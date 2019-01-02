@@ -1,0 +1,102 @@
+[whitespace]
+' '
+\t
+
+[identifiers]
+extra_identifier_characters '_'
+
+[tokens]
+EOI                                              "[end of input]"  [structural]
+EOL                   {'\n'}                     "end of line"
+IDENTIFIER            {identifier}               identifier
+REAL64                {real}                     Real64
+REAL64_AS_INT32                                  Real64
+INT32                 {integer}                  Int32
+CHARACTER             {character}                Character
+
+[keywords]
+KEYWORD_CLASS         class        [structural]
+KEYWORD_ELSE          else         [structural]
+KEYWORD_ELSE_IF       elseIf       [structural]
+KEYWORD_END_CLASS     endClass     [structural]
+KEYWORD_END_IF        endIf        [structural]
+KEYWORD_END_ROUTINE   endRoutine   [structural]
+KEYWORD_END_WHILE     endWhile     [structural]
+KEYWORD_FALSE         false
+KEYWORD_GLOBAL        global
+KEYWORD_IF            if
+KEYWORD_IMPORT        import
+KEYWORD_LOCAL         local
+KEYWORD_METHOD        method       [structural]
+KEYWORD_METHODS       METHODS      [structural]
+KEYWORD_NULL          null
+KEYWORD_PRINTLN       println
+KEYWORD_PROPERTIES    PROPERTIES   [structural]
+KEYWORD_RETURN        return
+KEYWORD_ROUTINE       routine      [structural]
+KEYWORD_TRUE          true         [structural]
+KEYWORD_WHILE         while
+
+[symbols]
+SYMBOL_AMPERSAND      &
+SYMBOL_ARROW          ->
+SYMBOL_ASTERISK       *
+SYMBOL_AT             @
+SYMBOL_BANG           !
+SYMBOL_CARET          ^
+SYMBOL_CLOSE_BRACE    }
+SYMBOL_CLOSE_BRACKET  ]
+SYMBOL_CLOSE_PAREN    )
+SYMBOL_COLON          :
+SYMBOL_COLON_COLON    ::
+SYMBOL_COMMA          ,
+SYMBOL_DOLLAR         $
+SYMBOL_DOUBLE_QUOTE   "
+SYMBOL_EQUALS         =
+SYMBOL_EQ             ==
+SYMBOL_GE             >=
+SYMBOL_GT             >
+SYMBOL_LEFT_SHIFT     <<
+SYMBOL_LE             <=
+SYMBOL_LT             <
+SYMBOL_MINUS          -
+SYMBOL_MINUS_MINUS    --
+SYMBOL_NE             !=
+SYMBOL_OPEN_BRACE     {
+SYMBOL_OPEN_BRACKET   [
+SYMBOL_OPEN_PAREN     (
+SYMBOL_PERCENT        %
+SYMBOL_PERIOD         .
+SYMBOL_PLUS           +
+SYMBOL_PLUS_PLUS      ++
+SYMBOL_QUESTION       ?
+SYMBOL_QUESTION_COLON ?:
+SYMBOL_RIGHT_SHIFT    >>
+SYMBOL_RIGHT_SHIFT_X  >>>
+SYMBOL_SEMICOLON      ;
+SYMBOL_SINGLE_QUOTE   '
+SYMBOL_SLASH          /
+SYMBOL_TILDE          ~
+SYMBOL_VERTICAL_BAR   |
+
+[strings]
+STRING                      "..."
+SINGLE_QUOTED_STRING        '...'
+DOUBLE_SINGLE_QUOTED_STRING ''...''
+
+[escapes]
+ESC_E          {'\\e'} -> 27
+ESC_N          {'\\n'} -> 10
+ESC_R          {'\\r'} -> 13
+ESC_BACKSLASH  {'\\\\'} -> '\\'
+ESC_OCTAL      {'\\' octal*1..3}
+ESC_UNICODE_4  {'\\' 'u' hex*1..4}
+ESC_UNICODE_N  {'\\' '[' hex*1..6}
+
+[comments]
+SINGLE_LINE_COMMENT   {'/' '/' any* '\n'}
+
+[custom]
+VERBATIM_STRING       @|
+MULTI_LINE_COMMENT    #{
+

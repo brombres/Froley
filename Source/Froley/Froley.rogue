@@ -1,1 +1,222 @@
-println "Hello World"
+Launcher( System.command_line_arguments )
+
+class Launcher
+  METHODS
+    method init( args:String[] )
+      local filepaths = String[]
+      local arg_reader = args.reader
+      while (arg_reader.has_another)
+        local arg = arg_reader.read
+        filepaths.add( arg )
+      endWhile
+
+      if (filepaths.count == 0) println "No input files specified."
+
+      Froley( forEach in filepaths )
+endClass
+
+class Froley
+  PROPERTIES
+    source : String
+    reader : Scanner
+
+    patterns            = StringTable<<Pattern>>()
+    whitespace_patterns = Pattern[]
+
+  METHODS
+    method init( froley_filepath:String )
+      try
+        source = File.load_as_string( froley_filepath )
+        SourcePos.filepath = froley_filepath
+        SourcePos.source = source
+
+        reader = Scanner( source, &spaces_per_tab=4 )
+
+        while (parse_section) noAction
+        if (reader.has_another) throw SourcePos().error( "Syntax error - unexpected character: $" (reader.read) )
+
+      catch (error:FroleyError)
+        println error->String
+        System.exit 1
+      endTry
+
+
+    method consume( ch:Character )->Logical
+      if (this.reader.consume(ch))
+        SourcePos.current_line = reader.line
+        SourcePos.current_column = reader.column
+        return true
+      else
+        return false
+      endIf
+
+    method consume_whitespace->Logical
+      local found_any = false
+      while (consume(' ')) found_any=true
+      return found_any
+
+    method consume_whitespace_and_comments->Logical
+      local found_any = false
+      loop
+        if (consume_whitespace) found_any=true; nextIteration
+        if (consume('#'))
+          found_any = true
+          while (reader.has_another)
+            if (reader.read == '\n') escapeWhile
+          endWhile
+          nextIteration
+        endIf
+        if (found_any)
+          SourcePos.current_line = reader.line
+          SourcePos.current_column = reader.column
+        endIf
+        return found_any
+      endLoop
+
+    method consume_whitespace_comments_and_eols->Logical
+      local found_any = false
+      while (consume_whitespace_and_comments or consume('\n')) found_any = true
+      return found_any
+
+    method must_consume_eols
+      consume_whitespace_and_comments
+      if (not consume('\n')) throw SourcePos().error( "End of line expected." )
+      while (consume_whitespace_comments_and_eols) noAction
+
+    method parse_section->Logical
+      while (consume_whitespace_and_comments or consume('\n')) noAction
+      if (not reader.has_another) return false
+
+      if (reader.consume("[whitespace]"))
+        must_consume_eols
+        parse_whitespace_defs
+        return true
+      endIf
+
+      if (reader.consume("[patterns]"))
+        must_consume_eols
+        while (reader.has_another and reader.peek != '[')
+          local name = read_identifier
+          consume_whitespace
+          local pattern = parse_pattern
+          must_consume_eols
+          patterns[ name ] = pattern
+        endWhile
+        return true
+      endIf
+
+      return false
+
+    method parse_whitespace_defs
+      consume_whitespace_comments_and_eols
+      while (reader.has_another and reader.peek != '[')
+        whitespace_patterns.add( parse_definition )
+        must_consume_eols
+      endWhile
+
+    method parse_definition->Pattern
+      consume_whitespace_and_comments
+      which (reader.peek)
+        others
+          return parse_string
+      endWhich
+
+    method parse_pattern->Pattern
+      throw SourcePos().error( "TODO" )
+
+    method parse_string->Pattern
+      local sp = SourcePos()
+      use builder = StringBuilder.pool
+        if (reader.peek == '"' or reader.peek == '\'')
+          local terminator = read
+          while (reader.has_another and not consume(terminator))
+            local ch = read
+            builder.print( ch )
+          endWhile
+          return LiteralString( sp, builder->String )
+        else
+          # Anything up to the next space or EOL is a LiteralString pattern
+          while (reader.has_another and not " \n#".contains(peek))
+            builder.print( read )
+          endWhile
+          return LiteralString( SourcePos(), builder->String )
+        endIf
+      endUse
+      return null  # never happens
+
+    method peek->Character [macro]
+      return this.reader.peek
+
+    method read->Character [macro]
+      return this.reader.read
+
+    method read_identifier->String
+      local id = reader.scan_identifier
+      if (id) return id
+      throw SourcePos().error( "Identifier expected." )
+
+endClass
+
+class SourcePos
+  GLOBAL PROPERTIES
+    filepath       : String
+    source         : String
+    current_line   : Int32
+    current_column : Int32
+
+  PROPERTIES
+    line, column : Int32
+
+  METHODS
+    method init
+      line = current_line
+      column = current_column
+
+    method error( message:String )->FroleyError
+      return FroleyError( message, filepath, source, line, column )
+endClass
+
+class FroleyError( message:String, filepath:String, source:String, line=0:Int32, column=0:Int32 ) : Error
+  METHODS
+    method to->String
+      local builder = StringBuilder()
+      local m = message.word_wrap(79,",").join
+      if (filepath)
+        builder.println( "=" * ((Console.width-1).or_smaller(79)) )
+        builder.print( ''ERROR in "'' ).print( File.filename(filepath) )
+        if (line) builder.print( ''" line '' ).print( line ).print( ", column " ).println( column )
+        builder.println
+        builder.println( m )
+
+        if (line and source)
+          builder.println
+          forEach (line at index in LineReader(source))
+            if (index+1 == this.line)
+              builder.println( line )
+              escapeForEach
+            endIf
+          endForEach
+          builder.print( " " * (column-1) ).println( '^' )
+        endIf
+
+        builder.println( "=" * ((Console.width-1).or_smaller(79)) )
+      else
+        builder.println( "=" * ((Console.width-1).or_smaller(79)) )
+        builder.println( "ERROR" )
+        builder.println( m )
+        builder.println( "=" * ((Console.width-1).or_smaller(79)) )
+      endIf
+      return builder->String
+endClass
+
+class Pattern( sp:SourcePos )
+endClass
+
+class LiteralString : Pattern
+  PROPERTIES
+    value : String
+
+  METHODS
+    method init( sp, value )
+      println "[$]"(value)
+endClass

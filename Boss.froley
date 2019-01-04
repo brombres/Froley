@@ -1,18 +1,50 @@
 [whitespace]
 ' '
-\t
+'\t'
 
-[identifiers]
-extra_identifier_characters '_'
+
+[patterns]
+alpha      { a..z | A..Z | _ }
+digit      { '0'..'9' }
+binary     { '0'..'1' }
+octal      { '0'..'7' }
+hex        { digit | a..f | A..F }
+identifier { alpha (alpha|digit)* }
+real       { [+|-] digit* ['.' digit+] [(e|E) [+|-] digit+] }
+integer    { [+|-] digit+ }
+character  { escape | any }
+escape     { esc_e | esc_n | esc_r | esc_backslash | ESC_OCTAL | ESC_HEX | ESC_UNICODE_4 | ESC_UNICODE_N }
+
+
+[conversions]
+esc_e          \e -> 27
+esc_n          \n -> 10
+esc_r          \r -> 13
+esc_backslash  \\ -> '\\'
+
+
+[custom]
+ESC_OCTAL             {\  octal*1..3}
+ESC_UNICODE_4         {\u hex*4}
+ESC_UNICODE_N         {\  '[' hex*1..6 ']'}
+
+VERBATIM_STRING       @|
+SINGLE_LINE_COMMENT   //
+MULTI_LINE_COMMENT    #{
+
 
 [tokens]
-EOI                                              "[end of input]"  [structural]
-EOL                   {'\n'}                     "end of line"
-IDENTIFIER            {identifier}               identifier
-REAL64                {real}                     Real64
-REAL64_AS_INT32                                  Real64
-INT32                 {integer}                  Int32
-CHARACTER             {character}                Character
+EOI                                    "[end of input]"  [structural]
+EOL                   {'\n'}           "end of line"
+IDENTIFIER            {identifier}     identifier
+REAL64                {real}           Real64
+REAL64_AS_INT32                        Real64
+INT32                                  Int32
+INTEGER               {integer}        integer
+BINARY_INTEGER        {'0b' binary+}   binary integer
+OCTAL_INTEGER         {'0c' octal+}    octal integer
+HEX_INTEGER           {'0x' hex+}      hex integer
+CHARACTER             {character}      Character
 
 [keywords]
 KEYWORD_CLASS         class        [structural]
@@ -83,20 +115,4 @@ SYMBOL_VERTICAL_BAR   |
 STRING                      "..."
 SINGLE_QUOTED_STRING        '...'
 DOUBLE_SINGLE_QUOTED_STRING ''...''
-
-[escapes]
-ESC_E          {'\\e'} -> 27
-ESC_N          {'\\n'} -> 10
-ESC_R          {'\\r'} -> 13
-ESC_BACKSLASH  {'\\\\'} -> '\\'
-ESC_OCTAL      {'\\' octal*1..3}
-ESC_UNICODE_4  {'\\' 'u' hex*1..4}
-ESC_UNICODE_N  {'\\' '[' hex*1..6}
-
-[comments]
-SINGLE_LINE_COMMENT   {'/' '/' any* '\n'}
-
-[custom]
-VERBATIM_STRING       @|
-MULTI_LINE_COMMENT    #{
 

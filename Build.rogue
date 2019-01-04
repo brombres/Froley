@@ -17,12 +17,12 @@ augment Build
 endAugment
 
 routine rogo_default
-  rogo_go
+  rogo_go( "Boss.froley" )
 endRoutine
 
-routine rogo_go
+routine rogo_go( arg="":String )
   rogo_build
-  rogo_execute
+  rogo_execute( arg )
 endRoutine
 
 routine rogo_clean
@@ -38,8 +38,8 @@ routine rogo_build
   if (System.os != "Windows" and Process.run( "which froley", &inherit_environment ).output_string == "") install_launcher
 endRoutine
 
-routine rogo_execute
-  execute Build.EXE
+routine rogo_execute( arg:String )
+  execute "$ $" (Build.EXE,arg)
 endRoutine
 
 routine rogo_link

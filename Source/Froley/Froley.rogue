@@ -22,33 +22,52 @@ class Froley
 
     patterns            = StringTable<<Pattern>>()
     whitespace_patterns = Pattern[]
+    token_names         = String[]
+    token_types         = StringTable<<Int32>>()
 
   METHODS
-    method init( froley_filepath:String )
+    method init( filepath:String )
+      init( filepath, File.load_as_string(filepath) )
+
+    method init( filepath:String, source )
       try
-        source = File.load_as_string( froley_filepath )
-        SourcePos.filepath = froley_filepath
+        SourcePos.filepath = filepath
         SourcePos.source = source
+
+        patterns//any = AnyCharacterPattern(SourcePos(0,0))
 
         reader = Scanner( source, &spaces_per_tab=4 )
 
         while (parse_section) noAction
-        if (reader.has_another) throw SourcePos().error( "Syntax error - unexpected character: $" (reader.read) )
+        if (reader.has_another) throw source_pos.error( "Syntax error - unexpected character: $" (reader.read) )
+
+        local tree = build_tree
+        tree.tokenize( "Test", "Froley" )
 
       catch (error:FroleyError)
         println error->String
         System.exit 1
       endTry
 
+    method build_tree->ScanTree
+      local tree = ScanTree()
+      forEach (token_name in token_names)
+        local pattern = patterns[ token_name ]
+        pattern.link
+        pattern.apply( this, tree.start, token_types[token_name] )
+        #pattern.build_tree( this, tree, tree.start )
+        #pattern.add( this, tree, tree.start, null, ScanNode.ACTION_ACCEPT, token_types[token_name] )
+      endForEach
+      tree.start.action = ScanNode.ACTION_NONE
+      return tree
 
-    method consume( ch:Character )->Logical
-      if (this.reader.consume(ch))
-        SourcePos.current_line = reader.line
-        SourcePos.current_column = reader.column
-        return true
-      else
-        return false
-      endIf
+    method consume( ch:Character )->Logical [macro]
+      return this.reader.consume( ch )
+
+    method consume_eols->Logical
+      local found_any = false
+      while (consume('\n')) found_any = true
+      return found_any
 
     method consume_whitespace->Logical
       local found_any = false
@@ -66,10 +85,6 @@ class Froley
           endWhile
           nextIteration
         endIf
-        if (found_any)
-          SourcePos.current_line = reader.line
-          SourcePos.current_column = reader.column
-        endIf
         return found_any
       endLoop
 
@@ -78,9 +93,13 @@ class Froley
       while (consume_whitespace_and_comments or consume('\n')) found_any = true
       return found_any
 
+    method must_consume( ch:Character )
+      if (consume(ch)) return
+      throw source_pos.error( "'$' expected." (ch) )
+
     method must_consume_eols
       consume_whitespace_and_comments
-      if (not consume('\n')) throw SourcePos().error( "End of line expected." )
+      if (not consume('\n')) throw source_pos.error( "End of line expected." )
       while (consume_whitespace_comments_and_eols) noAction
 
     method parse_section->Logical
@@ -89,43 +108,73 @@ class Froley
 
       if (reader.consume("[whitespace]"))
         must_consume_eols
-        parse_whitespace_defs
+        consume_whitespace_comments_and_eols
+        while (reader.has_another and reader.peek != '[')
+          whitespace_patterns.add( parse_definition )
+          must_consume_eols
+        endWhile
         return true
       endIf
 
       if (reader.consume("[patterns]"))
         must_consume_eols
         while (reader.has_another and reader.peek != '[')
+          local sp = source_pos
           local name = read_identifier
           consume_whitespace
-          local pattern = parse_pattern
+          local pattern = parse_definition
           must_consume_eols
+          if (patterns.contains(name)) throw sp.error( ''A definition for "$" already exists.''(name) )
           patterns[ name ] = pattern
+        endWhile
+        return true
+      endIf
+
+      if (reader.consume("[tokens]"))
+        must_consume_eols
+        while (reader.has_another and reader.peek != '[')
+          local sp = source_pos
+          local name = read_identifier
+          consume_whitespace
+          local pattern = parse_definition
+          must_consume_eols
+          if (patterns.contains(name)) throw sp.error( ''A definition for "$" already exists.''(name) )
+          patterns[ name ] = pattern
+          token_names.add( name )
+          token_types[ name ] = token_names.count
         endWhile
         return true
       endIf
 
       return false
 
-    method parse_whitespace_defs
-      consume_whitespace_comments_and_eols
-      while (reader.has_another and reader.peek != '[')
-        whitespace_patterns.add( parse_definition )
-        must_consume_eols
-      endWhile
 
     method parse_definition->Pattern
       consume_whitespace_and_comments
       which (reader.peek)
+        case '{'
+          return parse_pattern
         others
           return parse_string
       endWhich
 
     method parse_pattern->Pattern
-      throw SourcePos().error( "TODO" )
+      local group = PatternGroup( source_pos )
+      must_consume( '{' )
+      consume_whitespace
+      while (reader.has_another and peek != '}')
+        group.add( parse_or )
+        while (consume_whitespace or consume_eols) noAction
+      endWhile
+      must_consume( '}' )
+      return group
+
+    method parse_or->Pattern
+      consume_whitespace
+      return parse_definition
 
     method parse_string->Pattern
-      local sp = SourcePos()
+      local sp = source_pos
       use builder = StringBuilder.pool
         if (reader.peek == '"' or reader.peek == '\'')
           local terminator = read
@@ -133,13 +182,19 @@ class Froley
             local ch = read
             builder.print( ch )
           endWhile
-          return LiteralString( sp, builder->String )
+          return LiteralStringPattern( sp, builder->String )
         else
-          # Anything up to the next space or EOL is a LiteralString pattern
-          while (reader.has_another and not " \n#".contains(peek))
+          while (reader.has_another)
+            which (peek)
+              case ' ', '\n', '#', '|','}'
+                escapeWhile
+              case '.'
+                if (reader.peek(1) == '.') escapeWhile   # .. token
+            endWhich
             builder.print( read )
           endWhile
-          return LiteralString( SourcePos(), builder->String )
+          if (builder.count == 0) throw sp.error( "Pattern or literal character sequence expected." )
+          return IdentifierPattern( sp, builder->String )
         endIf
       endUse
       return null  # never happens
@@ -153,25 +208,19 @@ class Froley
     method read_identifier->String
       local id = reader.scan_identifier
       if (id) return id
-      throw SourcePos().error( "Identifier expected." )
+      throw source_pos.error( "Identifier expected." )
+
+    method source_pos->SourcePos
+      return SourcePos( reader.line, reader.column )
 
 endClass
 
-class SourcePos
+class SourcePos( line=0:Int32, column=0:Int32 ) [compound]
   GLOBAL PROPERTIES
     filepath       : String
     source         : String
-    current_line   : Int32
-    current_column : Int32
-
-  PROPERTIES
-    line, column : Int32
 
   METHODS
-    method init
-      line = current_line
-      column = current_column
-
     method error( message:String )->FroleyError
       return FroleyError( message, filepath, source, line, column )
 endClass
@@ -210,9 +259,81 @@ class FroleyError( message:String, filepath:String, source:String, line=0:Int32,
 endClass
 
 class Pattern( sp:SourcePos )
+  PROPERTIES
+    next : Pattern
+
+  METHODS
+    method apply( froley:Froley, cur:ScanNode, token_type:Int32 )
+      throw UnsupportedOperationError()
+
+    method error( message:String )->FroleyError
+      return sp.error( message )
+
+    method link
+      noAction
+
 endClass
 
-class LiteralString : Pattern
+class AnyCharacterPattern : Pattern
+  METHODS
+    method apply( froley:Froley, cur:ScanNode, token_type:Int32 )
+      local node = ScanNode()
+      cur.on_default = node
+      if (next)
+        next.apply( froley, node, token_type )
+      else
+        node.action = ScanNode.ACTION_ACCEPT
+        node.token_type = token_type
+      endIf
+
+    method to->String
+      return "(any)"
+endClass
+
+class PatternGroup( sp ) : Pattern
+  PROPERTIES
+    elements = Pattern[]
+
+  METHODS
+    method add( pattern:Pattern )
+      elements.add( pattern )
+
+    method apply( froley:Froley, cur:ScanNode, token_type:Int32 )
+      if (elements.count)
+        elements.first.apply( froley, cur, token_type )
+      elseIf (next)
+        next.apply( froley, cur, token_type )
+      else
+        cur.action = ScanNode.ACTION_ACCEPT
+        cur.token_type = token_type
+      endIf
+
+    method link
+      local prev : Pattern
+      forEach (element in elements)
+        element.link
+        if (prev)
+          local tail = prev
+          while (tail.next) tail = tail.next
+          tail.next = element
+        endIf
+        prev = element
+      endForEach
+endClass
+
+class IdentifierPattern( sp, value:String ) : Pattern
+  METHODS
+    method apply( froley:Froley, cur:ScanNode, token_type:Int32 )
+      local pattern = froley.patterns[ value ]
+      if (pattern)
+        pattern.next = next
+        pattern.apply( froley, cur, token_type )
+      else
+        throw Error( "TODO IdentifierPattern as string -> apply" )
+      endIf
+endClass
+
+class LiteralStringPattern : Pattern
   PROPERTIES
     value : String
 
@@ -220,3 +341,84 @@ class LiteralString : Pattern
     method init( sp, value )
       println "[$]"(value)
 endClass
+
+class ScanTree
+  PROPERTIES
+    start  = ScanNode()
+    buffer = StringBuilder()
+
+  METHODS
+    method tokenize( filepath:String, source:String )
+      local reader = Scanner( source, &spaces_per_tab=4 )
+      local cur = start
+      buffer.clear
+      while (reader.has_another)
+        local ch = reader.peek
+        local link = cur.on[ ch ]
+        if (link)
+          buffer.print( reader.read )
+          cur = link
+        elseIf (cur.on_alpha and ((ch>='a' and ch<='z') or (ch>='A' and ch<='Z')))
+          buffer.print( reader.read )
+          cur = cur.on_alpha
+        elseIf (cur.on_digit and (ch>='0' and ch<='9'))
+          buffer.print( reader.read )
+          cur = cur.on_digit
+        elseIf (cur.on_default)
+          buffer.print( reader.read )
+          cur = cur.on_default
+        elseIf (cur.action)
+          which (cur.action)
+            case ScanNode.ACTION_ACCEPT
+              accept( cur.token_type )
+            case ScanNode.ACTION_ACCEPT_AND_DISCARD
+              noAction
+            case ScanNode.ACTION_ACCEPT_AND_CONVERT_TO_CHARACTER
+              throw Error( "TODO" )
+            case ScanNode.ACTION_ACCEPT_AND_CONVERT_TO_STRING
+              throw Error( "TODO" )
+          endWhich
+          buffer.clear
+          cur = start
+        else
+          throw FroleyError( "Syntax error - unexpected '$'."(reader.peek), filepath, source, reader.line, reader.column )
+        endIf
+      endWhile
+
+      if (cur is not start)
+        which (cur.action)
+          case ScanNode.ACTION_NONE
+            throw FroleyError( "Syntax error - unexpected end of input.", filepath, source, reader.line, reader.column )
+          case ScanNode.ACTION_ACCEPT
+            accept( cur.token_type )
+          case ScanNode.ACTION_ACCEPT_AND_DISCARD
+            noAction
+          case ScanNode.ACTION_ACCEPT_AND_CONVERT_TO_CHARACTER
+            throw Error( "TODO" )
+          case ScanNode.ACTION_ACCEPT_AND_CONVERT_TO_STRING
+            throw Error( "TODO" )
+        endWhich
+      endIf
+
+    method accept( token_type:Int32 )
+      trace token_type, buffer
+
+endClass
+
+class ScanNode
+  ENUMERATE
+    ACTION_NONE
+    ACTION_ACCEPT
+    ACTION_ACCEPT_AND_DISCARD
+    ACTION_ACCEPT_AND_CONVERT_TO_CHARACTER
+    ACTION_ACCEPT_AND_CONVERT_TO_STRING
+
+  PROPERTIES
+    action     : Int32
+    token_type : Int32
+    on         = Table<<Character,ScanNode>>()
+    on_alpha   : ScanNode
+    on_digit   : ScanNode
+    on_default : ScanNode
+endClass
+

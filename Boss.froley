@@ -3,24 +3,22 @@
 '\t'
 
 
-[patterns]
-alpha      { a..z | A..Z | _ }
-digit      { '0'..'9' }
+[definitions]
 binary     { '0'..'1' }
 octal      { '0'..'7' }
 hex        { digit | a..f | A..F }
-identifier { alpha (alpha|digit)* }
+identifier { (alpha|_) (alpha|_|digit)* }
 real       { [+|-] digit* ['.' digit+] [(e|E) [+|-] digit+] }
 integer    { [+|-] digit+ }
 character  { escape | any }
 escape     { esc_e | esc_n | esc_r | esc_backslash | ESC_OCTAL | ESC_HEX | ESC_UNICODE_4 | ESC_UNICODE_N }
 
-
-[conversions]
 esc_e          \e -> 27
 esc_n          \n -> 10
 esc_r          \r -> 13
 esc_backslash  \\ -> '\\'
+
+single_line_comment   { '//' (character until '\n') } -> '\n'
 
 
 [custom]
@@ -29,24 +27,27 @@ ESC_UNICODE_4         {\u hex*4}
 ESC_UNICODE_N         {\  '[' hex*1..6 ']'}
 
 VERBATIM_STRING       @|
-SINGLE_LINE_COMMENT   //
-MULTI_LINE_COMMENT    #{
+MULTI_LINE_COMMENT    '#{'
 
 
 [tokens]
-EOI                                    "[end of input]"  [structural]
-EOL                   {'\n'}           "end of line"
-IDENTIFIER            {identifier}     identifier
-REAL64                {real}           Real64
-REAL64_AS_INT32                        Real64
-INT32                                  Int32
-INTEGER               {integer}        integer
-BINARY_INTEGER        {'0b' binary+}   binary integer
-OCTAL_INTEGER         {'0c' octal+}    octal integer
-HEX_INTEGER           {'0x' hex+}      hex integer
-CHARACTER             {character}      Character
+EOI                   {}              (end of input) [structural]
+EOL                   {'\n'}          (end of line)
+IDENTIFIER            {identifier}    (identifier)
+REAL64                {real}          (Real64)
+REAL64_AS_INT32       {}              (Real64)
+INT32                 {}              (Int32)
+INTEGER               {integer}       (integer)
+BINARY_INTEGER        {'0b' binary+}  (binary integer)
+OCTAL_INTEGER         {'0c' octal+}   (octal integer
+HEX_INTEGER           {'0x' hex+}     (hex integer)
+CHARACTER             {}              (Character)
 
-[keywords]
+STRING                      {'"' (character* until '"')}
+SINGLE_QUOTED_STRING        {"'" (character except "'")* "'"}
+DOUBLE_SINGLE_QUOTED_STRING {"''" (character except "''")* "''"}
+
+
 KEYWORD_CLASS         class        [structural]
 KEYWORD_ELSE          else         [structural]
 KEYWORD_ELSE_IF       elseIf       [structural]
@@ -69,7 +70,6 @@ KEYWORD_ROUTINE       routine      [structural]
 KEYWORD_TRUE          true         [structural]
 KEYWORD_WHILE         while
 
-[symbols]
 SYMBOL_AMPERSAND      &
 SYMBOL_ARROW          ->
 SYMBOL_ASTERISK       *
@@ -110,9 +110,4 @@ SYMBOL_SINGLE_QUOTE   '
 SYMBOL_SLASH          /
 SYMBOL_TILDE          ~
 SYMBOL_VERTICAL_BAR   |
-
-[strings]
-STRING                      "..."
-SINGLE_QUOTED_STRING        '...'
-DOUBLE_SINGLE_QUOTED_STRING ''...''
 

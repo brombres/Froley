@@ -12,10 +12,10 @@ class Launcher
 
       if (filepaths.count == 0) println "No input files specified."
 
-      Froley( forEach in filepaths )
+      ScanTableMaker( forEach in filepaths )
 endClass
 
-class Froley
+class ScanTableMaker
   PROPERTIES
     source : String
     reader : Scanner
@@ -42,7 +42,7 @@ class Froley
         if (reader.has_another) throw source_pos.error( "Syntax error - unexpected character: $" (reader.read) )
 
         local tree = build_tree
-        tree.tokenize( "Test", "Froley" )
+        tree.tokenize( "Test", "Frley" )
 
       catch (error:FroleyError)
         println error->String
@@ -53,7 +53,7 @@ class Froley
       local tree = ScanTree()
       forEach (token_name in token_names)
         local pattern = patterns[ token_name ]
-        pattern.link
+        pattern = pattern.resolved( this )
         pattern.apply( this, tree.start, token_types[token_name] )
         #pattern.build_tree( this, tree, tree.start )
         #pattern.add( this, tree, tree.start, null, ScanNode.ACTION_ACCEPT, token_types[token_name] )
@@ -149,15 +149,6 @@ class Froley
       return false
 
 
-    method parse_definition->Pattern
-      consume_whitespace_and_comments
-      which (reader.peek)
-        case '{'
-          return parse_pattern
-        others
-          return parse_string
-      endWhich
-
     method parse_pattern->Pattern
       local group = PatternGroup( source_pos )
       must_consume( '{' )
@@ -171,7 +162,25 @@ class Froley
 
     method parse_or->Pattern
       consume_whitespace
-      return parse_definition
+      return parse_zero_or_more
+
+    method parse_zero_or_more->Pattern
+      local pattern = parse_definition
+      local sp = source_pos
+      if (consume('*'))
+        return ZeroOrMorePattern( sp, pattern )
+      else
+        return pattern
+      endIf
+
+    method parse_definition->Pattern
+      consume_whitespace_and_comments
+      which (reader.peek)
+        case '{'
+          return parse_pattern
+        others
+          return parse_string
+      endWhich
 
     method parse_string->Pattern
       local sp = source_pos
@@ -182,11 +191,12 @@ class Froley
             local ch = read
             builder.print( ch )
           endWhile
+          if (builder.count == 0) throw sp.error( "Strings must contain at least one character." )
           return LiteralStringPattern( sp, builder->String )
         else
           while (reader.has_another)
             which (peek)
-              case ' ', '\n', '#', '|','}'
+              case ' ', '\n', '#', '|','}','*','+'
                 escapeWhile
               case '.'
                 if (reader.peek(1) == '.') escapeWhile   # .. token
@@ -263,31 +273,43 @@ class Pattern( sp:SourcePos )
     next : Pattern
 
   METHODS
-    method apply( froley:Froley, cur:ScanNode, token_type:Int32 )
+    method apply( maker:ScanTableMaker, cur:ScanNode, token_type:Int32 )
       throw UnsupportedOperationError()
 
     method error( message:String )->FroleyError
       return sp.error( message )
 
-    method link
-      noAction
+    method resolved( maker:ScanTableMaker )->Pattern
+      throw UnsupportedOperationError()
 
 endClass
 
 class AnyCharacterPattern : Pattern
   METHODS
-    method apply( froley:Froley, cur:ScanNode, token_type:Int32 )
-      local node = ScanNode()
-      cur.on_default = node
-      if (next)
-        next.apply( froley, node, token_type )
-      else
-        node.action = ScanNode.ACTION_ACCEPT
-        node.token_type = token_type
-      endIf
+    method apply( maker:ScanTableMaker, cur:ScanNode, token_type:Int32 )
+      local node = cur.link_default
+      if (next) next.apply( maker, node, token_type )
+      else      node.accept( token_type )
+
+    method resolved( maker:ScanTableMaker )->Pattern
+      return AnyCharacterPattern(sp)
 
     method to->String
       return "(any)"
+endClass
+
+class ZeroOrMorePattern( sp, pattern:Pattern ) : Pattern
+  METHODS
+    #{
+    method apply( maker:ScanTableMaker, cur:ScanNode, token_type:Int32 )
+      local first = cur
+      local last = ScanNode()
+      local actual_next = next
+      local next = last
+      }#
+
+    method resolved( maker:ScanTableMaker )->Pattern
+      return ZeroOrMorePattern( sp, pattern.resolved(maker) )
 endClass
 
 class PatternGroup( sp ) : Pattern
@@ -298,48 +320,43 @@ class PatternGroup( sp ) : Pattern
     method add( pattern:Pattern )
       elements.add( pattern )
 
-    method apply( froley:Froley, cur:ScanNode, token_type:Int32 )
-      if (elements.count)
-        elements.first.apply( froley, cur, token_type )
-      elseIf (next)
-        next.apply( froley, cur, token_type )
-      else
-        cur.action = ScanNode.ACTION_ACCEPT
-        cur.token_type = token_type
-      endIf
-
-    method link
-      local prev : Pattern
+    method resolved( maker:ScanTableMaker )->Pattern
+      local head, tail : Pattern
       forEach (element in elements)
-        element.link
-        if (prev)
-          local tail = prev
-          while (tail.next) tail = tail.next
+        element = element.resolved( maker )
+        if (head)
           tail.next = element
+        else
+          head = element
+          tail = element
         endIf
-        prev = element
+        while (tail.next) tail = tail.next
       endForEach
+      return head
 endClass
 
 class IdentifierPattern( sp, value:String ) : Pattern
   METHODS
-    method apply( froley:Froley, cur:ScanNode, token_type:Int32 )
-      local pattern = froley.patterns[ value ]
+    method resolved( maker:ScanTableMaker )->Pattern
+      local pattern = maker.patterns[ value ]
       if (pattern)
-        pattern.next = next
-        pattern.apply( froley, cur, token_type )
+        return pattern.resolved( maker )
       else
-        throw Error( "TODO IdentifierPattern as string -> apply" )
+        return LiteralStringPattern( sp, value )
       endIf
 endClass
 
-class LiteralStringPattern : Pattern
-  PROPERTIES
-    value : String
-
+class LiteralStringPattern( sp, value:String ) : Pattern
   METHODS
-    method init( sp, value )
-      println "[$]"(value)
+    method apply( maker:ScanTableMaker, cur:ScanNode, token_type:Int32 )
+      forEach (ch in value)
+        cur = cur.link( ch )
+      endForEach
+      if (next) next.apply( maker, cur, token_type )
+      else      cur.accept( token_type )
+
+    method resolved( maker:ScanTableMaker )->Pattern
+      return LiteralStringPattern( sp, value )
 endClass
 
 class ScanTree
@@ -420,5 +437,28 @@ class ScanNode
     on_alpha   : ScanNode
     on_digit   : ScanNode
     on_default : ScanNode
+
+  METHODS
+    method accept( token_type, action=ScanNode.ACTION_ACCEPT )
+
+    method link( ch:Character )->ScanNode
+      local result = on[ ch ]
+      if (not result)
+        ensure result
+        on[ ch ] = result
+      endIf
+      return result
+
+    method link_alpha->ScanNode
+      ensure on_alpha
+      return on_alpha
+
+    method link_digit->ScanNode
+      ensure on_digit
+      return on_digit
+
+    method link_default->ScanNode
+      ensure on_default
+      return on_default
 endClass
 

@@ -25,6 +25,8 @@ class ScanTableMaker
     token_names         = String[]
     token_types         = StringTable<<Int32>>()
 
+    expanding_patterns  = Pattern[]
+
   METHODS
     method init( filepath:String )
       init( filepath, File.load_as_string(filepath) )
@@ -41,25 +43,33 @@ class ScanTableMaker
         while (parse_section) noAction
         if (reader.has_another) throw source_pos.error( "Syntax error - unexpected character: $" (reader.read) )
 
-        local tree = build_tree
-        tree.tokenize( "Test", "Frley" )
+        local graph = build_graph
+        graph.tokenize( "Test", "Froooley" )
 
       catch (error:FroleyError)
         println error->String
         System.exit 1
       endTry
 
-    method build_tree->ScanTree
-      local tree = ScanTree()
+    method build_graph->ScanGraph
+      local graph = ScanGraph()
+      local sequence = Pattern[]
       forEach (token_name in token_names)
         local pattern = patterns[ token_name ]
-        pattern = pattern.resolved( this )
-        pattern.apply( this, tree.start, token_types[token_name] )
-        #pattern.build_tree( this, tree, tree.start )
-        #pattern.add( this, tree, tree.start, null, ScanNode.ACTION_ACCEPT, token_types[token_name] )
+        pattern = pattern.cloned( this )
+        pattern.collect( this, sequence.clear )
+        if (sequence.count)
+          forEach (element at index in sequence)
+            sequence[ index ] = element.cloned( this )
+          endForEach
+          local reader = PatternReader( this, graph, sequence, token_types[token_name] )
+trace reader
+          if (reader.has_another)
+            reader.read.build_graph( graph.start, reader )
+          endIf
+        endIf
       endForEach
-      tree.start.action = ScanNode.ACTION_NONE
-      return tree
+      return graph
 
     method consume( ch:Character )->Logical [macro]
       return this.reader.consume( ch )
@@ -268,49 +278,110 @@ class FroleyError( message:String, filepath:String, source:String, line=0:Int32,
       return builder->String
 endClass
 
-class Pattern( sp:SourcePos )
+class PatternReader
   PROPERTIES
-    next : Pattern
+    maker      : ScanTableMaker
+    graph      : ScanGraph
+    sequence   : Pattern[]
+    stack      : Pattern[]
+    position   : Int32
+    token_type : Int32?
 
   METHODS
-    method apply( maker:ScanTableMaker, cur:ScanNode, token_type:Int32 )
+    method init( maker, graph, sequence, token_type, position=0, stack=null )
+
+    method accept( state:ScanState )
+      if (token_type.exists)
+        state.accept( token_type.value )
+      endIf
+
+    method cloned->PatternReader
+      local new_stack = select{ stack:stack.cloned || null } : Pattern[]
+      return PatternReader( maker, graph, sequence, token_type, position, new_stack )
+
+    method empty_clone->PatternReader
+      return PatternReader( maker, graph, Pattern[], null, 0, null )
+
+    method has_another->Logical
+      return (stack and stack.count) or position < sequence.count
+
+    method peek->Pattern
+      if (stack and stack.count) return stack.last
+      return sequence[ position ]
+
+    method push( pattern:Pattern )
+      ensure stack
+      stack.add( pattern )
+
+    method read->Pattern
+      if (stack and stack.count) return stack.remove_last
+      ++position
+      return sequence[ position-1 ]
+
+    method to->String
+      return sequence.subset( position )->String
+endClass
+
+
+class Pattern( sp:SourcePos )
+  PROPERTIES
+    state : ScanState
+
+  METHODS
+    method build_graph( previous:ScanState, reader:PatternReader )
       throw UnsupportedOperationError()
+
+    method cloned( maker:ScanTableMaker )->Pattern
+      throw UnsupportedOperationError()
+
+    method collect( maker:ScanTableMaker, sequence:Pattern[] )
+      sequence.add( this )
 
     method error( message:String )->FroleyError
       return sp.error( message )
 
-    method resolved( maker:ScanTableMaker )->Pattern
-      throw UnsupportedOperationError()
-
+    method set_last_state( state:ScanState )
+      this.state = state
 endClass
+
 
 class AnyCharacterPattern : Pattern
   METHODS
-    method apply( maker:ScanTableMaker, cur:ScanNode, token_type:Int32 )
-      local node = cur.link_default
-      if (next) next.apply( maker, node, token_type )
-      else      node.accept( token_type )
+    method build_graph( previous:ScanState, reader:PatternReader )
+      state = previous.link_default
+      if (reader.has_another) reader.read.build_graph( state, reader )
+      else                    reader.accept( state )
 
-    method resolved( maker:ScanTableMaker )->Pattern
-      return AnyCharacterPattern(sp)
+    method cloned( maker:ScanTableMaker )->Pattern
+      return AnyCharacterPattern( sp )
 
     method to->String
       return "(any)"
 endClass
 
-class ZeroOrMorePattern( sp, pattern:Pattern ) : Pattern
-  METHODS
-    #{
-    method apply( maker:ScanTableMaker, cur:ScanNode, token_type:Int32 )
-      local first = cur
-      local last = ScanNode()
-      local actual_next = next
-      local next = last
-      }#
 
-    method resolved( maker:ScanTableMaker )->Pattern
-      return ZeroOrMorePattern( sp, pattern.resolved(maker) )
+class ZeroOrMorePattern( sp, sub_pattern:Pattern ) : Pattern
+  METHODS
+    method build_graph( previous:ScanState, reader:PatternReader )
+      sub_pattern.set_last_state( previous )
+      sub_pattern.build_graph( previous, reader.empty_clone )
+      if (reader.has_another)
+        reader.read.build_graph( previous, reader )
+      else
+        reader.accept( previous )
+      endIf
+
+    method cloned( maker:ScanTableMaker )->Pattern
+      return ZeroOrMorePattern( sp, sub_pattern.cloned(maker) )
+
+    method set_last_state( state:ScanState )
+      this.state = state
+      sub_pattern.set_last_state( state )
+
+    method to->String
+      return sub_pattern->String + "*"
 endClass
+
 
 class PatternGroup( sp ) : Pattern
   PROPERTIES
@@ -320,48 +391,78 @@ class PatternGroup( sp ) : Pattern
     method add( pattern:Pattern )
       elements.add( pattern )
 
-    method resolved( maker:ScanTableMaker )->Pattern
-      local head, tail : Pattern
-      forEach (element in elements)
-        element = element.resolved( maker )
-        if (head)
-          tail.next = element
-        else
-          head = element
-          tail = element
-        endIf
-        while (tail.next) tail = tail.next
+    method build_graph( previous:ScanState, reader:PatternReader )
+      forEach (element in elements step -1) reader.push( element )
+      if (reader.has_another) reader.read.build_graph( previous, reader )
+      else                    reader.accept( previous )
+
+    method cloned( maker:ScanTableMaker )->Pattern
+      local result = PatternGroup( sp )
+      forEach (element at index in elements)
+        result.add( element.cloned(maker) )
       endForEach
-      return head
+      return result
+
+    method set_last_state( state:ScanState )
+      if (elements.count) elements.last.set_last_state( state )
+
+    method to->String
+      return "{$}" (elements->String.leftmost(-1).rightmost(-1))
 endClass
+
 
 class IdentifierPattern( sp, value:String ) : Pattern
   METHODS
-    method resolved( maker:ScanTableMaker )->Pattern
+    method cloned( maker:ScanTableMaker )->Pattern
       local pattern = maker.patterns[ value ]
       if (pattern)
-        return pattern.resolved( maker )
+        if (maker.expanding_patterns.contains(pattern)) throw sp.error( "Recursive pattern definition." )
+        maker.expanding_patterns.add( pattern )
+        pattern = pattern.cloned( maker )
+        maker.expanding_patterns.remove_last
+        return pattern
       else
-        return LiteralStringPattern( sp, value )
+        return LiteralStringPattern( sp, value ).cloned( maker )
       endIf
+endClass
+
+class LiteralCharacterPattern( sp, value:Character ) : Pattern
+  METHODS
+    method build_graph( previous:ScanState, reader:PatternReader )
+      state = previous.link( value, state )
+      if (reader.has_another) reader.read.build_graph( state, reader )
+      else                    reader.accept( state )
+
+    method cloned( maker:ScanTableMaker )->Pattern
+      return LiteralCharacterPattern( sp, value )
+
+    method to->String
+      return "'$'" (value)
 endClass
 
 class LiteralStringPattern( sp, value:String ) : Pattern
   METHODS
-    method apply( maker:ScanTableMaker, cur:ScanNode, token_type:Int32 )
-      forEach (ch in value)
-        cur = cur.link( ch )
+    method build_graph( previous:ScanState, reader:PatternReader )
+      forEach (ch in value step -1)
+        reader.push( LiteralCharacterPattern(sp,ch) )
       endForEach
-      if (next) next.apply( maker, cur, token_type )
-      else      cur.accept( token_type )
+      if (reader.has_another) reader.read.build_graph( previous, reader )
+      else                    reader.accept( previous )
 
-    method resolved( maker:ScanTableMaker )->Pattern
-      return LiteralStringPattern( sp, value )
+    method cloned( maker:ScanTableMaker )->Pattern
+      local result = PatternGroup( sp )
+      forEach (ch in value)
+        result.add( LiteralCharacterPattern( sp, ch ) )
+      endForEach
+      return result
+
+    method to->String
+      return ''"$"'' (value)
 endClass
 
-class ScanTree
+class ScanGraph
   PROPERTIES
-    start  = ScanNode()
+    start  = ScanState()
     buffer = StringBuilder()
 
   METHODS
@@ -386,33 +487,34 @@ class ScanTree
           cur = cur.on_default
         elseIf (cur.action)
           which (cur.action)
-            case ScanNode.ACTION_ACCEPT
+            case ScanState.ACTION_ACCEPT
               accept( cur.token_type )
-            case ScanNode.ACTION_ACCEPT_AND_DISCARD
+            case ScanState.ACTION_ACCEPT_AND_DISCARD
               noAction
-            case ScanNode.ACTION_ACCEPT_AND_CONVERT_TO_CHARACTER
+            case ScanState.ACTION_ACCEPT_AND_CONVERT_TO_CHARACTER
               throw Error( "TODO" )
-            case ScanNode.ACTION_ACCEPT_AND_CONVERT_TO_STRING
+            case ScanState.ACTION_ACCEPT_AND_CONVERT_TO_STRING
               throw Error( "TODO" )
           endWhich
           buffer.clear
           cur = start
         else
+trace cur.on.keys
           throw FroleyError( "Syntax error - unexpected '$'."(reader.peek), filepath, source, reader.line, reader.column )
         endIf
       endWhile
 
       if (cur is not start)
         which (cur.action)
-          case ScanNode.ACTION_NONE
+          case ScanState.ACTION_NONE
             throw FroleyError( "Syntax error - unexpected end of input.", filepath, source, reader.line, reader.column )
-          case ScanNode.ACTION_ACCEPT
+          case ScanState.ACTION_ACCEPT
             accept( cur.token_type )
-          case ScanNode.ACTION_ACCEPT_AND_DISCARD
+          case ScanState.ACTION_ACCEPT_AND_DISCARD
             noAction
-          case ScanNode.ACTION_ACCEPT_AND_CONVERT_TO_CHARACTER
+          case ScanState.ACTION_ACCEPT_AND_CONVERT_TO_CHARACTER
             throw Error( "TODO" )
-          case ScanNode.ACTION_ACCEPT_AND_CONVERT_TO_STRING
+          case ScanState.ACTION_ACCEPT_AND_CONVERT_TO_STRING
             throw Error( "TODO" )
         endWhich
       endIf
@@ -422,7 +524,7 @@ class ScanTree
 
 endClass
 
-class ScanNode
+class ScanState
   ENUMERATE
     ACTION_NONE
     ACTION_ACCEPT
@@ -433,31 +535,32 @@ class ScanNode
   PROPERTIES
     action     : Int32
     token_type : Int32
-    on         = Table<<Character,ScanNode>>()
-    on_alpha   : ScanNode
-    on_digit   : ScanNode
-    on_default : ScanNode
+    on         = Table<<Character,ScanState>>()
+    on_alpha   : ScanState
+    on_digit   : ScanState
+    on_default : ScanState
 
   METHODS
-    method accept( token_type, action=ScanNode.ACTION_ACCEPT )
+    method accept( token_type, action=ScanState.ACTION_ACCEPT )
 
-    method link( ch:Character )->ScanNode
+    method link( ch:Character, state:ScanState )->ScanState
       local result = on[ ch ]
       if (not result)
+        result = state
         ensure result
         on[ ch ] = result
       endIf
       return result
 
-    method link_alpha->ScanNode
+    method link_alpha->ScanState
       ensure on_alpha
       return on_alpha
 
-    method link_digit->ScanNode
+    method link_digit->ScanState
       ensure on_digit
       return on_digit
 
-    method link_default->ScanNode
+    method link_default->ScanState
       ensure on_default
       return on_default
 endClass

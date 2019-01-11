@@ -21,9 +21,9 @@ class ScanTableMaker
     reader : Scanner
 
     patterns            = StringTable<<Pattern>>()
-    whitespace_patterns = Pattern[]
     token_names         = String[]
     token_types         = StringTable<<Int32>>()
+    whitespace          = Character[]
 
     expanding_patterns  = Pattern[]
 
@@ -41,10 +41,12 @@ class ScanTableMaker
         reader = Scanner( source, &spaces_per_tab=4 )
 
         while (parse_section) noAction
-        if (reader.has_another) throw source_pos.error( "Syntax error - unexpected character: $" (reader.read) )
+        if (reader.has_another)
+          throw source_pos.error( "Syntax error - unexpected character: $" (reader.read.to_printable_string) )
+        endIf
 
         local graph = build_graph
-        graph.tokenize( "Test", "Froooley" )
+        graph.tokenize( File("Test.txt") )
 
       catch (error:FroleyError)
         println error->String
@@ -52,7 +54,7 @@ class ScanTableMaker
       endTry
 
     method build_graph->ScanGraph
-      local graph = ScanGraph()
+      local graph = ScanGraph( whitespace )
       local sequence = Pattern[]
       forEach (token_name in token_names)
         local pattern = patterns[ token_name ]
@@ -62,8 +64,9 @@ class ScanTableMaker
           forEach (element at index in sequence)
             sequence[ index ] = element.cloned( this )
           endForEach
-          local reader = PatternReader( this, graph, sequence, token_types[token_name] )
-trace reader
+          local action = ScanState.ACTION_ACCEPT
+          local token_type = token_types[ token_name ]
+          local reader = PatternReader( this, graph, sequence, action, token_type )
           if (reader.has_another)
             reader.read.build_graph( graph.start, reader )
           endIf
@@ -120,62 +123,108 @@ trace reader
         must_consume_eols
         consume_whitespace_comments_and_eols
         while (reader.has_another and reader.peek != '[')
-          whitespace_patterns.add( parse_definition )
-          must_consume_eols
+          local st = read_string
+          forEach (ch in st) whitespace.add( ch )
+          consume_whitespace_comments_and_eols
         endWhile
+        forEach (ch in whitespace) trace ch->Int32
         return true
       endIf
 
-      if (reader.consume("[patterns]"))
+      if (reader.consume("[definitions]"))
         must_consume_eols
-        while (reader.has_another and reader.peek != '[')
-          local sp = source_pos
-          local name = read_identifier
-          consume_whitespace
-          local pattern = parse_definition
-          must_consume_eols
-          if (patterns.contains(name)) throw sp.error( ''A definition for "$" already exists.''(name) )
-          patterns[ name ] = pattern
+        local name = parse_definition
+        while (name)
+          name = parse_definition
         endWhile
         return true
       endIf
 
       if (reader.consume("[tokens]"))
         must_consume_eols
-        while (reader.has_another and reader.peek != '[')
-          local sp = source_pos
-          local name = read_identifier
-          consume_whitespace
-          local pattern = parse_definition
-          must_consume_eols
-          if (patterns.contains(name)) throw sp.error( ''A definition for "$" already exists.''(name) )
-          patterns[ name ] = pattern
+        local name = parse_definition
+        while (name)
           token_names.add( name )
           token_types[ name ] = token_names.count
+          name = parse_definition
         endWhile
         return true
       endIf
 
       return false
 
-
-    method parse_pattern->Pattern
-      local group = PatternGroup( source_pos )
-      must_consume( '{' )
-      consume_whitespace
-      while (reader.has_another and peek != '}')
-        group.add( parse_or )
-        while (consume_whitespace or consume_eols) noAction
-      endWhile
-      must_consume( '}' )
-      return group
+    method parse_definition->String
+      # Returns: name
+      local name : String
+      consume_eols
+      if (reader.has_another and reader.peek != '[')
+        local sp = source_pos
+        name = read_identifier
+        consume_whitespace
+        local pattern : Pattern
+        if (consume_eols)
+          pattern = StringPattern( sp, name )
+        else
+          pattern = parse_pattern
+          consume_whitespace
+          must_consume_eols
+        endIf
+        if (patterns.contains(name)) throw sp.error( ''A definition for "$" already exists.''(name) )
+        patterns[ name ] = pattern
+        consume_whitespace_comments_and_eols
+      endIf
+      return name
 
     method parse_or->Pattern
+      local pattern = parse_range : Pattern
       consume_whitespace
-      return parse_zero_or_more
+      local sp = source_pos
+      if (consume('|'))
+        local result = OrPattern( sp, pattern, parse_range )
+        consume_whitespace
+        while (consume('|'))
+          result.add( parse_range )
+          consume_whitespace
+        endWhile
+        return result
+      else
+        return pattern
+      endIf
+
+    method parse_range->Pattern
+      local first = parse_zero_or_more
+      if (reader.peek(0) == '.' and reader.peek(1) == '.')
+        local sp = source_pos
+        read
+        read
+        local last  = parse_zero_or_more
+        if (first instanceOf IdentifierPattern)
+          local first_id = first as IdentifierPattern
+          if (first_id.value.count == 1) first = CharacterPattern( first.sp, first_id.value[0] )
+        endIf
+        local first_ch = first as CharacterPattern
+        if (not first_ch)
+          throw first.error( "Single character or Unicode value required for range." )
+        endIf
+        if (last instanceOf IdentifierPattern)
+          local last_id = last as IdentifierPattern
+          if (last_id.value.count == 1) last = CharacterPattern( last.sp, last_id.value[0] )
+        endIf
+        local last_ch = last as CharacterPattern
+        if (not last_ch)
+          throw last.error( "Single character or Unicode value required for range." )
+        endIf
+        local result = OrPattern( sp )
+        forEach (ch in first_ch.value..last_ch.value)
+          result.add( CharacterPattern(sp,ch) )
+        endForEach
+        return result
+      else
+        return first
+      endIf
 
     method parse_zero_or_more->Pattern
-      local pattern = parse_definition
+      local pattern = parse_pattern
       local sp = source_pos
       if (consume('*'))
         return ZeroOrMorePattern( sp, pattern )
@@ -183,41 +232,103 @@ trace reader
         return pattern
       endIf
 
-    method parse_definition->Pattern
+    method parse_pattern->Pattern
       consume_whitespace_and_comments
       which (reader.peek)
-        case '{'
-          return parse_pattern
+        case '('
+          local group = PatternGroup( source_pos )
+          must_consume( '(' )
+          consume_whitespace
+          while (reader.has_another and peek != ')')
+            group.add( parse_or )
+            while (consume_whitespace or consume_eols) noAction
+          endWhile
+          must_consume( ')' )
+          return group
         others
-          return parse_string
+          return parse_term
       endWhich
 
-    method parse_string->Pattern
+    method parse_term->Pattern
       local sp = source_pos
-      use builder = StringBuilder.pool
-        if (reader.peek == '"' or reader.peek == '\'')
-          local terminator = read
-          while (reader.has_another and not consume(terminator))
-            local ch = read
-            builder.print( ch )
-          endWhile
-          if (builder.count == 0) throw sp.error( "Strings must contain at least one character." )
-          return LiteralStringPattern( sp, builder->String )
-        else
+      if (reader.peek == '"' or reader.peek == '\'')
+        local st = read_string
+        if (st.count == 0) throw sp.error( "Strings must contain at least one character." )
+        if (st.count == 1) return CharacterPattern( sp, st[0] )
+        return StringPattern( sp, st )
+      else
+        use builder = StringBuilder.pool
+          local all_digits = true
           while (reader.has_another)
             which (peek)
-              case ' ', '\n', '#', '|','}','*','+'
+              case ' ', '\t', '\n', '#', '|',')','*','+'
                 escapeWhile
               case '.'
                 if (reader.peek(1) == '.') escapeWhile   # .. token
             endWhich
-            builder.print( read )
+            local ch = read
+            builder.print( ch )
+            if (ch < '0' or ch > '9') all_digits = false
           endWhile
           if (builder.count == 0) throw sp.error( "Pattern or literal character sequence expected." )
+          if (all_digits) return CharacterPattern( sp, builder->String->Int32->Character )
           return IdentifierPattern( sp, builder->String )
+        endUse
+      endIf
+      return null  # never happens
+
+    method read_string->String
+      use builder = StringBuilder.pool
+        if (reader.peek == '"' or reader.peek == '\'')
+          local terminator = read
+          while (reader.has_another and not consume(terminator))
+            local ch = read_character
+            builder.print( ch )
+          endWhile
+          return builder->String
+        else
+          local all_digits = true
+          while (reader.has_another)
+            which (peek)
+              case ' ', '\t', '\n', '#'
+                escapeWhile
+            endWhich
+            local ch = read
+            builder.print( ch )
+            if (ch < '0' or ch > '9') all_digits = false
+          endWhile
+          if (all_digits) return ""+builder->String->Int32->Character
+          return builder->String
         endIf
       endUse
       return null  # never happens
+
+    method read_character->Character
+      local sp = source_pos
+      local ch = read
+      if (ch == '\\')
+        ch = read
+        which (ch)
+          case 'b':  return 8->Character
+          case 'e':  return 27->Character
+          case 'f':  return 12->Character
+          case 'n':  return '\n'
+          case 'r':  return '\r'
+          case 't':  return '\t'
+          case 'v':  return 11->Character
+          case '0':  return '\0'
+          case '/':  return '/'
+          case '?':  return '?'
+          case '\'': return '\''
+          case '\\': return '\\'
+          case '"':  return '"'
+          others
+            throw sp.error( ''Invalid escape sequence.  Supported: \\b \\e \\f \\n \\r \\t \\v \\0 \\? \\/ \\' \\\\ \\\"'' )
+        endWhich
+      else
+        return ch
+      endIf
+
 
     method peek->Character [macro]
       return this.reader.peek
@@ -285,22 +396,21 @@ class PatternReader
     sequence   : Pattern[]
     stack      : Pattern[]
     position   : Int32
-    token_type : Int32?
+    action     : Int32
+    action_arg : Int32
 
   METHODS
-    method init( maker, graph, sequence, token_type, position=0, stack=null )
+    method init( maker, graph, sequence, action, action_arg, position=0, stack=null )
 
     method accept( state:ScanState )
-      if (token_type.exists)
-        state.accept( token_type.value )
-      endIf
+      state.accept( action, action_arg )
 
     method cloned->PatternReader
       local new_stack = select{ stack:stack.cloned || null } : Pattern[]
-      return PatternReader( maker, graph, sequence, token_type, position, new_stack )
+      return PatternReader( maker, graph, sequence, action, action_arg, position, new_stack )
 
     method empty_clone->PatternReader
-      return PatternReader( maker, graph, Pattern[], null, 0, null )
+      return PatternReader( maker, graph, Pattern[], ScanState.ACTION_NONE, 0, 0, null )
 
     method has_another->Logical
       return (stack and stack.count) or position < sequence.count
@@ -407,7 +517,40 @@ class PatternGroup( sp ) : Pattern
       if (elements.count) elements.last.set_last_state( state )
 
     method to->String
-      return "{$}" (elements->String.leftmost(-1).rightmost(-1))
+      return "($)" (elements.join(","))
+endClass
+
+class OrPattern : Pattern
+  PROPERTIES
+    elements = Pattern[]
+
+  METHODS
+    method init( sp )
+
+    method init( sp, first:Pattern, second:Pattern )
+      add( first )
+      add( second )
+
+    method add( pattern:Pattern )
+      elements.add( pattern )
+
+    method build_graph( previous:ScanState, reader:PatternReader )
+      forEach (element in elements)
+        element.build_graph( previous, reader.cloned )
+      endForEach
+
+    method cloned( maker:ScanTableMaker )->Pattern
+      local result = OrPattern( sp )
+      forEach (element at index in elements)
+        result.add( element.cloned(maker) )
+      endForEach
+      return result
+
+    method set_last_state( state:ScanState )
+      (forEach in elements).set_last_state( state )
+
+    method to->String
+      return "[$]" (elements.join("|"))
 endClass
 
 
@@ -422,11 +565,12 @@ class IdentifierPattern( sp, value:String ) : Pattern
         maker.expanding_patterns.remove_last
         return pattern
       else
-        return LiteralStringPattern( sp, value ).cloned( maker )
+        if (value.count == 1) return CharacterPattern( sp, value[0] )
+        return StringPattern( sp, value ).cloned( maker )
       endIf
 endClass
 
-class LiteralCharacterPattern( sp, value:Character ) : Pattern
+class CharacterPattern( sp, value:Character ) : Pattern
   METHODS
     method build_graph( previous:ScanState, reader:PatternReader )
       state = previous.link( value, state )
@@ -434,17 +578,17 @@ class LiteralCharacterPattern( sp, value:Character ) : Pattern
       else                    reader.accept( state )
 
     method cloned( maker:ScanTableMaker )->Pattern
-      return LiteralCharacterPattern( sp, value )
+      return CharacterPattern( sp, value )
 
     method to->String
       return "'$'" (value)
 endClass
 
-class LiteralStringPattern( sp, value:String ) : Pattern
+class StringPattern( sp, value:String ) : Pattern
   METHODS
     method build_graph( previous:ScanState, reader:PatternReader )
       forEach (ch in value step -1)
-        reader.push( LiteralCharacterPattern(sp,ch) )
+        reader.push( CharacterPattern(sp,ch) )
       endForEach
       if (reader.has_another) reader.read.build_graph( previous, reader )
       else                    reader.accept( previous )
@@ -452,7 +596,7 @@ class LiteralStringPattern( sp, value:String ) : Pattern
     method cloned( maker:ScanTableMaker )->Pattern
       local result = PatternGroup( sp )
       forEach (ch in value)
-        result.add( LiteralCharacterPattern( sp, ch ) )
+        result.add( CharacterPattern( sp, ch ) )
       endForEach
       return result
 
@@ -462,45 +606,41 @@ endClass
 
 class ScanGraph
   PROPERTIES
-    start  = ScanState()
-    buffer = StringBuilder()
+    whitespace    : Character[]
+    start         = ScanState()
+    buffer        = StringBuilder()
+    strings       = StringLookupList()
 
   METHODS
+    method init( whitespace )
+
+    method tokenize( file:File )
+      tokenize( file.filepath, file.load_as_string )
+
     method tokenize( filepath:String, source:String )
       local reader = Scanner( source, &spaces_per_tab=4 )
       local cur = start
       buffer.clear
+      consume_whitespace( reader )
       while (reader.has_another)
         local ch = reader.peek
         local link = cur.on[ ch ]
         if (link)
           buffer.print( reader.read )
           cur = link
-        elseIf (cur.on_alpha and ((ch>='a' and ch<='z') or (ch>='A' and ch<='Z')))
-          buffer.print( reader.read )
-          cur = cur.on_alpha
-        elseIf (cur.on_digit and (ch>='0' and ch<='9'))
-          buffer.print( reader.read )
-          cur = cur.on_digit
         elseIf (cur.on_default)
           buffer.print( reader.read )
           cur = cur.on_default
         elseIf (cur.action)
           which (cur.action)
             case ScanState.ACTION_ACCEPT
-              accept( cur.token_type )
-            case ScanState.ACTION_ACCEPT_AND_DISCARD
-              noAction
-            case ScanState.ACTION_ACCEPT_AND_CONVERT_TO_CHARACTER
-              throw Error( "TODO" )
-            case ScanState.ACTION_ACCEPT_AND_CONVERT_TO_STRING
-              throw Error( "TODO" )
+              accept( cur.action_arg )
           endWhich
           buffer.clear
           cur = start
+          consume_whitespace( reader )
         else
-trace cur.on.keys
-          throw FroleyError( "Syntax error - unexpected '$'."(reader.peek), filepath, source, reader.line, reader.column )
+          throw FroleyError( "Syntax error - unexpected '$'."(reader.peek.to_printable_string), filepath, source, reader.line, reader.column )
         endIf
       endWhile
 
@@ -509,18 +649,15 @@ trace cur.on.keys
           case ScanState.ACTION_NONE
             throw FroleyError( "Syntax error - unexpected end of input.", filepath, source, reader.line, reader.column )
           case ScanState.ACTION_ACCEPT
-            accept( cur.token_type )
-          case ScanState.ACTION_ACCEPT_AND_DISCARD
-            noAction
-          case ScanState.ACTION_ACCEPT_AND_CONVERT_TO_CHARACTER
-            throw Error( "TODO" )
-          case ScanState.ACTION_ACCEPT_AND_CONVERT_TO_STRING
-            throw Error( "TODO" )
+            accept( cur.action_arg )
         endWhich
       endIf
 
     method accept( token_type:Int32 )
       trace token_type, buffer
+
+    method consume_whitespace( reader:Scanner )
+      while (whitespace.contains(reader.peek)) reader.read
 
 endClass
 
@@ -528,20 +665,16 @@ class ScanState
   ENUMERATE
     ACTION_NONE
     ACTION_ACCEPT
-    ACTION_ACCEPT_AND_DISCARD
-    ACTION_ACCEPT_AND_CONVERT_TO_CHARACTER
-    ACTION_ACCEPT_AND_CONVERT_TO_STRING
 
   PROPERTIES
     action     : Int32
+    action_arg : Int32
     token_type : Int32
     on         = Table<<Character,ScanState>>()
-    on_alpha   : ScanState
-    on_digit   : ScanState
     on_default : ScanState
 
   METHODS
-    method accept( token_type, action=ScanState.ACTION_ACCEPT )
+    method accept( action, token_type )
 
     method link( ch:Character, state:ScanState )->ScanState
       local result = on[ ch ]
@@ -551,14 +684,6 @@ class ScanState
         on[ ch ] = result
       endIf
       return result
-
-    method link_alpha->ScanState
-      ensure on_alpha
-      return on_alpha
-
-    method link_digit->ScanState
-      ensure on_digit
-      return on_digit
 
     method link_default->ScanState
       ensure on_default

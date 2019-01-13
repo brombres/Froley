@@ -1,0 +1,7 @@
+uses ParseKit<<Froley>>
+
+class FroleyTokenizer : Tokenizer
+endClass
+
+class FroleyError : ParseError
+endClass

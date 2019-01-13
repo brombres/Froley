@@ -1,0 +1,7 @@
+uses ParseKit<<Froley>>
+
+augment TokenType
+  EOI( "eoi", "[end of input]" )
+  EOL( "eol", "[end of line]" )
+endAugment
+

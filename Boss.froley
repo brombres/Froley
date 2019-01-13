@@ -1,3 +1,4 @@
+#{
 [whitespace]
 ' '
 '\t'
@@ -48,6 +49,7 @@ SINGLE_QUOTED_STRING        {"'" (character except "'")* "'"}
 DOUBLE_SINGLE_QUOTED_STRING {"''" (character except "''")* "''"}
 
 
+[keywords]
 KEYWORD_CLASS         class        [structural]
 KEYWORD_ELSE          else         [structural]
 KEYWORD_ELSE_IF       elseIf       [structural]
@@ -70,6 +72,7 @@ KEYWORD_ROUTINE       routine      [structural]
 KEYWORD_TRUE          true         [structural]
 KEYWORD_WHILE         while
 
+[symbols]
 SYMBOL_AMPERSAND      &
 SYMBOL_ARROW          ->
 SYMBOL_ASTERISK       *
@@ -110,4 +113,166 @@ SYMBOL_SINGLE_QUOTE   '
 SYMBOL_SLASH          /
 SYMBOL_TILDE          ~
 SYMBOL_VERTICAL_BAR   |
+
+[token types]
+KEYWORD_CLASS         class        [structural]
+KEYWORD_ELSE          else         [structural]
+KEYWORD_ELSE_IF       elseIf       [structural]
+KEYWORD_END_CLASS     endClass     [structural]
+KEYWORD_END_IF        endIf        [structural]
+KEYWORD_END_ROUTINE   endRoutine   [structural]
+KEYWORD_END_WHILE     endWhile     [structural]
+KEYWORD_FALSE         false
+KEYWORD_GLOBAL        global
+KEYWORD_IF            if
+KEYWORD_IMPORT        import
+KEYWORD_LOCAL         local
+KEYWORD_METHOD        method       [structural]
+KEYWORD_METHODS       METHODS      [structural]
+KEYWORD_NULL          null
+KEYWORD_PRINTLN       println
+KEYWORD_PROPERTIES    PROPERTIES   [structural]
+KEYWORD_RETURN        return
+KEYWORD_ROUTINE       routine      [structural]
+KEYWORD_TRUE          true         [structural]
+KEYWORD_WHILE         while
+
+[tokenizer]
+while (consume(' ') or consume('\t') or consume('\r')) no_action
+
+mark_source_position
+if (not has_another) finished
+
+# We need to scan identfiers in a separate table so that if it fails
+# to accept a keyword then we still know that what's gathered so far
+# can be turned into an identifier.
+peek
+if (is_letter or '_')
+  scanTable
+    handle KEYWORD_TRUE
+    handle KEYWORD_FALSE
+    others
+      # Some of an identifier may have already been read. Read the rest.
+      while (consume(letter) or consume('_') or consume('0'..'9'))
+        accept IDENTIFIER
+      endWhile
+  endScanTable
+endIf
+
+scanTable
+  case '\n'
+    accept EOL
+
+  case '#'
+    # Comment
+    if (consume('{'))
+      # Multi-line comment
+      count = 1
+      while (has another)
+        if (consume("#{"))
+          ++count
+        elseIf (consume("}#"))
+          --count
+          if (zero) discard
+        else
+          consume
+        endIf
+      endWhile
+      throw "Unterminated multi-line comment."
+    else
+      # Single-line comment
+      while (not '\n') consume
+      accept EOL
+    endIf
+
+  case [']
+    if (consume(['])
+      clear
+      while (has_another)
+        if (peek(0)==['] and peek(1)==['])
+          read
+          read
+          accept STRING
+        endIf
+        call <scan character>
+      endWhile
+      throw "Unterminated literal string."
+    else
+      clear
+      while (has_another)
+        if (peek==['])
+          read
+          accept SINGLE_QUOTE_STRING
+        endIf
+        call <scan character>
+      endWhile
+      throw "Unterminated literal string."
+    endIf
+
+  case ["]
+    clear
+    while (has_another)
+      if (peek==['])
+        read
+        accept SINGLE_QUOTE_STRING
+      endIf
+      call <scan character>
+    endWhile
+    throw "Unterminated literal string."
+
+  others
+    clear
+    print "Syntax error - unexpected "
+    peek
+    if (a < 32 or a == 127)
+      scanTable
+        case '\n': print "end of line"
+        case '\t': print "tab"
+        others:    print "character code "; print_integer
+      endScanTable
+    else
+      print [']
+      print_character
+      print [']
+    endIf
+    print "."
+    throw error
+
+    <scan character>
+    scanTable
+      case [\n]: a = '\n'
+      case [\t]: a = '\t'
+      case [\x]
+        call <scan hex>
+        int64 = a
+        call <scan hex>
+        int64 << 4
+        int64 + a
+      case "\\["
+        int64 = 0
+        while (has_another)
+          if (consume(']'))
+            a = int64
+            return
+          endIf
+          call <scan hex>
+          int64 << 4
+          int64 + a
+        endWhile
+      others
+        read
+    endScanTable
+    return
+
+    <scan hex>
+    peek
+    if (not is_hex)
+      mark_source_position
+      throw "Hexadecimal digit expected."
+    endIf
+    read
+    convert_hex_to_value
+    return
+
+endScanTable
 

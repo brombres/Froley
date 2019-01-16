@@ -6,6 +6,9 @@ augment Cmd
     method assemble( assembler:Assembler )
       throw UnsupportedOperationError()
 
+    method assemble_assignment( assembler:Assembler, new_value:Cmd )
+      throw t.error( "Illegal assignment." )
+
     method error( message:String )->Error
       return t.error( message )
 endAugment
@@ -51,4 +54,36 @@ class CmdPrintString( t, value:String ) : Cmd
 
     method to->String
       return ''print "$"'' (value.to_escaped_ascii)
+endClass
+
+class CmdPrintA( t ) : Cmd
+  METHODS
+    method assemble( assembler:Assembler )
+      assembler.writer.write( Opcode.PRINT_A )
+
+    method to->String
+      return "print a"
+endClass
+
+class CmdAccess( t, name:String ) : Cmd
+  METHODS
+    method assemble_assignment( assembler:Assembler, new_value:Cmd )
+      which (name)
+        case "a"
+          local cmd_int32 = new_value as CmdLiteralInt32
+          if (cmd_int32)
+            assembler.writer.write( Opcode.SET_A, cmd_int32.value )
+            return
+          endIf
+      endWhich
+      prior.assemble_assignment( assembler, new_value )
+endClass
+
+class CmdAssign( t, target:Cmd, new_value:Cmd ) : Cmd
+  METHODS
+    method assemble( assembler:Assembler )
+      target.assemble_assignment( assembler, new_value )
+endClass
+
+class CmdLiteralInt32( t, value:Int32 ) : Cmd
 endClass

@@ -9,6 +9,7 @@ class VM
   PROPERTIES
     code    = Int32[]
     strings = String[]
+    a       : Int32
 
   METHODS
     method init( data:Byte[] )
@@ -22,9 +23,17 @@ class VM
         which (opcode)
           case Opcode.HALT
             return
+          case Opcode.PRINT_A
+            print a->Character
+            nextIteration
           case Opcode.PRINT_STRING
             print strings[ code[ip] ]
             ++ip
+            nextIteration
+          case Opcode.SET_A
+            a = code[ ip ]
+            ++ip
+            nextIteration
           others
             throw FroleyError( "[INTERNAL] Unhandled opcode: " + Opcode(opcode) )
         endWhich

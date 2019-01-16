@@ -23,13 +23,43 @@ class FroleyParser : Parser
           statements.add( CmdPrintString(t,read.text) )
           must_consume( TokenType.EOL )
           return true
+        elseIf (next_is(TokenType.IDENTIFIER))
+          local name = read_identifier
+          which (name)
+            case "a"
+              statements.add( CmdPrintA(t) )
+              return true
+            others
+              throw t.error( "Syntax error - valid syntax is 'print <string>' or 'print a'." )
+          endWhich
         else
           throw t.error( "FroleyParser.parse_statement() TODO" )
         endIf
 
+      else
+        local expr = parse_expression
+        local t2 = peek
+        if (consume(TokenType.SYMBOL_EQUALS))
+          local new_value = parse_expression
+          statements.add( CmdAssign(t2,expr,new_value) )
+        else
+          statements.add( expr )
+        endIf
+        return true
+
       endIf
 
       throw peek.error( "Syntax error - unexpected '$'." (peek->String) )
+
+    method parse_expression->Cmd
+      local t = peek
+      if (next_is(TokenType.IDENTIFIER))
+        return CmdAccess( t, read_identifier )
+      elseIf (next_is(TokenType.INTEGER))
+        return CmdLiteralInt32( t, read->Int32 )
+      else
+        throw t.error( "Syntax error - unexpected '$'." (t) )
+      endIf
 
     method read_identifier->String
       if (next_is(TokenType.IDENTIFIER))

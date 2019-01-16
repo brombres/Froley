@@ -1,0 +1,115 @@
+module Froley
+  uses ParseKit<<Froley>>
+
+class Label
+  PROPERTIES
+    name           : String
+    address        : Int32?
+    backpatch_list = Int32[](4)
+
+  METHODS
+    method init( name )
+      # 'name' is only used for reference and for debugging
+
+    method backpatch( code:Int32[] )
+      forEach (address in backpatch_list)
+        code[ address ] = this.address.value
+      endForEach
+
+    method exists->Logical [macro]
+      return this.address.exists
+
+    method to->String
+      if (address.exists) return "$ @$" (name,address.value)
+      else                return name
+
+endClass
+
+class FroloWriter
+  DEFINITIONS
+    VERSION = 1
+
+  PROPERTIES
+    code              = Int32[]
+    unresolved_labels = Label[]
+    labels            = StringTable<<Label>>()
+    strings           = StringLookupList()
+
+  METHODS
+    method define( label:Label )
+      if (label.address.exists)
+        throw FroleyError( "[INTERNAL] Label defined twice." )
+      else
+        label.address = code.count
+        label.backpatch( code )
+        unresolved_labels.remove( label )
+      endIf
+
+    method define( label_name:String )
+      define( label(label_name) )
+
+    method label( label_name:String )->Label
+      local result = labels[ label_name ]
+      if (result) return result
+      ensure result( label_name )
+      labels[ label_name ] = result
+      return result
+
+    method to->Byte[]
+      if (unresolved_labels.count)
+        local labels = unresolved_labels
+        throw FroleyError( "[INTERNAL] Unresolved $: $" ("label".pluralized(labels.count),labels.join(", ")) )
+      endIf
+
+      local result = Byte[]
+      local writer = DataWriter( result )
+
+      writer.write_int32x( VERSION )
+
+      writer.write_int32x( strings.count )
+      forEach (value in strings)
+        writer.write_string( value )
+      endForEach
+
+      writer.write_int32x( code.count )
+      forEach (value in code)
+        writer.write_int32x( value )
+      endForEach
+
+      writer.close
+      #trace code.count, " -> ", result.count
+      return result
+
+    method write( opcode:Opcode ) [macro]
+      this.write( opcode->Int32 )
+
+    method write( opcode:Opcode, value:Int32 )
+      write( opcode->Int32 )
+      write( value )
+
+    method write( opcode:Opcode, label:Label )
+      write( opcode->Int32 )
+      write_address( label )
+
+    method write( opcode:Opcode, value:String )
+      write( opcode->Int32 )
+      strings.add( value )
+      write( strings.locate(value).value )  # String index
+
+    method write( value:Int32 )
+      code.add( value )
+
+    method write_address( label:Label )
+      if (label.address.exists)
+        write( label.address.value )
+      else
+        if (label.backpatch_list.is_empty) unresolved_labels.add( label )
+        label.backpatch_list.add( code.count )
+        write( 0 )
+      endIf
+
+    method write_address( label_name:String )
+      write_address( label(label_name) )
+
+endClass
+

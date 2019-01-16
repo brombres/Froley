@@ -1,8 +1,16 @@
-$include "Framework.rogue"
-$include "Opcode.rogue"
-$include "TokenType.rogue"
+module Froley
+  uses ParseKit<<Froley>>
 
-uses ParseKit<<Froley>>
+$include "Assembler.rogue"
+$include "Cmd.rogue"
+$include "FroleyError.rogue"
+$include "FroleyParser.rogue"
+$include "FroleyTokenizer.rogue"
+$include "FroloWriter.rogue"
+$include "Opcode.rogue"
+$include "Token.rogue"
+$include "TokenType.rogue"
+$include "VM.rogue"
 
 Launcher( System.command_line_arguments )
 
@@ -19,6 +27,60 @@ class Launcher
       init( options, targets )
 
     method init( options:String[], targets:String[] )
-      throw FroleyError( "TODO" )
+      try
+        forEach (option in options)
+          which (option.before_first('='))
+            others
+              throw FroleyError( "Unrecognized option: " + option )
+          endWhich
+        endForEach
+
+        forEach (target in targets)
+          Froley( File(target) )
+        endForEach
+
+
+      catch (error:FroleyError)
+        println error
+      endTry
+
+      #{
+      trace( "TODO" )
+      local writer = FroloWriter()
+
+      writer.write( Opcode.PRINT_STRING, "Hello World!\n" )
+      writer.write( Opcode.HALT )
+      local bytes = writer->Byte[]
+
+      local vm = VM( bytes )
+      vm.execute
+      }#
+endClass
+
+class Froley
+  METHODS
+    method init( file:File )
+      local source = file.load_as_string
+      parse( file.filepath, source )
+
+    method parse( filepath:String, source:String )
+      local statements = CmdStatements()
+      local parser = FroleyParser()
+      parser.set_source( filepath, source )
+      parser.consume_eols
+      while (parser.has_another)
+        parser.parse_statement( statements )
+        parser.consume_eols
+      endWhile
+
+      local bytes = Assembler().assemble( statements )
+      local vm = VM( bytes )
+      vm.execute
+
+      #{
+      local tokens = FroleyTokenizer().tokenize( filepath, source )
+      trace tokens
+      }#
+
 endClass
 

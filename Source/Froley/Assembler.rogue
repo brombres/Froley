@@ -1,0 +1,14 @@
+module Froley
+  uses ParseKit<<Froley>>
+
+class Assembler
+  PROPERTIES
+    writer : FroloWriter
+
+  METHODS
+    method assemble( statements:CmdStatements )->Byte[]
+      writer = FroloWriter()
+      statements.assemble( this )
+      writer.write( Opcode.HALT )
+      return writer->Byte[]
+endClass

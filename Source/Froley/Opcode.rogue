@@ -1,3 +1,5 @@
+module Froley
+
 enum Opcode( size=1:Int32 )
   HALT                  # Tokenization complete; VM.tokenize() returns
   ERROR                 # Throws error using message in BUFFER
@@ -11,6 +13,7 @@ enum Opcode( size=1:Int32 )
   JUMP_GT(2)            # Jumps to specified IP if Z=0 and N=0
   JUMP_GE(2)            # Jumps to specified IP if Z=1 or  N=0
   SCAN_TABLE            # large, variable size operand data
+  MARK_SOURCE_POS       # Notes the current source line and column to be used with the next token
   HAS_ANOTHER           # Z=1 if scanner has another; else Z=0
   READ                  # A = scanner.read
   PEEK_N(2)             # A = scanner.peek(lookahead=opcode)
@@ -19,7 +22,9 @@ enum Opcode( size=1:Int32 )
   CONSUME_STRING(2)     # if (scanner.consume(strings[index=opcode])){BUFFER.print(st);Z=1} else {Z=0}
   CLEAR_BUFFER          # BUFFER.clear
   WRITE_A(2)            # BUFFER.print( A->Character )
-  WRITE_STRING(2)       # BUFFER.print( strings[index=opcode]->String )
+  WRITE_STRING(2)       # BUFFER.print( strings[index=opcode] )
+  PRINT_A(2)            # print( A->Character )
+  PRINT_STRING(2)       # print( strings[index=opcode] )
   SET_A(2)              # A = operand:Int32
   SET_C(2)              # C = operand:Int32
   MOVE_A_TO_C           # C = A

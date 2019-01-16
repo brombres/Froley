@@ -1,0 +1,54 @@
+module Froley
+  uses ParseKit<<Froley>>
+
+augment Cmd
+  METHODS
+    method assemble( assembler:Assembler )
+      throw UnsupportedOperationError()
+
+    method error( message:String )->Error
+      return t.error( message )
+endAugment
+
+augment CmdStatements
+  METHODS
+    method assemble( assembler:Assembler )
+      (forEach in this).assemble( assembler )
+endAugment
+
+
+augment CmdArgs
+  METHODS
+    method assemble( assembler:Assembler )
+      (forEach in this).assemble( assembler )
+endAugment
+
+class CmdHalt : Cmd
+  METHODS
+    method assemble( assembler:Assembler )
+      assembler.writer.write( Opcode.HALT )
+
+    method to->String
+      return "halt"
+endClass
+
+class CmdLabel( t, name:String ) : Cmd
+  METHODS
+    method assemble( assembler:Assembler )
+      if (assembler.writer.label(name).exists)
+        throw error( "Label <$> has already been defined." (name) )
+      endIf
+      assembler.writer.define( name )
+
+    method to->String
+      return "<$>" (name)
+endClass
+
+class CmdPrintString( t, value:String ) : Cmd
+  METHODS
+    method assemble( assembler:Assembler )
+      assembler.writer.write( Opcode.PRINT_STRING, value )
+
+    method to->String
+      return ''print "$"'' (value.to_escaped_ascii)
+endClass

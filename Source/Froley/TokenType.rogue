@@ -1,7 +1,18 @@
-uses ParseKit<<Froley>>
+module Froley
+  uses ParseKit<<Froley>>
 
 augment TokenType
-  EOI( "eoi", "[end of input]" )
-  EOL( "eol", "[end of line]" )
+  EOI( "eoi", "[end of input]", &is_structural )
+  EOL( "\n", "[end of line]", &is_symbol )
+  IDENTIFIER( "identifier" )
+  INTEGER( "integer value" )
+  STRING( "literal string" )
+  LABEL( "label" )
+
+  KEYWORD_HALT(  "halt",  &is_keyword )
+  KEYWORD_PRINT( "print", &is_keyword )
+
+  SYMBOL_LT( "<", &is_symbol )
+  SYMBOL_GT( ">", &is_symbol )
 endAugment
 

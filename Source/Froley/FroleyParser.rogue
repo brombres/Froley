@@ -1,0 +1,41 @@
+module Froley
+  uses ParseKit<<Froley>>
+
+class FroleyParser : Parser
+  METHODS
+    method parse_statement( statements:CmdStatements )->Logical
+      consume_eols
+      local t = peek
+
+      if (consume(TokenType.SYMBOL_LT))
+        local name = read_identifier
+        must_consume( TokenType.SYMBOL_GT )
+        must_consume( TokenType.EOL )
+        statements.add( CmdLabel(t,name) )
+        return true
+
+      elseIf (consume(TokenType.KEYWORD_HALT))
+        statements.add( CmdHalt(t) )
+        return true
+
+      elseIf (consume(TokenType.KEYWORD_PRINT))
+        if (next_is(TokenType.STRING))
+          statements.add( CmdPrintString(t,read.text) )
+          must_consume( TokenType.EOL )
+          return true
+        else
+          throw t.error( "FroleyParser.parse_statement() TODO" )
+        endIf
+
+      endIf
+
+      throw peek.error( "Syntax error - unexpected '$'." (peek->String) )
+
+    method read_identifier->String
+      if (next_is(TokenType.IDENTIFIER))
+        local name = read->String
+        return name
+      else
+        throw peek.error( "Identifier expected." )
+      endIf
+endClass

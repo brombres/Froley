@@ -1,0 +1,45 @@
+module Froley
+  uses ParseKit<<Froley>>
+
+class VM
+  DEFINITIONS
+    VERSION     = 1
+    MIN_VERSION = 1
+
+  PROPERTIES
+    code    = Int32[]
+    strings = String[]
+
+  METHODS
+    method init( data:Byte[] )
+      load( data )
+
+    method execute
+      local ip = 0
+      loop
+        local opcode = code[ ip ]
+        ++ip
+        which (opcode)
+          case Opcode.HALT
+            return
+          case Opcode.PRINT_STRING
+            print strings[ code[ip] ]
+            ++ip
+          others
+            throw FroleyError( "[INTERNAL] Unhandled opcode: " + Opcode(opcode) )
+        endWhich
+      endLoop
+
+    method load( data:Byte[] )
+      load( DataReader(data) )
+
+    method load( reader:DataReader )
+      local version = reader.read_int32x
+      require version >= MIN_VERSION
+      local n = reader.read_int32x
+      strings.reserve( n )
+      loop (n) strings.add( reader.read_string )
+      n = reader.read_int32x
+      code.reserve( n )
+      loop (n) code.add( reader.read_int32x )
+endClass

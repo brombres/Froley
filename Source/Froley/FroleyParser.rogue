@@ -36,12 +36,30 @@ class FroleyParser : Parser
           throw t.error( "FroleyParser.parse_statement() TODO" )
         endIf
 
+      elseIf (consume(TokenType.SYMBOL_PLUS_PLUS))
+        local target = parse_access
+        statements.add( CmdAdd(t,target,CmdLiteralInt32(t,1)) )
+        return true
+
+      elseIf (consume(TokenType.SYMBOL_MINUS_MINUS))
+        local target = parse_access
+        statements.add( CmdSubtract(t,target,CmdLiteralInt32(t,1)) )
+        return true
+
       else
         local expr = parse_expression
         local t2 = peek
         if (consume(TokenType.SYMBOL_EQUALS))
           local new_value = parse_expression
           statements.add( CmdAssign(t2,expr,new_value) )
+        elseIf (consume(TokenType.SYMBOL_PLUS_PLUS))
+          statements.add( CmdAdd(t,expr,CmdLiteralInt32(t2,1)) )
+        elseIf (consume(TokenType.SYMBOL_MINUS_MINUS))
+          statements.add( CmdSubtract(t,expr,CmdLiteralInt32(t2,1)) )
+        elseIf (consume(TokenType.SYMBOL_PLUS_EQUALS))
+          statements.add( CmdAdd(t,expr,parse_expression) )
+        elseIf (consume(TokenType.SYMBOL_MINUS_EQUALS))
+          statements.add( CmdSubtract(t,expr,parse_expression) )
         else
           statements.add( expr )
         endIf
@@ -50,6 +68,11 @@ class FroleyParser : Parser
       endIf
 
       throw peek.error( "Syntax error - unexpected '$'." (peek->String) )
+
+    method parse_access->Cmd
+      local t = peek
+      local name = read_identifier
+      return CmdAccess( t, name )
 
     method parse_expression->Cmd
       local t = peek

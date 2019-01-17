@@ -15,5 +15,9 @@ augment TokenType
   SYMBOL_EQUALS( "=", &is_symbol )
   SYMBOL_LT( "<", &is_symbol )
   SYMBOL_GT( ">", &is_symbol )
+  SYMBOL_PLUS_PLUS( "++", &is_symbol )
+  SYMBOL_MINUS_MINUS( "--", &is_symbol )
+  SYMBOL_PLUS_EQUALS(  "+=", &is_symbol )
+  SYMBOL_MINUS_EQUALS( "-=", &is_symbol )
 endAugment
 

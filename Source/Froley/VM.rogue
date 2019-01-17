@@ -10,6 +10,7 @@ class VM
     code    = Int32[]
     strings = String[]
     a       : Int32
+    c       : Int32
 
   METHODS
     method init( data:Byte[] )
@@ -23,6 +24,27 @@ class VM
         which (opcode)
           case Opcode.HALT
             return
+          #case Opcode.ERROR
+          #case Opcode.ACCEPT_X
+          #case Opcode.DISCARD
+          #case Opcode.JUMP
+          #case Opcode.JUMP_EQ
+          #case Opcode.JUMP_NE
+          #case Opcode.JUMP_LT
+          #case Opcode.JUMP_LE
+          #case Opcode.JUMP_GT
+          #case Opcode.JUMP_GE
+          #case Opcode.SCAN_TABLE
+          #case Opcode.MARK_SOURCE_POS
+          #case Opcode.HAS_ANOTHER
+          #case Opcode.READ
+          #case Opcode.PEEK_N
+          #case Opcode.CONSUME
+          #case Opcode.CONSUME_CHARACTER
+          #case Opcode.CONSUME_STRING
+          #case Opcode.CLEAR_BUFFER
+          #case Opcode.WRITE_A
+          #case Opcode.WRITE_STRING
           case Opcode.PRINT_A
             print a->Character
             nextIteration
@@ -34,6 +56,28 @@ class VM
             a = code[ ip ]
             ++ip
             nextIteration
+          case Opcode.SET_C
+            c = code[ ip ]
+            ++ip
+            nextIteration
+          case Opcode.MOVE_A_TO_C
+            c = a
+            nextIteration
+          case Opcode.MOVE_C_TO_A
+            a = c
+            nextIteration
+          case Opcode.ADD_A_INT32
+            a += code[ ip ]
+            ++ip
+          case Opcode.ADD_C_INT32
+            c += code[ ip ]
+            ++ip
+          case Opcode.SUB_A_INT32
+            a -= code[ ip ]
+            ++ip
+          case Opcode.SUB_C_INT32
+            c -= code[ ip ]
+            ++ip
           others
             throw FroleyError( "[INTERNAL] Unhandled opcode: " + Opcode(opcode) )
         endWhich

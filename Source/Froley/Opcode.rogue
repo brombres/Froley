@@ -29,6 +29,9 @@ enum Opcode( size=1:Int32 )
   SET_C(2)              # C = operand:Int32
   MOVE_A_TO_C           # C = A
   MOVE_C_TO_A           # A = C
-  ADD_C(2)              # C = C + operand:Int32
+  ADD_A_INT32(2)        # A += operand:Int32
+  ADD_C_INT32(2)        # C += operand:Int32
+  SUB_A_INT32(2)        # A -= operand:Int32
+  SUB_C_INT32(2)        # C -= operand:Int32
 endEnum
 

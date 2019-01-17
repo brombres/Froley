@@ -74,9 +74,38 @@ class CmdAccess( t, name:String ) : Cmd
           if (cmd_int32)
             assembler.writer.write( Opcode.SET_A, cmd_int32.value )
             return
+          else
+            local cmd_access = new_value as CmdAccess
+            if (cmd_access)
+              if (cmd_access.name == "c")
+                assembler.writer.write( Opcode.MOVE_C_TO_A )
+                return
+              endIf
+            endIf
+            throw t.error( "Illegal assignment value. 'a' can be assigned 'c' or an integer." )
           endIf
+        case "c"
+          local cmd_int32 = new_value as CmdLiteralInt32
+          if (cmd_int32)
+            assembler.writer.write( Opcode.SET_C, cmd_int32.value )
+            return
+          else
+            local cmd_access = new_value as CmdAccess
+            if (cmd_access)
+              if (cmd_access.name == "a")
+                assembler.writer.write( Opcode.MOVE_A_TO_C )
+                return
+              endIf
+            endIf
+            throw t.error( "Illegal assignment value. 'c' can be assigned 'a' or an integer." )
+          endIf
+        others
+          throw t.error( "Illegal assignment target. Valid targets are 'a' and 'c'." )
       endWhich
       prior.assemble_assignment( assembler, new_value )
+
+    method to->String
+      return name
 endClass
 
 class CmdAssign( t, target:Cmd, new_value:Cmd ) : Cmd
@@ -87,3 +116,58 @@ endClass
 
 class CmdLiteralInt32( t, value:Int32 ) : Cmd
 endClass
+
+class CmdAdd( t, target:Cmd, value:Cmd ) : Cmd
+  METHODS
+    method assemble( assembler:Assembler )
+      local target_access = target as CmdAccess
+      if (target_access)
+        which (target_access.name)
+          case "a"
+            local value_int = value as CmdLiteralInt32
+            if (value_int)
+              assembler.writer.write( Opcode.ADD_A_INT32, value_int.value )
+              return
+            else
+              throw value.error( "Illegal operation value - must be an integer." )
+            endIf
+          case "c"
+            local value_int = value as CmdLiteralInt32
+            if (value_int)
+              assembler.writer.write( Opcode.ADD_C_INT32, value_int.value )
+              return
+            else
+              throw value.error( "Illegal operation value - must be an integer." )
+            endIf
+        endWhich
+      endIf
+      throw target.error( "Illegal operation target - target must be 'a' or 'c'." )
+endClass
+
+class CmdSubtract( t, target:Cmd, value:Cmd ) : Cmd
+  METHODS
+    method assemble( assembler:Assembler )
+      local target_access = target as CmdAccess
+      if (target_access)
+        which (target_access.name)
+          case "a"
+            local value_int = value as CmdLiteralInt32
+            if (value_int)
+              assembler.writer.write( Opcode.SUB_A_INT32, value_int.value )
+              return
+            else
+              throw value.error( "Illegal operation value - must be an integer." )
+            endIf
+          case "c"
+            local value_int = value as CmdLiteralInt32
+            if (value_int)
+              assembler.writer.write( Opcode.SUB_C_INT32, value_int.value )
+              return
+            else
+              throw value.error( "Illegal operation value - must be an integer." )
+            endIf
+        endWhich
+      endIf
+      throw target.error( "Illegal operation target - target must be 'a' or 'c'." )
+endClass
+

@@ -7,11 +7,9 @@ class FroleyParser : Parser
       consume_eols
       local t = peek
 
-      if (consume(TokenType.SYMBOL_LT))
-        local name = read_identifier
-        must_consume( TokenType.SYMBOL_GT )
-        must_consume( TokenType.EOL )
-        statements.add( CmdLabel(t,name) )
+      if (consume(TokenType.KEYWORD_CALL))
+        local label_name = read_label_name
+        statements.add( CmdCall(t,label_name) )
         return true
 
       elseIf (consume(TokenType.KEYWORD_HALT))
@@ -36,14 +34,24 @@ class FroleyParser : Parser
           throw t.error( "FroleyParser.parse_statement() TODO" )
         endIf
 
-      elseIf (consume(TokenType.SYMBOL_PLUS_PLUS))
-        local target = parse_access
-        statements.add( CmdAdd(t,target,CmdLiteralInt32(t,1)) )
+      elseIf (consume(TokenType.KEYWORD_RETURN))
+        statements.add( CmdReturn(t) )
+        return true
+
+      elseIf (next_is(TokenType.SYMBOL_LT))
+        local name = read_label_name
+        must_consume( TokenType.EOL )
+        statements.add( CmdLabel(t,name) )
         return true
 
       elseIf (consume(TokenType.SYMBOL_MINUS_MINUS))
         local target = parse_access
         statements.add( CmdSubtract(t,target,CmdLiteralInt32(t,1)) )
+        return true
+
+      elseIf (consume(TokenType.SYMBOL_PLUS_PLUS))
+        local target = parse_access
+        statements.add( CmdAdd(t,target,CmdLiteralInt32(t,1)) )
         return true
 
       else
@@ -91,4 +99,11 @@ class FroleyParser : Parser
       else
         throw peek.error( "Identifier expected." )
       endIf
+
+    method read_label_name->String
+      must_consume( TokenType.SYMBOL_LT )
+      local name = read->String
+      must_consume( TokenType.SYMBOL_GT )
+      return name
+
 endClass

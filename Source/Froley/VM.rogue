@@ -8,6 +8,7 @@ class VM
 
   PROPERTIES
     code    = Int32[]
+    stack   = Int32[]
     strings = String[]
     a       : Int32
     c       : Int32
@@ -24,6 +25,9 @@ class VM
         which (opcode)
           case Opcode.HALT
             return
+          case Opcode.RETURN
+            ip = stack.remove_last
+            nextIteration
           #case Opcode.ERROR
           #case Opcode.ACCEPT_X
           #case Opcode.DISCARD
@@ -34,6 +38,11 @@ class VM
           #case Opcode.JUMP_LE
           #case Opcode.JUMP_GT
           #case Opcode.JUMP_GE
+          case Opcode.CALL
+            ++ip
+            stack.add( ip )
+            ip = code[ ip-1 ]
+            nextIteration
           #case Opcode.SCAN_TABLE
           #case Opcode.MARK_SOURCE_POS
           #case Opcode.HAS_ANOTHER

@@ -2,6 +2,7 @@ module Froley
 
 enum Opcode( size=1:Int32 )
   HALT                  # Tokenization complete; VM.tokenize() returns
+  RETURN                # ip = stack.remove_last
   ERROR                 # Throws error using message in BUFFER
   ACCEPT_X(2)           # Invokes VM callback accept(type,BUFFER), where 'type' is operand, then clears BUFFER & jumps to IP 0
   DISCARD               # Clears BUFFER & jumps to IP 0
@@ -12,6 +13,7 @@ enum Opcode( size=1:Int32 )
   JUMP_LE(2)            # Jumps to specified IP if Z=1 or  N=1
   JUMP_GT(2)            # Jumps to specified IP if Z=0 and N=0
   JUMP_GE(2)            # Jumps to specified IP if Z=1 or  N=0
+  CALL(2)               # stack.add(ip); ip = opcode
   SCAN_TABLE            # large, variable size operand data
   MARK_SOURCE_POS       # Notes the current source line and column to be used with the next token
   HAS_ANOTHER           # Z=1 if scanner has another; else Z=0

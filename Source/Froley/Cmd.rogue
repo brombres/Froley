@@ -171,3 +171,16 @@ class CmdSubtract( t, target:Cmd, value:Cmd ) : Cmd
       throw target.error( "Illegal operation target - target must be 'a' or 'c'." )
 endClass
 
+class CmdCall( t, label_name:String ) : Cmd
+  METHODS
+    method assemble( assembler:Assembler )
+      assembler.writer.write( Opcode.CALL )
+      assembler.writer.write_address( label_name )
+endClass
+
+class CmdReturn( t ) : Cmd
+  METHODS
+    method assemble( assembler:Assembler )
+      assembler.writer.write( Opcode.RETURN )
+endClass
+

@@ -12,6 +12,11 @@ class VM
     strings = String[]
     a       : Int32
     c       : Int32
+    n       : Logical
+    z       : Logical
+
+    filepath : String
+    scanner  : Scanner
 
   METHODS
     method init( data:Byte[] )
@@ -26,18 +31,39 @@ class VM
           case Opcode.HALT
             return
           case Opcode.RETURN
+            if (stack.is_empty) throw FroleyError( "[Compiled Code]", "'return' on empty stack." )
             ip = stack.remove_last
             nextIteration
           #case Opcode.ERROR
           #case Opcode.ACCEPT_X
           #case Opcode.DISCARD
-          #case Opcode.JUMP
-          #case Opcode.JUMP_EQ
-          #case Opcode.JUMP_NE
-          #case Opcode.JUMP_LT
-          #case Opcode.JUMP_LE
-          #case Opcode.JUMP_GT
-          #case Opcode.JUMP_GE
+          case Opcode.JUMP
+            ip = code[ ip ]
+            nextIteration
+          case Opcode.JUMP_EQ
+            if (z) ip = code[ ip ]
+            else   ++ip
+            nextIteration
+          case Opcode.JUMP_NE
+            if (not z) ip = code[ ip ]
+            else       ++ip
+            nextIteration
+          case Opcode.JUMP_LT
+            if (n) ip = code[ ip ]
+            else   ++ip
+            nextIteration
+          case Opcode.JUMP_LE
+            if (n or z) ip = code[ ip ]
+            else        ++ip
+            nextIteration
+          case Opcode.JUMP_GT
+            if (not (n or z)) ip = code[ ip ]
+            else              ++ip
+            nextIteration
+          case Opcode.JUMP_GE
+            if (not n) ip = code[ ip ]
+            else       ++ip
+            nextIteration
           case Opcode.CALL
             ++ip
             stack.add( ip )
@@ -45,8 +71,13 @@ class VM
             nextIteration
           #case Opcode.SCAN_TABLE
           #case Opcode.MARK_SOURCE_POS
-          #case Opcode.HAS_ANOTHER
-          #case Opcode.READ
+          case Opcode.HAS_ANOTHER
+            z = not scanner.has_another
+            nextIteration
+          case Opcode.READ
+            a = scanner.read
+            n = (a < 0); z = (a == 0)
+            nextIteration
           #case Opcode.PEEK_N
           #case Opcode.CONSUME
           #case Opcode.CONSUME_CHARACTER
@@ -64,29 +95,51 @@ class VM
           case Opcode.SET_A
             a = code[ ip ]
             ++ip
+            n = (a < 0); z = (a == 0)
+            nextIteration
+          case Opcode.TEST_A
+            n = (a < 0); z = (a == 0)
+            nextIteration
+          case Opcode.PUSH_A
+            stack.add( a )
+            nextIteration
+          case Opcode.POP_A
+            if (stack.is_empty) throw FroleyError( "[Compiled Code]", "'pop' on empty stack." )
+            a = stack.remove_last
             nextIteration
           case Opcode.SET_C
             c = code[ ip ]
             ++ip
+            n = (c < 0); z = (c == 0)
             nextIteration
           case Opcode.MOVE_A_TO_C
             c = a
+            n = (c < 0); z = (c == 0)
             nextIteration
           case Opcode.MOVE_C_TO_A
             a = c
+            n = (a < 0); z = (a == 0)
             nextIteration
           case Opcode.ADD_A_INT32
             a += code[ ip ]
             ++ip
+            n = (a < 0); z = (a == 0)
+            nextIteration
           case Opcode.ADD_C_INT32
             c += code[ ip ]
             ++ip
+            n = (c < 0); z = (c == 0)
+            nextIteration
           case Opcode.SUB_A_INT32
             a -= code[ ip ]
             ++ip
+            n = (a < 0); z = (a == 0)
+            nextIteration
           case Opcode.SUB_C_INT32
             c -= code[ ip ]
             ++ip
+            n = (c < 0); z = (c == 0)
+            nextIteration
           others
             throw FroleyError( "[INTERNAL] Unhandled opcode: " + Opcode(opcode) )
         endWhich
@@ -104,4 +157,13 @@ class VM
       n = reader.read_int32x
       code.reserve( n )
       loop (n) code.add( reader.read_int32x )
+
+    method tokenize( file:File )
+      if (not file.exists) throw FroleyError( "File not found: $." (file.filepath) )
+      tokenize( file.filepath, file.load_as_string )
+
+    method tokenize( filepath, source:String )
+      scanner = Scanner( source )
+      execute
 endClass
+

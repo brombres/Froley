@@ -6,7 +6,6 @@ $include "Cmd.rogue"
 $include "FroleyError.rogue"
 $include "FroleyParser.rogue"
 $include "FroleyTokenizer.rogue"
-$include "FroloWriter.rogue"
 $include "Opcode.rogue"
 $include "Token.rogue"
 $include "TokenType.rogue"
@@ -39,22 +38,9 @@ class Launcher
           Froley( File(target) )
         endForEach
 
-
       catch (error:FroleyError)
         println error
       endTry
-
-      #{
-      trace( "TODO" )
-      local writer = FroloWriter()
-
-      writer.write( Opcode.PRINT_STRING, "Hello World!\n" )
-      writer.write( Opcode.HALT )
-      local bytes = writer->Byte[]
-
-      local vm = VM( bytes )
-      vm.execute
-      }#
 endClass
 
 class Froley
@@ -75,7 +61,7 @@ class Froley
 
       local bytes = Assembler().assemble( statements )
       local vm = VM( bytes )
-      vm.execute
+      vm.tokenize( File("Test.txt") )
 
       #{
       local tokens = FroleyTokenizer().tokenize( filepath, source )

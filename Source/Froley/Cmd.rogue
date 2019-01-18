@@ -3,11 +3,17 @@ module Froley
 
 augment Cmd
   METHODS
-    method assemble( assembler:Assembler )
+    method write( assembler:Assembler )
       throw UnsupportedOperationError()
 
-    method assemble_assignment( assembler:Assembler, new_value:Cmd )
+    method write_assignment( assembler:Assembler, new_value:Cmd )
       throw t.error( "Illegal assignment." )
+
+    method write_add( assembler:Assembler, expression:Cmd )
+      throw t.error( "Illegal operation target - target must be 'a' or 'c'." )
+
+    method write_subtract( assembler:Assembler, expression:Cmd )
+      throw t.error( "Illegal operation target - target must be 'a' or 'c'." )
 
     method error( message:String )->Error
       return t.error( message )
@@ -15,21 +21,30 @@ endAugment
 
 augment CmdStatements
   METHODS
-    method assemble( assembler:Assembler )
-      (forEach in this).assemble( assembler )
+    method write( assembler:Assembler )
+      (forEach in this).write( assembler )
 endAugment
 
 
 augment CmdArgs
   METHODS
-    method assemble( assembler:Assembler )
-      (forEach in this).assemble( assembler )
+    method write( assembler:Assembler )
+      (forEach in this).write( assembler )
 endAugment
+
+class CmdGoTo( t, label_name:String ) : Cmd
+  METHODS
+    method write( assembler:Assembler )
+      assembler.[ write(Opcode.JUMP), write_address(label_name) ]
+
+    method to->String
+      return "goto"
+endClass
 
 class CmdHalt : Cmd
   METHODS
-    method assemble( assembler:Assembler )
-      assembler.writer.write( Opcode.HALT )
+    method write( assembler:Assembler )
+      assembler.write( Opcode.HALT )
 
     method to->String
       return "halt"
@@ -37,11 +52,11 @@ endClass
 
 class CmdLabel( t, name:String ) : Cmd
   METHODS
-    method assemble( assembler:Assembler )
-      if (assembler.writer.label(name).exists)
+    method write( assembler:Assembler )
+      if (assembler.label(name).exists)
         throw error( "Label <$> has already been defined." (name) )
       endIf
-      assembler.writer.define( name )
+      assembler.define( name )
 
     method to->String
       return "<$>" (name)
@@ -49,8 +64,8 @@ endClass
 
 class CmdPrintString( t, value:String ) : Cmd
   METHODS
-    method assemble( assembler:Assembler )
-      assembler.writer.write( Opcode.PRINT_STRING, value )
+    method write( assembler:Assembler )
+      assembler.write( Opcode.PRINT_STRING, value )
 
     method to->String
       return ''print "$"'' (value.to_escaped_ascii)
@@ -58,8 +73,8 @@ endClass
 
 class CmdPrintA( t ) : Cmd
   METHODS
-    method assemble( assembler:Assembler )
-      assembler.writer.write( Opcode.PRINT_A )
+    method write( assembler:Assembler )
+      assembler.write( Opcode.PRINT_A )
 
     method to->String
       return "print a"
@@ -67,42 +82,14 @@ endClass
 
 class CmdAccess( t, name:String ) : Cmd
   METHODS
-    method assemble_assignment( assembler:Assembler, new_value:Cmd )
-      which (name)
-        case "a"
-          local cmd_int32 = new_value as CmdLiteralInt32
-          if (cmd_int32)
-            assembler.writer.write( Opcode.SET_A, cmd_int32.value )
-            return
-          else
-            local cmd_access = new_value as CmdAccess
-            if (cmd_access)
-              if (cmd_access.name == "c")
-                assembler.writer.write( Opcode.MOVE_C_TO_A )
-                return
-              endIf
-            endIf
-            throw t.error( "Illegal assignment value. 'a' can be assigned 'c' or an integer." )
-          endIf
-        case "c"
-          local cmd_int32 = new_value as CmdLiteralInt32
-          if (cmd_int32)
-            assembler.writer.write( Opcode.SET_C, cmd_int32.value )
-            return
-          else
-            local cmd_access = new_value as CmdAccess
-            if (cmd_access)
-              if (cmd_access.name == "a")
-                assembler.writer.write( Opcode.MOVE_A_TO_C )
-                return
-              endIf
-            endIf
-            throw t.error( "Illegal assignment value. 'c' can be assigned 'a' or an integer." )
-          endIf
-        others
-          throw t.error( "Illegal assignment target. Valid targets are 'a' and 'c'." )
-      endWhich
-      prior.assemble_assignment( assembler, new_value )
+    method init( t )
+      name = t.text
+
+    method write( assembler:Assembler )
+      throw t.error( ''No such function or register "$".'' (name) )
+
+    method write_assignment( assembler:Assembler, new_value:Cmd )
+      throw t.error( "Illegal assignment target. Valid targets are 'a' and 'c'." )
 
     method to->String
       return name
@@ -110,77 +97,148 @@ endClass
 
 class CmdAssign( t, target:Cmd, new_value:Cmd ) : Cmd
   METHODS
-    method assemble( assembler:Assembler )
-      target.assemble_assignment( assembler, new_value )
+    method write( assembler:Assembler )
+      target.write_assignment( assembler, new_value )
 endClass
 
 class CmdLiteralInt32( t, value:Int32 ) : Cmd
+  METHODS
+    method init( t )
+      value = t->Int32
 endClass
 
 class CmdAdd( t, target:Cmd, value:Cmd ) : Cmd
   METHODS
-    method assemble( assembler:Assembler )
-      local target_access = target as CmdAccess
-      if (target_access)
-        which (target_access.name)
-          case "a"
-            local value_int = value as CmdLiteralInt32
-            if (value_int)
-              assembler.writer.write( Opcode.ADD_A_INT32, value_int.value )
-              return
-            else
-              throw value.error( "Illegal operation value - must be an integer." )
-            endIf
-          case "c"
-            local value_int = value as CmdLiteralInt32
-            if (value_int)
-              assembler.writer.write( Opcode.ADD_C_INT32, value_int.value )
-              return
-            else
-              throw value.error( "Illegal operation value - must be an integer." )
-            endIf
-        endWhich
-      endIf
-      throw target.error( "Illegal operation target - target must be 'a' or 'c'." )
+    method write( assembler:Assembler )
+      target.write_add( assembler, value )
 endClass
 
 class CmdSubtract( t, target:Cmd, value:Cmd ) : Cmd
   METHODS
-    method assemble( assembler:Assembler )
-      local target_access = target as CmdAccess
-      if (target_access)
-        which (target_access.name)
-          case "a"
-            local value_int = value as CmdLiteralInt32
-            if (value_int)
-              assembler.writer.write( Opcode.SUB_A_INT32, value_int.value )
-              return
-            else
-              throw value.error( "Illegal operation value - must be an integer." )
-            endIf
-          case "c"
-            local value_int = value as CmdLiteralInt32
-            if (value_int)
-              assembler.writer.write( Opcode.SUB_C_INT32, value_int.value )
-              return
-            else
-              throw value.error( "Illegal operation value - must be an integer." )
-            endIf
-        endWhich
-      endIf
-      throw target.error( "Illegal operation target - target must be 'a' or 'c'." )
+    method write( assembler:Assembler )
+      target.write_subtract( assembler, value )
 endClass
 
 class CmdCall( t, label_name:String ) : Cmd
   METHODS
-    method assemble( assembler:Assembler )
-      assembler.writer.write( Opcode.CALL )
-      assembler.writer.write_address( label_name )
+    method write( assembler:Assembler )
+      assembler.write( Opcode.CALL )
+      assembler.write_address( label_name )
 endClass
 
 class CmdReturn( t ) : Cmd
   METHODS
-    method assemble( assembler:Assembler )
-      assembler.writer.write( Opcode.RETURN )
+    method write( assembler:Assembler )
+      assembler.write( Opcode.RETURN )
+endClass
+
+class CmdRead( t ) : Cmd
+  METHODS
+    method write( assembler:Assembler )
+      assembler.write( Opcode.READ )
+endClass
+
+class CmdWhile( t, expression:Cmd ) : Cmd
+  PROPERTIES
+    statements = CmdStatements()
+
+  METHODS
+    method write( assembler:Assembler )
+      local label_test = Label()
+      local label_top  = Label()
+      assembler.write( Opcode.JUMP, label_test )
+      assembler.define( label_top )
+      statements.write( assembler )
+      assembler.define( label_test )
+      expression.write( assembler )
+      assembler.write( Opcode.JUMP_NE, label_top )
+endClass
+
+class CmdHasAnother( t ) : Cmd
+  METHODS
+    method write( assembler:Assembler )
+      assembler.write( Opcode.HAS_ANOTHER )
+endClass
+
+class CmdRegisterA( t ) : Cmd
+  METHODS
+    method write( assembler:Assembler )
+      assembler.write( Opcode.TEST_A )
+
+    method write_assignment( assembler:Assembler, new_value:Cmd )
+      local cmd_int32 = new_value as CmdLiteralInt32
+      if (cmd_int32)
+        assembler.write( Opcode.SET_A, cmd_int32.value )
+      elseIf (new_value instanceOf CmdRegisterC)
+        assembler.write( Opcode.MOVE_C_TO_A )
+      else
+        throw t.error( "Illegal assignment value. 'a' can be assigned either 'c' or an integer." )
+      endIf
+
+    method write_add( assembler:Assembler, expression:Cmd )
+      local cmd_int = expression as CmdLiteralInt32
+      if (cmd_int)
+        assembler.write( Opcode.ADD_A_INT32, cmd_int.value )
+      else
+        throw expression.error( "Illegal operation value; integer expected." )
+      endIf
+
+    method write_subtract( assembler:Assembler, expression:Cmd )
+      local cmd_int = expression as CmdLiteralInt32
+      if (cmd_int)
+        assembler.write( Opcode.SUB_A_INT32, cmd_int.value )
+      else
+        throw expression.error( "Illegal operation value; integer expected." )
+      endIf
+endClass
+
+class CmdRegisterC( t ) : Cmd
+  METHODS
+    method write( assembler:Assembler )
+      assembler.write( Opcode.MOVE_C_TO_A )
+
+    method write_assignment( assembler:Assembler, new_value:Cmd )
+      local cmd_int32 = new_value as CmdLiteralInt32
+      if (cmd_int32)
+        assembler.write( Opcode.SET_C, cmd_int32.value )
+      elseIf (new_value instanceOf CmdRegisterA)
+        assembler.write( Opcode.MOVE_A_TO_C )
+      else
+        throw t.error( "Illegal assignment value. 'c' can be assigned ether 'a' or an integer." )
+      endIf
+
+    method write_add( assembler:Assembler, expression:Cmd )
+      local cmd_int32 = expression as CmdLiteralInt32
+      if (cmd_int32)
+        assembler.write( Opcode.ADD_C_INT32, cmd_int32.value )
+      else
+        throw expression.error( "Illegal operation value; integer expected." )
+      endIf
+
+    method write_subtract( assembler:Assembler, expression:Cmd )
+      local cmd_int32 = expression as CmdLiteralInt32
+      if (cmd_int32)
+        assembler.write( Opcode.SUB_C_INT32, cmd_int32.value )
+      else
+        throw expression.error( "Illegal operation value; integer expected." )
+      endIf
+endClass
+
+class CmdPush( t ) : Cmd
+  METHODS
+    method write( assembler:Assembler )
+      assembler.write( Opcode.PUSH_A )
+endClass
+
+class CmdPop( t ) : Cmd
+  METHODS
+    method write( assembler:Assembler )
+      assembler.write( Opcode.POP_A )
+endClass
+
+class CmdTest( t ) : Cmd
+  METHODS
+    method write( assembler:Assembler )
+      assembler.write( Opcode.TEST_A )
 endClass
 

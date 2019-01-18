@@ -2,14 +2,43 @@ module Froley
   uses ParseKit<<Froley>>
 
 class FroleyParser : Parser
+  PROPERTIES
+    parse_expression : ParseRule
+
   METHODS
+    method init
+      # expression
+      local rule = add( ParseRule("expression") )
+
+      # term
+      rule = add_nested( ParseRule("term") )
+      rule.on( "(",
+        function (parser:FroleyParser)->Cmd
+          parser.must_consume( TokenType.SYMBOL_OPEN_PAREN )
+          local result = parser.parse_expression()
+          parser.must_consume( TokenType.SYMBOL_CLOSE_PAREN )
+          return result
+        endFunction
+      )
+      rule.on( "a",             <<CmdRegisterA>> )
+      rule.on( "c",             <<CmdRegisterC>> )
+      rule.on( "has_another",   <<CmdHasAnother>> )
+      rule.on( "identifier",    <<CmdAccess>> )
+      rule.on( "integer value", <<CmdLiteralInt32>> )
+
     method parse_statement( statements:CmdStatements )->Logical
       consume_eols
+      if (not has_another) return false
       local t = peek
+      if (t.type.is_structural) return false
 
       if (consume(TokenType.KEYWORD_CALL))
         local label_name = read_label_name
         statements.add( CmdCall(t,label_name) )
+        return true
+
+      elseIf (consume(TokenType.KEYWORD_GOTO))
+        statements.add( CmdGoTo(t,read_label_name) )
         return true
 
       elseIf (consume(TokenType.KEYWORD_HALT))
@@ -21,18 +50,16 @@ class FroleyParser : Parser
           statements.add( CmdPrintString(t,read.text) )
           must_consume( TokenType.EOL )
           return true
-        elseIf (next_is(TokenType.IDENTIFIER))
-          local name = read_identifier
-          which (name)
-            case "a"
-              statements.add( CmdPrintA(t) )
-              return true
-            others
-              throw t.error( "Syntax error - valid syntax is 'print <string>' or 'print a'." )
-          endWhich
+        elseIf (next_is(TokenType.EOL))
+          statements.add( CmdPrintA(t) )
+          return true
         else
-          throw t.error( "FroleyParser.parse_statement() TODO" )
+          throw t.error( "Syntax error - valid syntax is 'print' or 'print <string>'." )
         endIf
+
+      elseIf (consume(TokenType.KEYWORD_READ))
+        statements.add( CmdRead(t) )
+        return true
 
       elseIf (consume(TokenType.KEYWORD_RETURN))
         statements.add( CmdReturn(t) )
@@ -45,29 +72,50 @@ class FroleyParser : Parser
         return true
 
       elseIf (consume(TokenType.SYMBOL_MINUS_MINUS))
-        local target = parse_access
+        local target = parse_register
         statements.add( CmdSubtract(t,target,CmdLiteralInt32(t,1)) )
         return true
 
       elseIf (consume(TokenType.SYMBOL_PLUS_PLUS))
-        local target = parse_access
+        local target = parse_register
         statements.add( CmdAdd(t,target,CmdLiteralInt32(t,1)) )
         return true
 
+      elseIf (consume(TokenType.KEYWORD_POP))
+        statements.add( CmdPop(t) )
+        return true
+
+      elseIf (consume(TokenType.KEYWORD_PUSH))
+        statements.add( CmdPush(t) )
+        return true
+
+      elseIf (consume(TokenType.KEYWORD_TEST))
+        statements.add( CmdTest(t) )
+        return true
+
+      elseIf (consume(TokenType.KEYWORD_WHILE))
+        local has_parens = consume( TokenType.SYMBOL_OPEN_PAREN )
+        local cmd_while = CmdWhile( t, parse_expression() )
+        if (has_parens) must_consume( TokenType.SYMBOL_CLOSE_PAREN )
+        while (parse_statement(cmd_while.statements)) noAction
+        statements.add( cmd_while )
+        must_consume( TokenType.KEYWORD_END_WHILE )
+        return true
+
       else
-        local expr = parse_expression
+        local expr = parse_expression()
         local t2 = peek
         if (consume(TokenType.SYMBOL_EQUALS))
-          local new_value = parse_expression
+          local new_value = parse_expression()
           statements.add( CmdAssign(t2,expr,new_value) )
         elseIf (consume(TokenType.SYMBOL_PLUS_PLUS))
           statements.add( CmdAdd(t,expr,CmdLiteralInt32(t2,1)) )
         elseIf (consume(TokenType.SYMBOL_MINUS_MINUS))
           statements.add( CmdSubtract(t,expr,CmdLiteralInt32(t2,1)) )
         elseIf (consume(TokenType.SYMBOL_PLUS_EQUALS))
-          statements.add( CmdAdd(t,expr,parse_expression) )
+          statements.add( CmdAdd(t,expr,parse_expression()) )
         elseIf (consume(TokenType.SYMBOL_MINUS_EQUALS))
-          statements.add( CmdSubtract(t,expr,parse_expression) )
+          statements.add( CmdSubtract(t,expr,parse_expression()) )
         else
           statements.add( expr )
         endIf
@@ -82,6 +130,13 @@ class FroleyParser : Parser
       local name = read_identifier
       return CmdAccess( t, name )
 
+    method parse_register->Cmd
+      local t = peek
+      if (consume(TokenType.KEYWORD_A)) return CmdRegisterA( t )
+      if (consume(TokenType.KEYWORD_C)) return CmdRegisterC( t )
+      throw t.error( "Register 'a' or 'c' expected." )
+
+      #{
     method parse_expression->Cmd
       local t = peek
       if (next_is(TokenType.IDENTIFIER))
@@ -91,6 +146,7 @@ class FroleyParser : Parser
       else
         throw t.error( "Syntax error - unexpected '$'." (t) )
       endIf
+      }#
 
     method read_identifier->String
       if (next_is(TokenType.IDENTIFIER))

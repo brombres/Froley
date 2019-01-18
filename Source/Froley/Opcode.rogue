@@ -29,6 +29,7 @@ enum Opcode( size=1:Int32 )
   PRINT_STRING(2)       # print( strings[index=opcode] )
   SET_A(2)              # A = operand:Int32
   TEST_A                # N and Z flags updated
+  COMPARE_A_INT32
   PUSH_A
   POP_A
   SET_C(2)              # C = operand:Int32

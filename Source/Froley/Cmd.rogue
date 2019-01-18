@@ -3,6 +3,9 @@ module Froley
 
 augment Cmd
   METHODS
+    method to->Int32
+      throw UnsupportedOperationError()
+
     method write( assembler:Assembler )
       throw UnsupportedOperationError()
 
@@ -105,6 +108,9 @@ class CmdLiteralInt32( t, value:Int32 ) : Cmd
   METHODS
     method init( t )
       value = t->Int32
+
+    method to->Int32
+      return value
 endClass
 
 class CmdAdd( t, target:Cmd, value:Cmd ) : Cmd
@@ -258,5 +264,19 @@ class CmdTest( t ) : Cmd
   METHODS
     method write( assembler:Assembler )
       assembler.write( Opcode.TEST_A )
+endClass
+
+class CmdCompareEQ : CmdBinary
+  METHODS
+    method write( assembler:Assembler )
+      if (left instanceOf CmdRegisterA)
+        if (right instanceOf CmdLiteralInt32)
+          assembler.write( Opcode.COMPARE_A_INT32, right->Int32 )
+        else
+          throw right.t.error( "'a' can only be compared with an integer." )
+        endIf
+      else
+        throw left.t.error( "The left-hand side of '==' must be register 'a'." )
+      endIf
 endClass
 

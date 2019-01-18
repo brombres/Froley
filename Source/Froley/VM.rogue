@@ -100,6 +100,11 @@ class VM
           case Opcode.TEST_A
             n = (a < 0); z = (a == 0)
             nextIteration
+          case Opcode.COMPARE_A_INT32
+            local diff = a - code[ip]
+            ++ip
+            n = (diff < 0); z = (diff == 0)
+            nextIteration
           case Opcode.PUSH_A
             stack.add( a )
             nextIteration

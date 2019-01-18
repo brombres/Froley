@@ -10,6 +10,10 @@ class FroleyParser : Parser
       # expression
       local rule = add( ParseRule("expression") )
 
+      # comparison
+      rule = add_nested( BinaryParseRule("comparison") )
+      rule.on( "==", <<CmdCompareEQ>> )
+
       # term
       rule = add_nested( ParseRule("term") )
       rule.on( "(",
@@ -32,21 +36,20 @@ class FroleyParser : Parser
         return true
       else
         parse_single_line_statements( statements )
-        consume_eols
         return false
       endIf
 
     method parse_multi_line_statements( statements:CmdStatements )
       consume_eols
       while (reader.has_another and not reader.peek.type.is_structural)
-        parse_statement( statements, &allow_conditionals )
+        parse_statement( statements, &allow_control_structures )
         while (consume_eols or consume(TokenType.SYMBOL_SEMICOLON)) noAction
       endWhile
 
     method parse_single_line_statements( statements:CmdStatements )
       while (reader.has_another and not reader.peek.type.is_structural)
-        parse_statement( statements, &!allow_conditionals )
-        if (not consume(TokenType.SYMBOL_SEMICOLON)) return
+        parse_statement( statements, &!allow_control_structures )
+        if (not consume(TokenType.SYMBOL_SEMICOLON)) escapeWhile
         while (consume(TokenType.SYMBOL_SEMICOLON)) noAction
 
         # Don't let a trailing ';' act as a next-line continuation.
@@ -59,27 +62,70 @@ class FroleyParser : Parser
         endIf
       endIf
 
-    method parse_statement( statements:CmdStatements, &allow_conditionals )->Logical
+    method parse_statement( statements:CmdStatements, &allow_control_structures )->Logical
       consume_eols
       if (not has_another) return false
       local t = peek
       if (t.type.is_structural) return false
 
+      if (allow_control_structures)
+        if (consume(TokenType.KEYWORD_IF))
+          local cmd_if = CmdIf( t, parse_expression() )
+          if (parse_statements(cmd_if.statements))
+            # Multi-line statements
+            local outer_if = cmd_if
+            while (next_is_else_if(&multi_line))
+              local t2 = read
+              local inner_if = CmdIf( t2, parse_expression() )
+              parse_multi_line_statements( inner_if.statements )
+              ensure outer_if.else_statements
+              outer_if.else_statements.add( inner_if )
+              outer_if = inner_if
+            endWhile
+            consume_eols
+            if (next_is(TokenType.KEYWORD_ELSE) and reader.peek(1).type == TokenType.EOL)
+              read
+              ensure outer_if.else_statements
+              parse_multi_line_statements( outer_if.else_statements )
+            endIf
+            must_consume( TokenType.KEYWORD_END_IF )
+          else
+            # Single line statements
+            local outer_if = cmd_if
+            while (next_is_else_if(&single_line))
+              local t2 = read
+              local inner_if = CmdIf( t2, parse_expression() )
+              parse_single_line_statements( inner_if.statements )
+              ensure outer_if.else_statements
+              outer_if.else_statements.add( inner_if )
+              outer_if = inner_if
+            endWhile
+            consume_eols
+            if (next_is(TokenType.KEYWORD_ELSE) and reader.peek(1).type != TokenType.EOL)
+              read
+              ensure outer_if.else_statements
+              parse_single_line_statements( outer_if.else_statements )
+            endIf
+          endIf
+          statements.add( cmd_if )
+          return true
+
+        elseIf (consume(TokenType.KEYWORD_WHILE))
+          local cmd_while = CmdWhile( t, parse_expression() )
+          if (parse_statements(cmd_while.statements))
+            # Returns true if multi-line statements were parsed
+            must_consume( TokenType.KEYWORD_END_WHILE )
+          endIf
+          statements.add( cmd_while )
+          return true
+
+        endIf
+      endIf
+
       if (consume(TokenType.KEYWORD_CALL))
         local label_name = read_label_name
         statements.add( CmdCall(t,label_name) )
         return true
-
-        #{
-      elseIf (consume(TokenType.KEYWORD_IF))
-        local has_parens = consume( TokenType.SYMBOL_OPEN_PAREN )
-        local cmd_if = CmdIf( t, parse_expression() )
-        if (has_parens) must_consume( TokenType.SYMBOL_CLOSE_PAREN )
-        while (parse_statement(cmd_if.statements)) noAction
-        statements.add( cmd_if )
-        must_consume( TokenType.KEYWORD_END_WHILE )
-        return true
-        }#
 
       elseIf (consume(TokenType.KEYWORD_GOTO))
         statements.add( CmdGoTo(t,read_label_name) )
@@ -137,17 +183,6 @@ class FroleyParser : Parser
         statements.add( CmdTest(t) )
         return true
 
-      elseIf (consume(TokenType.KEYWORD_WHILE))
-        local has_parens = consume( TokenType.SYMBOL_OPEN_PAREN )
-        local cmd_while = CmdWhile( t, parse_expression() )
-        if (has_parens) must_consume( TokenType.SYMBOL_CLOSE_PAREN )
-        if (parse_statements(cmd_while.statements))
-          # Returns true if multi-line statements were parsed
-          must_consume( TokenType.KEYWORD_END_WHILE )
-        endIf
-        statements.add( cmd_while )
-        return true
-
       else
         local expr = parse_expression()
         local t2 = peek
@@ -171,6 +206,25 @@ class FroleyParser : Parser
 
       throw peek.error( "Syntax error - unexpected '$'." (peek->String) )
 
+    method next_is_else_if( &single_line, &multi_line )->Logical
+      consume_eols
+      if (not next_is(TokenType.KEYWORD_ELSE_IF)) return false
+
+      # Scan to just after the elseIf() conditional
+      local original_pos = reader.position
+      read  # elseIf
+      parse_expression()
+
+      if (single_line)
+        local result = not next_is( TokenType.EOL )
+        reader.position = original_pos
+        return result
+      else
+        local result = next_is( TokenType.EOL )
+        reader.position = original_pos
+        return result
+      endIf
+
     method parse_access->Cmd
       local t = peek
       local name = read_identifier
@@ -181,18 +235,6 @@ class FroleyParser : Parser
       if (consume(TokenType.KEYWORD_A)) return CmdRegisterA( t )
       if (consume(TokenType.KEYWORD_C)) return CmdRegisterC( t )
       throw t.error( "Register 'a' or 'c' expected." )
-
-      #{
-    method parse_expression->Cmd
-      local t = peek
-      if (next_is(TokenType.IDENTIFIER))
-        return CmdAccess( t, read_identifier )
-      elseIf (next_is(TokenType.INTEGER))
-        return CmdLiteralInt32( t, read->Int32 )
-      else
-        throw t.error( "Syntax error - unexpected '$'." (t) )
-      endIf
-      }#
 
     method read_identifier->String
       if (next_is(TokenType.IDENTIFIER))

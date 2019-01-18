@@ -54,10 +54,7 @@ class Froley
       local parser = FroleyParser()
       parser.set_source( filepath, source )
       parser.consume_eols
-      while (parser.has_another)
-        parser.parse_statement( statements )
-        parser.consume_eols
-      endWhile
+      parser.parse_multi_line_statements( statements )
 
       local bytes = Assembler().assemble( statements )
       local vm = VM( bytes )

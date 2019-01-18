@@ -26,7 +26,40 @@ class FroleyParser : Parser
       rule.on( "identifier",    <<CmdAccess>> )
       rule.on( "integer value", <<CmdLiteralInt32>> )
 
-    method parse_statement( statements:CmdStatements )->Logical
+    method parse_statements( statements:CmdStatements )->Logical
+      if (consume_eols)
+        parse_multi_line_statements( statements )
+        return true
+      else
+        parse_single_line_statements( statements )
+        consume_eols
+        return false
+      endIf
+
+    method parse_multi_line_statements( statements:CmdStatements )
+      consume_eols
+      while (reader.has_another and not reader.peek.type.is_structural)
+        parse_statement( statements, &allow_conditionals )
+        while (consume_eols or consume(TokenType.SYMBOL_SEMICOLON)) noAction
+      endWhile
+
+    method parse_single_line_statements( statements:CmdStatements )
+      while (reader.has_another and not reader.peek.type.is_structural)
+        parse_statement( statements, &!allow_conditionals )
+        if (not consume(TokenType.SYMBOL_SEMICOLON)) return
+        while (consume(TokenType.SYMBOL_SEMICOLON)) noAction
+
+        # Don't let a trailing ';' act as a next-line continuation.
+        if (next_is(TokenType.EOL)) escapeWhile
+      endWhile
+
+      if (not consume(TokenType.EOL))
+        if (not reader.peek.type.is_structural)
+          must_consume( TokenType.EOL )  # force an error
+        endIf
+      endIf
+
+    method parse_statement( statements:CmdStatements, &allow_conditionals )->Logical
       consume_eols
       if (not has_another) return false
       local t = peek
@@ -36,6 +69,17 @@ class FroleyParser : Parser
         local label_name = read_label_name
         statements.add( CmdCall(t,label_name) )
         return true
+
+        #{
+      elseIf (consume(TokenType.KEYWORD_IF))
+        local has_parens = consume( TokenType.SYMBOL_OPEN_PAREN )
+        local cmd_if = CmdIf( t, parse_expression() )
+        if (has_parens) must_consume( TokenType.SYMBOL_CLOSE_PAREN )
+        while (parse_statement(cmd_if.statements)) noAction
+        statements.add( cmd_if )
+        must_consume( TokenType.KEYWORD_END_WHILE )
+        return true
+        }#
 
       elseIf (consume(TokenType.KEYWORD_GOTO))
         statements.add( CmdGoTo(t,read_label_name) )
@@ -97,9 +141,11 @@ class FroleyParser : Parser
         local has_parens = consume( TokenType.SYMBOL_OPEN_PAREN )
         local cmd_while = CmdWhile( t, parse_expression() )
         if (has_parens) must_consume( TokenType.SYMBOL_CLOSE_PAREN )
-        while (parse_statement(cmd_while.statements)) noAction
+        if (parse_statements(cmd_while.statements))
+          # Returns true if multi-line statements were parsed
+          must_consume( TokenType.KEYWORD_END_WHILE )
+        endIf
         statements.add( cmd_while )
-        must_consume( TokenType.KEYWORD_END_WHILE )
         return true
 
       else

@@ -138,7 +138,7 @@ class CmdRead( t ) : Cmd
       assembler.write( Opcode.READ )
 endClass
 
-class CmdWhile( t, expression:Cmd ) : Cmd
+class CmdWhile( t, condition:Cmd ) : Cmd
   PROPERTIES
     statements = CmdStatements()
 
@@ -150,8 +150,26 @@ class CmdWhile( t, expression:Cmd ) : Cmd
       assembler.define( label_top )
       statements.write( assembler )
       assembler.define( label_test )
-      expression.write( assembler )
+      condition.write( assembler )
       assembler.write( Opcode.JUMP_NE, label_top )
+endClass
+
+class CmdIf( t, condition:Cmd ) : Cmd
+  PROPERTIES
+    statements      = CmdStatements()
+    else_statements : CmdStatements
+
+  METHODS
+    method write( assembler:Assembler )
+      local label_else   = Label()
+      local label_end_if = Label()
+      condition.write( assembler )
+      assembler.write( Opcode.JUMP_NE, label_else )
+      statements.write( assembler )
+      assembler.write( Opcode.JUMP, label_end_if )
+      assembler.define( label_else )
+      if (else_statements) else_statements.write( assembler )
+      assembler.define( label_end_if )
 endClass
 
 class CmdHasAnother( t ) : Cmd

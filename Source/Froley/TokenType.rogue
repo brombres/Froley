@@ -12,7 +12,10 @@ augment TokenType
   KEYWORD_A          ( "a",           &is_keyword )
   KEYWORD_C          ( "c",           &is_keyword )
   KEYWORD_CALL       ( "call",        &is_keyword )
+  KEYWORD_ELSE_IF    ( "elseIf",      &is_keyword, &is_structural )
+  KEYWORD_END_IF     ( "endIf",       &is_keyword, &is_structural )
   KEYWORD_END_WHILE  ( "endWhile",    &is_keyword, &is_structural )
+  KEYWORD_IF         ( "if",          &is_keyword )
   KEYWORD_GOTO       ( "goto",        &is_keyword )
   KEYWORD_HALT       ( "halt",        &is_keyword )
   KEYWORD_HAS_ANOTHER( "has_another", &is_keyword )
@@ -33,5 +36,6 @@ augment TokenType
   SYMBOL_CLOSE_PAREN ( ")",   &is_symbol, &is_structural )
   SYMBOL_PLUS_EQUALS (  "+=", &is_symbol )
   SYMBOL_PLUS_PLUS   ( "++",  &is_symbol )
+  SYMBOL_SEMICOLON   ( ";",   &is_symbol )
 endAugment
 

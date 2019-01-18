@@ -157,7 +157,7 @@ class CmdWhile( t, condition:Cmd ) : Cmd
       statements.write( assembler )
       assembler.define( label_test )
       condition.write( assembler )
-      assembler.write( Opcode.JUMP_NE, label_top )
+      assembler.write( Opcode.JUMP_IF_TRUE, label_top )
 endClass
 
 class CmdIf( t, condition:Cmd ) : Cmd
@@ -170,7 +170,7 @@ class CmdIf( t, condition:Cmd ) : Cmd
       local label_else   = Label()
       local label_end_if = Label()
       condition.write( assembler )
-      assembler.write( Opcode.JUMP_NE, label_else )
+      assembler.write( Opcode.JUMP_IF_FALSE, label_else )
       statements.write( assembler )
       assembler.write( Opcode.JUMP, label_end_if )
       assembler.define( label_else )
@@ -277,6 +277,81 @@ class CmdCompareEQ : CmdBinary
         endIf
       else
         throw left.t.error( "The left-hand side of '==' must be register 'a'." )
+      endIf
+endClass
+
+class CmdCompareNE : CmdBinary
+  METHODS
+    method write( assembler:Assembler )
+      if (left instanceOf CmdRegisterA)
+        if (right instanceOf CmdLiteralInt32)
+          assembler.write( Opcode.COMPARE_A_INT32, right->Int32 )
+          assembler.write( Opcode.TEST_NE )
+        else
+          throw right.t.error( "'a' can only be compared with an integer." )
+        endIf
+      else
+        throw left.t.error( "The left-hand side of '!=' must be register 'a'." )
+      endIf
+endClass
+
+class CmdCompareLT : CmdBinary
+  METHODS
+    method write( assembler:Assembler )
+      if (left instanceOf CmdRegisterA)
+        if (right instanceOf CmdLiteralInt32)
+          assembler.write( Opcode.COMPARE_A_INT32, right->Int32 )
+          assembler.write( Opcode.TEST_LT )
+        else
+          throw right.t.error( "'a' can only be compared with an integer." )
+        endIf
+      else
+        throw left.t.error( "The left-hand side of '<' must be register 'a'." )
+      endIf
+endClass
+
+class CmdCompareLE : CmdBinary
+  METHODS
+    method write( assembler:Assembler )
+      if (left instanceOf CmdRegisterA)
+        if (right instanceOf CmdLiteralInt32)
+          assembler.write( Opcode.COMPARE_A_INT32, right->Int32 )
+          assembler.write( Opcode.TEST_LE )
+        else
+          throw right.t.error( "'a' can only be compared with an integer." )
+        endIf
+      else
+        throw left.t.error( "The left-hand side of '<=' must be register 'a'." )
+      endIf
+endClass
+
+class CmdCompareGT : CmdBinary
+  METHODS
+    method write( assembler:Assembler )
+      if (left instanceOf CmdRegisterA)
+        if (right instanceOf CmdLiteralInt32)
+          assembler.write( Opcode.COMPARE_A_INT32, right->Int32 )
+          assembler.write( Opcode.TEST_GT )
+        else
+          throw right.t.error( "'a' can only be compared with an integer." )
+        endIf
+      else
+        throw left.t.error( "The left-hand side of '>' must be register 'a'." )
+      endIf
+endClass
+
+class CmdCompareGE : CmdBinary
+  METHODS
+    method write( assembler:Assembler )
+      if (left instanceOf CmdRegisterA)
+        if (right instanceOf CmdLiteralInt32)
+          assembler.write( Opcode.COMPARE_A_INT32, right->Int32 )
+          assembler.write( Opcode.TEST_GE )
+        else
+          throw right.t.error( "'a' can only be compared with an integer." )
+        endIf
+      else
+        throw left.t.error( "The left-hand side of '>=' must be register 'a'." )
       endIf
 endClass
 

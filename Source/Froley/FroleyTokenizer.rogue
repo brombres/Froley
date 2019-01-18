@@ -14,5 +14,14 @@ class FroleyTokenizer : Tokenizer
 
     method on_string( value:String )
       tokens.add( Token(TokenType.STRING,value) )
+
+    method tokenize_string->Logical
+      if (prior.tokenize_string) return true
+      local ch = peek
+      if (ch != '\'') return false
+      local st = scan_string( '\'' )
+      if (st.count == 1) tokens.add( Token(TokenType.INTEGER,st[0]->Int64) )
+      else               on_string( st )
+      return true
 endClass
 

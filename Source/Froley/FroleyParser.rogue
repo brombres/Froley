@@ -13,6 +13,11 @@ class FroleyParser : Parser
       # comparison
       rule = add_nested( BinaryParseRule("comparison") )
       rule.on( "==", <<CmdCompareEQ>> )
+      rule.on( "!=", <<CmdCompareNE>> )
+      rule.on( "<",  <<CmdCompareLT>> )
+      rule.on( "<=", <<CmdCompareLE>> )
+      rule.on( ">",  <<CmdCompareGT>> )
+      rule.on( ">=", <<CmdCompareGE>> )
 
       # term
       rule = add_nested( ParseRule("term") )
@@ -138,9 +143,9 @@ class FroleyParser : Parser
       elseIf (consume(TokenType.KEYWORD_PRINT))
         if (next_is(TokenType.STRING))
           statements.add( CmdPrintString(t,read.text) )
-          must_consume( TokenType.EOL )
+          if (not consume(TokenType.SYMBOL_SEMICOLON)) must_consume( TokenType.EOL )
           return true
-        elseIf (next_is(TokenType.EOL))
+        elseIf (next_is(TokenType.EOL) or next_is(TokenType.SYMBOL_SEMICOLON))
           statements.add( CmdPrintA(t) )
           return true
         else

@@ -30,10 +30,13 @@ augment TokenType
 
   SYMBOL_EQUALS       ( "=",   &is_symbol )
   SYMBOL_EQUALS_EQUALS( "==",  &is_symbol )
+  SYMBOL_GE           ( ">=",  &is_symbol )
   SYMBOL_GT           ( ">",   &is_symbol )
+  SYMBOL_LE           ( "<=",  &is_symbol )
   SYMBOL_LT           ( "<",   &is_symbol )
   SYMBOL_MINUS_EQUALS ( "-=",  &is_symbol )
   SYMBOL_MINUS_MINUS  ( "--",  &is_symbol )
+  SYMBOL_NOT_EQUAL    ( "!=",  &is_symbol )
   SYMBOL_OPEN_PAREN   ( "(",   &is_symbol )
   SYMBOL_CLOSE_PAREN  ( ")",   &is_symbol, &is_structural )
   SYMBOL_PLUS_EQUALS  (  "+=", &is_symbol )

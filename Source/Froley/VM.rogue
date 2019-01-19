@@ -10,10 +10,9 @@ class VM
     code    = Int32[]
     stack   = Int32[]
     strings = String[]
-    a       : Int32
-    c       : Int32
-    delta   : Int32
-    success : Logical
+    ch      : Int32
+    count   : Int32
+    result  : Int32
 
     filepath : String
     scanner  : Scanner
@@ -27,6 +26,7 @@ class VM
       loop
         local opcode = code[ ip ]
         ++ip
+        #trace Opcode(opcode)
         which (opcode)
           case Opcode.HALT
             return
@@ -40,12 +40,28 @@ class VM
           case Opcode.JUMP
             ip = code[ ip ]
             nextIteration
-          case Opcode.JUMP_IF_TRUE
-            if (success) ip = code[ ip ]
-            else         ++ip
+          case Opcode.JUMP_EQ
+            if (result == 0) ip = code[ ip ]
+            else             ++ip
             nextIteration
-          case Opcode.JUMP_IF_FALSE
-            if (not success) ip = code[ ip ]
+          case Opcode.JUMP_NE
+            if (result != 0) ip = code[ ip ]
+            else             ++ip
+            nextIteration
+          case Opcode.JUMP_LT
+            if (result < 0) ip = code[ ip ]
+            else            ++ip
+            nextIteration
+          case Opcode.JUMP_LE
+            if (result <= 0) ip = code[ ip ]
+            else             ++ip
+            nextIteration
+          case Opcode.JUMP_GT
+            if (result > 0) ip = code[ ip ]
+            else            ++ip
+            nextIteration
+          case Opcode.JUMP_GE
+            if (result >= 0) ip = code[ ip ]
             else             ++ip
             nextIteration
           case Opcode.CALL
@@ -56,102 +72,77 @@ class VM
           #case Opcode.SCAN_TABLE
           #case Opcode.MARK_SOURCE_POS
           case Opcode.HAS_ANOTHER
-            success = scanner.has_another
+            result = select{ scanner.has_another:1 || 0 }
             nextIteration
           case Opcode.INPUT
-            a = scanner.read
-            delta = a
-            success = delta?
+            ch = scanner.read
+            result = ch
             nextIteration
           #case Opcode.PEEK_N
           #case Opcode.CONSUME
           #case Opcode.CONSUME_CHARACTER
           #case Opcode.CONSUME_STRING
           #case Opcode.CLEAR_BUFFER
-          #case Opcode.WRITE_A
-          #case Opcode.WRITE_STRING
-          case Opcode.PRINT_A
-            print a->Character
+          #case Opcode.COLLECT_CH
+          #case Opcode.COLLECT_STRING
+          case Opcode.PRINT_CH
+            print ch->Character
             nextIteration
           case Opcode.PRINT_STRING
             print strings[ code[ip] ]
             ++ip
             nextIteration
-          case Opcode.SET_A
-            a = code[ ip ]
+          case Opcode.SET_CH_INT32
+            ch = code[ ip ]
             ++ip
-            delta = a
-            success = delta?
+            result = ch
             nextIteration
-          case Opcode.TEST_A
-            delta = a
-            success = delta?
-            nextIteration
-          case Opcode.TEST_EQ
-            success = (delta == 0)
-            nextIteration
-          case Opcode.TEST_NE
-            success = (delta != 0)
-            nextIteration
-          case Opcode.TEST_LT
-            success = (delta < 0)
-            nextIteration
-          case Opcode.TEST_LE
-            success = (delta <= 0)
-            nextIteration
-          case Opcode.TEST_GT
-            success = (delta > 0)
-            nextIteration
-          case Opcode.TEST_GE
-            success = (delta >= 0)
-            nextIteration
-          case Opcode.COMPARE_A_INT32
-            delta = a - code[ip]
+          case Opcode.COMPARE_CH_INT32
+            result = ch - code[ip]
             ++ip
-            success = delta?
             nextIteration
-          case Opcode.PUSH_A
-            stack.add( a )
+          case Opcode.TEST_COUNT
+            result = count
             nextIteration
-          case Opcode.POP_A
+          case Opcode.PUSH_CH
+            stack.add( ch )
+            nextIteration
+          case Opcode.POP_CH
             if (stack.is_empty) throw FroleyError( "[Compiled Code]", "'pop' on empty stack." )
-            a = stack.remove_last
+            ch = stack.remove_last
             nextIteration
           case Opcode.SET_C
-            c = code[ ip ]
+            count = code[ ip ]
             ++ip
-            delta = c
-            success = delta?
+            result = count
             nextIteration
-          case Opcode.MOVE_A_TO_C
-            c = a
-            delta = c
-            success = delta?
+          case Opcode.MOVE_CH_TO_C
+            count = ch
+            result = count
             nextIteration
-          case Opcode.MOVE_C_TO_A
-            a = c
-            delta = a
-            success = delta?
+          case Opcode.MOVE_C_TO_CH
+            ch = count
+            result = ch
             nextIteration
-          case Opcode.ADD_A_INT32
-            a += code[ ip ]
+          case Opcode.ADD_CH_INT32
+            ch += code[ ip ]
             ++ip
-            delta = a; success = delta?
+            result = ch
             nextIteration
           case Opcode.ADD_C_INT32
-            c += code[ ip ]
+            count += code[ ip ]
             ++ip
-            delta = c; success = delta?
+            result = count
             nextIteration
-          case Opcode.SUB_A_INT32
-            a -= code[ ip ]
+          case Opcode.SUB_CH_INT32
+            ch -= code[ ip ]
             ++ip
-            delta = a; success = delta?
+            result = ch
             nextIteration
           case Opcode.SUB_C_INT32
-            c -= code[ ip ]
+            count -= code[ ip ]
             ++ip
-            delta = c; success = delta?
+            result = count
             nextIteration
           others
             throw FroleyError( "[INTERNAL] Unhandled opcode: " + Opcode(opcode) )

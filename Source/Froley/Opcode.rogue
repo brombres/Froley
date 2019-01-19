@@ -7,39 +7,37 @@ enum Opcode( size=1:Int32 )
   ACCEPT_X(2)           # Invokes VM callback accept(type,BUFFER), where 'type' is operand, then clears BUFFER & jumps to IP 0
   DISCARD               # Clears BUFFER & jumps to IP 0
   JUMP(2)               # Jumps to IP specified by operand
-  JUMP_IF_TRUE(2)       # Jumps to specified IP if Z=1
-  JUMP_IF_FALSE(2)      # Jumps to specified IP if Z=0
-  CALL(2)               # stack.add(ip); ip = opcode
-  SCAN_TABLE            # large, variable size operand data
-  MARK_SOURCE_POS       # Notes the current source line and column to be used with the next token
-  HAS_ANOTHER           # Z=1 if scanner has another; else Z=0
-  INPUT                 # A = scanner.read
-  PEEK_N(2)             # A = scanner.peek(lookahead=opcode)
-  CONSUME               # A = scanner.read; BUFFER.print(A)
-  CONSUME_CHARACTER(2)  # if (scanner.consume(ch=opcode:Character)){BUFFER.print(ch); Z=1} else {Z=0}
-  CONSUME_STRING(2)     # if (scanner.consume(strings[index=opcode])){BUFFER.print(st);Z=1} else {Z=0}
-  CLEAR_BUFFER          # BUFFER.clear
-  WRITE_A(2)            # BUFFER.print( A->Character )
-  WRITE_STRING(2)       # BUFFER.print( strings[index=opcode] )
-  PRINT_A(2)            # print( A->Character )
-  PRINT_STRING(2)       # print( strings[index=opcode] )
-  SET_A(2)              # A = operand:Int32
-  TEST_A                # RESULT flag updated
-  TEST_EQ               # RESULT flag updated (true if equal)
-  TEST_NE               # RESULT flag updated (etc)
-  TEST_LT               # RESULT flag updated
-  TEST_LE               # RESULT flag updated
-  TEST_GT               # RESULT flag updated
-  TEST_GE               # RESULT flag updated
-  COMPARE_A_INT32
-  PUSH_A
-  POP_A
-  SET_C(2)              # C = operand:Int32
-  MOVE_A_TO_C           # C = A
-  MOVE_C_TO_A           # A = C
-  ADD_A_INT32(2)        # A += operand:Int32
-  ADD_C_INT32(2)        # C += operand:Int32
-  SUB_A_INT32(2)        # A -= operand:Int32
-  SUB_C_INT32(2)        # C -= operand:Int32
+  JUMP_EQ               #
+  JUMP_NE               #
+  JUMP_LT               #
+  JUMP_LE               #
+  JUMP_GT               #
+  JUMP_GE               #
+  CALL(2)               #
+  SCAN_TABLE            #
+  MARK_SOURCE_POS       #
+  HAS_ANOTHER           #
+  INPUT                 #
+  PEEK_N(2)             #
+  CONSUME               #
+  CONSUME_CHARACTER(2)  #
+  CONSUME_STRING(2)     #
+  CLEAR_BUFFER          #
+  COLLECT_CH            #
+  COLLECT_STRING(2)     #
+  PRINT_CH              #
+  PRINT_STRING(2)       #
+  SET_CH_INT32(2)       #
+  COMPARE_CH_INT32
+  TEST_COUNT
+  PUSH_CH
+  POP_CH
+  SET_C(2)              #
+  MOVE_CH_TO_C           #
+  MOVE_C_TO_CH           #
+  ADD_CH_INT32(2)        #
+  ADD_C_INT32(2)        #
+  SUB_CH_INT32(2)        #
+  SUB_C_INT32(2)        #
 endEnum
 

@@ -3,6 +3,21 @@ module Froley
 
 augment Cmd
   METHODS
+    method jump_if_true->Opcode
+      throw UnsupportedOperationError()
+
+    method jump_if_false->Opcode
+      which (jump_if_true)
+        case Opcode.JUMP_EQ: return Opcode.JUMP_NE
+        case Opcode.JUMP_NE: return Opcode.JUMP_EQ
+        case Opcode.JUMP_LT: return Opcode.JUMP_GE
+        case Opcode.JUMP_LE: return Opcode.JUMP_GT
+        case Opcode.JUMP_GT: return Opcode.JUMP_LE
+        case Opcode.JUMP_GE: return Opcode.JUMP_LT
+        others
+          throw UnsupportedOperationError()
+      endWhich
+
     method to->Int32
       throw UnsupportedOperationError()
 
@@ -13,10 +28,10 @@ augment Cmd
       throw t.error( "Illegal assignment." )
 
     method write_add( assembler:Assembler, expression:Cmd )
-      throw t.error( "Illegal operation target - target must be 'a' or 'c'." )
+      throw t.error( "Illegal operation target - target must be 'ch' or 'count'." )
 
     method write_subtract( assembler:Assembler, expression:Cmd )
-      throw t.error( "Illegal operation target - target must be 'a' or 'c'." )
+      throw t.error( "Illegal operation target - target must be 'ch' or 'count'." )
 
     method error( message:String )->Error
       return t.error( message )
@@ -77,10 +92,10 @@ endClass
 class CmdPrintA( t ) : Cmd
   METHODS
     method write( assembler:Assembler )
-      assembler.write( Opcode.PRINT_A )
+      assembler.write( Opcode.PRINT_CH )
 
     method to->String
-      return "print a"
+      return "print ch"
 endClass
 
 class CmdAccess( t, name:String ) : Cmd
@@ -92,7 +107,7 @@ class CmdAccess( t, name:String ) : Cmd
       throw t.error( ''No such function or register "$".'' (name) )
 
     method write_assignment( assembler:Assembler, new_value:Cmd )
-      throw t.error( "Illegal assignment target. Valid targets are 'a' and 'c'." )
+      throw t.error( "Illegal assignment target. Valid targets are 'ch' and 'count'." )
 
     method to->String
       return name
@@ -111,6 +126,9 @@ class CmdLiteralInt32( t, value:Int32 ) : Cmd
 
     method to->Int32
       return value
+
+    method to->String
+      return value->String
 endClass
 
 class CmdAdd( t, target:Cmd, value:Cmd ) : Cmd
@@ -157,7 +175,7 @@ class CmdWhile( t, condition:Cmd ) : Cmd
       statements.write( assembler )
       assembler.define( label_test )
       condition.write( assembler )
-      assembler.write( Opcode.JUMP_IF_TRUE, label_top )
+      assembler.write( condition.jump_if_true, label_top )
 endClass
 
 class CmdIf( t, condition:Cmd ) : Cmd
@@ -170,39 +188,48 @@ class CmdIf( t, condition:Cmd ) : Cmd
       local label_else   = Label()
       local label_end_if = Label()
       condition.write( assembler )
+throw t.error( "TODO" )
+#{
       assembler.write( Opcode.JUMP_IF_FALSE, label_else )
       statements.write( assembler )
       assembler.write( Opcode.JUMP, label_end_if )
       assembler.define( label_else )
       if (else_statements) else_statements.write( assembler )
       assembler.define( label_end_if )
+}#
 endClass
 
 class CmdHasAnother( t ) : Cmd
   METHODS
+    method jump_if_true->Opcode
+      return Opcode.JUMP_GT
+
     method write( assembler:Assembler )
       assembler.write( Opcode.HAS_ANOTHER )
 endClass
 
-class CmdRegisterA( t ) : Cmd
+class CmdRegisterCh( t ) : Cmd
   METHODS
+    method to->String
+      return "ch"
+
     method write( assembler:Assembler )
-      assembler.write( Opcode.TEST_A )
+      throw t.error( "Syntax error." )
 
     method write_assignment( assembler:Assembler, new_value:Cmd )
       local cmd_int32 = new_value as CmdLiteralInt32
       if (cmd_int32)
-        assembler.write( Opcode.SET_A, cmd_int32.value )
-      elseIf (new_value instanceOf CmdRegisterC)
-        assembler.write( Opcode.MOVE_C_TO_A )
+        assembler.write( Opcode.SET_CH_INT32, cmd_int32.value )
+      elseIf (new_value instanceOf CmdRegisterCount)
+        assembler.write( Opcode.MOVE_C_TO_CH )
       else
-        throw t.error( "Illegal assignment value. 'a' can be assigned either 'c' or an integer." )
+        throw t.error( "Illegal assignment value. 'ch' can be assigned either 'count' or an integer." )
       endIf
 
     method write_add( assembler:Assembler, expression:Cmd )
       local cmd_int = expression as CmdLiteralInt32
       if (cmd_int)
-        assembler.write( Opcode.ADD_A_INT32, cmd_int.value )
+        assembler.write( Opcode.ADD_CH_INT32, cmd_int.value )
       else
         throw expression.error( "Illegal operation value; integer expected." )
       endIf
@@ -210,25 +237,28 @@ class CmdRegisterA( t ) : Cmd
     method write_subtract( assembler:Assembler, expression:Cmd )
       local cmd_int = expression as CmdLiteralInt32
       if (cmd_int)
-        assembler.write( Opcode.SUB_A_INT32, cmd_int.value )
+        assembler.write( Opcode.SUB_CH_INT32, cmd_int.value )
       else
         throw expression.error( "Illegal operation value; integer expected." )
       endIf
 endClass
 
-class CmdRegisterC( t ) : Cmd
+class CmdRegisterCount( t ) : Cmd
   METHODS
+    method jump_if_true->Opcode
+      return Opcode.JUMP_GT
+
     method write( assembler:Assembler )
-      assembler.write( Opcode.MOVE_C_TO_A )
+      assembler.write( Opcode.TEST_COUNT )
 
     method write_assignment( assembler:Assembler, new_value:Cmd )
       local cmd_int32 = new_value as CmdLiteralInt32
       if (cmd_int32)
         assembler.write( Opcode.SET_C, cmd_int32.value )
-      elseIf (new_value instanceOf CmdRegisterA)
-        assembler.write( Opcode.MOVE_A_TO_C )
+      elseIf (new_value instanceOf CmdRegisterCh)
+        assembler.write( Opcode.MOVE_CH_TO_C )
       else
-        throw t.error( "Illegal assignment value. 'c' can be assigned ether 'a' or an integer." )
+        throw t.error( "Illegal assignment value. 'count' can be assigned ether 'ch' or an integer." )
       endIf
 
     method write_add( assembler:Assembler, expression:Cmd )
@@ -251,107 +281,60 @@ endClass
 class CmdPush( t ) : Cmd
   METHODS
     method write( assembler:Assembler )
-      assembler.write( Opcode.PUSH_A )
+      assembler.write( Opcode.PUSH_CH )
 endClass
 
 class CmdPop( t ) : Cmd
   METHODS
     method write( assembler:Assembler )
-      assembler.write( Opcode.POP_A )
+      assembler.write( Opcode.POP_CH )
 endClass
 
-class CmdTest( t ) : Cmd
+class CmdCompare : CmdBinary
   METHODS
     method write( assembler:Assembler )
-      assembler.write( Opcode.TEST_A )
-endClass
-
-class CmdCompareEQ : CmdBinary
-  METHODS
-    method write( assembler:Assembler )
-      if (left instanceOf CmdRegisterA)
+      if (left instanceOf CmdRegisterCh)
         if (right instanceOf CmdLiteralInt32)
-          assembler.write( Opcode.COMPARE_A_INT32, right->Int32 )
-        else
-          throw right.t.error( "'a' can only be compared with an integer." )
+          assembler.write( Opcode.COMPARE_CH_INT32, right->Int32 )
+          return
         endIf
-      else
-        throw left.t.error( "The left-hand side of '==' must be register 'a'." )
       endIf
+      throw t.error( "Unsupported comparison between '$' and '$'." (left,right) )
 endClass
 
-class CmdCompareNE : CmdBinary
+class CmdCompareEQ : CmdCompare
   METHODS
-    method write( assembler:Assembler )
-      if (left instanceOf CmdRegisterA)
-        if (right instanceOf CmdLiteralInt32)
-          assembler.write( Opcode.COMPARE_A_INT32, right->Int32 )
-          assembler.write( Opcode.TEST_NE )
-        else
-          throw right.t.error( "'a' can only be compared with an integer." )
-        endIf
-      else
-        throw left.t.error( "The left-hand side of '!=' must be register 'a'." )
-      endIf
+    method jump_if_true->Opcode
+      return Opcode.JUMP_EQ
 endClass
 
-class CmdCompareLT : CmdBinary
+class CmdCompareNE : CmdCompare
   METHODS
-    method write( assembler:Assembler )
-      if (left instanceOf CmdRegisterA)
-        if (right instanceOf CmdLiteralInt32)
-          assembler.write( Opcode.COMPARE_A_INT32, right->Int32 )
-          assembler.write( Opcode.TEST_LT )
-        else
-          throw right.t.error( "'a' can only be compared with an integer." )
-        endIf
-      else
-        throw left.t.error( "The left-hand side of '<' must be register 'a'." )
-      endIf
+    method jump_if_true->Opcode
+      return Opcode.JUMP_NE
 endClass
 
-class CmdCompareLE : CmdBinary
+class CmdCompareLT : CmdCompare
   METHODS
-    method write( assembler:Assembler )
-      if (left instanceOf CmdRegisterA)
-        if (right instanceOf CmdLiteralInt32)
-          assembler.write( Opcode.COMPARE_A_INT32, right->Int32 )
-          assembler.write( Opcode.TEST_LE )
-        else
-          throw right.t.error( "'a' can only be compared with an integer." )
-        endIf
-      else
-        throw left.t.error( "The left-hand side of '<=' must be register 'a'." )
-      endIf
+    method jump_if_true->Opcode
+      return Opcode.JUMP_LT
 endClass
 
-class CmdCompareGT : CmdBinary
+class CmdCompareLE : CmdCompare
   METHODS
-    method write( assembler:Assembler )
-      if (left instanceOf CmdRegisterA)
-        if (right instanceOf CmdLiteralInt32)
-          assembler.write( Opcode.COMPARE_A_INT32, right->Int32 )
-          assembler.write( Opcode.TEST_GT )
-        else
-          throw right.t.error( "'a' can only be compared with an integer." )
-        endIf
-      else
-        throw left.t.error( "The left-hand side of '>' must be register 'a'." )
-      endIf
+    method jump_if_true->Opcode
+      return Opcode.JUMP_LE
 endClass
 
-class CmdCompareGE : CmdBinary
+class CmdCompareGT : CmdCompare
   METHODS
-    method write( assembler:Assembler )
-      if (left instanceOf CmdRegisterA)
-        if (right instanceOf CmdLiteralInt32)
-          assembler.write( Opcode.COMPARE_A_INT32, right->Int32 )
-          assembler.write( Opcode.TEST_GE )
-        else
-          throw right.t.error( "'a' can only be compared with an integer." )
-        endIf
-      else
-        throw left.t.error( "The left-hand side of '>=' must be register 'a'." )
-      endIf
+    method jump_if_true->Opcode
+      return Opcode.JUMP_GT
+endClass
+
+class CmdCompareGE : CmdCompare
+  METHODS
+    method jump_if_true->Opcode
+      return Opcode.JUMP_GE
 endClass
 

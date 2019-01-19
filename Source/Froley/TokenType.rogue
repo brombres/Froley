@@ -9,8 +9,8 @@ augment TokenType
   STRING( "literal string" )
   LABEL( "label" )
 
-  KEYWORD_A          ( "a",           &is_keyword )
-  KEYWORD_C          ( "c",           &is_keyword )
+  KEYWORD_CH         ( "ch",          &is_keyword )
+  KEYWORD_COUNT      ( "count",       &is_keyword )
   KEYWORD_CALL       ( "call",        &is_keyword )
   KEYWORD_ELSE       ( "else",        &is_keyword, &is_structural )
   KEYWORD_ELSE_IF    ( "elseIf",      &is_keyword, &is_structural )
@@ -25,7 +25,6 @@ augment TokenType
   KEYWORD_PUSH       ( "push",        &is_keyword )
   KEYWORD_INPUT      ( "input",       &is_keyword )
   KEYWORD_RETURN     ( "return",      &is_keyword )
-  KEYWORD_TEST       ( "test",        &is_keyword )
   KEYWORD_WHILE      ( "while",       &is_keyword )
 
   SYMBOL_EQUALS       ( "=",   &is_symbol )

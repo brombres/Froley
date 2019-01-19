@@ -29,8 +29,8 @@ class FroleyParser : Parser
           return result
         endFunction
       )
-      rule.on( "a",             <<CmdRegisterA>> )
-      rule.on( "c",             <<CmdRegisterC>> )
+      rule.on( "ch",             <<CmdRegisterCh>> )
+      rule.on( "count",          <<CmdRegisterCount>> )
       rule.on( "has_another",   <<CmdHasAnother>> )
       rule.on( "identifier",    <<CmdAccess>> )
       rule.on( "integer value", <<CmdLiteralInt32>> )
@@ -145,11 +145,15 @@ class FroleyParser : Parser
           statements.add( CmdPrintString(t,read.text) )
           if (not consume(TokenType.SYMBOL_SEMICOLON)) must_consume( TokenType.EOL )
           return true
-        elseIf (next_is(TokenType.EOL) or next_is(TokenType.SYMBOL_SEMICOLON))
-          statements.add( CmdPrintA(t) )
-          return true
         else
-          throw t.error( "Syntax error - valid syntax is 'print' or 'print <string>'." )
+          if (not (next_is(TokenType.EOL) or next_is(TokenType.SYMBOL_SEMICOLON)))
+            local expr = parse_expression()
+            if (expr instanceOf CmdRegisterCh)
+              statements.add( CmdPrintA(t) )
+              return true
+            endIf
+          endIf
+          throw t.error( "Syntax error - 'print ch' or 'print <string>' expected." )
         endIf
 
       elseIf (consume(TokenType.KEYWORD_INPUT))
@@ -182,10 +186,6 @@ class FroleyParser : Parser
 
       elseIf (consume(TokenType.KEYWORD_PUSH))
         statements.add( CmdPush(t) )
-        return true
-
-      elseIf (consume(TokenType.KEYWORD_TEST))
-        statements.add( CmdTest(t) )
         return true
 
       else
@@ -237,9 +237,9 @@ class FroleyParser : Parser
 
     method parse_register->Cmd
       local t = peek
-      if (consume(TokenType.KEYWORD_A)) return CmdRegisterA( t )
-      if (consume(TokenType.KEYWORD_C)) return CmdRegisterC( t )
-      throw t.error( "Register 'a' or 'c' expected." )
+      if (consume(TokenType.KEYWORD_CH)) return CmdRegisterCh( t )
+      if (consume(TokenType.KEYWORD_COUNT)) return CmdRegisterCount( t )
+      throw t.error( "Register 'ch' or 'count' expected." )
 
     method read_identifier->String
       if (next_is(TokenType.IDENTIFIER))

@@ -58,12 +58,7 @@ class Froley
 
       local bytes = Assembler().assemble( statements )
       local vm = VM( bytes )
-      vm.tokenize( File("Test.txt") )
-
-      #{
-      local tokens = FroleyTokenizer().tokenize( filepath, source )
-      trace tokens
-      }#
+      vm.tokenize( File("Test2.txt") )
 
 endClass
 

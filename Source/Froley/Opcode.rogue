@@ -13,7 +13,7 @@ enum Opcode( size=1:Int32 )
   SCAN_TABLE            # large, variable size operand data
   MARK_SOURCE_POS       # Notes the current source line and column to be used with the next token
   HAS_ANOTHER           # Z=1 if scanner has another; else Z=0
-  READ                  # A = scanner.read
+  INPUT                 # A = scanner.read
   PEEK_N(2)             # A = scanner.peek(lookahead=opcode)
   CONSUME               # A = scanner.read; BUFFER.print(A)
   CONSUME_CHARACTER(2)  # if (scanner.consume(ch=opcode:Character)){BUFFER.print(ch); Z=1} else {Z=0}

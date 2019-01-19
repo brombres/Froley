@@ -58,7 +58,7 @@ class VM
           case Opcode.HAS_ANOTHER
             success = scanner.has_another
             nextIteration
-          case Opcode.READ
+          case Opcode.INPUT
             a = scanner.read
             delta = a
             success = delta?

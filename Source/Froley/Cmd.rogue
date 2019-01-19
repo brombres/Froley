@@ -138,10 +138,10 @@ class CmdReturn( t ) : Cmd
       assembler.write( Opcode.RETURN )
 endClass
 
-class CmdRead( t ) : Cmd
+class CmdInput( t ) : Cmd
   METHODS
     method write( assembler:Assembler )
-      assembler.write( Opcode.READ )
+      assembler.write( Opcode.INPUT )
 endClass
 
 class CmdWhile( t, condition:Cmd ) : Cmd

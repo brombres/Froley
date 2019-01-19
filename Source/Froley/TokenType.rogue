@@ -23,7 +23,7 @@ augment TokenType
   KEYWORD_PRINT      ( "print",       &is_keyword )
   KEYWORD_POP        ( "pop",         &is_keyword )
   KEYWORD_PUSH       ( "push",        &is_keyword )
-  KEYWORD_READ       ( "read",        &is_keyword )
+  KEYWORD_INPUT      ( "input",       &is_keyword )
   KEYWORD_RETURN     ( "return",      &is_keyword )
   KEYWORD_TEST       ( "test",        &is_keyword )
   KEYWORD_WHILE      ( "while",       &is_keyword )

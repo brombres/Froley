@@ -152,8 +152,8 @@ class FroleyParser : Parser
           throw t.error( "Syntax error - valid syntax is 'print' or 'print <string>'." )
         endIf
 
-      elseIf (consume(TokenType.KEYWORD_READ))
-        statements.add( CmdRead(t) )
+      elseIf (consume(TokenType.KEYWORD_INPUT))
+        statements.add( CmdInput(t) )
         return true
 
       elseIf (consume(TokenType.KEYWORD_RETURN))

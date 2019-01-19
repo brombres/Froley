@@ -31,7 +31,7 @@ class FroleyParser : Parser
       )
       rule.on( "ch",             <<CmdRegisterCh>> )
       rule.on( "count",          <<CmdRegisterCount>> )
-      rule.on( "has_another",   <<CmdHasAnother>> )
+      rule.on( "hasAnother",    <<CmdHasAnother>> )
       rule.on( "identifier",    <<CmdAccess>> )
       rule.on( "integer value", <<CmdLiteralInt32>> )
 
@@ -148,16 +148,36 @@ class FroleyParser : Parser
         else
           if (not (next_is(TokenType.EOL) or next_is(TokenType.SYMBOL_SEMICOLON)))
             local expr = parse_expression()
-            if (expr instanceOf CmdRegisterCh)
-              statements.add( CmdPrintA(t) )
+            if (expr.is_ch)
+              statements.add( CmdPrintCh(t) )
+              return true
+            elseIf (expr.is_count)
+              statements.add( CmdPrintCount(t) )
+              return true
+            elseIf (expr.is_integer)
+              statements.add( CmdPrintCharacter(t,expr->Int32) )
               return true
             endIf
           endIf
-          throw t.error( "Syntax error - 'print ch' or 'print <string>' expected." )
+          throw t.error( "Syntax error - valid 'print' arguments are  'ch', 'count', and '<string>'." )
         endIf
 
-      elseIf (consume(TokenType.KEYWORD_INPUT))
-        statements.add( CmdInput(t) )
+      elseIf (consume(TokenType.KEYWORD_READ))
+        statements.add( CmdRead(t) )
+        return true
+
+      elseIf (consume(TokenType.KEYWORD_READ_NUMBER))
+        local arg = parse_expression()
+        contingent
+          necessary (arg.is_integer)
+          necessary (consume(TokenType.SYMBOL_COMMA))
+          necessary (parse_register.is_ch)
+          necessary (consume(TokenType.SYMBOL_COMMA))
+          necessary (parse_register.is_count)
+          statements.add( CmdReadNumber(t,arg->Int32) )
+        unsatisfied
+          throw t.error( "Syntax error. Correct syntax: 'readNumber <base>, ch, count'." )
+        endContingent
         return true
 
       elseIf (consume(TokenType.KEYWORD_RETURN))

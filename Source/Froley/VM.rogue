@@ -74,9 +74,18 @@ class VM
           case Opcode.HAS_ANOTHER
             result = select{ scanner.has_another:1 || 0 }
             nextIteration
-          case Opcode.INPUT
+          case Opcode.READ
             ch = scanner.read
-            result = ch
+            nextIteration
+          case Opcode.READ_NUMBER
+            local base = code[ ip ]
+            ++ip
+            ch = 0
+            count = 0
+            while (scanner.has_another and scanner.peek.is_number(base))
+              ch = ch * base + scanner.read.to_number(base)
+              ++count
+            endWhile
             nextIteration
           #case Opcode.PEEK_N
           #case Opcode.CONSUME
@@ -88,6 +97,13 @@ class VM
           case Opcode.PRINT_CH
             print ch->Character
             nextIteration
+          case Opcode.PRINT_COUNT
+            print count
+            nextIteration
+          case Opcode.PRINT_CHARACTER
+            print code[ip]->Character
+            ++ip
+            nextIteration
           case Opcode.PRINT_STRING
             print strings[ code[ip] ]
             ++ip
@@ -95,11 +111,17 @@ class VM
           case Opcode.SET_CH_INT32
             ch = code[ ip ]
             ++ip
-            result = ch
             nextIteration
           case Opcode.COMPARE_CH_INT32
             result = ch - code[ip]
             ++ip
+            nextIteration
+          case Opcode.COMPARE_COUNT_INT32
+            result = count - code[ip]
+            ++ip
+            nextIteration
+          case Opcode.TEST_CH
+            result = ch
             nextIteration
           case Opcode.TEST_COUNT
             result = count
@@ -114,35 +136,28 @@ class VM
           case Opcode.SET_C
             count = code[ ip ]
             ++ip
-            result = count
             nextIteration
           case Opcode.MOVE_CH_TO_C
             count = ch
-            result = count
             nextIteration
           case Opcode.MOVE_C_TO_CH
             ch = count
-            result = ch
             nextIteration
           case Opcode.ADD_CH_INT32
             ch += code[ ip ]
             ++ip
-            result = ch
             nextIteration
           case Opcode.ADD_C_INT32
             count += code[ ip ]
             ++ip
-            result = count
             nextIteration
           case Opcode.SUB_CH_INT32
             ch -= code[ ip ]
             ++ip
-            result = ch
             nextIteration
           case Opcode.SUB_C_INT32
             count -= code[ ip ]
             ++ip
-            result = count
             nextIteration
           others
             throw FroleyError( "[INTERNAL] Unhandled opcode: " + Opcode(opcode) )

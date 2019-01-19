@@ -17,7 +17,8 @@ enum Opcode( size=1:Int32 )
   SCAN_TABLE            #
   MARK_SOURCE_POS       #
   HAS_ANOTHER           #
-  INPUT                 #
+  READ                  #
+  READ_NUMBER(2)          #
   PEEK_N(2)             #
   CONSUME               #
   CONSUME_CHARACTER(2)  #
@@ -26,9 +27,13 @@ enum Opcode( size=1:Int32 )
   COLLECT_CH            #
   COLLECT_STRING(2)     #
   PRINT_CH              #
+  PRINT_COUNT           #
+  PRINT_CHARACTER(2)    #
   PRINT_STRING(2)       #
   SET_CH_INT32(2)       #
   COMPARE_CH_INT32
+  COMPARE_COUNT_INT32   #
+  TEST_CH
   TEST_COUNT
   PUSH_CH
   POP_CH

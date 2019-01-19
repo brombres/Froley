@@ -3,6 +3,15 @@ module Froley
 
 augment Cmd
   METHODS
+    method is_ch->Logical
+      return false
+
+    method is_count->Logical
+      return false
+
+    method is_integer->Logical
+      return false
+
     method jump_if_true->Opcode
       throw UnsupportedOperationError()
 
@@ -80,6 +89,34 @@ class CmdLabel( t, name:String ) : Cmd
       return "<$>" (name)
 endClass
 
+class CmdPrintCh( t ) : Cmd
+  METHODS
+    method write( assembler:Assembler )
+      assembler.write( Opcode.PRINT_CH )
+
+    method to->String
+      return "print ch"
+endClass
+
+class CmdPrintCount( t ) : Cmd
+  METHODS
+    method write( assembler:Assembler )
+      assembler.write( Opcode.PRINT_COUNT )
+
+    method to->String
+      return "print count"
+endClass
+
+class CmdPrintCharacter( t, code:Int32 ) : Cmd
+  METHODS
+    method write( assembler:Assembler )
+      assembler.write( Opcode.PRINT_CHARACTER, code )
+
+    method to->String
+      return "print '$'" (code->Character.to_escaped_ascii)
+endClass
+
+
 class CmdPrintString( t, value:String ) : Cmd
   METHODS
     method write( assembler:Assembler )
@@ -87,15 +124,6 @@ class CmdPrintString( t, value:String ) : Cmd
 
     method to->String
       return ''print "$"'' (value.to_escaped_ascii)
-endClass
-
-class CmdPrintA( t ) : Cmd
-  METHODS
-    method write( assembler:Assembler )
-      assembler.write( Opcode.PRINT_CH )
-
-    method to->String
-      return "print ch"
 endClass
 
 class CmdAccess( t, name:String ) : Cmd
@@ -123,6 +151,9 @@ class CmdLiteralInt32( t, value:Int32 ) : Cmd
   METHODS
     method init( t )
       value = t->Int32
+
+    method is_integer->Logical
+      return true
 
     method to->Int32
       return value
@@ -156,10 +187,10 @@ class CmdReturn( t ) : Cmd
       assembler.write( Opcode.RETURN )
 endClass
 
-class CmdInput( t ) : Cmd
+class CmdRead( t ) : Cmd
   METHODS
     method write( assembler:Assembler )
-      assembler.write( Opcode.INPUT )
+      assembler.write( Opcode.READ )
 endClass
 
 class CmdWhile( t, condition:Cmd ) : Cmd
@@ -204,17 +235,23 @@ class CmdHasAnother( t ) : Cmd
     method jump_if_true->Opcode
       return Opcode.JUMP_GT
 
+    method to->String
+      return "hasAnother"
+
     method write( assembler:Assembler )
       assembler.write( Opcode.HAS_ANOTHER )
 endClass
 
 class CmdRegisterCh( t ) : Cmd
   METHODS
+    method is_ch->Logical
+      return true
+
     method to->String
       return "ch"
 
     method write( assembler:Assembler )
-      throw t.error( "Syntax error." )
+      assembler.write( Opcode.TEST_CH )
 
     method write_assignment( assembler:Assembler, new_value:Cmd )
       local cmd_int32 = new_value as CmdLiteralInt32
@@ -245,8 +282,14 @@ endClass
 
 class CmdRegisterCount( t ) : Cmd
   METHODS
+    method is_count->Logical
+      return true
+
     method jump_if_true->Opcode
       return Opcode.JUMP_GT
+
+    method to->String
+      return "count"
 
     method write( assembler:Assembler )
       assembler.write( Opcode.TEST_COUNT )
@@ -293,9 +336,15 @@ endClass
 class CmdCompare : CmdBinary
   METHODS
     method write( assembler:Assembler )
-      if (left instanceOf CmdRegisterCh)
-        if (right instanceOf CmdLiteralInt32)
+      if (left.is_ch)
+        if (right.is_integer)
           assembler.write( Opcode.COMPARE_CH_INT32, right->Int32 )
+          return
+        endIf
+      endIf
+      if (left.is_count)
+        if (right.is_integer)
+          assembler.write( Opcode.COMPARE_COUNT_INT32, right->Int32 )
           return
         endIf
       endIf
@@ -336,5 +385,11 @@ class CmdCompareGE : CmdCompare
   METHODS
     method jump_if_true->Opcode
       return Opcode.JUMP_GE
+endClass
+
+class CmdReadNumber( t, base:Int32 ) : Cmd
+  METHODS
+    method write( assembler:Assembler )
+      assembler.write( Opcode.READ_NUMBER, base )
 endClass
 

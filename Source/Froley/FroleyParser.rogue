@@ -150,6 +150,38 @@ class FroleyParser : Parser
         statements.add( CmdCall(t,label_name) )
         return true
 
+      elseIf (consume(TokenType.KEYWORD_CLEAR))
+        if (consume(TokenType.KEYWORD_BUFFER))
+          statements.add( CmdClearBuffer(t) )
+          return true
+        else
+          throw peek.error( "Expected 'buffer'." )
+        endIf
+
+      elseIf (consume(TokenType.KEYWORD_COLLECT))
+        if (next_is(TokenType.KEYWORD_CH))
+          must_consume_register_ch
+          statements.add( CmdCollectCh(t) )
+          return true
+        elseIf (next_is(TokenType.STRING))
+          statements.add( CmdCollectString(t,read.text) )
+          return true
+        elseIf (next_is(TokenType.INTEGER))
+          statements.add( CmdCollectCharacter(t,read_integer) )
+          return true
+        else
+          throw t.error( "Syntax error - expected 'ch' or a literal string.")
+        endIf
+        return true
+
+      elseIf (consume(TokenType.KEYWORD_ERROR))
+        if (consume(TokenType.KEYWORD_BUFFER))
+          statements.add( CmdErrorBuffer(t) )
+        else
+          throw peek.error( "Expected 'buffer'." )
+        endIf
+        return true
+
       elseIf (consume(TokenType.KEYWORD_GOTO))
         statements.add( CmdGoTo(t,read_label_name) )
         return true
@@ -231,6 +263,16 @@ class FroleyParser : Parser
       endIf
 
       throw peek.error( "Syntax error - unexpected '$'." (peek->String) )
+
+    method must_consume_register_ch
+      local t = peek
+      if (consume(TokenType.KEYWORD_CH)) return
+      throw t.error( "Register 'ch' expected." )
+
+    method must_consume_register_count
+      local t = peek
+      if (consume(TokenType.KEYWORD_COUNT)) return
+      throw t.error( "Register 'count' expected." )
 
     method next_is_else_if( &single_line, &multi_line )->Logical
       consume_eols

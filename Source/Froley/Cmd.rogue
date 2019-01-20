@@ -484,3 +484,42 @@ class CmdCompareGE : CmdCompare
       return Opcode.JUMP_GE
 endClass
 
+class CmdClearBuffer : Cmd
+  METHODS
+    method write( assembler:Assembler )
+      assembler.write( Opcode.CLEAR_BUFFER )
+endClass
+
+class CmdCollectCh : Cmd
+  METHODS
+    method write( assembler:Assembler )
+      assembler.write( Opcode.COLLECT_CH )
+endClass
+
+class CmdCollectCharacter( t, value:Int32 ) : Cmd
+  METHODS
+    method to->String
+      return "collect '$'" (value->Character.to_escaped_ascii)
+
+    method write( assembler:Assembler )
+      assembler.write( Opcode.COLLECT_CHARACTER, value )
+endClass
+
+class CmdCollectString( t, value:String ) : Cmd
+  METHODS
+    method to->String
+      return ''collect "$"'' (value.to_escaped_ascii)
+
+    method write( assembler:Assembler )
+      assembler.write( Opcode.COLLECT_STRING, value )
+endClass
+
+class CmdErrorBuffer : Cmd
+  METHODS
+    method to->String
+      return "error buffer"
+
+    method write( assembler:Assembler )
+      assembler.write( Opcode.ERROR_BUFFER )
+endClass
+

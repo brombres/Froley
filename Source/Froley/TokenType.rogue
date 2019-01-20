@@ -10,9 +10,13 @@ augment TokenType
   LABEL( "label" )
 
   KEYWORD_BASE       ( "base",        &is_keyword )
+  KEYWORD_BUFFER     ( "buffer",      &is_keyword )
   KEYWORD_CH         ( "ch",          &is_keyword )
+  KEYWORD_CLEAR      ( "clear",       &is_keyword )
+  KEYWORD_COLLECT    ( "collect",     &is_keyword )
   KEYWORD_COUNT      ( "count",       &is_keyword )
   KEYWORD_CALL       ( "call",        &is_keyword )
+  KEYWORD_ERROR      ( "error",       &is_keyword )
   KEYWORD_ELSE       ( "else",        &is_keyword, &is_structural )
   KEYWORD_ELSE_IF    ( "elseIf",      &is_keyword, &is_structural )
   KEYWORD_END_IF     ( "endIf",       &is_keyword, &is_structural )

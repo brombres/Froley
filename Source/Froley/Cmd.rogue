@@ -27,14 +27,17 @@ augment Cmd
           throw UnsupportedOperationError()
       endWhich
 
+    method resolved->Cmd
+      return this
+
+    method resolve_assignment( new_value:Cmd )->Cmd
+      throw t.error( "Illegal assignment." )
+
     method to->Int32
       throw UnsupportedOperationError()
 
     method write( assembler:Assembler )
       throw UnsupportedOperationError()
-
-    method write_assignment( assembler:Assembler, new_value:Cmd )
-      throw t.error( "Illegal assignment." )
 
     method write_add( assembler:Assembler, expression:Cmd )
       throw t.error( "Illegal operation target - target must be 'ch' or 'count'." )
@@ -48,6 +51,11 @@ endAugment
 
 augment CmdStatements
   METHODS
+    method resolve
+      forEach (statement at index in this)
+        this[ index ] = statement.resolved
+      endForEach
+
     method write( assembler:Assembler )
       (forEach in this).write( assembler )
 endAugment
@@ -55,6 +63,11 @@ endAugment
 
 augment CmdArgs
   METHODS
+    method resolve
+      forEach (statement at index in this)
+        this[ index ] = statement.resolved
+      endForEach
+
     method write( assembler:Assembler )
       (forEach in this).write( assembler )
 endAugment
@@ -131,20 +144,23 @@ class CmdAccess( t, name:String ) : Cmd
     method init( t )
       name = t.text
 
-    method write( assembler:Assembler )
-      throw t.error( ''No such function or register "$".'' (name) )
-
-    method write_assignment( assembler:Assembler, new_value:Cmd )
-      throw t.error( "Illegal assignment target. Valid targets are 'ch' and 'count'." )
-
     method to->String
       return name
+
+    method resolve_assignment( new_value:Cmd )->Cmd
+      throw t.error( "Illegal assignment target. Valid targets are 'ch' and 'count'." )
+
+    method write( assembler:Assembler )
+      throw t.error( ''No such function or register "$".'' (name) )
 endClass
 
-class CmdAssign( t, target:Cmd, new_value:Cmd ) : Cmd
+class CmdAssign : CmdBinary
   METHODS
+    method resolved->Cmd
+      return left.resolve_assignment( right )
+
     method write( assembler:Assembler )
-      target.write_assignment( assembler, new_value )
+      throw t.error( "Illegal assignment: $ = $" (left,right) )
 endClass
 
 class CmdLiteralInt32( t, value:Int32 ) : Cmd
@@ -190,14 +206,42 @@ endClass
 class CmdRead( t ) : Cmd
   METHODS
     method write( assembler:Assembler )
-      assembler.write( Opcode.READ )
+      assembler.write( Opcode.READ_AND_DISCARD )
 endClass
+
+class CmdScanDigits( t, min_digits:Int32, max_digits:Int32, base:Int32 ) : Cmd
+  PROPERTIES
+    is_resolved : Logical
+
+  METHODS
+    method jump_if_true->Opcode
+      return Opcode.JUMP_GE
+
+    method to->String
+      return "scanDigits $..$ base $" (min_digits,max_digits,base)
+
+    method write( assembler:Assembler )
+      if (is_resolved)
+        assembler.write( Opcode.SCAN_DIGITS )
+        assembler.write( min_digits )
+        assembler.write( max_digits )
+        assembler.write( base )
+      else
+        throw t.error( "Syntax error. Expected 'ch = scanDigits <min-digits>[..<max-digits>] [base <number-base>]'." )
+      endIf
+endClass
+
 
 class CmdWhile( t, condition:Cmd ) : Cmd
   PROPERTIES
     statements = CmdStatements()
 
   METHODS
+    method resolved->Cmd
+      condition = condition.resolved
+      statements.resolve
+      return this
+
     method write( assembler:Assembler )
       local label_test = Label()
       local label_top  = Label()
@@ -215,19 +259,22 @@ class CmdIf( t, condition:Cmd ) : Cmd
     else_statements : CmdStatements
 
   METHODS
+    method resolved->Cmd
+      condition = condition.resolved
+      statements.resolve
+      if (else_statements) else_statements.resolve
+      return this
+
     method write( assembler:Assembler )
       local label_else   = Label()
       local label_end_if = Label()
       condition.write( assembler )
-throw t.error( "TODO" )
-#{
-      assembler.write( Opcode.JUMP_IF_FALSE, label_else )
+      assembler.write( condition.jump_if_false, label_else )
       statements.write( assembler )
       assembler.write( Opcode.JUMP, label_end_if )
       assembler.define( label_else )
       if (else_statements) else_statements.write( assembler )
       assembler.define( label_end_if )
-}#
 endClass
 
 class CmdHasAnother( t ) : Cmd
@@ -242,26 +289,49 @@ class CmdHasAnother( t ) : Cmd
       assembler.write( Opcode.HAS_ANOTHER )
 endClass
 
+class CmdSetChToInt32( t, value:Int32 ) : Cmd
+  METHODS
+    method write( assembler:Assembler )
+      assembler.write( Opcode.SET_CH_INT32, value )
+endClass
+
+class CmdSetChToCount( t ) : Cmd
+  METHODS
+    method write( assembler:Assembler )
+      assembler.write( Opcode.SET_CH_TO_COUNT )
+endClass
+
+class CmdReadCh( t ) : Cmd
+  METHODS
+    method write( assembler:Assembler )
+      assembler.write( Opcode.READ_CH )
+endClass
+
 class CmdRegisterCh( t ) : Cmd
   METHODS
     method is_ch->Logical
       return true
+
+    method resolve_assignment( new_value:Cmd )->Cmd
+      local cmd_int32 = new_value as CmdLiteralInt32
+      if (new_value.is_integer)
+        return CmdSetChToInt32( t, new_value->Int32 )
+      elseIf (new_value instanceOf CmdRegisterCount)
+        return CmdSetChToCount( t )
+      elseIf (new_value instanceOf CmdRead)
+        return CmdReadCh( t )
+      elseIf (new_value instanceOf CmdScanDigits)
+        (new_value as CmdScanDigits).is_resolved = true
+        return new_value
+      else
+        throw t.error( "Illegal 'ch' assignment. Expected 'count', 'read', 'scanDigits', or an integer." )
+      endIf
 
     method to->String
       return "ch"
 
     method write( assembler:Assembler )
       assembler.write( Opcode.TEST_CH )
-
-    method write_assignment( assembler:Assembler, new_value:Cmd )
-      local cmd_int32 = new_value as CmdLiteralInt32
-      if (cmd_int32)
-        assembler.write( Opcode.SET_CH_INT32, cmd_int32.value )
-      elseIf (new_value instanceOf CmdRegisterCount)
-        assembler.write( Opcode.MOVE_C_TO_CH )
-      else
-        throw t.error( "Illegal assignment value. 'ch' can be assigned either 'count' or an integer." )
-      endIf
 
     method write_add( assembler:Assembler, expression:Cmd )
       local cmd_int = expression as CmdLiteralInt32
@@ -280,6 +350,19 @@ class CmdRegisterCh( t ) : Cmd
       endIf
 endClass
 
+class CmdSetCountToInt32( t, value:Int32 ) : Cmd
+  METHODS
+    method write( assembler:Assembler )
+      assembler.write( Opcode.SET_COUNT_TO_INT32, value )
+endClass
+
+class CmdSetCountToCh( t ) : Cmd
+  METHODS
+    method write( assembler:Assembler )
+      assembler.write( Opcode.SET_COUNT_TO_CH )
+endClass
+
+
 class CmdRegisterCount( t ) : Cmd
   METHODS
     method is_count->Logical
@@ -288,21 +371,20 @@ class CmdRegisterCount( t ) : Cmd
     method jump_if_true->Opcode
       return Opcode.JUMP_GT
 
+    method resolve_assignment( new_value:Cmd )->Cmd
+      if (new_value.is_integer)
+        return CmdSetCountToInt32( t, new_value->Int32 )
+      elseIf (new_value.is_ch)
+        return CmdSetCountToCh( t )
+      else
+        throw t.error( "Illegal assignment value. 'count' can be assigned ether 'ch' or an integer." )
+      endIf
+
     method to->String
       return "count"
 
     method write( assembler:Assembler )
       assembler.write( Opcode.TEST_COUNT )
-
-    method write_assignment( assembler:Assembler, new_value:Cmd )
-      local cmd_int32 = new_value as CmdLiteralInt32
-      if (cmd_int32)
-        assembler.write( Opcode.SET_C, cmd_int32.value )
-      elseIf (new_value instanceOf CmdRegisterCh)
-        assembler.write( Opcode.MOVE_CH_TO_C )
-      else
-        throw t.error( "Illegal assignment value. 'count' can be assigned ether 'ch' or an integer." )
-      endIf
 
     method write_add( assembler:Assembler, expression:Cmd )
       local cmd_int32 = expression as CmdLiteralInt32
@@ -385,11 +467,5 @@ class CmdCompareGE : CmdCompare
   METHODS
     method jump_if_true->Opcode
       return Opcode.JUMP_GE
-endClass
-
-class CmdReadNumber( t, base:Int32 ) : Cmd
-  METHODS
-    method write( assembler:Assembler )
-      assembler.write( Opcode.READ_NUMBER, base )
 endClass
 

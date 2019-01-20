@@ -10,6 +10,10 @@ class FroleyParser : Parser
       # expression
       local rule = add( ParseRule("expression") )
 
+      # assignment
+      rule = add_nested( RightAssociativeBinaryParseRule("assignment") )
+      rule.on( "=", <<CmdAssign>> )
+
       # comparison
       rule = add_nested( BinaryParseRule("comparison") )
       rule.on( "==", <<CmdCompareEQ>> )
@@ -29,11 +33,25 @@ class FroleyParser : Parser
           return result
         endFunction
       )
-      rule.on( "ch",             <<CmdRegisterCh>> )
-      rule.on( "count",          <<CmdRegisterCount>> )
+      rule.on( "count",         <<CmdRegisterCount>> )
       rule.on( "hasAnother",    <<CmdHasAnother>> )
       rule.on( "identifier",    <<CmdAccess>> )
       rule.on( "integer value", <<CmdLiteralInt32>> )
+      rule.on( "read",          <<CmdRead>> )
+      rule.on( "ch",            <<CmdRegisterCh>> )
+      rule.on( "scanDigits",
+        function(parser:FroleyParser)->Cmd
+          local t = parser.read  # 'scanDigits'
+          local min_digits = parser.read_integer
+          local max_digits = min_digits
+          if (parser.consume(TokenType.SYMBOL_DOT_DOT)) max_digits = parser.read_integer
+          local base = 10
+          if (parser.consume(TokenType.KEYWORD_BASE))
+            base = parser.read_integer
+          endIf
+          return CmdScanDigits(t,min_digits,max_digits,base)
+        endFunction
+      )
 
     method parse_statements( statements:CmdStatements )->Logical
       if (consume_eols)
@@ -162,23 +180,8 @@ class FroleyParser : Parser
           throw t.error( "Syntax error - valid 'print' arguments are  'ch', 'count', and '<string>'." )
         endIf
 
-      elseIf (consume(TokenType.KEYWORD_READ))
-        statements.add( CmdRead(t) )
-        return true
-
-      elseIf (consume(TokenType.KEYWORD_READ_NUMBER))
-        local arg = parse_expression()
-        contingent
-          necessary (arg.is_integer)
-          necessary (consume(TokenType.SYMBOL_COMMA))
-          necessary (parse_register.is_ch)
-          necessary (consume(TokenType.SYMBOL_COMMA))
-          necessary (parse_register.is_count)
-          statements.add( CmdReadNumber(t,arg->Int32) )
-        unsatisfied
-          throw t.error( "Syntax error. Correct syntax: 'readNumber <base>, ch, count'." )
-        endContingent
-        return true
+      elseIf (consume(TokenType.KEYWORD_SCAN_DIGITS))
+        throw t.error( "Syntax error. Expected 'ch = scanDigits <min-digits>[..<max-digits>] [base <number-base>]'." )
 
       elseIf (consume(TokenType.KEYWORD_RETURN))
         statements.add( CmdReturn(t) )
@@ -210,11 +213,9 @@ class FroleyParser : Parser
 
       else
         local expr = parse_expression()
+
         local t2 = peek
-        if (consume(TokenType.SYMBOL_EQUALS))
-          local new_value = parse_expression()
-          statements.add( CmdAssign(t2,expr,new_value) )
-        elseIf (consume(TokenType.SYMBOL_PLUS_PLUS))
+        if (consume(TokenType.SYMBOL_PLUS_PLUS))
           statements.add( CmdAdd(t,expr,CmdLiteralInt32(t2,1)) )
         elseIf (consume(TokenType.SYMBOL_MINUS_MINUS))
           statements.add( CmdSubtract(t,expr,CmdLiteralInt32(t2,1)) )
@@ -267,6 +268,13 @@ class FroleyParser : Parser
         return name
       else
         throw peek.error( "Identifier expected." )
+      endIf
+
+    method read_integer->Int32
+      if (next_is(TokenType.INTEGER))
+        return read->Int32
+      else
+        throw peek.error( "Integer value expected." )
       endIf
 
     method read_label_name->String

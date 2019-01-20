@@ -74,18 +74,28 @@ class VM
           case Opcode.HAS_ANOTHER
             result = select{ scanner.has_another:1 || 0 }
             nextIteration
-          case Opcode.READ
+          case Opcode.READ_CH
             ch = scanner.read
             nextIteration
-          case Opcode.READ_NUMBER
-            local base = code[ ip ]
-            ++ip
+          case Opcode.READ_AND_DISCARD
+            scanner.read
+            nextIteration
+          case Opcode.SCAN_DIGITS
+            local min_digits = code[ ip ]
+            local max_digits = code[ ip+1 ]
+            local base = code[ ip+2 ]
+            ip += 3
             ch = 0
-            count = 0
-            while (scanner.has_another and scanner.peek.is_number(base))
-              ch = ch * base + scanner.read.to_number(base)
-              ++count
-            endWhile
+            local n = 0
+            loop (max_digits)
+              if (scanner.has_another and scanner.peek.is_number(base))
+                ch = ch * base + scanner.read.to_number(base)
+                ++n
+              else
+                escapeLoop
+              endIf
+            endLoop
+            result = n - min_digits
             nextIteration
           #case Opcode.PEEK_N
           #case Opcode.CONSUME
@@ -133,14 +143,14 @@ class VM
             if (stack.is_empty) throw FroleyError( "[Compiled Code]", "'pop' on empty stack." )
             ch = stack.remove_last
             nextIteration
-          case Opcode.SET_C
+          case Opcode.SET_COUNT_TO_INT32
             count = code[ ip ]
             ++ip
             nextIteration
-          case Opcode.MOVE_CH_TO_C
+          case Opcode.SET_COUNT_TO_CH
             count = ch
             nextIteration
-          case Opcode.MOVE_C_TO_CH
+          case Opcode.SET_CH_TO_COUNT
             ch = count
             nextIteration
           case Opcode.ADD_CH_INT32

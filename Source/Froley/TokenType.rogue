@@ -9,6 +9,7 @@ augment TokenType
   STRING( "literal string" )
   LABEL( "label" )
 
+  KEYWORD_BASE       ( "base",        &is_keyword )
   KEYWORD_CH         ( "ch",          &is_keyword )
   KEYWORD_COUNT      ( "count",       &is_keyword )
   KEYWORD_CALL       ( "call",        &is_keyword )
@@ -24,11 +25,12 @@ augment TokenType
   KEYWORD_POP        ( "pop",         &is_keyword )
   KEYWORD_PUSH       ( "push",        &is_keyword )
   KEYWORD_READ       ( "read",        &is_keyword )
-  KEYWORD_READ_NUMBER( "readNumber",  &is_keyword )
+  KEYWORD_SCAN_DIGITS( "scanDigits",  &is_keyword )
   KEYWORD_RETURN     ( "return",      &is_keyword )
   KEYWORD_WHILE      ( "while",       &is_keyword )
 
   SYMBOL_COMMA        ( ",",   &is_symbol )
+  SYMBOL_DOT_DOT      ( "..",  &is_symbol )
   SYMBOL_EQUALS       ( "=",   &is_symbol )
   SYMBOL_EQUALS_EQUALS( "==",  &is_symbol )
   SYMBOL_GE           ( ">=",  &is_symbol )

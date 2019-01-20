@@ -470,3 +470,11 @@ class CmdCollectString( t, value:String ) : Cmd
       assembler.write( Opcode.COLLECT_STRING, value )
 endClass
 
+class CmdAcceptInt32( t, token_type:Int32 ) : Cmd
+  METHODS
+    method to->String
+      return Froley.token_name( token_type )
+
+    method write( assembler:Assembler )
+      assembler.write( Opcode.ACCEPT_INT32, token_type )
+endClass

@@ -146,7 +146,12 @@ class FroleyParser : Parser
         endIf
       endIf
 
-      if (consume(TokenType.KEYWORD_CALL))
+      if (consume(TokenType.KEYWORD_ACCEPT))
+        local name = read_identifier
+        statements.add( CmdAcceptInt32(t,Froley.token_type(name)) )
+        return true
+
+      elseIf (consume(TokenType.KEYWORD_CALL))
         local label_name = read_label_name
         statements.add( CmdCall(t,label_name) )
         return true
@@ -183,6 +188,10 @@ class FroleyParser : Parser
       elseIf (consume(TokenType.KEYWORD_ERROR))
         if (consume(TokenType.KEYWORD_BUFFER))
           statements.add( CmdStatement(t,"error buffer",Opcode.ERROR) )
+        elseIf (next_is(TokenType.STRING))
+          statements.add( CmdStatement(t,"clear buffer",Opcode.CLEAR_BUFFER) )
+          statements.add( CmdCollectString(t,read.text) )
+          statements.add( CmdStatement(t,"error <message>",Opcode.ERROR) )
         else
           throw peek.error( "Expected 'buffer'." )
         endIf

@@ -4,7 +4,7 @@ enum Opcode( size=1:Int32 )
   HALT                  # Tokenization complete; VM.tokenize() returns
   RETURN                # ip = stack.remove_last
   ERROR                 # Throws error using message in BUFFER
-  ACCEPT_X(2)           # Invokes VM callback accept(type,BUFFER), where 'type' is operand, then clears BUFFER & jumps to IP 0
+  ACCEPT_INT32(2)       # Invokes VM callback accept(type,BUFFER), where 'type' is operand, then clears BUFFER & jumps to IP 0
   JUMP(2)               # Jumps to IP specified by operand
   JUMP_EQ(2)            #
   JUMP_NE(2)            #

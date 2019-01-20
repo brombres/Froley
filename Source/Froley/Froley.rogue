@@ -43,7 +43,12 @@ class Launcher
       endTry
 endClass
 
-class Froley
+class Froley [singleton]
+  PROPERTIES
+    token_name_to_type = StringTable<<Int32>>()
+    token_type_to_name = Table<<Int32,String>>()
+    last_token_type    = 0
+
   METHODS
     method init( file:File )
       local source = file.load_as_string
@@ -61,6 +66,18 @@ class Froley
       local bytes = Assembler().assemble( statements )
       local vm = VM( bytes )
       vm.tokenize( File("Test2.txt") )
+
+    method token_name( token_type:Int32 )->String
+      return token_type_to_name[ token_type ]
+
+    method token_type( token_name:String )->Int32
+      local entry = token_name_to_type.find( token_name )
+      if (entry) return entry.value
+
+      ++last_token_type
+      token_name_to_type[ token_name ] = last_token_type
+      token_type_to_name[ last_token_type ] = token_name
+      return last_token_type
 
 endClass
 

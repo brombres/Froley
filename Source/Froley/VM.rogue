@@ -22,6 +22,9 @@ class VM
     method init( data:Byte[] )
       load( data )
 
+    method accept( token_type:Int32 )
+      println "Accepting $ ($)" (token_type,buffer->String.to_escaped_ascii)
+
     method execute
       local ip = 0
       loop
@@ -36,9 +39,12 @@ class VM
             ip = stack.remove_last
             nextIteration
           case Opcode.ERROR
-            #class ParseError( filepath:String, source:String, line:Int32, column:Int32, message ) : Error
             throw FroleyError( filepath, scanner.source, scanner.line, scanner.column, buffer->String )
-          #case Opcode.ACCEPT_X
+          case Opcode.ACCEPT_INT32
+            local token_type = code[ ip ]
+            ip = 0
+            accept( token_type )
+            buffer.clear
           case Opcode.JUMP
             ip = code[ ip ]
             nextIteration

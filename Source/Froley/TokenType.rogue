@@ -9,6 +9,7 @@ augment TokenType
   STRING( "literal string" )
   LABEL( "label" )
 
+  KEYWORD_ACCEPT     ( "accept",      &is_keyword )
   KEYWORD_BASE       ( "base",        &is_keyword )
   KEYWORD_BUFFER     ( "buffer",      &is_keyword )
   KEYWORD_CH         ( "ch",          &is_keyword )

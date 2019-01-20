@@ -106,7 +106,15 @@ class VM
             endLoop
             result = n - min_digits
             nextIteration
-          #case Opcode.PEEK_N
+          case Opcode.PEEK_CH_INT32
+            ch = scanner.peek( code[ip] )
+            ++ip
+            result = ch
+            nextIteration
+          case Opcode.PEEK_CH_COUNT
+            ch = scanner.peek( count )
+            result = ch
+            nextIteration
           #case Opcode.CONSUME
           #case Opcode.CONSUME_CHARACTER
           #case Opcode.CONSUME_STRING

@@ -27,6 +27,7 @@ augment TokenType
   KEYWORD_GOTO       ( "goto",        &is_keyword )
   KEYWORD_HALT       ( "halt",        &is_keyword )
   KEYWORD_HAS_ANOTHER( "hasAnother",  &is_keyword )
+  KEYWORD_PEEK       ( "peek",        &is_keyword )
   KEYWORD_PRINT      ( "print",       &is_keyword )
   KEYWORD_POP        ( "pop",         &is_keyword )
   KEYWORD_PUSH       ( "push",        &is_keyword )

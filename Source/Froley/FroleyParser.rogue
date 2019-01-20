@@ -53,6 +53,19 @@ class FroleyParser : Parser
           return CmdScanDigits(t,min_digits,max_digits,base)
         endFunction
       )
+      rule.on( "peek",
+        function(parser:FroleyParser)->Cmd
+          local t = parser.read  # 'peek'
+          if (parser.next_is(TokenType.SYMBOL_OPEN_PAREN))
+            local expr = parser.parse_expression()
+            if (expr.is_integer) return CmdPeekInt32( t, expr->Int32 )
+            if (expr.is_count)   return CmdPeekCount( t )
+            throw expr.t.error( "'Expected 'peek', 'peek(<integer>)', or 'peek(count)'." )
+          else
+            return CmdPeek( t )
+          endIf
+        endFunction
+      )
 
     method parse_statements( statements:CmdStatements )->Logical
       if (consume_eols)

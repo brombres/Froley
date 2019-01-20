@@ -315,6 +315,12 @@ class CmdRegisterCh( t ) : Cmd
         return CmdSetChToCount( t )
       elseIf (new_value instanceOf CmdRead)
         return CmdReadCh( t )
+      elseIf (new_value instanceOf CmdPeek)
+        return CmdPeekChInt32( t, 0 )
+      elseIf (new_value instanceOf CmdPeekInt32)
+        return CmdPeekChInt32( t, (new_value as CmdPeekInt32).lookahead )
+      elseIf (new_value instanceOf CmdPeekCount)
+        return CmdPeekChCount( t )
       elseIf (new_value instanceOf CmdScanDigits)
         (new_value as CmdScanDigits).is_resolved = true
         return new_value
@@ -477,4 +483,49 @@ class CmdAcceptInt32( t, token_type:Int32 ) : Cmd
 
     method write( assembler:Assembler )
       assembler.write( Opcode.ACCEPT_INT32, token_type )
+endClass
+
+class CmdPeek( t ) : Cmd
+  METHODS
+    method to->String
+      return "peek"
+
+    method write( assembler:Assembler )
+      throw t.error( "Syntax error - expected 'ch = peek'." )
+endClass
+
+class CmdPeekCount( t ) : Cmd
+  METHODS
+    method to->String
+      return "peek(count)"
+
+    method write( assembler:Assembler )
+      throw t.error( "Syntax error - expected 'ch = peek(count)'." )
+endClass
+
+class CmdPeekInt32( t, lookahead:Int32 ) : Cmd
+  METHODS
+    method to->String
+      return "peek($)" (lookahead)
+
+    method write( assembler:Assembler )
+      throw t.error( "Syntax error - expected 'ch = peek($)'." (lookahead) )
+endClass
+
+class CmdPeekChCount( t ) : Cmd
+  METHODS
+    method to->String
+      return "ch = peek(count)"
+
+    method write( assembler:Assembler )
+      assembler.write( Opcode.PEEK_CH_COUNT )
+endClass
+
+class CmdPeekChInt32( t, lookahead:Int32 ) : Cmd
+  METHODS
+    method to->String
+      return "ch = peek($)" (lookahead)
+
+    method write( assembler:Assembler )
+      assembler.write( Opcode.PEEK_CH_INT32, lookahead )
 endClass

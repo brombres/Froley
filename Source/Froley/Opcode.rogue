@@ -19,7 +19,8 @@ enum Opcode( size=1:Int32 )
   READ_CH               #
   READ_AND_DISCARD      #
   SCAN_DIGITS(4)        #
-  PEEK_N(2)             #
+  PEEK_CH_INT32(2)      #
+  PEEK_CH_COUNT         #
   CONSUME               #
   CONSUME_CHARACTER(2)  #
   CONSUME_STRING(2)     #

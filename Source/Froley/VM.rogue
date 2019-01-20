@@ -35,12 +35,10 @@ class VM
             if (stack.is_empty) throw FroleyError( "[Compiled Code]", "'return' on empty stack." )
             ip = stack.remove_last
             nextIteration
-          case Opcode.ERROR_BUFFER
+          case Opcode.ERROR
             #class ParseError( filepath:String, source:String, line:Int32, column:Int32, message ) : Error
             throw FroleyError( filepath, scanner.source, scanner.line, scanner.column, buffer->String )
-          #case Opcode.ERROR_STRING
           #case Opcode.ACCEPT_X
-          #case Opcode.DISCARD
           case Opcode.JUMP
             ip = code[ ip ]
             nextIteration
@@ -119,6 +117,9 @@ class VM
           case Opcode.COLLECT_STRING
             buffer.print( strings[code[ip]] )
             ++ip
+            nextIteration
+          case Opcode.PRINT_BUFFER
+            print (forEach in buffer)
             nextIteration
           case Opcode.PRINT_CH
             print ch->Character

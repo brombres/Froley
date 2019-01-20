@@ -72,6 +72,16 @@ augment CmdArgs
       (forEach in this).write( assembler )
 endAugment
 
+class CmdStatement( t, name:String, opcode:Opcode ) : Cmd
+  # Generic statement with opcode and no operands
+  METHODS
+    method to->String
+      return name
+
+    method write( assembler:Assembler )
+      assembler.write( opcode )
+endClass
+
 class CmdGoTo( t, label_name:String ) : Cmd
   METHODS
     method write( assembler:Assembler )
@@ -81,13 +91,13 @@ class CmdGoTo( t, label_name:String ) : Cmd
       return "goto"
 endClass
 
-class CmdHalt : Cmd
+class CmdJump( t, address:Int32 ) : Cmd
   METHODS
     method write( assembler:Assembler )
-      assembler.write( Opcode.HALT )
+      assembler.write( Opcode.JUMP, address )
 
     method to->String
-      return "halt"
+      return "jump " + address
 endClass
 
 class CmdLabel( t, name:String ) : Cmd
@@ -100,24 +110,6 @@ class CmdLabel( t, name:String ) : Cmd
 
     method to->String
       return "<$>" (name)
-endClass
-
-class CmdPrintCh( t ) : Cmd
-  METHODS
-    method write( assembler:Assembler )
-      assembler.write( Opcode.PRINT_CH )
-
-    method to->String
-      return "print ch"
-endClass
-
-class CmdPrintCount( t ) : Cmd
-  METHODS
-    method write( assembler:Assembler )
-      assembler.write( Opcode.PRINT_COUNT )
-
-    method to->String
-      return "print count"
 endClass
 
 class CmdPrintCharacter( t, code:Int32 ) : Cmd
@@ -195,12 +187,6 @@ class CmdCall( t, label_name:String ) : Cmd
     method write( assembler:Assembler )
       assembler.write( Opcode.CALL )
       assembler.write_address( label_name )
-endClass
-
-class CmdReturn( t ) : Cmd
-  METHODS
-    method write( assembler:Assembler )
-      assembler.write( Opcode.RETURN )
 endClass
 
 class CmdRead( t ) : Cmd
@@ -332,6 +318,8 @@ class CmdRegisterCh( t ) : Cmd
       elseIf (new_value instanceOf CmdScanDigits)
         (new_value as CmdScanDigits).is_resolved = true
         return new_value
+      elseIf (new_value instanceOf CmdPop)
+        return CmdStatement( t, "ch = pop", Opcode.POP_CH )
       else
         throw t.error( "Illegal 'ch' assignment. Expected 'count', 'read', 'scanDigits', or an integer." )
       endIf
@@ -418,20 +406,29 @@ class CmdRegisterCount( t ) : Cmd
       endIf
 endClass
 
-class CmdPush( t ) : Cmd
-  METHODS
-    method write( assembler:Assembler )
-      assembler.write( Opcode.PUSH_CH )
-endClass
-
 class CmdPop( t ) : Cmd
   METHODS
     method write( assembler:Assembler )
-      assembler.write( Opcode.POP_CH )
+      throw t.error( "Syntax error - expected 'ch = pop'." )
 endClass
 
-class CmdCompare : CmdBinary
+class CmdCompare<<$OPCODE>> : CmdBinary
   METHODS
+    method jump_if_true->Opcode
+      return Opcode.$OPCODE
+
+    method to->String
+      local symbol = "<>"
+      which (Opcode.$OPCODE)
+        case Opcode.JUMP_EQ: symbol = "=="
+        case Opcode.JUMP_NE: symbol = "!="
+        case Opcode.JUMP_LT: symbol = "<"
+        case Opcode.JUMP_LE: symbol = "<="
+        case Opcode.JUMP_GT: symbol = ">"
+        case Opcode.JUMP_GE: symbol = ">="
+      endWhich
+      return "$ $ $" (left,symbol,right)
+
     method write( assembler:Assembler )
       if (left.is_ch)
         if (right.is_integer)
@@ -448,53 +445,12 @@ class CmdCompare : CmdBinary
       throw t.error( "Unsupported comparison between '$' and '$'." (left,right) )
 endClass
 
-class CmdCompareEQ : CmdCompare
-  METHODS
-    method jump_if_true->Opcode
-      return Opcode.JUMP_EQ
-endClass
-
-class CmdCompareNE : CmdCompare
-  METHODS
-    method jump_if_true->Opcode
-      return Opcode.JUMP_NE
-endClass
-
-class CmdCompareLT : CmdCompare
-  METHODS
-    method jump_if_true->Opcode
-      return Opcode.JUMP_LT
-endClass
-
-class CmdCompareLE : CmdCompare
-  METHODS
-    method jump_if_true->Opcode
-      return Opcode.JUMP_LE
-endClass
-
-class CmdCompareGT : CmdCompare
-  METHODS
-    method jump_if_true->Opcode
-      return Opcode.JUMP_GT
-endClass
-
-class CmdCompareGE : CmdCompare
-  METHODS
-    method jump_if_true->Opcode
-      return Opcode.JUMP_GE
-endClass
-
-class CmdClearBuffer : Cmd
-  METHODS
-    method write( assembler:Assembler )
-      assembler.write( Opcode.CLEAR_BUFFER )
-endClass
-
-class CmdCollectCh : Cmd
-  METHODS
-    method write( assembler:Assembler )
-      assembler.write( Opcode.COLLECT_CH )
-endClass
+class CmdCompareEQ : CmdCompare<<JUMP_EQ>>;
+class CmdCompareNE : CmdCompare<<JUMP_NE>>;
+class CmdCompareLT : CmdCompare<<JUMP_LT>>;
+class CmdCompareLE : CmdCompare<<JUMP_LE>>;
+class CmdCompareGT : CmdCompare<<JUMP_GT>>;
+class CmdCompareGE : CmdCompare<<JUMP_GE>>;
 
 class CmdCollectCharacter( t, value:Int32 ) : Cmd
   METHODS
@@ -512,14 +468,5 @@ class CmdCollectString( t, value:String ) : Cmd
 
     method write( assembler:Assembler )
       assembler.write( Opcode.COLLECT_STRING, value )
-endClass
-
-class CmdErrorBuffer : Cmd
-  METHODS
-    method to->String
-      return "error buffer"
-
-    method write( assembler:Assembler )
-      assembler.write( Opcode.ERROR_BUFFER )
 endClass
 

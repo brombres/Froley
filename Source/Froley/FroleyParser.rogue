@@ -33,12 +33,13 @@ class FroleyParser : Parser
           return result
         endFunction
       )
+      rule.on( "ch",            <<CmdRegisterCh>> )
       rule.on( "count",         <<CmdRegisterCount>> )
       rule.on( "hasAnother",    <<CmdHasAnother>> )
       rule.on( "identifier",    <<CmdAccess>> )
       rule.on( "integer value", <<CmdLiteralInt32>> )
       rule.on( "read",          <<CmdRead>> )
-      rule.on( "ch",            <<CmdRegisterCh>> )
+      rule.on( "pop",           <<CmdPop>> )
       rule.on( "scanDigits",
         function(parser:FroleyParser)->Cmd
           local t = parser.read  # 'scanDigits'
@@ -152,7 +153,7 @@ class FroleyParser : Parser
 
       elseIf (consume(TokenType.KEYWORD_CLEAR))
         if (consume(TokenType.KEYWORD_BUFFER))
-          statements.add( CmdClearBuffer(t) )
+          statements.add( CmdStatement(t,"clear buffer",Opcode.CLEAR_BUFFER) )
           return true
         else
           throw peek.error( "Expected 'buffer'." )
@@ -161,7 +162,7 @@ class FroleyParser : Parser
       elseIf (consume(TokenType.KEYWORD_COLLECT))
         if (next_is(TokenType.KEYWORD_CH))
           must_consume_register_ch
-          statements.add( CmdCollectCh(t) )
+          statements.add( CmdStatement(t,"collect ch",Opcode.COLLECT_CH) )
           return true
         elseIf (next_is(TokenType.STRING))
           statements.add( CmdCollectString(t,read.text) )
@@ -174,9 +175,14 @@ class FroleyParser : Parser
         endIf
         return true
 
+      elseIf (consume(TokenType.KEYWORD_DISCARD))
+        statements.add( CmdStatement(t,"clear buffer",Opcode.CLEAR_BUFFER) )
+        statements.add( CmdJump(t,0) )
+        return true
+
       elseIf (consume(TokenType.KEYWORD_ERROR))
         if (consume(TokenType.KEYWORD_BUFFER))
-          statements.add( CmdErrorBuffer(t) )
+          statements.add( CmdStatement(t,"error buffer",Opcode.ERROR) )
         else
           throw peek.error( "Expected 'buffer'." )
         endIf
@@ -187,11 +193,14 @@ class FroleyParser : Parser
         return true
 
       elseIf (consume(TokenType.KEYWORD_HALT))
-        statements.add( CmdHalt(t) )
+        statements.add( CmdStatement(t,"halt",Opcode.HALT) )
         return true
 
       elseIf (consume(TokenType.KEYWORD_PRINT))
-        if (next_is(TokenType.STRING))
+        if (consume(TokenType.KEYWORD_BUFFER))
+          statements.add( CmdStatement(t,"print buffer",Opcode.PRINT_BUFFER) )
+          return true
+        elseIf (next_is(TokenType.STRING))
           statements.add( CmdPrintString(t,read.text) )
           if (not consume(TokenType.SYMBOL_SEMICOLON)) must_consume( TokenType.EOL )
           return true
@@ -199,10 +208,10 @@ class FroleyParser : Parser
           if (not (next_is(TokenType.EOL) or next_is(TokenType.SYMBOL_SEMICOLON)))
             local expr = parse_expression()
             if (expr.is_ch)
-              statements.add( CmdPrintCh(t) )
+              statements.add( CmdStatement(t,"print ch",Opcode.PRINT_CH) )
               return true
             elseIf (expr.is_count)
-              statements.add( CmdPrintCount(t) )
+              statements.add( CmdStatement(t,"print count",Opcode.PRINT_COUNT) )
               return true
             elseIf (expr.is_integer)
               statements.add( CmdPrintCharacter(t,expr->Int32) )
@@ -212,12 +221,12 @@ class FroleyParser : Parser
           throw t.error( "Syntax error - valid 'print' arguments are  'ch', 'count', and '<string>'." )
         endIf
 
+      elseIf (consume(TokenType.KEYWORD_RETURN))
+        statements.add( CmdStatement(t,"return",Opcode.RETURN) )
+        return true
+
       elseIf (consume(TokenType.KEYWORD_SCAN_DIGITS))
         throw t.error( "Syntax error. Expected 'ch = scanDigits <min-digits>[..<max-digits>] [base <number-base>]'." )
-
-      elseIf (consume(TokenType.KEYWORD_RETURN))
-        statements.add( CmdReturn(t) )
-        return true
 
       elseIf (next_is(TokenType.SYMBOL_LT))
         local name = read_label_name
@@ -235,12 +244,9 @@ class FroleyParser : Parser
         statements.add( CmdAdd(t,target,CmdLiteralInt32(t,1)) )
         return true
 
-      elseIf (consume(TokenType.KEYWORD_POP))
-        statements.add( CmdPop(t) )
-        return true
-
       elseIf (consume(TokenType.KEYWORD_PUSH))
-        statements.add( CmdPush(t) )
+        must_consume( TokenType.KEYWORD_CH )
+        statements.add( CmdStatement(t,"push ch",Opcode.PUSH_CH) )
         return true
 
       else

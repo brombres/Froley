@@ -3,17 +3,15 @@ module Froley
 enum Opcode( size=1:Int32 )
   HALT                  # Tokenization complete; VM.tokenize() returns
   RETURN                # ip = stack.remove_last
-  ERROR_BUFFER          # Throws error using message in BUFFER
-  ERROR_STRING          # Throws error using given string
+  ERROR                 # Throws error using message in BUFFER
   ACCEPT_X(2)           # Invokes VM callback accept(type,BUFFER), where 'type' is operand, then clears BUFFER & jumps to IP 0
-  DISCARD               # Clears BUFFER & jumps to IP 0
   JUMP(2)               # Jumps to IP specified by operand
-  JUMP_EQ               #
-  JUMP_NE               #
-  JUMP_LT               #
-  JUMP_LE               #
-  JUMP_GT               #
-  JUMP_GE               #
+  JUMP_EQ(2)            #
+  JUMP_NE(2)            #
+  JUMP_LT(2)            #
+  JUMP_LE(2)            #
+  JUMP_GT(2)            #
+  JUMP_GE(2)            #
   CALL(2)               #
   SCAN_TABLE            #
   MARK_SOURCE_POS       #
@@ -29,6 +27,7 @@ enum Opcode( size=1:Int32 )
   COLLECT_CH            #
   COLLECT_CHARACTER(2)  #
   COLLECT_STRING(2)     #
+  PRINT_BUFFER          #
   PRINT_CH              #
   PRINT_COUNT           #
   PRINT_CHARACTER(2)    #

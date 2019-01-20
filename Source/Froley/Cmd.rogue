@@ -291,18 +291,27 @@ endClass
 
 class CmdSetChToInt32( t, value:Int32 ) : Cmd
   METHODS
+    method jump_if_true->Opcode
+      return Opcode.JUMP_NE
+
     method write( assembler:Assembler )
       assembler.write( Opcode.SET_CH_INT32, value )
 endClass
 
 class CmdSetChToCount( t ) : Cmd
   METHODS
+    method jump_if_true->Opcode
+      return Opcode.JUMP_NE
+
     method write( assembler:Assembler )
       assembler.write( Opcode.SET_CH_TO_COUNT )
 endClass
 
 class CmdReadCh( t ) : Cmd
   METHODS
+    method jump_if_true->Opcode
+      return Opcode.JUMP_NE
+
     method write( assembler:Assembler )
       assembler.write( Opcode.READ_CH )
 endClass
@@ -352,12 +361,18 @@ endClass
 
 class CmdSetCountToInt32( t, value:Int32 ) : Cmd
   METHODS
+    method jump_if_true->Opcode
+      return Opcode.JUMP_NE
+
     method write( assembler:Assembler )
       assembler.write( Opcode.SET_COUNT_TO_INT32, value )
 endClass
 
 class CmdSetCountToCh( t ) : Cmd
   METHODS
+    method jump_if_true->Opcode
+      return Opcode.JUMP_NE
+
     method write( assembler:Assembler )
       assembler.write( Opcode.SET_COUNT_TO_CH )
 endClass

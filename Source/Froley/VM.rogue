@@ -76,6 +76,7 @@ class VM
             nextIteration
           case Opcode.READ_CH
             ch = scanner.read
+            result = ch
             nextIteration
           case Opcode.READ_AND_DISCARD
             scanner.read
@@ -120,6 +121,7 @@ class VM
             nextIteration
           case Opcode.SET_CH_INT32
             ch = code[ ip ]
+            result = ch
             ++ip
             nextIteration
           case Opcode.COMPARE_CH_INT32
@@ -145,13 +147,16 @@ class VM
             nextIteration
           case Opcode.SET_COUNT_TO_INT32
             count = code[ ip ]
+            result = count
             ++ip
             nextIteration
           case Opcode.SET_COUNT_TO_CH
             count = ch
+            result = count
             nextIteration
           case Opcode.SET_CH_TO_COUNT
             ch = count
+            result = ch
             nextIteration
           case Opcode.ADD_CH_INT32
             ch += code[ ip ]

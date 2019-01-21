@@ -38,6 +38,7 @@ class FroleyParser : Parser
       rule.on( "hasAnother",    <<CmdHasAnother>> )
       rule.on( "identifier",    <<CmdAccess>> )
       rule.on( "integer value", <<CmdLiteralInt32>> )
+      rule.on( "literal string",<<CmdLiteralString>> )
       rule.on( "read",          <<CmdRead>> )
       rule.on( "pop",           <<CmdPop>> )
       rule.on( "scanDigits",
@@ -66,6 +67,19 @@ class FroleyParser : Parser
           endIf
         endFunction
       )
+      rule.on( "consume",
+        function(parser:FroleyParser)->Cmd
+          local t = parser.read  # 'consume'
+          if (parser.next_is(TokenType.SYMBOL_OPEN_PAREN))
+            local expr = parser.parse_expression()
+            if (expr.is_integer)                      return CmdConsumeCharacter( t, expr->Int32 )
+            elseIf (expr instanceOf CmdLiteralString) return CmdConsumeString(t,(expr as CmdLiteralString).value)
+            throw expr.t.error( "'Expected 'consume', 'consume(<character>)', or 'consume(<string>)'." )
+          else
+            return CmdConsume( t )
+          endIf
+        endFunction
+      )
 
     method parse_statements( statements:CmdStatements )->Logical
       if (consume_eols)
@@ -86,7 +100,7 @@ class FroleyParser : Parser
     method parse_single_line_statements( statements:CmdStatements )
       while (reader.has_another and not reader.peek.type.is_structural)
         parse_statement( statements, &!allow_control_structures )
-        if (not consume(TokenType.SYMBOL_SEMICOLON)) escapeWhile
+        if (not consume(TokenType.SYMBOL_SEMICOLON)) return
         while (consume(TokenType.SYMBOL_SEMICOLON)) noAction
 
         # Don't let a trailing ';' act as a next-line continuation.
@@ -119,11 +133,13 @@ class FroleyParser : Parser
               outer_if.else_statements.add( inner_if )
               outer_if = inner_if
             endWhile
-            consume_eols
-            if (next_is(TokenType.KEYWORD_ELSE) and reader.peek(1).type == TokenType.EOL)
-              read
-              ensure outer_if.else_statements
-              parse_multi_line_statements( outer_if.else_statements )
+            if (next_is_else(&multi_line))
+              consume_eols
+              if (next_is(TokenType.KEYWORD_ELSE) and reader.peek(1).type == TokenType.EOL)
+                read
+                ensure outer_if.else_statements
+                parse_multi_line_statements( outer_if.else_statements )
+              endIf
             endIf
             must_consume( TokenType.KEYWORD_END_IF )
           else
@@ -137,11 +153,13 @@ class FroleyParser : Parser
               outer_if.else_statements.add( inner_if )
               outer_if = inner_if
             endWhile
-            consume_eols
-            if (next_is(TokenType.KEYWORD_ELSE) and reader.peek(1).type != TokenType.EOL)
-              read
-              ensure outer_if.else_statements
-              parse_single_line_statements( outer_if.else_statements )
+            if (next_is_else(&single_line))
+              consume_eols
+              if (next_is(TokenType.KEYWORD_ELSE) and reader.peek(1).type != TokenType.EOL)
+                read
+                ensure outer_if.else_statements
+                parse_single_line_statements( outer_if.else_statements )
+              endIf
             endIf
           endIf
           statements.add( cmd_if )
@@ -303,13 +321,37 @@ class FroleyParser : Parser
       throw t.error( "Register 'count' expected." )
 
     method next_is_else_if( &single_line, &multi_line )->Logical
+      local original_pos = reader.position
       consume_eols
-      if (not next_is(TokenType.KEYWORD_ELSE_IF)) return false
+      if (not next_is(TokenType.KEYWORD_ELSE_IF))
+        reader.position = original_pos
+        return false
+      endIf
 
       # Scan to just after the elseIf() conditional
-      local original_pos = reader.position
       read  # elseIf
       parse_expression()
+
+      if (single_line)
+        local result = not next_is( TokenType.EOL )
+        reader.position = original_pos
+        return result
+      else
+        local result = next_is( TokenType.EOL )
+        reader.position = original_pos
+        return result
+      endIf
+
+    method next_is_else( &single_line, &multi_line )->Logical
+      local original_pos = reader.position
+      consume_eols
+      if (not next_is(TokenType.KEYWORD_ELSE))
+        reader.position = original_pos
+        return false
+      endIf
+
+      # Scan to just after the else
+      read  # else
 
       if (single_line)
         local result = not next_is( TokenType.EOL )

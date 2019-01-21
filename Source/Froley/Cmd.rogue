@@ -13,7 +13,7 @@ augment Cmd
       return false
 
     method jump_if_true->Opcode
-      throw UnsupportedOperationError()
+      throw t.error( "Value expected." )
 
     method jump_if_false->Opcode
       which (jump_if_true)
@@ -529,3 +529,49 @@ class CmdPeekChInt32( t, lookahead:Int32 ) : Cmd
     method write( assembler:Assembler )
       assembler.write( Opcode.PEEK_CH_INT32, lookahead )
 endClass
+
+class CmdConsume : Cmd
+  METHODS
+    method to->String
+      return "consume"
+
+    method write( assembler:Assembler )
+      assembler.write( Opcode.CONSUME )
+endClass
+
+class CmdConsumeCharacter( t, value:Int32 ) : Cmd
+  METHODS
+    method jump_if_true->Opcode
+      return Opcode.JUMP_GT
+
+    method to->String
+      return "consume($)" (value->Character.to_escaped_ascii)
+
+    method write( assembler:Assembler )
+      assembler.write( Opcode.CONSUME_CHARACTER, value )
+endClass
+
+class CmdConsumeString( t, value:String ) : Cmd
+  METHODS
+    method jump_if_true->Opcode
+      return Opcode.JUMP_GT
+
+    method to->String
+      return "consume($)" (value.to_escaped_ascii)
+
+    method write( assembler:Assembler )
+      assembler.write( Opcode.CONSUME_STRING, value )
+endClass
+
+class CmdLiteralString( t, value:String ) : Cmd
+  METHODS
+    method init( t )
+      value = t.text
+
+    method to->String
+      return ''"$"'' (value.to_escaped_ascii)
+
+    method write( assembler:Assembler )
+      throw t.error( "Syntax error - unexpected literal string." )
+endClass
+

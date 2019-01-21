@@ -115,9 +115,29 @@ class VM
             ch = scanner.peek( count )
             result = ch
             nextIteration
-          #case Opcode.CONSUME
-          #case Opcode.CONSUME_CHARACTER
-          #case Opcode.CONSUME_STRING
+          case Opcode.CONSUME
+            buffer.print( scanner.read )
+            nextIteration
+          case Opcode.CONSUME_CHARACTER
+            local value = code[ip]->Character
+            if (scanner.consume(value))
+              result = 1
+              buffer.print( value )
+            else
+              result = 0
+            endIf
+            ++ip
+            nextIteration
+          case Opcode.CONSUME_STRING
+            local st = strings[ code[ip] ]
+            if (scanner.consume(st))
+              result = 1
+              buffer.print( st )
+            else
+              result = 0
+            endIf
+            ++ip
+            nextIteration
           case Opcode.CLEAR_BUFFER
             buffer.clear
             nextIteration

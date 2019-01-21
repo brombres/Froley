@@ -192,7 +192,7 @@ endClass
 class CmdRead( t ) : Cmd
   METHODS
     method write( assembler:Assembler )
-      assembler.write( Opcode.READ_AND_DISCARD )
+      throw t.error( "Syntax error - expected 'ch = read'." )
 endClass
 
 class CmdScanDigits( t, min_digits:Int32, max_digits:Int32, base:Int32 ) : Cmd
@@ -281,7 +281,7 @@ class CmdSetChToInt32( t, value:Int32 ) : Cmd
       return Opcode.JUMP_NE
 
     method write( assembler:Assembler )
-      assembler.write( Opcode.SET_CH_INT32, value )
+      assembler.write( Opcode.SET_CH_TO_INT32, value )
 endClass
 
 class CmdSetChToCount( t ) : Cmd
@@ -347,7 +347,7 @@ class CmdRegisterCh( t ) : Cmd
     method write_subtract( assembler:Assembler, expression:Cmd )
       local cmd_int = expression as CmdLiteralInt32
       if (cmd_int)
-        assembler.write( Opcode.SUB_CH_INT32, cmd_int.value )
+        assembler.write( Opcode.ADD_CH_INT32, -cmd_int.value )
       else
         throw expression.error( "Illegal operation value; integer expected." )
       endIf
@@ -398,7 +398,7 @@ class CmdRegisterCount( t ) : Cmd
     method write_add( assembler:Assembler, expression:Cmd )
       local cmd_int32 = expression as CmdLiteralInt32
       if (cmd_int32)
-        assembler.write( Opcode.ADD_C_INT32, cmd_int32.value )
+        assembler.write( Opcode.ADD_COUNT_INT32, cmd_int32.value )
       else
         throw expression.error( "Illegal operation value; integer expected." )
       endIf
@@ -406,7 +406,7 @@ class CmdRegisterCount( t ) : Cmd
     method write_subtract( assembler:Assembler, expression:Cmd )
       local cmd_int32 = expression as CmdLiteralInt32
       if (cmd_int32)
-        assembler.write( Opcode.SUB_C_INT32, cmd_int32.value )
+        assembler.write( Opcode.ADD_COUNT_INT32, -cmd_int32.value )
       else
         throw expression.error( "Illegal operation value; integer expected." )
       endIf
@@ -530,15 +530,6 @@ class CmdPeekChInt32( t, lookahead:Int32 ) : Cmd
       assembler.write( Opcode.PEEK_CH_INT32, lookahead )
 endClass
 
-class CmdConsume : Cmd
-  METHODS
-    method to->String
-      return "consume"
-
-    method write( assembler:Assembler )
-      assembler.write( Opcode.CONSUME )
-endClass
-
 class CmdConsumeCharacter( t, value:Int32 ) : Cmd
   METHODS
     method jump_if_true->Opcode
@@ -549,18 +540,6 @@ class CmdConsumeCharacter( t, value:Int32 ) : Cmd
 
     method write( assembler:Assembler )
       assembler.write( Opcode.CONSUME_CHARACTER, value )
-endClass
-
-class CmdConsumeString( t, value:String ) : Cmd
-  METHODS
-    method jump_if_true->Opcode
-      return Opcode.JUMP_GT
-
-    method to->String
-      return "consume($)" (value.to_escaped_ascii)
-
-    method write( assembler:Assembler )
-      assembler.write( Opcode.CONSUME_STRING, value )
 endClass
 
 class CmdLiteralString( t, value:String ) : Cmd

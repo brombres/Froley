@@ -89,10 +89,23 @@ class VM
             nextIteration
           case Opcode.READ_CH
             ch = scanner.read
-            result = ch
             nextIteration
-          case Opcode.READ_AND_DISCARD
-            scanner.read
+          case Opcode.PEEK_CH_INT32
+            ch = scanner.peek( code[ip] )
+            ++ip
+            nextIteration
+          case Opcode.PEEK_CH_COUNT
+            ch = scanner.peek( count )
+            nextIteration
+          case Opcode.CONSUME_CHARACTER
+            local value = code[ip]->Character
+            if (scanner.consume(value))
+              result = 1
+              buffer.print( value )
+            else
+              result = 0
+            endIf
+            ++ip
             nextIteration
           case Opcode.SCAN_DIGITS
             local min_digits = code[ ip ]
@@ -110,38 +123,6 @@ class VM
               endIf
             endLoop
             result = n - min_digits
-            nextIteration
-          case Opcode.PEEK_CH_INT32
-            ch = scanner.peek( code[ip] )
-            ++ip
-            result = ch
-            nextIteration
-          case Opcode.PEEK_CH_COUNT
-            ch = scanner.peek( count )
-            result = ch
-            nextIteration
-          case Opcode.CONSUME
-            buffer.print( scanner.read )
-            nextIteration
-          case Opcode.CONSUME_CHARACTER
-            local value = code[ip]->Character
-            if (scanner.consume(value))
-              result = 1
-              buffer.print( value )
-            else
-              result = 0
-            endIf
-            ++ip
-            nextIteration
-          case Opcode.CONSUME_STRING
-            local st = strings[ code[ip] ]
-            if (scanner.consume(st))
-              result = 1
-              buffer.print( st )
-            else
-              result = 0
-            endIf
-            ++ip
             nextIteration
           case Opcode.CLEAR_BUFFER
             buffer.clear
@@ -174,11 +155,6 @@ class VM
             print strings[ code[ip] ]
             ++ip
             nextIteration
-          case Opcode.SET_CH_INT32
-            ch = code[ ip ]
-            result = ch
-            ++ip
-            nextIteration
           case Opcode.COMPARE_CH_INT32
             result = ch - code[ip]
             ++ip
@@ -200,6 +176,15 @@ class VM
             if (stack.is_empty) throw FroleyError( "[Compiled Code]", "'pop' on empty stack." )
             ch = stack.remove_last
             nextIteration
+          case Opcode.SET_CH_TO_INT32
+            ch = code[ ip ]
+            result = ch
+            ++ip
+            nextIteration
+          case Opcode.SET_CH_TO_COUNT
+            ch = count
+            result = ch
+            nextIteration
           case Opcode.SET_COUNT_TO_INT32
             count = code[ ip ]
             result = count
@@ -209,24 +194,12 @@ class VM
             count = ch
             result = count
             nextIteration
-          case Opcode.SET_CH_TO_COUNT
-            ch = count
-            result = ch
-            nextIteration
           case Opcode.ADD_CH_INT32
             ch += code[ ip ]
             ++ip
             nextIteration
-          case Opcode.ADD_C_INT32
+          case Opcode.ADD_COUNT_INT32
             count += code[ ip ]
-            ++ip
-            nextIteration
-          case Opcode.SUB_CH_INT32
-            ch -= code[ ip ]
-            ++ip
-            nextIteration
-          case Opcode.SUB_C_INT32
-            count -= code[ ip ]
             ++ip
             nextIteration
           case Opcode.SCAN_TABLE

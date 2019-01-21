@@ -29,8 +29,6 @@ augment TokenType
   KEYWORD_GOTO           ( "goto",          &is_keyword )
   KEYWORD_HALT           ( "halt",          &is_keyword )
   KEYWORD_HANDLE         ( "handle",        &is_keyword, &is_structural )
-  KEYWORD_HANDLE_KEYWORDS( "handleKeywords",&is_keyword, &is_structural )
-  KEYWORD_HANDLE_SYMBOLS ( "handleSymbols", &is_keyword, &is_structural )
   KEYWORD_HAS_ANOTHER    ( "hasAnother",    &is_keyword )
   KEYWORD_IF             ( "if",            &is_keyword )
   KEYWORD_OTHERS         ( "others",        &is_keyword, &is_structural )

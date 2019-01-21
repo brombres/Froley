@@ -2,50 +2,45 @@ module Froley
 
 enum Opcode( size=1:Int32 )
   HALT                  # Tokenization complete; VM.tokenize() returns
-  RETURN                # ip = stack.remove_last
+  RETURN                # IP = STACK.remove_last
   ERROR                 # Throws error using message in BUFFER
-  ACCEPT_INT32(2)       # Invokes VM callback accept(type,BUFFER), where 'type' is operand, then clears BUFFER & jumps to IP 0
-  JUMP(2)               # Jumps to IP specified by operand
-  JUMP_EQ(2)            #
-  JUMP_NE(2)            #
-  JUMP_LT(2)            #
-  JUMP_LE(2)            #
-  JUMP_GT(2)            #
-  JUMP_GE(2)            #
-  CALL(2)               #
-  MARK_SOURCE_POS       #
-  HAS_ANOTHER           #
-  READ_CH               #
-  READ_AND_DISCARD      #
+  ACCEPT_INT32(2)       # Invokes VM callback accept(token_type:ARG1) then clears BUFFER & jumps to IP 0
+  JUMP(2)               # IP = ARG1
+  JUMP_EQ(2)            # if (RESULT == 0) IP = ARG1
+  JUMP_NE(2)            # if (RESULT != 0) IP = ARG1
+  JUMP_LT(2)            # if (RESULT <  0) IP = ARG1
+  JUMP_LE(2)            # if (RESULT <= 0) IP = ARG1
+  JUMP_GT(2)            # if (RESULT >  0) IP = ARG1
+  JUMP_GE(2)            # if (RESULT >= 0) IP = ARG1
+  CALL(2)               # STACK.push(IP); IP = ARG1
+  MARK_SOURCE_POS       # Implementation-dependent; usually records scanner line and column for later token creation
+  HAS_ANOTHER           # if another character of input is available then RESULT=1 else RESULT=0
+  PEEK_CH_INT32(2)      # CH = peek(lookahead:ARG1)
+  PEEK_CH_COUNT         # CH = peek(lookahead=COUNT)
+  READ_CH               # CH = read
+  CONSUME_CHARACTER(2)  # if consume(character:ARG1) then RESULT=1 else RESULT=0
   SCAN_DIGITS(4)        #
-  PEEK_CH_INT32(2)      #
-  PEEK_CH_COUNT         #
-  CONSUME               #
-  CONSUME_CHARACTER(2)  #
-  CONSUME_STRING(2)     #
-  CLEAR_BUFFER          #
-  COLLECT_CH            #
-  COLLECT_CHARACTER(2)  #
-  COLLECT_STRING(2)     #
+  CLEAR_BUFFER          # BUFFER.clear
+  COLLECT_CH            # BUFFER.print(ch)
+  COLLECT_CHARACTER(2)  # BUFFER.print(character:ARG1)
+  COLLECT_STRING(2)     # BUFFER.print(strings[index:ARG1])
   PRINT_BUFFER          #
   PRINT_CH              #
   PRINT_COUNT           #
   PRINT_CHARACTER(2)    #
   PRINT_STRING(2)       #
-  SET_CH_INT32(2)       #
-  COMPARE_CH_INT32
+  COMPARE_CH_INT32      #
   COMPARE_COUNT_INT32   #
-  TEST_CH
-  TEST_COUNT
-  PUSH_CH
-  POP_CH
-  SET_COUNT_TO_INT32(2)              #
-  SET_COUNT_TO_CH           #
-  SET_CH_TO_COUNT           #
-  ADD_CH_INT32(2)        #
-  ADD_C_INT32(2)        #
-  SUB_CH_INT32(2)        #
-  SUB_C_INT32(2)        #
+  TEST_CH               #
+  TEST_COUNT            #
+  PUSH_CH               #
+  POP_CH                #
+  SET_CH_TO_INT32(2)    #
+  SET_CH_TO_COUNT       #
+  SET_COUNT_TO_INT32(2) #
+  SET_COUNT_TO_CH       #
+  ADD_CH_INT32(2)       #
+  ADD_COUNT_INT32(2)    #
   SCAN_TABLE            #
 endEnum
 

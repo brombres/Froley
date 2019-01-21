@@ -72,12 +72,10 @@ class FroleyParser : Parser
           local t = parser.read  # 'consume'
           if (parser.next_is(TokenType.SYMBOL_OPEN_PAREN))
             local expr = parser.parse_expression()
+            t = expr.t
             if (expr.is_integer)                      return CmdConsumeCharacter( t, expr->Int32 )
-            elseIf (expr instanceOf CmdLiteralString) return CmdConsumeString(t,(expr as CmdLiteralString).value)
-            throw expr.t.error( "'Expected 'consume', 'consume(<character>)', or 'consume(<string>)'." )
-          else
-            return CmdConsume( t )
           endIf
+          throw t.error( "'Expected 'consume(<character>)'." )
         endFunction
       )
 
@@ -397,11 +395,19 @@ class FroleyParser : Parser
           endIf
           consume( TokenType.SYMBOL_COLON )
           parse_statements( node.statements )
+          #{
+        elseIf (consume(TokenType.KEYWORD_HANDLE))
+          local t    = peek
+          local name = read_identifier
+          local node = cmd_scan_table.start
+          node = node.link( forEach in name )
+          node.statements.add( CmdAcceptInt32(t,Froley.token_type(name)) )
+          }#
         elseIf (consume(TokenType.KEYWORD_OTHERS))
           consume( TokenType.SYMBOL_COLON )
           parse_statements( cmd_scan_table.start.statements )
         else
-          throw peek.error( "'case', 'handle', 'handleKeywords', 'handleSymbols', or 'others' expected." )
+          throw peek.error( "'case', 'handle', or 'others' expected." )
         endIf
         consume_eols
       endWhile

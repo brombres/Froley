@@ -575,3 +575,68 @@ class CmdLiteralString( t, value:String ) : Cmd
       throw t.error( "Syntax error - unexpected literal string." )
 endClass
 
+class CmdScanTable : Cmd
+  PROPERTIES
+    start = ScanNode()
+
+  METHODS
+    method init( t )
+      start.is_acceptable = true
+
+    method write( assembler:Assembler )
+      assembler.write( Opcode.SCAN_TABLE )
+      # Write twice - the first time through will set the correct addresses
+      # and the second time through will use correct addresses.
+      local start_ip = assembler.code.count
+      local label_end = Label()
+      start.write( assembler )                # set addresses
+      assembler.code.discard_from( start_ip ) # reset
+      start.write( assembler, label_end )     # set addresses
+      assembler.define( label_end )
+endClass
+
+class ScanNode
+  PROPERTIES
+    is_acceptable : Logical
+    address       : Int32
+    links         = Table<<Character,ScanNode>>()
+    statements    = CmdStatements()
+
+  METHODS
+    method link( ch:Character )->ScanNode
+      local entry = links.find( ch )
+      if (entry)
+        return entry.value
+      else
+        local result = ScanNode()
+        links[ ch ] = result
+        return result
+      endIf
+
+    method write( assembler:Assembler, label_end=null:Label )
+      address = assembler.code.count
+      if (statements.count) is_acceptable = true
+      assembler.write( select{is_acceptable:1 || 0} )
+
+      # Write links
+      assembler.write( links.count )
+      forEach (key in links.keys)
+        assembler.write( key->Int32 )
+        assembler.write( links[key].address )
+      endForEach
+
+      # Write code
+      statements.write( assembler )
+      if (is_acceptable)
+        assembler.write( Opcode.JUMP )
+        if (label_end) assembler.write_address( label_end )
+        else           assembler.write( 0 )  # end ip unknown on first pass
+      endIf
+
+      # Write subnode definitions
+      (forEach in links).write( assembler, label_end )
+
+    method to->String
+      return "$$" (address->String,links)
+endClass
+

@@ -268,6 +268,13 @@ class FroleyParser : Parser
       elseIf (consume(TokenType.KEYWORD_SCAN_DIGITS))
         throw t.error( "Syntax error. Expected 'ch = scanDigits <min-digits>[..<max-digits>] [base <number-base>]'." )
 
+      elseIf (consume(TokenType.KEYWORD_SCAN_TABLE))
+        local cmd_scan_table = CmdScanTable( t )
+        statements.add( cmd_scan_table )
+        parse_scan_table( cmd_scan_table )
+        must_consume( TokenType.KEYWORD_END_SCAN_TABLE )
+        return true
+
       elseIf (next_is(TokenType.SYMBOL_LT))
         local name = read_label_name
         must_consume( TokenType.EOL )
@@ -373,6 +380,31 @@ class FroleyParser : Parser
       if (consume(TokenType.KEYWORD_CH)) return CmdRegisterCh( t )
       if (consume(TokenType.KEYWORD_COUNT)) return CmdRegisterCount( t )
       throw t.error( "Register 'ch' or 'count' expected." )
+
+    method parse_scan_table( cmd_scan_table:CmdScanTable )
+      consume_eols
+      while (has_another and not next_is(TokenType.KEYWORD_END_SCAN_TABLE))
+        if (consume(TokenType.KEYWORD_CASE))
+          local expr = parse_expression()
+          local node = cmd_scan_table.start
+          if (expr.is_integer)
+            node = node.link( expr->Int32->Character )
+          elseIf (expr instanceOf CmdLiteralString)
+            local st = (expr as CmdLiteralString).value
+            node = node.link( forEach in st )
+          else
+            throw expr.t.error( "Syntax error - expected character, character code, or string." )
+          endIf
+          consume( TokenType.SYMBOL_COLON )
+          parse_statements( node.statements )
+        elseIf (consume(TokenType.KEYWORD_OTHERS))
+          consume( TokenType.SYMBOL_COLON )
+          parse_statements( cmd_scan_table.start.statements )
+        else
+          throw peek.error( "'case', 'handle', 'handleKeywords', 'handleSymbols', or 'others' expected." )
+        endIf
+        consume_eols
+      endWhile
 
     method read_identifier->String
       if (next_is(TokenType.IDENTIFIER))

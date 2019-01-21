@@ -13,7 +13,6 @@ enum Opcode( size=1:Int32 )
   JUMP_GT(2)            #
   JUMP_GE(2)            #
   CALL(2)               #
-  SCAN_TABLE            #
   MARK_SOURCE_POS       #
   HAS_ANOTHER           #
   READ_CH               #
@@ -47,5 +46,6 @@ enum Opcode( size=1:Int32 )
   ADD_C_INT32(2)        #
   SUB_CH_INT32(2)        #
   SUB_C_INT32(2)        #
+  SCAN_TABLE            #
 endEnum
 

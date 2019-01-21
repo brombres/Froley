@@ -18,6 +18,9 @@ class VM
     filepath : String
     scanner  : Scanner
 
+    next_line   : Int32
+    next_column : Int32
+
   METHODS
     method init( data:Byte[] )
       load( data )
@@ -77,8 +80,10 @@ class VM
             stack.add( ip )
             ip = code[ ip-1 ]
             nextIteration
-          #case Opcode.SCAN_TABLE
-          #case Opcode.MARK_SOURCE_POS
+          case Opcode.MARK_SOURCE_POS
+            next_line = scanner.line
+            next_column = scanner.column
+            nextIteration
           case Opcode.HAS_ANOTHER
             result = select{ scanner.has_another:1 || 0 }
             nextIteration
@@ -223,6 +228,38 @@ class VM
           case Opcode.SUB_C_INT32
             count -= code[ ip ]
             ++ip
+            nextIteration
+          case Opcode.SCAN_TABLE
+            local cur_node = ip
+            local lookahead = 0
+            local last_acceptable_node = 0
+            local last_acceptable_link_count = 0
+            local last_acceptable_lookahead = 0
+            while (scanner.has_another(lookahead+1))
+              local link_count = code[cur_node+1]
+              if (code[cur_node])
+                last_acceptable_node = cur_node
+                last_acceptable_link_count = link_count
+                last_acceptable_lookahead = lookahead
+              endIf
+              local c = scanner.peek( lookahead )
+              ip = cur_node + 2
+              contingent
+                loop (link_count)
+                  sufficient (c == code[ip])
+                  ip += 2
+                endLoop
+                # No links match - jump to code of last acceptable node.  The
+                # start node is always acceptable (and either contains the
+                # 'others' case or jumps to the end of the scan table).
+                ip = last_acceptable_node + (last_acceptable_link_count+1) * 2
+                loop (last_acceptable_lookahead) buffer.print( scanner.read )
+                escapeWhile
+              satisfied
+                ++lookahead
+                cur_node = code[ ip+1 ]
+              endContingent
+            endWhile
             nextIteration
           others
             throw FroleyError( "[INTERNAL] Unhandled opcode: " + Opcode(opcode) )

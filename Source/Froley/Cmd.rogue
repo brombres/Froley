@@ -479,7 +479,7 @@ endClass
 class CmdAcceptInt32( t, token_type:Int32 ) : Cmd
   METHODS
     method to->String
-      return Froley.token_name( token_type )
+      return Froley.token_def( token_type ).name
 
     method write( assembler:Assembler )
       assembler.write( Opcode.ACCEPT_INT32, token_type )

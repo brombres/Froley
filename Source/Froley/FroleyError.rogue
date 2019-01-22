@@ -17,7 +17,7 @@ class FroleyError : ParseError
         endIf
       endIf
       builder.println.println
-      builder.println( message )
+      builder.println( message.word_wrapped(79) )
       if (line and column and source)
         builder.println.println
         forEach (line at index in LineReader(source))

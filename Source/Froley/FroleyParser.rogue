@@ -177,7 +177,7 @@ class FroleyParser : Parser
 
       if (consume(TokenType.KEYWORD_ACCEPT))
         local name = read_identifier
-        statements.add( CmdAcceptInt32(t,Froley.token_type(name)) )
+        statements.add( CmdAcceptInt32(t,Froley.token_def(name).type) )
         return true
 
       elseIf (consume(TokenType.KEYWORD_CALL))
@@ -407,7 +407,7 @@ class FroleyParser : Parser
           consume( TokenType.SYMBOL_COLON )
           parse_statements( cmd_scan_table.start.statements )
         else
-          throw peek.error( "'case', 'handle', or 'others' expected." )
+          throw peek.error( "Syntax error - 'case', 'accept [<section-name>]', 'discard [<section-name>]', 'others', or 'endScanTable' expected." )
         endIf
         consume_eols
       endWhile

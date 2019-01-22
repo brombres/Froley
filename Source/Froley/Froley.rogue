@@ -43,11 +43,17 @@ class Launcher
       endTry
 endClass
 
+class TokenDef( name:String, type:Int32, attributes=0:Int32 )
+endClass
+
 class Froley [singleton]
   PROPERTIES
-    token_name_to_type = StringTable<<Int32>>()
-    token_type_to_name = Table<<Int32,String>>()
-    last_token_type    = 0
+    token_defs_by_name    = StringTable<<TokenDef>>()
+    token_defs_by_type    = Table<<Int32,TokenDef>>()
+    last_token_type       = 0
+
+    token_defs_by_section = StringTable<<TokenDef[]>>()
+    attributes            = LookupList<<Int32>>()
 
   METHODS
     method init( file:File )
@@ -55,6 +61,8 @@ class Froley [singleton]
       parse( file.filepath, source )
 
     method parse( filepath:String, source:String )
+      source = collect_definitions_and_extract_code( filepath, source )
+
       local statements = CmdStatements()
       local parser = FroleyParser()
       parser.set_source( filepath, source )
@@ -67,17 +75,141 @@ class Froley [singleton]
       local vm = VM( bytes )
       vm.tokenize( File("Test2.txt") )
 
-    method token_name( token_type:Int32 )->String
-      return token_type_to_name[ token_type ]
+    method collect_definitions_and_extract_code( filepath:String, source:String )->String
+      $localDefine PARSING_TOKENIZER   0
+      $localDefine PARSING_DEFINITIONS 1
+      $localDefine PARSING_ATTRIBUTES  2
+      local code = StringBuilder( 2048 )
+      local cur_section_name = "tokenizer"
+      local cur_section_defs : TokenDef[]
+      local parse_type = PARSING_TOKENIZER
+      local buffer = StringBuilder()
+      local next_attribute_value = 1
+      forEach (line at index in LineReader(source))
+        if (line.begins_with('['))  # new section
+          code.println  # keep line numbers consistent
+          cur_section_name = line.extract_string( "[$]*" )
+          which (cur_section_name)
+            case "tokenAttributes": parse_type = PARSING_ATTRIBUTES
+            case "tokenizer":       parse_type = PARSING_TOKENIZER
+            others:                 parse_type = PARSING_DEFINITIONS
+          endWhich
 
-    method token_type( token_name:String )->Int32
-      local entry = token_name_to_type.find( token_name )
+          if (parse_type == PARSING_DEFINITIONS)
+            cur_section_defs = section_defs( cur_section_name )
+          endIf
+        elseIf (parse_type == PARSING_TOKENIZER)
+          code.println( line )
+        elseIf (parse_type == PARSING_ATTRIBUTES)
+          code.println  # keep line numbers consistent
+          local scanner = Scanner( line, &spaces_per_tab=2 ).[ line=index+1 ]
+          discard_whitespace( scanner )
+          if (scanner.has_another)
+            local name = scanner.scan_identifier
+            if (name is null)
+              throw FroleyError( filepath, source, scanner.line, scanner.column, "Attribute name expected." )
+            endIf
+
+            discard_whitespace( scanner )
+            if (scanner.consume('='))
+              discard_whitespace( scanner )
+              if (not scanner.peek.is_number)
+                throw FroleyError( filepath, source, scanner.line, scanner.column, "Attribute value expected, e.g 1, 2, 4, etc." )
+              endIf
+              next_attribute_value = scanner.scan_int64
+            endIf
+
+@trace name, next_attribute_value
+
+            next_attribute_value *= 2
+
+          endIf
+        else
+          code.println  # keep line numbers consistent
+          local scanner = Scanner( line, &spaces_per_tab=2 ).[ line=index+1 ]
+          discard_whitespace( scanner )
+          if (scanner.has_another)
+            local name = scanner.scan_identifier
+            if (name is null)
+              throw FroleyError( filepath, source, scanner.line, scanner.column, "Token name expected." )
+            endIf
+
+            local symbol : String
+            discard_whitespace( scanner )
+            if (scanner.has_another)
+              buffer.clear
+              local ch = scanner.peek
+              if (ch == '"' or ch == '\'')
+                local terminator = scanner.read
+                while (scanner.has_another and scanner.peek != terminator)
+                  scanner.consume( '\\' )
+                  buffer.print( scanner.read )
+                endWhile
+                if (not scanner.consume(terminator))
+                  throw FroleyError( filepath, source, scanner.line, scanner.column, "Unterminated string." )
+                endIf
+              else
+                while (scanner.has_another and not scanner.consume(' ')) buffer.print( scanner.read )
+              endIf
+              symbol = buffer->String
+            endIf
+
+            local attributes = 0
+            discard_whitespace( scanner )
+            if (scanner.consume('['))
+              discard_whitespace( scanner )
+              local first = true
+              while (first or scanner.consume(','))
+                first = false
+                discard_whitespace( scanner )
+                local attribute_name = scanner.scan_identifier
+                if (attribute_name is null)
+                  throw FroleyError( filepath, source, scanner.line, scanner.column, "Attribute name expected." )
+                endIf
+                trace attribute_name
+              endWhile
+              if (not scanner.consume(']'))
+                throw FroleyError( filepath, source, scanner.line, scanner.column, "Closing ']' expected." )
+              endIf
+            endIf
+
+            discard_whitespace( scanner )
+            if (scanner.has_another)
+              throw FroleyError( filepath, source, scanner.line, scanner.column, "Syntax error - unexpected '$'." (scanner.peek.to_escaped_ascii) )
+            endIf
+
+@trace name, symbol, attributes
+          endIf
+        endIf
+      endForEach
+      return code->String
+
+    method discard_whitespace( scanner:Scanner )
+      while (scanner.consume(' ')) noAction
+      if (scanner.consume('#'))
+        while (scanner.has_another) scanner.read
+      endIf
+
+    method section_defs( name:String )->TokenDef[]
+      local entry = token_defs_by_section.find( name )
+      if (entry) return entry.value
+
+      local defs = TokenDef[]
+      token_defs_by_section[ name ] = defs
+      return defs
+
+    method token_def( token_name:String )->TokenDef
+      local entry = token_defs_by_name.find( token_name )
       if (entry) return entry.value
 
       ++last_token_type
-      token_name_to_type[ token_name ] = last_token_type
-      token_type_to_name[ last_token_type ] = token_name
-      return last_token_type
+      local def = TokenDef( token_name, last_token_type )
+      token_defs_by_name[ token_name ] = def
+      token_defs_by_type[ def.type ] = def
+      return def
+
+    method token_def( token_type:Int32 )->TokenDef
+      return token_defs_by_type[ token_type ]
 
 endClass
 

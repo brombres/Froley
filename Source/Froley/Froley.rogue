@@ -61,6 +61,16 @@ class Froley [singleton]
 
     entry_points          = StringLookupList()
 
+    id_begin_letter : Logical
+    id_begin_digit  : Logical
+    id_begin_other  = ""
+
+    id_continue_letter : Logical
+    id_continue_digit  : Logical
+    id_continue_other  = ""
+
+    whitespace = ""
+
   METHODS
     method parse( file:File )
       local source = file.load_as_string
@@ -110,8 +120,96 @@ class Froley [singleton]
           if (parse_type == PARSING_DEFINITIONS)
             cur_section_defs = section_defs( cur_section_name )
           endIf
+
+        elseIf (parse_type == PARSING_CONFIGURE)
+          code.println  # keep line numbers consistent
+          local scanner = Scanner( line, &spaces_per_tab=2 ).[ line=index+1 ]
+          discard_whitespace( scanner )
+          if (not scanner.has_another) nextIteration
+          local config_name = scanner.scan_identifier
+          if (config_name is null)
+            throw FroleyError( filepath, source, scanner.line, scanner.column, "Expected 'id_begin', 'id_continue', or 'whitespace'." )
+          endIf
+          which (config_name)
+            case "id_begin"
+              discard_whitespace( scanner )
+              while (scanner.has_another)
+                local id = scanner.scan_identifier
+                if (id)
+                  if (id == "letter")
+                    id_begin_letter = true
+                  elseIf (id == "digit")
+                    id_begin_digit = true
+                  else
+                    forEach (ch in id)
+                      if (not id_begin_other.contains(ch)) id_begin_other += ch
+                    endForEach
+                  endIf
+                else
+                  local chars = scanner.scan_string
+                  if (chars)
+                    forEach (ch in chars)
+                      if (not id_begin_other.contains(ch)) id_begin_other += ch
+                    endForEach
+                  else
+                    local ch = scanner.read
+                    if (not id_begin_other.contains(ch)) id_begin_other += ch
+                  endIf
+                endIf
+                discard_whitespace(scanner)
+              endWhile
+
+            case "id_continue"
+              discard_whitespace( scanner )
+              while (scanner.has_another)
+                local id = scanner.scan_identifier
+                if (id)
+                  if (id == "letter")
+                    id_continue_letter = true
+                  elseIf (id == "digit")
+                    id_continue_digit = true
+                  else
+                    forEach (ch in id)
+                      if (not id_continue_other.contains(ch)) id_continue_other += ch
+                    endForEach
+                  endIf
+                else
+                  local chars = scanner.scan_string
+                  if (chars)
+                    forEach (ch in chars)
+                      if (not id_continue_other.contains(ch)) id_continue_other += ch
+                    endForEach
+                  else
+                    local ch = scanner.read
+                    if (not id_continue_other.contains(ch)) id_continue_other += ch
+                  endIf
+                endIf
+                discard_whitespace(scanner)
+              endWhile
+
+            case "whitespace"
+              discard_whitespace( scanner )
+              while (scanner.has_another)
+                local chars = scanner.scan_identifier
+                if (chars is null) chars = scanner.scan_string
+                if (chars)
+                  forEach (ch in chars)
+                    if (not whitespace.contains(ch)) whitespace += ch
+                  endForEach
+                else
+                  local ch = scanner.read
+                  if (not whitespace.contains(ch)) whitespace += ch
+                endIf
+                discard_whitespace(scanner)
+              endWhile
+
+            others
+              throw FroleyError( filepath, source, scanner.line, scanner.column, "Attribute value expected, e.g 1, 2, 4, etc." )
+          endWhich
+
         elseIf (parse_type == PARSING_CODE)
           code.println( line )
+
         elseIf (parse_type == PARSING_ATTRIBUTES)
           code.println  # keep line numbers consistent
           local scanner = Scanner( line, &spaces_per_tab=2 ).[ line=index+1 ]
@@ -136,6 +234,7 @@ class Froley [singleton]
 
           endIf
         else
+          # Token definitions
           code.println  # keep line numbers consistent
           local scanner = Scanner( line, &spaces_per_tab=2 ).[ line=index+1 ]
           discard_whitespace( scanner )

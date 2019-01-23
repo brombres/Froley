@@ -395,14 +395,39 @@ class FroleyParser : Parser
           endIf
           consume( TokenType.SYMBOL_COLON )
           parse_statements( node.statements )
-          #{
-        elseIf (consume(TokenType.KEYWORD_HANDLE))
+        elseIf (consume(TokenType.KEYWORD_ACCEPT_ALL))
           local t    = peek
+          must_consume( TokenType.SYMBOL_OPEN_BRACKET )
           local name = read_identifier
-          local node = cmd_scan_table.start
-          node = node.link( forEach in name )
-          node.statements.add( CmdAcceptInt32(t,Froley.token_type(name)) )
-          }#
+          must_consume( TokenType.SYMBOL_CLOSE_BRACKET )
+          if (Froley.token_defs_by_section.contains(name))
+            forEach (def in Froley.section_defs(name))
+              if (def.symbol)
+                local node = cmd_scan_table.start
+                node = node.link( forEach in def.symbol )
+                node.statements.add( CmdAcceptInt32(t,def.type) )
+              endIf
+            endForEach
+          else
+            throw t.error( "No token definitions for [$] exist." (name) )
+          endIf
+        elseIf (consume(TokenType.KEYWORD_DISCARD_ALL))
+          local t    = peek
+          must_consume( TokenType.SYMBOL_OPEN_BRACKET )
+          local name = read_identifier
+          must_consume( TokenType.SYMBOL_CLOSE_BRACKET )
+          if (Froley.token_defs_by_section.contains(name))
+            forEach (def in Froley.section_defs(name))
+              if (def.symbol)
+                local node = cmd_scan_table.start
+                node = node.link( forEach in def.symbol )
+                node.statements.add( CmdStatement(t,"clear buffer",Opcode.CLEAR_BUFFER) )
+                node.statements.add( CmdJump(t,0) )
+              endIf
+            endForEach
+          else
+            throw t.error( "No token definitions for [$] exist." (name) )
+          endIf
         elseIf (consume(TokenType.KEYWORD_OTHERS))
           consume( TokenType.SYMBOL_COLON )
           parse_statements( cmd_scan_table.start.statements )
@@ -429,8 +454,13 @@ class FroleyParser : Parser
 
     method read_label_name->String
       must_consume( TokenType.SYMBOL_LT )
+      local is_entry_point = consume( TokenType.SYMBOL_LT )
       local name = read->String
       must_consume( TokenType.SYMBOL_GT )
+      if (is_entry_point)
+        must_consume( TokenType.SYMBOL_GT )
+        Froley.entry_points.add( name )
+      endIf
       return name
 
 endClass

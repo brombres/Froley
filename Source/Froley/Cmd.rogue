@@ -564,20 +564,15 @@ class CmdScanTable : Cmd
 
     method write( assembler:Assembler )
       assembler.write( Opcode.SCAN_TABLE )
-      # Write twice - the first time through will set the correct addresses
-      # and the second time through will use correct addresses.
-      local start_ip = assembler.code.count
       local label_end = Label()
-      start.write( assembler )                # set addresses
-      assembler.code.discard_from( start_ip ) # reset
-      start.write( assembler, label_end )     # set addresses
+      start.write( assembler, label_end )
       assembler.define( label_end )
 endClass
 
 class ScanNode
   PROPERTIES
     is_acceptable : Logical
-    address       : Int32
+    label         = Label()
     links         = Table<<Character,ScanNode>>()
     statements    = CmdStatements()
 
@@ -593,7 +588,7 @@ class ScanNode
       endIf
 
     method write( assembler:Assembler, label_end=null:Label )
-      address = assembler.code.count
+      assembler.define( label )
       if (statements.count) is_acceptable = true
       assembler.write( select{is_acceptable:1 || 0} )
 
@@ -601,7 +596,7 @@ class ScanNode
       assembler.write( links.count )
       forEach (key in links.keys)
         assembler.write( key->Int32 )
-        assembler.write( links[key].address )
+        assembler.write_address( links[key].label )
       endForEach
 
       # Write code
@@ -616,6 +611,6 @@ class ScanNode
       (forEach in links).write( assembler, label_end )
 
     method to->String
-      return "$$" (address->String,links)
+      return "$$" (label->String,links)
 endClass
 

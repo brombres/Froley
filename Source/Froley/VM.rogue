@@ -7,19 +7,22 @@ class VM
     MIN_VERSION = 1
 
   PROPERTIES
-    code    = Int32[]
-    stack   = Int32[]
-    strings = String[]
-    ch      : Int32
-    count   : Int32
-    result  : Int32
-    buffer  = StringBuilder()
+    code         = Int32[]
+    stack        = Int32[]
+    strings      = String[]
+    entry_points = EntryPoint[]
+    ch           : Int32
+    count        : Int32
+    result       : Int32
+    buffer       = StringBuilder()
 
     filepath : String
     scanner  : Scanner
 
     next_line   : Int32
     next_column : Int32
+
+    start_ip = 0
 
   METHODS
     method init( data:Byte[] )
@@ -29,23 +32,31 @@ class VM
       println "Accepting $ ($)" (token_type,buffer->String.to_escaped_ascii)
 
     method execute
-      local ip = 0
+      local ip = start_ip
       loop
         local opcode = code[ ip ]
+        #println "$ $" (ip.format("03"),Opcode(opcode))
         ++ip
-        #trace Opcode(opcode)
         which (opcode)
           case Opcode.HALT
             return
+          case Opcode.RESTART
+            buffer.clear
+            ip = start_ip
+            nextIteration
+          case Opcode.MODE_INT32
+            start_ip = code[ ip ]
+            ++ip
+            nextIteration
+          case Opcode.ERROR
+            throw FroleyError( filepath, scanner.source, scanner.line, scanner.column, buffer->String )
           case Opcode.RETURN
             if (stack.is_empty) throw FroleyError( "[Compiled Code]", "'return' on empty stack." )
             ip = stack.remove_last
             nextIteration
-          case Opcode.ERROR
-            throw FroleyError( filepath, scanner.source, scanner.line, scanner.column, buffer->String )
           case Opcode.ACCEPT_INT32
             local token_type = code[ ip ]
-            ip = 0
+            ip = start_ip
             accept( token_type )
             buffer.clear
           case Opcode.JUMP
@@ -173,8 +184,15 @@ class VM
             stack.add( ch )
             nextIteration
           case Opcode.POP_CH
-            if (stack.is_empty) throw FroleyError( "[Compiled Code]", "'pop' on empty stack." )
+            if (stack.is_empty) throw FroleyError( "[Compiled Code]", "'pop ch' on empty stack." )
             ch = stack.remove_last
+            nextIteration
+          case Opcode.PUSH_COUNT
+            stack.add( count )
+            nextIteration
+          case Opcode.POP_COUNT
+            if (stack.is_empty) throw FroleyError( "[Compiled Code]", "'pop count' on empty stack." )
+            count = stack.remove_last
             nextIteration
           case Opcode.SET_CH_TO_INT32
             ch = code[ ip ]
@@ -208,13 +226,14 @@ class VM
             local last_acceptable_node = 0
             local last_acceptable_link_count = 0
             local last_acceptable_lookahead = 0
-            while (scanner.has_another(lookahead+1))
+            loop
               local link_count = code[cur_node+1]
               if (code[cur_node])
                 last_acceptable_node = cur_node
                 last_acceptable_link_count = link_count
                 last_acceptable_lookahead = lookahead
               endIf
+              if (not scanner.has_another(lookahead+1)) escapeLoop
               local c = scanner.peek( lookahead )
               ip = cur_node + 2
               contingent
@@ -222,17 +241,17 @@ class VM
                   sufficient (c == code[ip])
                   ip += 2
                 endLoop
-                # No links match - jump to code of last acceptable node.  The
-                # start node is always acceptable (and either contains the
-                # 'others' case or jumps to the end of the scan table).
-                ip = last_acceptable_node + (last_acceptable_link_count+1) * 2
-                loop (last_acceptable_lookahead) buffer.print( scanner.read )
-                escapeWhile
+                escapeLoop
               satisfied
                 ++lookahead
                 cur_node = code[ ip+1 ]
               endContingent
-            endWhile
+            endLoop
+            # Either no links match or EOI - jump to code of last acceptable node.
+            # The start node is always acceptable and either contains the
+            # 'others' case or jumps to the end of the scan table.
+            ip = last_acceptable_node + (last_acceptable_link_count+1) * 2
+            loop (last_acceptable_lookahead) buffer.print( scanner.read )
             nextIteration
           others
             throw FroleyError( "[INTERNAL] Unhandled opcode: " + Opcode(opcode) )
@@ -248,6 +267,15 @@ class VM
       local n = reader.read_int32x
       strings.reserve( n )
       loop (n) strings.add( reader.read_string )
+
+      n = reader.read_int32x
+      entry_points.reserve( n )
+      loop (n)
+        local name = strings[ reader.read_int32x ]
+        entry_points.add( EntryPoint(name,reader.read_int32x) )
+      endLoop
+      trace entry_points
+
       n = reader.read_int32x
       code.reserve( n )
       loop (n) code.add( reader.read_int32x )
@@ -259,5 +287,11 @@ class VM
     method tokenize( filepath, source:String )
       scanner = Scanner( source )
       execute
+endClass
+
+class EntryPoint( name:String, ip:Int32 ) [compound]
+  METHODS
+    method to->String
+      return "$ $" (ip.format("04"),name)
 endClass
 

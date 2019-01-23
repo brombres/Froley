@@ -12,6 +12,9 @@ class Assembler
     strings           = StringLookupList()
 
   METHODS
+    method init
+      strings.add( forEach in Froley.entry_points )
+
     method assemble( statements:CmdStatements )->Byte[]
       statements.write( this )
       write( Opcode.HALT )
@@ -50,6 +53,12 @@ class Assembler
       writer.write_int32x( strings.count )
       forEach (value in strings)
         writer.write_string( value )
+      endForEach
+
+      writer.write_int32x( Froley.entry_points.count )
+      forEach (entry_point_name in Froley.entry_points)
+        writer.write_int32x( strings.locate(entry_point_name).value )
+        writer.write_int32x( label(entry_point_name).address.value )
       endForEach
 
       writer.write_int32x( code.count )

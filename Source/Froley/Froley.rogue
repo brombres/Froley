@@ -35,7 +35,8 @@ class Launcher
         endForEach
 
         forEach (target in targets)
-          Froley( File(target) )
+          Froley = Froley() # new singleton
+          Froley.parse( File(target) )
         endForEach
 
       catch (error:FroleyError)
@@ -43,7 +44,10 @@ class Launcher
       endTry
 endClass
 
-class TokenDef( name:String, type:Int32, attributes=0:Int32 )
+class TokenDef( name:String, type:Int32, symbol=null:String, attributes=0:Int32 )
+  METHODS
+    method to->String
+      return "$=$ ($) [$]" (name,type,symbol,attributes)
 endClass
 
 class Froley [singleton]
@@ -53,10 +57,12 @@ class Froley [singleton]
     last_token_type       = 0
 
     token_defs_by_section = StringTable<<TokenDef[]>>()
-    attributes            = LookupList<<Int32>>()
+    token_attributes      = LookupList<<Int32>>()
+
+    entry_points          = StringLookupList()
 
   METHODS
-    method init( file:File )
+    method parse( file:File )
       local source = file.load_as_string
       parse( file.filepath, source )
 
@@ -76,13 +82,14 @@ class Froley [singleton]
       vm.tokenize( File("Test2.txt") )
 
     method collect_definitions_and_extract_code( filepath:String, source:String )->String
-      $localDefine PARSING_TOKENIZER   0
-      $localDefine PARSING_DEFINITIONS 1
-      $localDefine PARSING_ATTRIBUTES  2
+      $localDefine PARSING_CONFIGURE   0
+      $localDefine PARSING_ATTRIBUTES  1
+      $localDefine PARSING_DEFINITIONS 2
+      $localDefine PARSING_CODE        3
       local code = StringBuilder( 2048 )
       local cur_section_name = "tokenizer"
       local cur_section_defs : TokenDef[]
-      local parse_type = PARSING_TOKENIZER
+      local parse_type = PARSING_CODE
       local buffer = StringBuilder()
       local next_attribute_value = 1
       forEach (line at index in LineReader(source))
@@ -90,15 +97,20 @@ class Froley [singleton]
           code.println  # keep line numbers consistent
           cur_section_name = line.extract_string( "[$]*" )
           which (cur_section_name)
-            case "tokenAttributes": parse_type = PARSING_ATTRIBUTES
-            case "tokenizer":       parse_type = PARSING_TOKENIZER
-            others:                 parse_type = PARSING_DEFINITIONS
+            case "configure"
+              parse_type = PARSING_CONFIGURE
+            case "attributes"
+              parse_type = PARSING_ATTRIBUTES
+            case "code"
+              parse_type = PARSING_CODE
+            others
+              parse_type = PARSING_DEFINITIONS
           endWhich
 
           if (parse_type == PARSING_DEFINITIONS)
             cur_section_defs = section_defs( cur_section_name )
           endIf
-        elseIf (parse_type == PARSING_TOKENIZER)
+        elseIf (parse_type == PARSING_CODE)
           code.println( line )
         elseIf (parse_type == PARSING_ATTRIBUTES)
           code.println  # keep line numbers consistent
@@ -119,8 +131,7 @@ class Froley [singleton]
               next_attribute_value = scanner.scan_int64
             endIf
 
-@trace name, next_attribute_value
-
+            token_attributes[ name ] = next_attribute_value
             next_attribute_value *= 2
 
           endIf
@@ -140,14 +151,11 @@ class Froley [singleton]
               buffer.clear
               local ch = scanner.peek
               if (ch == '"' or ch == '\'')
-                local terminator = scanner.read
-                while (scanner.has_another and scanner.peek != terminator)
-                  scanner.consume( '\\' )
-                  buffer.print( scanner.read )
-                endWhile
-                if (not scanner.consume(terminator))
+                local st = scanner.scan_string
+                if (st is null)
                   throw FroleyError( filepath, source, scanner.line, scanner.column, "Unterminated string." )
                 endIf
+                buffer.print( st )
               else
                 while (scanner.has_another and not scanner.consume(' ')) buffer.print( scanner.read )
               endIf
@@ -166,7 +174,10 @@ class Froley [singleton]
                 if (attribute_name is null)
                   throw FroleyError( filepath, source, scanner.line, scanner.column, "Attribute name expected." )
                 endIf
-                trace attribute_name
+                if (not token_attributes.contains(attribute_name))
+                  throw FroleyError( filepath, source, scanner.line, scanner.column, "Undefined attribute '$'." (attribute_name) )
+                endIf
+                attributes |= token_attributes[ attribute_name ]
               endWhile
               if (not scanner.consume(']'))
                 throw FroleyError( filepath, source, scanner.line, scanner.column, "Closing ']' expected." )
@@ -178,7 +189,10 @@ class Froley [singleton]
               throw FroleyError( filepath, source, scanner.line, scanner.column, "Syntax error - unexpected '$'." (scanner.peek.to_escaped_ascii) )
             endIf
 
-@trace name, symbol, attributes
+            local def = token_def( name, cur_section_name )
+            def.symbol = symbol
+            def.attributes = attributes
+
           endIf
         endIf
       endForEach
@@ -198,7 +212,7 @@ class Froley [singleton]
       token_defs_by_section[ name ] = defs
       return defs
 
-    method token_def( token_name:String )->TokenDef
+    method token_def( token_name:String, cur_section_name=null:String )->TokenDef
       local entry = token_defs_by_name.find( token_name )
       if (entry) return entry.value
 
@@ -206,6 +220,10 @@ class Froley [singleton]
       local def = TokenDef( token_name, last_token_type )
       token_defs_by_name[ token_name ] = def
       token_defs_by_type[ def.type ] = def
+
+      if (cur_section_name)
+        section_defs( cur_section_name ).add( def )
+      endIf
       return def
 
     method token_def( token_type:Int32 )->TokenDef

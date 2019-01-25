@@ -556,7 +556,7 @@ endClass
 
 class CmdScanTable : Cmd
   PROPERTIES
-    start = ScanNode()
+    start         = ScanState()
 
   METHODS
     method init( t )
@@ -565,24 +565,48 @@ class CmdScanTable : Cmd
     method write( assembler:Assembler )
       assembler.write( Opcode.SCAN_TABLE )
       local label_end = Label()
-      start.write( assembler, label_end )
+      local states = ScanState[]
+      start.collect( states )
+      (forEach in states).is_visited = false
+      (forEach in states).write( assembler, label_end )
       assembler.define( label_end )
 endClass
 
-class ScanNode
+class ScanState
   PROPERTIES
     is_acceptable : Logical
+    is_visited    : Logical
     label         = Label()
-    links         = Table<<Character,ScanNode>>()
+    links         = Table<<Character,ScanState>>()
+    on_letter     : ScanState
+    on_digit      : ScanState
     statements    = CmdStatements()
 
   METHODS
-    method link( ch:Character )->ScanNode
+    method cloned->ScanState
+      local result = ScanState()
+      result.is_acceptable = is_acceptable
+      forEach (key in links.keys) result.links[ key ] = links[ key ]
+      result.on_letter = on_letter
+      result.on_digit = on_digit
+      result.statements.add( statements )
+      return result
+
+    method collect( states:ScanState[] )
+      if (is_visited) return
+      is_visited = true
+      states.add( this )
+      (forEach in links).collect( states )
+      if (on_letter) on_letter.collect( states )
+      if (on_digit)  on_digit.collect( states )
+
+
+    method link( ch:Character )->ScanState
       local entry = links.find( ch )
       if (entry)
         return entry.value
       else
-        local result = ScanNode()
+        local result = ScanState()
         links[ ch ] = result
         return result
       endIf
@@ -598,6 +622,10 @@ class ScanNode
         assembler.write( key->Int32 )
         assembler.write_address( links[key].label )
       endForEach
+      if (on_letter) assembler.write_address( on_letter.label )
+      else           assembler.write( 0 )
+      if (on_digit)  assembler.write_address( on_digit.label )
+      else           assembler.write( 0 )
 
       # Write code
       statements.write( assembler )
@@ -606,9 +634,6 @@ class ScanNode
         if (label_end) assembler.write_address( label_end )
         else           assembler.write( 0 )  # end ip unknown on first pass
       endIf
-
-      # Write subnode definitions
-      (forEach in links).write( assembler, label_end )
 
     method to->String
       return "$$" (label->String,links)

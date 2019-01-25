@@ -22,7 +22,7 @@ class Assembler
 
     method define( label:Label )
       if (label.address.exists)
-        throw FroleyError( "[INTERNAL] Label defined twice." )
+        throw FroleyError( "[INTERNAL] Label defined twice ($)." (label.name) )
       else
         label.address = code.count
         label.backpatch( code )

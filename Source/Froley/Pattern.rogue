@@ -1,0 +1,146 @@
+module Froley
+  uses ParseKit<<Froley>>
+
+class PatternInjector
+  PROPERTIES
+    end_state          : ScanState
+    patterns           = Pattern[]
+
+  METHODS
+    method init( end_state )
+
+    method init( pattern:Pattern, end_state )
+      patterns.add( pattern )
+
+    method advance( cur_state:ScanState )
+      if (patterns.count)
+        patterns.remove_first.apply( this, cur_state )
+      elseIf (cur_state is not end_state)
+        if (cur_state.statements.is_empty)
+          cur_state.statements.add( end_state.statements )
+        endIf
+      endIf
+
+    method cloned->PatternInjector
+      local result = PatternInjector( end_state )
+      result.patterns.add( patterns )
+      return result
+
+    method has_another->Logical
+      return patterns.count
+
+    method push( pattern:Pattern )
+      patterns.insert( pattern )
+
+    method inject( cur_state:ScanState )
+      if (patterns.count)
+        patterns.remove_first.apply( this, cur_state )
+      endIf
+endClass
+
+class Pattern( t:Token )
+  METHODS
+    method apply( injector:PatternInjector, cur_state:ScanState )
+      throw UnsupportedOperationError()
+
+endClass
+
+class SequencePattern : Pattern
+  PROPERTIES
+    patterns = Pattern[]
+
+  METHODS
+    method add( pattern:Pattern )
+      patterns.add( pattern )
+
+    method apply( injector:PatternInjector, cur_state:ScanState )
+      forEach (pattern in patterns step -1)
+        injector.push( pattern )
+      endForEach
+      injector.inject( cur_state )
+
+    method to->String
+      return "($)" (patterns.join(" "))
+endClass
+
+class OrPattern : Pattern
+  PROPERTIES
+    patterns = Pattern[]
+
+  METHODS
+    method add( pattern:Pattern )
+      patterns.add( pattern )
+
+    method apply( injector:PatternInjector, cur_state:ScanState )
+      forEach (pattern in patterns)
+        injector.cloned.[ push(pattern) ].inject( cur_state )
+      endForEach
+
+    method to->String
+      return "($)" (patterns.join("|"))
+endClass
+
+class ZeroOrMorePattern( t, operand:Pattern ) : Pattern
+  METHODS
+    method to->String
+      return "($)*" (operand)
+endClass
+
+class LetterPattern : Pattern
+  METHODS
+    method to->String
+      return "letter"
+endClass
+
+class DigitPattern : Pattern
+  METHODS
+    method to->String
+      return "digit"
+endClass
+
+class StringPattern( t, value:String ) : Pattern
+endClass
+
+class CharacterPattern( t, ch:Character ) : Pattern
+  GLOBAL PROPERTIES
+    instance : CharacterPattern
+
+  METHODS
+    method apply( injector:PatternInjector, cur_state:ScanState )
+      local new_state : ScanState
+      if (cur_state.links.contains(ch))
+        new_state = cur_state.link( ch )
+      elseIf (cur_state.on_letter and ((ch>='a' and ch<='z') or (ch>='A' and ch<='Z')))
+        new_state = cur_state.on_letter.cloned
+        cur_state.links[ ch ] = new_state
+      elseIf (cur_state.on_digit and ch>='0' and ch<='9')
+        new_state = cur_state.on_digit.cloned
+        cur_state.links[ ch ] = new_state
+      elseIf (injector.has_another)
+        new_state = cur_state.link( ch )
+      else
+        new_state = injector.end_state
+        cur_state.links[ ch ] = new_state
+      endIf
+      injector.advance( new_state )
+
+    #{
+    method apply( cur_state:ScanState, final_state:ScanState )->ScanState
+      if (cur_state.links.contains(value))
+        cur_state = cur_state.link( value )
+        if (final_state)
+          if (cur_state.statements.is_empty) cur_state.statements.add( final_state.statements )
+        endIf
+        return cur_state
+      elseIf (final_state)
+        cur_state.links[ value ] = final_state
+        return final_state
+      else
+        return cur_state.link( value )
+      endIf
+      }#
+
+    method to->String
+      return "'$'" (ch.to_escaped_ascii)
+endClass
+

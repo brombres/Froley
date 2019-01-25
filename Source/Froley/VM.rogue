@@ -24,6 +24,14 @@ class VM
 
     start_ip = 0
 
+    id_begin_letter : Logical
+    id_begin_digit  : Logical
+    id_begin_other  = ""
+
+    id_continue_letter : Logical
+    id_continue_digit  : Logical
+    id_continue_other  = ""
+
   METHODS
     method init( data:Byte[] )
       load( data )
@@ -238,19 +246,31 @@ class VM
               ip = cur_node + 2
               contingent
                 loop (link_count)
-                  sufficient (c == code[ip])
+                  if (c == code[ip])
+                    cur_node = code[ ip+1 ]
+                    sufficient true
+                  endIf
                   ip += 2
                 endLoop
+                local on_alpha = code[ip]
+                if (on_alpha and ((c>='a' and c<='z') or (c>='A' and c<='Z')))
+                  cur_node = on_alpha
+                  sufficient true
+                endIf
+                local on_digit = code[ip+1]
+                if (on_digit and c>='0' and c<='9')
+                  cur_node = on_digit
+                  sufficient true
+                endIf
                 escapeLoop
               satisfied
                 ++lookahead
-                cur_node = code[ ip+1 ]
               endContingent
             endLoop
             # Either no links match or EOI - jump to code of last acceptable node.
             # The start node is always acceptable and either contains the
             # 'others' case or jumps to the end of the scan table.
-            ip = last_acceptable_node + (last_acceptable_link_count+1) * 2
+            ip = last_acceptable_node + last_acceptable_link_count * 2 + 4
             loop (last_acceptable_lookahead) buffer.print( scanner.read )
             nextIteration
           others

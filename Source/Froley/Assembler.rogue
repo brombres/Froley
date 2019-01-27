@@ -111,7 +111,7 @@ class Label
 
   METHODS
     method init
-      name = "unnamed"
+      name = ""
 
     method init( name )
       # 'name' is only used for reference and for debugging

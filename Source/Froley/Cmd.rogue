@@ -82,10 +82,19 @@ class CmdStatement( t, name:String, opcode:Opcode ) : Cmd
       assembler.write( opcode )
 endClass
 
-class CmdGoTo( t, label_name:String ) : Cmd
+class CmdGoto( t, label_name:String ) : Cmd
   METHODS
     method write( assembler:Assembler )
       assembler.[ write(Opcode.JUMP), write_address(label_name) ]
+
+    method to->String
+      return "goto"
+endClass
+
+class CmdGotoLabel( t, label:Label ) : Cmd
+  METHODS
+    method write( assembler:Assembler )
+      assembler.[ write(Opcode.JUMP), write_address(label) ]
 
     method to->String
       return "goto"
@@ -570,72 +579,5 @@ class CmdScanTable : Cmd
       (forEach in states).is_visited = false
       (forEach in states).write( assembler, label_end )
       assembler.define( label_end )
-endClass
-
-class ScanState
-  PROPERTIES
-    is_acceptable : Logical
-    is_visited    : Logical
-    label         = Label()
-    links         = Table<<Character,ScanState>>()
-    on_letter     : ScanState
-    on_digit      : ScanState
-    statements    = CmdStatements()
-
-  METHODS
-    method cloned->ScanState
-      local result = ScanState()
-      result.is_acceptable = is_acceptable
-      forEach (key in links.keys) result.links[ key ] = links[ key ]
-      result.on_letter = on_letter
-      result.on_digit = on_digit
-      result.statements.add( statements )
-      return result
-
-    method collect( states:ScanState[] )
-      if (is_visited) return
-      is_visited = true
-      states.add( this )
-      (forEach in links).collect( states )
-      if (on_letter) on_letter.collect( states )
-      if (on_digit)  on_digit.collect( states )
-
-
-    method link( ch:Character )->ScanState
-      local entry = links.find( ch )
-      if (entry)
-        return entry.value
-      else
-        local result = ScanState()
-        links[ ch ] = result
-        return result
-      endIf
-
-    method write( assembler:Assembler, label_end=null:Label )
-      assembler.define( label )
-      if (statements.count) is_acceptable = true
-      assembler.write( select{is_acceptable:1 || 0} )
-
-      # Write links
-      assembler.write( links.count )
-      forEach (key in links.keys)
-        assembler.write( key->Int32 )
-        assembler.write_address( links[key].label )
-      endForEach
-      if (on_letter) assembler.write_address( on_letter.label )
-      else           assembler.write( 0 )
-      if (on_digit)  assembler.write_address( on_digit.label )
-      else           assembler.write( 0 )
-
-      # Write code
-      statements.write( assembler )
-      if (is_acceptable)
-        assembler.write( Opcode.JUMP )
-        if (label_end) assembler.write_address( label_end )
-        else           assembler.write( 0 )  # end ip unknown on first pass
-      endIf
-
-    method to->String
-      return "$$" (label->String,links)
 endClass
 

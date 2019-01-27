@@ -1,0 +1,81 @@
+module Froley
+  uses ParseKit<<Froley>>
+
+class ScanState
+  PROPERTIES
+    is_acceptable : Logical
+    is_visited    : Logical
+    is_redirected : Logical
+    label         = Label()
+    code_label    = Label()
+    links         = Table<<Character,ScanState>>()
+    on_letter     : ScanState
+    on_digit      : ScanState
+    statements    = CmdStatements()
+
+  METHODS
+    method cloned->ScanState
+      local result = ScanState()
+      result.is_acceptable = is_acceptable
+      forEach (key in links.keys) result.links[ key ] = links[ key ]
+      result.on_letter = on_letter
+      result.on_digit = on_digit
+      result.statements.add( statements )
+      return result
+
+    method collect( states:ScanState[] )
+      if (is_visited) return
+      is_visited = true
+      states.add( this )
+      (forEach in links).collect( states )
+      if (on_letter) on_letter.collect( states )
+      if (on_digit)  on_digit.collect( states )
+
+
+    method link( ch:Character )->ScanState
+      local entry = links.find( ch )
+      if (entry)
+        return entry.value
+      else
+        local result = ScanState()
+        links[ ch ] = result
+        return result
+      endIf
+
+    method write( assembler:Assembler, label_end:Label )
+      assembler.define( label )
+      if (statements.count) is_acceptable = true
+      assembler.write( select{is_acceptable:1 || 0} )
+
+      # Write links
+      assembler.write( links.count )
+      forEach (key in links.keys)
+        assembler.write( key->Int32 )
+        assembler.write_address( links[key].label )
+      endForEach
+      if (on_letter) assembler.write_address( on_letter.label )
+      else           assembler.write( 0 )
+      if (on_digit)  assembler.write_address( on_digit.label )
+      else           assembler.write( 0 )
+
+      # Write code
+      if (not is_redirected) assembler.define( code_label )
+      statements.write( assembler )
+      if (is_acceptable)
+        assembler.write( Opcode.JUMP )
+        assembler.write_address( label_end )
+      endIf
+
+    method to->String
+      local st = links->String.leftmost(-1)
+      if (on_letter)
+        if (st.count > 1) st += ","
+        st += "letter:" + on_letter
+      endIf
+      if (on_digit)
+        if (st.count > 1) st += ","
+        st += "digit:" + on_digit
+      endIf
+      return "$$}" (label->String,st)
+endClass
+

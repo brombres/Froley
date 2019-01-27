@@ -294,7 +294,6 @@ class VM
         local name = strings[ reader.read_int32x ]
         entry_points.add( EntryPoint(name,reader.read_int32x) )
       endLoop
-      trace entry_points
 
       n = reader.read_int32x
       code.reserve( n )

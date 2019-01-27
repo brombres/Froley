@@ -1,7 +1,7 @@
 module Froley
   uses ParseKit<<Froley>>
 
-class PatternInjector
+class PatternGraphBuilder
   PROPERTIES
     end_state          : ScanState
     patterns           = Pattern[]
@@ -12,17 +12,35 @@ class PatternInjector
     method init( pattern:Pattern, end_state )
       patterns.add( pattern )
 
-    method advance( cur_state:ScanState )
+    method apply( cur_state:ScanState )
       if (patterns.count)
         patterns.remove_first.apply( this, cur_state )
-      elseIf (cur_state is not end_state)
+      elseIf (end_state and cur_state is not end_state)
         if (cur_state.statements.is_empty)
-          cur_state.statements.add( end_state.statements )
+          if (end_state.is_redirected)
+            cur_state.statements.add( CmdGotoLabel(end_state.statements.first.t,end_state.code_label) )
+          else
+            # The original end state may never be defined, so we'll have this state take
+            # over the end state duties and redirect other accept states here.
+            cur_state.is_acceptable = true
+            end_state.is_redirected = true
+            end_state.code_label = cur_state.code_label
+            cur_state.statements.add( end_state.statements )
+            if (cur_state.statements.count)
+              end_state.statements.clear
+              end_state.statements.add( CmdGotoLabel(cur_state.statements.first.t,cur_state.code_label) )
+            endIf
+          endIf
+
+          if (end_state.statements.count)
+          else
+            cur_state.is_acceptable = true
+          endIf
         endIf
       endIf
 
-    method cloned->PatternInjector
-      local result = PatternInjector( end_state )
+    method cloned->PatternGraphBuilder
+      local result = PatternGraphBuilder( end_state )
       result.patterns.add( patterns )
       return result
 
@@ -32,15 +50,41 @@ class PatternInjector
     method push( pattern:Pattern )
       patterns.insert( pattern )
 
-    method inject( cur_state:ScanState )
+endClass
+
+class PatternLoopMaker
+  PROPERTIES
+    patterns         = Pattern[]
+    loop_start_state : ScanState
+
+  METHODS
+    method init
+      noAction
+
+    method init( pattern:Pattern, loop_start_state=null )
+      patterns.add( pattern )
+
+    method cloned->PatternLoopMaker
+      local result = PatternLoopMaker()
+      result.patterns.add( patterns )
+      return result
+
+    method apply( cur_state:ScanState )
       if (patterns.count)
         patterns.remove_first.apply( this, cur_state )
       endIf
+
+    method push( pattern:Pattern )
+      patterns.insert( pattern )
+
 endClass
 
 class Pattern( t:Token )
   METHODS
-    method apply( injector:PatternInjector, cur_state:ScanState )
+    method apply( builder:PatternGraphBuilder, cur_state:ScanState )
+      throw UnsupportedOperationError()
+
+    method apply( maker:PatternLoopMaker, cur_state:ScanState )
       throw UnsupportedOperationError()
 
 endClass
@@ -53,11 +97,17 @@ class SequencePattern : Pattern
     method add( pattern:Pattern )
       patterns.add( pattern )
 
-    method apply( injector:PatternInjector, cur_state:ScanState )
+    method apply( builder:PatternGraphBuilder, cur_state:ScanState )
       forEach (pattern in patterns step -1)
-        injector.push( pattern )
+        builder.push( pattern )
       endForEach
-      injector.inject( cur_state )
+      builder.apply( cur_state )
+
+    method apply( maker:PatternLoopMaker, cur_state:ScanState )
+      forEach (pattern in patterns step -1)
+        maker.push( pattern )
+      endForEach
+      maker.apply( cur_state )
 
     method to->String
       return "($)" (patterns.join(" "))
@@ -71,10 +121,17 @@ class OrPattern : Pattern
     method add( pattern:Pattern )
       patterns.add( pattern )
 
-    method apply( injector:PatternInjector, cur_state:ScanState )
+    method apply( builder:PatternGraphBuilder, cur_state:ScanState )
       forEach (pattern in patterns)
-        injector.cloned.[ push(pattern) ].inject( cur_state )
+        builder.cloned.[ push(pattern) ].apply( cur_state )
       endForEach
+
+      #{
+    method apply( maker:PatternLoopMaker, cur_state:ScanState, loop_start_state:ScanState )
+      forEach (pattern in patterns)
+        builder.cloned.[ push(pattern) ].apply( cur_state, loop_start_state )
+      endForEach
+      }#
 
     method to->String
       return "($)" (patterns.join("|"))
@@ -82,18 +139,88 @@ endClass
 
 class ZeroOrMorePattern( t, operand:Pattern ) : Pattern
   METHODS
+    method apply( builder:PatternGraphBuilder, cur_state:ScanState )
+      # Skip indefinite iterations during this phase
+      builder.apply( cur_state )
+
+      #method apply( maker:PatternLoopMaker, cur_state:ScanState, loop_start_state:ScanState )
+
     method to->String
       return "($)*" (operand)
 endClass
 
 class LetterPattern : Pattern
   METHODS
+    method apply( builder:PatternGraphBuilder, cur_state:ScanState )
+      apply( builder, cur_state, forEach in 'a'..'z' )
+      apply( builder, cur_state, forEach in 'A'..'Z' )
+      if (cur_state.on_letter)
+        builder.apply( cur_state.on_letter )
+      elseIf (builder.has_another)
+        cur_state.on_letter = ScanState()
+        builder.apply( cur_state.on_letter )
+      elseIf (builder.end_state)
+        cur_state.on_letter = builder.end_state
+        # No end_state means we've reached the end of an indefinite repeat branch (e.g. letter*);
+        # we'll leave this dead end for now and come back and fix it in the next pass.
+      endIf
+
+    method apply( builder:PatternGraphBuilder, cur_state:ScanState, ch:Character )
+      local new_state : ScanState
+      if (cur_state.links.contains(ch))
+        new_state = cur_state.link( ch )
+        builder.cloned.apply( new_state )
+      endIf
+
+      #{
+    method apply( maker:PatternLoopMaker, cur_state:ScanState )
+      apply( maker, cur_state, forEach in 'a'..'z' )
+      apply( maker, cur_state, forEach in 'A'..'Z' )
+      if (cur_state.on_letter)
+        maker.apply( cur_state.on_letter )
+      elseIf (not maker.has_another)
+        cur_state.on_letter = ScanState()
+        maker.apply( cur_state.on_letter )
+      elseIf (maker.end_state)
+        cur_state.on_letter = maker.end_state
+        # No end_state means we've reached the end of an indefinite repeat branch (e.g. letter*);
+        # we'll leave this dead end for now and come back and fix it in the next pass.
+      endIf
+
+    method apply( maker:PatternLoopMaker, cur_state:ScanState, ch:Character )
+      local new_state : ScanState
+      if (cur_state.links.contains(ch))
+        new_state = cur_state.link( ch )
+        maker.cloned.apply( new_state )
+      endIf
+      }#
+
     method to->String
       return "letter"
 endClass
 
 class DigitPattern : Pattern
   METHODS
+    method apply( builder:PatternGraphBuilder, cur_state:ScanState )
+      apply( builder, cur_state, forEach in '0'..'9' )
+      if (cur_state.on_digit)
+        builder.apply( cur_state.on_digit )
+      elseIf (builder.has_another)
+        cur_state.on_digit = ScanState()
+        builder.apply( cur_state.on_digit )
+      elseIf (builder.end_state)
+        cur_state.on_digit = builder.end_state
+        # No end_state means we've reached the end of an indefinite repeat branch (e.g. digit*);
+        # we'll leave this dead end for now and come back and fix it in the next pass.
+      endIf
+
+    method apply( builder:PatternGraphBuilder, cur_state:ScanState, ch:Character )
+      local new_state : ScanState
+      if (cur_state.links.contains(ch))
+        new_state = cur_state.link( ch )
+        builder.cloned.apply( new_state )
+      endIf
+
     method to->String
       return "digit"
 endClass
@@ -106,7 +233,7 @@ class CharacterPattern( t, ch:Character ) : Pattern
     instance : CharacterPattern
 
   METHODS
-    method apply( injector:PatternInjector, cur_state:ScanState )
+    method apply( builder:PatternGraphBuilder, cur_state:ScanState )
       local new_state : ScanState
       if (cur_state.links.contains(ch))
         new_state = cur_state.link( ch )
@@ -116,13 +243,15 @@ class CharacterPattern( t, ch:Character ) : Pattern
       elseIf (cur_state.on_digit and ch>='0' and ch<='9')
         new_state = cur_state.on_digit.cloned
         cur_state.links[ ch ] = new_state
-      elseIf (injector.has_another)
+      elseIf (builder.has_another)
         new_state = cur_state.link( ch )
-      else
-        new_state = injector.end_state
+      elseIf (builder.end_state)
+        new_state = builder.end_state
         cur_state.links[ ch ] = new_state
+        # No end_state means we've reached the end of an indefinite repeat branch (e.g. a*);
+        # we'll leave this dead end for now and come back and fix it in the next pass.
       endIf
-      injector.advance( new_state )
+      builder.apply( new_state )
 
     #{
     method apply( cur_state:ScanState, final_state:ScanState )->ScanState

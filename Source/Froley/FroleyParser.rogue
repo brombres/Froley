@@ -229,7 +229,7 @@ class FroleyParser : Parser
         return true
 
       elseIf (consume(TokenType.KEYWORD_GOTO))
-        statements.add( CmdGoTo(t,read_label_name) )
+        statements.add( CmdGoto(t,read_label_name) )
         return true
 
       elseIf (consume(TokenType.KEYWORD_HALT))
@@ -382,29 +382,17 @@ class FroleyParser : Parser
       throw t.error( "Register 'ch' or 'count' expected." )
 
     method parse_scan_table( cmd_scan_table:CmdScanTable )
-      local case_pattern : Pattern
-      local pattern_match_state : ScanState
-      #{
-      local id_begin_letter = true
-      local id_begin_digit  = false
-      local id_begin_other  = "_"
-
-      local id_continue_letter = true
-      local id_continue_digit  = true
-      local id_continue_other  = "_"
-      }#
+      local patterns = (Pattern,ScanState)[]
 
       consume_eols
       while (has_another and not next_is(TokenType.KEYWORD_END_SCAN_TABLE))
         if (consume(TokenType.KEYWORD_CASE))
           if (next_is(TokenType.SYMBOL_OPEN_CURLY))
-            if (case_pattern)
-              throw peek.error( "Multiple pattern cases - each scan table is limited to one pattern case." )
-            endIf
-            case_pattern = parse_pattern
-            pattern_match_state = ScanState()
+            local pattern = parse_pattern
+            local state = ScanState()
             consume( TokenType.SYMBOL_COLON )
-            parse_statements( pattern_match_state.statements )
+            parse_statements( state.statements )
+            patterns.add( (pattern,state) )
           else
             local expr = parse_expression()
             local node = cmd_scan_table.start
@@ -418,11 +406,6 @@ class FroleyParser : Parser
             endIf
             consume( TokenType.SYMBOL_COLON )
             parse_statements( node.statements )
-          endIf
-
-          if (case_pattern)
-            PatternInjector( case_pattern, pattern_match_state ).inject( cmd_scan_table.start )
-            #PatternResolver( case_pattern, pattern_match_state ).resolve( cmd_scan_table.start )
           endIf
 
         elseIf (consume(TokenType.KEYWORD_ACCEPT_ALL))
@@ -466,6 +449,13 @@ class FroleyParser : Parser
         endIf
         consume_eols
       endWhile
+
+      forEach ((pattern,state) in patterns)
+@trace pattern
+        PatternGraphBuilder( pattern, state ).apply( cmd_scan_table.start )
+        #PatternLoopMaker( pattern ).apply( cmd_scan_table.start )
+        #PatternResolver( case_pattern, pattern_match_state ).resolve( cmd_scan_table.start )
+      endForEach
 
     method parse_pattern->Pattern
       local t = peek

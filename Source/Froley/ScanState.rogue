@@ -5,7 +5,9 @@ class ScanState
   PROPERTIES
     is_acceptable : Logical
     is_visited    : Logical
+    is_collected  : Logical
     is_redirected : Logical
+    is_loop_state : Logical
     label         = Label()
     code_label    = Label()
     links         = Table<<Character,ScanState>>()
@@ -24,8 +26,8 @@ class ScanState
       return result
 
     method collect( states:ScanState[] )
-      if (is_visited) return
-      is_visited = true
+      if (is_collected) return
+      is_collected = true
       states.add( this )
       (forEach in links).collect( states )
       if (on_letter) on_letter.collect( states )
@@ -41,6 +43,15 @@ class ScanState
         links[ ch ] = result
         return result
       endIf
+
+    method resolve
+      if (is_visited) return
+      is_visited = true
+      (forEach in links).resolve
+      if (on_letter) on_letter.resolve
+      if (on_digit)  on_digit.resolve
+      statements.resolve
+      is_visited = false
 
     method write( assembler:Assembler, label_end:Label )
       assembler.define( label )
@@ -67,7 +78,14 @@ class ScanState
       endIf
 
     method to->String
+      if (is_collected) return "*"
+      is_collected = true
+
+      local builder = StringBuilder()
+      if (is_acceptable or statements.count) builder.print('[')
+
       local st = links->String.leftmost(-1)
+
       if (on_letter)
         if (st.count > 1) st += ","
         st += "letter:" + on_letter
@@ -76,6 +94,12 @@ class ScanState
         if (st.count > 1) st += ","
         st += "digit:" + on_digit
       endIf
-      return "$$}" (label->String,st)
+
+      is_collected = false
+
+      builder.print( label->String ).print( st ).print( '}' )
+      if (is_acceptable or statements.count) builder.print(']')
+
+      return builder->String
 endClass
 

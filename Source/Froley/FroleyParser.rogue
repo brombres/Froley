@@ -23,6 +23,9 @@ class FroleyParser : Parser
       rule.on( ">",  <<CmdCompareGT>> )
       rule.on( ">=", <<CmdCompareGE>> )
 
+      rule = add_nested( PreUnaryParseRule("pre-unary") )
+      rule.on( "not", <<CmdNot>> )
+
       # term
       rule = add_nested( ParseRule("term") )
       rule.on( "(",
@@ -292,8 +295,13 @@ class FroleyParser : Parser
         return true
 
       elseIf (consume(TokenType.KEYWORD_PUSH))
-        must_consume( TokenType.KEYWORD_CH )
-        statements.add( CmdStatement(t,"push ch",Opcode.PUSH_CH) )
+        if (consume(TokenType.KEYWORD_CH))
+          statements.add( CmdStatement(t,"push ch",Opcode.PUSH_CH) )
+        elseIf (consume(TokenType.KEYWORD_COUNT))
+          statements.add( CmdStatement(t,"push count",Opcode.PUSH_COUNT) )
+        else
+          throw peek.error( "Expected 'ch' or 'count'." )
+        endIf
         return true
 
       else
@@ -451,10 +459,8 @@ class FroleyParser : Parser
       endWhile
 
       forEach ((pattern,state) in patterns)
-@trace pattern
         PatternGraphBuilder( pattern, state ).apply( cmd_scan_table.start )
-        #PatternLoopMaker( pattern ).apply( cmd_scan_table.start )
-        #PatternResolver( case_pattern, pattern_match_state ).resolve( cmd_scan_table.start )
+        #@trace cmd_scan_table.start  # FIXME
       endForEach
 
     method parse_pattern->Pattern

@@ -37,7 +37,8 @@ class VM
       load( data )
 
     method accept( token_type:Int32 )
-      println "Accepting $ ($)" (token_type,buffer->String.to_escaped_ascii)
+      #println "Accepting $ ($)" (token_type,buffer->String.to_escaped_ascii)
+      println "Accepting $ ($)" (Froley.token_def(token_type).name,buffer->String.to_escaped_ascii)
 
     method execute
       local ip = start_ip
@@ -110,7 +111,9 @@ class VM
             ch = scanner.read
             nextIteration
           case Opcode.PEEK_CH_INT32
+#trace "peek " + code[ip]
             ch = scanner.peek( code[ip] )
+#trace ch->Character
             ++ip
             nextIteration
           case Opcode.PEEK_CH_COUNT
@@ -118,12 +121,7 @@ class VM
             nextIteration
           case Opcode.CONSUME_CHARACTER
             local value = code[ip]->Character
-            if (scanner.consume(value))
-              result = 1
-              buffer.print( value )
-            else
-              result = 0
-            endIf
+            result = select{ scanner.consume(value):1 || 0 }
             ++ip
             nextIteration
           case Opcode.SCAN_DIGITS
@@ -252,9 +250,9 @@ class VM
                   endIf
                   ip += 2
                 endLoop
-                local on_alpha = code[ip]
-                if (on_alpha and ((c>='a' and c<='z') or (c>='A' and c<='Z')))
-                  cur_node = on_alpha
+                local on_letter = code[ip]
+                if (on_letter and ((c>='a' and c<='z') or (c>='A' and c<='Z')))
+                  cur_node = on_letter
                   sufficient true
                 endIf
                 local on_digit = code[ip+1]

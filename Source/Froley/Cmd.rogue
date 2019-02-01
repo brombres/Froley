@@ -202,6 +202,9 @@ class CmdRead( t ) : Cmd
   METHODS
     method write( assembler:Assembler )
       throw t.error( "Syntax error - expected 'ch = read'." )
+
+    method to->String
+      return "read"
 endClass
 
 class CmdScanDigits( t, min_digits:Int32, max_digits:Int32, base:Int32 ) : Cmd
@@ -394,8 +397,10 @@ class CmdRegisterCount( t ) : Cmd
         return CmdSetCountToInt32( t, new_value->Int32 )
       elseIf (new_value.is_ch)
         return CmdSetCountToCh( t )
+      elseIf (new_value instanceOf CmdPop)
+        return CmdStatement( t, "count = pop", Opcode.POP_COUNT )
       else
-        throw t.error( "Illegal assignment value. 'count' can be assigned ether 'ch' or an integer." )
+        throw t.error( "Illegal 'count' assignment. Expected 'ch', 'pop', or an integer." )
       endIf
 
     method to->String
@@ -424,7 +429,7 @@ endClass
 class CmdPop( t ) : Cmd
   METHODS
     method write( assembler:Assembler )
-      throw t.error( "Syntax error - expected 'ch = pop'." )
+      throw t.error( "Syntax error - expected 'ch = pop' or 'count = pop'." )
 endClass
 
 class CmdCompare<<$OPCODE>> : CmdBinary
@@ -571,13 +576,36 @@ class CmdScanTable : Cmd
     method init( t )
       start.is_acceptable = true
 
+    method resolved->Cmd
+      start.resolve
+      return this
+
     method write( assembler:Assembler )
       assembler.write( Opcode.SCAN_TABLE )
       local label_end = Label()
       local states = ScanState[]
       start.collect( states )
-      (forEach in states).is_visited = false
+      (forEach in states).is_collected = false
       (forEach in states).write( assembler, label_end )
       assembler.define( label_end )
+endClass
+
+class CmdNot( t, operand ) : CmdUnary
+  METHODS
+    method jump_if_true->Opcode
+      return operand.jump_if_false
+
+    method jump_if_false->Opcode
+      return operand.jump_if_true
+
+    method resolved->Cmd
+      operand = operand.resolved
+      return this
+
+    method to->String
+      return "not " + operand
+
+    method write( assembler:Assembler )
+      operand.write( assembler )
 endClass
 

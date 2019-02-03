@@ -162,30 +162,24 @@ class LetterPattern : Pattern
 
     method make_repeating( cur_state:ScanState, builder:PatternGraphBuilder )
       if (cur_state.is_visited) return
+      cur_state.is_visited = true
       make_repeating( cur_state, builder, forEach in 'a'..'z' )
       make_repeating( cur_state, builder, forEach in 'A'..'Z' )
-      cur_state.is_visited = true
       if (cur_state.on_letter)
         if (not cur_state.is_loop_state)
           make_repeating( cur_state.on_letter, builder )
         endIf
-        builder.cloned.apply( cur_state )
       elseIf (cur_state.is_loop_state)
         cur_state.on_letter = cur_state
-        builder.cloned.apply( cur_state )
       else
         cur_state.on_letter = ScanState().[ is_loop_state=true ]
         make_repeating( cur_state.on_letter, builder )
       endIf
+      builder.cloned.apply( cur_state )
       cur_state.is_visited = false
 
     method make_repeating( cur_state:ScanState, builder:PatternGraphBuilder, ch:Character )
-      if (cur_state.is_visited) return
-      if (cur_state.links.contains(ch))
-        cur_state.is_visited = true
-        make_repeating( cur_state.links[ch], builder )
-        cur_state.is_visited = false
-      endIf
+      if (cur_state.links.contains(ch)) make_repeating( cur_state.links[ch], builder )
 
     method to->String
       return "letter"
@@ -216,29 +210,25 @@ class DigitPattern : Pattern
 
     method make_repeating( cur_state:ScanState, builder:PatternGraphBuilder )
       if (cur_state.is_visited) return
-      make_repeating( cur_state, builder, forEach in '0'..'9' )
       cur_state.is_visited = true
+
+      make_repeating( cur_state, builder, forEach in '0'..'9' )
       if (cur_state.on_digit)
         if (not cur_state.is_loop_state)
           make_repeating( cur_state.on_digit, builder )
         endIf
-        builder.cloned.apply( cur_state )
-        cur_state.is_visited = false
       elseIf (cur_state.is_loop_state)
         cur_state.on_digit = cur_state
-        builder.cloned.apply( cur_state )
       else
         cur_state.on_digit = ScanState().[ is_loop_state=true ]
         make_repeating( cur_state.on_digit, builder )
       endIf
 
+      builder.cloned.apply( cur_state )
+      cur_state.is_visited = false
+
     method make_repeating( cur_state:ScanState, builder:PatternGraphBuilder, ch:Character )
-      if (cur_state.is_visited) return
-      if (cur_state.links.contains(ch))
-        cur_state.is_visited = true
-        make_repeating( cur_state.links[ch], builder )
-        cur_state.is_visited = false
-      endIf
+      if (cur_state.links.contains(ch)) make_repeating( cur_state.links[ch], builder )
 
     method to->String
       return "digit"
@@ -275,35 +265,31 @@ class CharacterPattern( t, ch:Character ) : Pattern
 
     method make_repeating( cur_state:ScanState, builder:PatternGraphBuilder )
       if (cur_state.is_visited) return
-
       cur_state.is_visited = true
+
       if (cur_state.links.contains(ch))
         if (not cur_state.is_loop_state)
           make_repeating( cur_state.links[ch], builder )
         endIf
-        builder.cloned.apply( cur_state )
       elseIf (cur_state.is_loop_state)
         cur_state.links[ch] = cur_state
-        builder.cloned.apply( cur_state )
       else
         cur_state.links[ch] = ScanState().[ is_loop_state=true ]
         make_repeating( cur_state.links[ch], builder )
       endIf
-      cur_state.is_visited = false
 
       if (cur_state.on_letter and ((ch>='a' and ch<='z') or (ch>='A' and ch<='Z')))
         local new_state = cur_state.on_letter.cloned
         cur_state.links[ ch ] = new_state
-        cur_state.is_visited = true
         make_repeating( new_state, builder )
-        cur_state.is_visited = false
       elseIf (cur_state.on_digit and ch>='0' and ch<='9')
         local new_state = cur_state.on_letter.cloned
         cur_state.links[ ch ] = new_state
-        cur_state.is_visited = true
         make_repeating( new_state, builder )
-        cur_state.is_visited = false
       endIf
+
+      builder.cloned.apply( cur_state )
+      cur_state.is_visited = false
 
     method to->String
       return "'$'" (ch.to_escaped_ascii)

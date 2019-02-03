@@ -4,9 +4,9 @@ enum Opcode( size=1:Int32 )
   HALT                  # Tokenization complete; VM.tokenize() returns
   RESTART               # BUFFER.clear, IP = START_IP
   MODE_INT32            # START_IP = ARG1
-  ERROR                 # Throws error using message in BUFFER
-  RETURN                # IP = STACK.remove_last
-  ACCEPT_INT32(2)       # Invokes VM callback accept(token_type:ARG1) then clears BUFFER & jumps to IP 0
+  ERROR                 # Throws error using current line, column, and message in BUFFER
+  MARK_SOURCE_POS       # Implementation-dependent; usually records scanner line and column for later token creation
+  ACCEPT_INT32(2)       # Invokes VM callback accept(token_type:ARG1) then clears BUFFER & jumps to START_IP
   JUMP(2)               # IP = ARG1
   JUMP_EQ(2)            # if (RESULT == 0) IP = ARG1
   JUMP_NE(2)            # if (RESULT != 0) IP = ARG1
@@ -15,36 +15,36 @@ enum Opcode( size=1:Int32 )
   JUMP_GT(2)            # if (RESULT >  0) IP = ARG1
   JUMP_GE(2)            # if (RESULT >= 0) IP = ARG1
   CALL(2)               # STACK.push(IP); IP = ARG1
-  MARK_SOURCE_POS       # Implementation-dependent; usually records scanner line and column for later token creation
+  RETURN                # IP = STACK.remove_last
   HAS_ANOTHER           # if another character of input is available then RESULT=1 else RESULT=0
   PEEK_CH_INT32(2)      # CH = peek(lookahead:ARG1)
   PEEK_CH_COUNT         # CH = peek(lookahead=COUNT)
   READ_CH               # CH = read
   CONSUME_CHARACTER(2)  # if consume(character:ARG1) then RESULT=1 else RESULT=0
-  SCAN_DIGITS(4)        #
+  SCAN_DIGITS(4)        # min..max:ARG1..ARG2, base:ARG3; result = n_read - min_digits
   CLEAR_BUFFER          # BUFFER.clear
   COLLECT_CH            # BUFFER.print(ch)
   COLLECT_CHARACTER(2)  # BUFFER.print(character:ARG1)
   COLLECT_STRING(2)     # BUFFER.print(strings[index:ARG1])
-  PRINT_BUFFER          #
-  PRINT_CH              #
-  PRINT_COUNT           #
-  PRINT_CHARACTER(2)    #
-  PRINT_STRING(2)       #
-  COMPARE_CH_INT32      #
-  COMPARE_COUNT_INT32   #
-  TEST_CH               #
-  TEST_COUNT            #
-  PUSH_CH               #
-  POP_CH                #
-  PUSH_COUNT            #
-  POP_COUNT             #
-  SET_CH_TO_INT32(2)    #
-  SET_CH_TO_COUNT       #
-  SET_COUNT_TO_INT32(2) #
-  SET_COUNT_TO_CH       #
-  ADD_CH_INT32(2)       #
-  ADD_COUNT_INT32(2)    #
-  SCAN_TABLE            #
+  PRINT_BUFFER          # println buffer
+  PRINT_CH              # println ch->Character
+  PRINT_COUNT           # println count->Int32
+  PRINT_CHARACTER(2)    # println ARG1->Character
+  PRINT_STRING(2)       # println strings[index:ARG1]
+  COMPARE_CH_INT32      # result = ch - ARG1
+  COMPARE_COUNT_INT32   # result = count - ARG1
+  TEST_CH               # result = ch
+  TEST_COUNT            # result = count
+  PUSH_CH               # STACK.add( ch )
+  PUSH_COUNT            # STACK.add( count )
+  POP_CH                # ch = STACK.remove_last
+  POP_COUNT             # count = STACK.remove_last
+  SET_CH_TO_INT32(2)    # ch = ARG1
+  SET_CH_TO_COUNT       # ch = count
+  SET_COUNT_TO_INT32(2) # count = ARG1
+  SET_COUNT_TO_CH       # count = ch
+  ADD_CH_INT32(2)       # ch    += ARG1
+  ADD_COUNT_INT32(2)    # count += ARG1
+  SCAN_TABLE            # (complex)
 endEnum
 

@@ -54,7 +54,7 @@ endClass
 
 class Froley [singleton]
   PROPERTIES
-    token_defs_by_name    = StringTable<<TokenDef>>()
+    token_defs_by_name    = LookupList<<TokenDef>>()
     token_defs_by_type    = Table<<Int32,TokenDef>>()
     last_token_type       = 0
 
@@ -90,8 +90,25 @@ class Froley [singleton]
       statements.resolve
 
       local bytes = Assembler().assemble( statements )
+      local max_count  = 0
+      local max_digits = 0
+      forEach (def in token_defs_by_name)
+        max_count = max_count.or_larger( def.name.count )
+        max_digits = max_digits.or_larger( def.type.digit_count )
+      endForEach
+      println "[Token Types]"
+      forEach (def at index in token_defs_by_name)
+        println "$ = $" (def.name.left_justified(max_count), def.type.format(max_digits->String))
+      endForEach
+      println
+
+      println "[Code IntX + UTF-8]"
+      println bytes.to_base64
+      println
+      @trace bytes.count
+
       local vm = VM( bytes )
-      vm.tokenize( File("Test2.txt") )
+      vm.tokenize( File("Test.txt") )
 
     method collect_definitions_and_extract_code( filepath:String, source:String )->String
       $localDefine PARSING_CONFIGURE   0
@@ -303,8 +320,7 @@ class Froley [singleton]
       return defs
 
     method token_def( token_name:String, cur_section_name=null:String )->TokenDef
-      local entry = token_defs_by_name.find( token_name )
-      if (entry) return entry.value
+      if (token_defs_by_name.contains(token_name)) return token_defs_by_name[ token_name ]
 
       ++last_token_type
       local def = TokenDef( token_name, last_token_type )

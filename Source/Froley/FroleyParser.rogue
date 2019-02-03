@@ -239,6 +239,10 @@ class FroleyParser : Parser
         statements.add( CmdStatement(t,"halt",Opcode.HALT) )
         return true
 
+      elseIf (consume(TokenType.KEYWORD_MARK_SRC_POS))
+        statements.add( CmdStatement(t,"markSourcePosition",Opcode.MARK_SOURCE_POS) )
+        return true
+
       elseIf (consume(TokenType.KEYWORD_PRINT))
         if (consume(TokenType.KEYWORD_BUFFER))
           statements.add( CmdStatement(t,"print buffer",Opcode.PRINT_BUFFER) )

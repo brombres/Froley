@@ -24,21 +24,13 @@ class VM
 
     start_ip = 0
 
-    id_begin_letter : Logical
-    id_begin_digit  : Logical
-    id_begin_other  = ""
-
-    id_continue_letter : Logical
-    id_continue_digit  : Logical
-    id_continue_other  = ""
-
   METHODS
     method init( data:Byte[] )
       load( data )
 
     method accept( token_type:Int32 )
       #println "Accepting $ ($)" (token_type,buffer->String.to_escaped_ascii)
-      println "Accepting $ ($)" (Froley.token_def(token_type).name,buffer->String.to_escaped_ascii)
+      #println "Accepting $ ($)" (Froley.token_def(token_type).name,buffer->String.to_escaped_ascii)
 
     method execute
       local ip = start_ip
@@ -59,15 +51,12 @@ class VM
             nextIteration
           case Opcode.ERROR
             throw FroleyError( filepath, scanner.source, scanner.line, scanner.column, buffer->String )
-          case Opcode.RETURN
-            if (stack.is_empty) throw FroleyError( "[Compiled Code]", "'return' on empty stack." )
-            ip = stack.remove_last
-            nextIteration
           case Opcode.ACCEPT_INT32
             local token_type = code[ ip ]
             ip = start_ip
             accept( token_type )
             buffer.clear
+            nextIteration
           case Opcode.JUMP
             ip = code[ ip ]
             nextIteration
@@ -96,9 +85,12 @@ class VM
             else             ++ip
             nextIteration
           case Opcode.CALL
-            ++ip
-            stack.add( ip )
-            ip = code[ ip-1 ]
+            stack.add( ip+1 )
+            ip = code[ ip ]
+            nextIteration
+          case Opcode.RETURN
+            if (stack.is_empty) throw FroleyError( "[Compiled Code]", "'return' on empty stack." )
+            ip = stack.remove_last
             nextIteration
           case Opcode.MARK_SOURCE_POS
             next_line = scanner.line

@@ -215,8 +215,7 @@ class FroleyParser : Parser
         return true
 
       elseIf (consume(TokenType.KEYWORD_DISCARD))
-        statements.add( CmdStatement(t,"clear buffer",Opcode.CLEAR_BUFFER) )
-        statements.add( CmdJump(t,0) )
+        statements.add( CmdStatement(t,"restart",Opcode.RESTART) )
         return true
 
       elseIf (consume(TokenType.KEYWORD_ERROR))
@@ -243,13 +242,17 @@ class FroleyParser : Parser
         statements.add( CmdStatement(t,"markSourcePosition",Opcode.MARK_SOURCE_POS) )
         return true
 
+      elseIf (consume(TokenType.KEYWORD_MODE))
+        local label_name = read_label_name
+        statements.add( CmdMode(t,label_name) )
+        return true
+
       elseIf (consume(TokenType.KEYWORD_PRINT))
         if (consume(TokenType.KEYWORD_BUFFER))
           statements.add( CmdStatement(t,"print buffer",Opcode.PRINT_BUFFER) )
           return true
         elseIf (next_is(TokenType.STRING))
           statements.add( CmdPrintString(t,read.text) )
-          if (not consume(TokenType.SYMBOL_SEMICOLON)) must_consume( TokenType.EOL )
           return true
         else
           if (not (next_is(TokenType.EOL) or next_is(TokenType.SYMBOL_SEMICOLON)))
@@ -267,6 +270,10 @@ class FroleyParser : Parser
           endIf
           throw t.error( "Syntax error - valid 'print' arguments are  'ch', 'count', and '<string>'." )
         endIf
+
+      elseIf (consume(TokenType.KEYWORD_RESTART))
+        statements.add( CmdStatement(t,"restart",Opcode.RESTART) )
+        return true
 
       elseIf (consume(TokenType.KEYWORD_RETURN))
         statements.add( CmdStatement(t,"return",Opcode.RETURN) )
@@ -446,8 +453,7 @@ class FroleyParser : Parser
               if (def.symbol)
                 local node = cmd_scan_table.start
                 node = node.link( forEach in def.symbol )
-                node.statements.add( CmdStatement(t,"clear buffer",Opcode.CLEAR_BUFFER) )
-                node.statements.add( CmdJump(t,0) )
+                node.statements.add( CmdStatement(t,"restart",Opcode.RESTART) )
               endIf
             endForEach
           else
@@ -464,7 +470,6 @@ class FroleyParser : Parser
 
       forEach ((pattern,state) in patterns)
         PatternGraphBuilder( pattern, state ).apply( cmd_scan_table.start )
-        #@trace cmd_scan_table.start  # FIXME
       endForEach
 
     method parse_pattern->Pattern

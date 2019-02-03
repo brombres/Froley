@@ -22,7 +22,7 @@ class Assembler
 
     method define( label:Label )
       if (label.address.exists)
-        throw FroleyError( "[INTERNAL] Label defined twice ($)." (label.name) )
+        throw FroleyError( "Label defined multiple times: $." (label.name) )
       else
         label.address = code.count
         label.backpatch( code )
@@ -42,7 +42,7 @@ class Assembler
     method to->Byte[]
       if (unresolved_labels.count)
         local labels = unresolved_labels
-        throw FroleyError( "[INTERNAL] Unresolved $: $" ("label".pluralized(labels.count),labels.join(", ")) )
+        throw FroleyError( "References to undefined $: $" ("label".pluralized(labels.count),labels.join(", ")) )
       endIf
 
       local result = Byte[]

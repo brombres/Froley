@@ -88,7 +88,7 @@ class CmdGoto( t, label_name:String ) : Cmd
       assembler.[ write(Opcode.JUMP), write_address(label_name) ]
 
     method to->String
-      return "goto"
+      return "goto " + label_name
 endClass
 
 class CmdGotoLabel( t, label:Label ) : Cmd
@@ -97,7 +97,7 @@ class CmdGotoLabel( t, label:Label ) : Cmd
       assembler.[ write(Opcode.JUMP), write_address(label) ]
 
     method to->String
-      return "goto"
+      return "goto " + label.name
 endClass
 
 class CmdJump( t, address:Int32 ) : Cmd
@@ -107,6 +107,15 @@ class CmdJump( t, address:Int32 ) : Cmd
 
     method to->String
       return "jump " + address
+endClass
+
+class CmdMode( t, label_name:String) : Cmd
+  METHODS
+    method write( assembler:Assembler )
+      assembler.[ write(Opcode.MODE_INT32), write_address(label_name) ]
+
+    method to->String
+      return "mode " + label_name
 endClass
 
 class CmdLabel( t, name:String ) : Cmd

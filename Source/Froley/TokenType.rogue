@@ -34,6 +34,7 @@ augment TokenType
   KEYWORD_HANDLE         ( "handle",            &is_keyword, &is_structural )
   KEYWORD_HAS_ANOTHER    ( "hasAnother",        &is_keyword )
   KEYWORD_IF             ( "if",                &is_keyword )
+  KEYWORD_IS             ( "is",                &is_keyword )
   KEYWORD_LETTER         ( "letter",            &is_keyword )
   KEYWORD_MARK_SRC_POS   ( "markSourcePosition",&is_keyword )
   KEYWORD_MODE           ( "mode",              &is_keyword )

@@ -172,6 +172,12 @@ class VM
             result = count - code[ip]
             ++ip
             nextIteration
+          case Opcode.CH_IS_DIGIT
+            result = select{ (ch>='0' and ch<='9') }
+            nextIteration
+          case Opcode.CH_IS_LETTER
+            result = select{ ((ch>='a' and ch<='z') or (ch>='A' and ch<='Z')):1 || 0 }
+            nextIteration
           case Opcode.TEST_CH
             result = ch
             nextIteration

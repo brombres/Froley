@@ -4,6 +4,7 @@ module Froley
 class FroleyParser : Parser
   PROPERTIES
     parse_expression : ParseRule
+    parse_term       : ParseRule
 
   METHODS
     method init
@@ -23,8 +24,28 @@ class FroleyParser : Parser
       rule.on( ">",  <<CmdCompareGT>> )
       rule.on( ">=", <<CmdCompareGE>> )
 
-      rule = add_nested( PreUnaryParseRule("pre-unary") )
+      rule = add_nested( PreUnaryParseRule("pre_unary") )
       rule.on( "not", <<CmdNot>> )
+
+      # is digit, is letter
+      rule = add_nested(
+        PostUnaryParseRule( "is_digit_is_letter",
+          function (rule:ParseRule)->Cmd
+            local term = rule.parser.parse_term()
+            if (rule.parser.consume(TokenType.KEYWORD_IS))
+              if (rule.parser.consume(TokenType.KEYWORD_DIGIT))
+                return term.to_is_digit
+              elseIf (rule.parser.consume(TokenType.KEYWORD_LETTER))
+                return term.to_is_letter
+              else
+                throw rule.parser.peek.error( "'is digit' or 'is letter' expected." )
+              endIf
+            else
+              return term
+            endIf
+          endFunction
+        )
+      )
 
       # term
       rule = add_nested( ParseRule("term") )

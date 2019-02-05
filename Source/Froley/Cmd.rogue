@@ -36,6 +36,12 @@ augment Cmd
     method to->Int32
       throw UnsupportedOperationError()
 
+    method to_is_digit->Cmd
+      throw t.error( "Syntax error; expected 'ch is digit'." )
+
+    method to_is_letter->Cmd
+      throw t.error( "Syntax error; expected 'ch is letter'." )
+
     method write( assembler:Assembler )
       throw UnsupportedOperationError()
 
@@ -323,6 +329,26 @@ class CmdReadCh( t ) : Cmd
       assembler.write( Opcode.READ_CH )
 endClass
 
+class CmdChIsDigit( t ) : Cmd
+  METHODS
+    method jump_if_true->Opcode
+      return Opcode.JUMP_NE
+
+    method write( assembler:Assembler )
+      assembler.write( Opcode.CH_IS_DIGIT )
+endClass
+
+
+class CmdChIsLetter( t ) : Cmd
+  METHODS
+    method jump_if_true->Opcode
+      return Opcode.JUMP_NE
+
+    method write( assembler:Assembler )
+      assembler.write( Opcode.CH_IS_LETTER )
+endClass
+
+
 class CmdRegisterCh( t ) : Cmd
   METHODS
     method is_ch->Logical
@@ -353,6 +379,12 @@ class CmdRegisterCh( t ) : Cmd
 
     method to->String
       return "ch"
+
+    method to_is_digit->Cmd
+      return CmdChIsDigit( t )
+
+    method to_is_letter->Cmd
+      return CmdChIsLetter( t )
 
     method write( assembler:Assembler )
       assembler.write( Opcode.TEST_CH )

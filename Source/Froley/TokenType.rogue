@@ -28,6 +28,7 @@ augment TokenType
   KEYWORD_ELSE_IF        ( "elseIf",            &is_keyword, &is_structural )
   KEYWORD_END_IF         ( "endIf",             &is_keyword, &is_structural )
   KEYWORD_END_SCAN_TABLE ( "endScanTable",      &is_keyword, &is_structural )
+  KEYWORD_END_WHICH      ( "endWhich",          &is_keyword, &is_structural )
   KEYWORD_END_WHILE      ( "endWhile",          &is_keyword, &is_structural )
   KEYWORD_GOTO           ( "goto",              &is_keyword )
   KEYWORD_HALT           ( "halt",              &is_keyword )
@@ -49,6 +50,7 @@ augment TokenType
   KEYWORD_SCAN_DIGITS    ( "scanDigits",        &is_keyword )
   KEYWORD_SCAN_TABLE     ( "scanTable",         &is_keyword )
   KEYWORD_RETURN         ( "return",            &is_keyword )
+  KEYWORD_WHICH          ( "which",             &is_keyword )
   KEYWORD_WHILE          ( "while",             &is_keyword )
 
   SYMBOL_ASTERISK        ( "*",   &is_symbol )

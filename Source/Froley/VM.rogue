@@ -30,7 +30,7 @@ class VM
 
     method accept( token_type:Int32 )
       #println "Accepting $ ($)" (token_type,buffer->String.to_escaped_ascii)
-      #println "Accepting $ ($)" (Froley.token_def(token_type).name,buffer->String.to_escaped_ascii)
+      println "Accepting $ ($)" (Froley.token_def(token_type).name,buffer->String.to_escaped_ascii)
 
     method execute
       local ip = start_ip
@@ -268,6 +268,47 @@ class VM
             # 'others' case or jumps to the end of the scan table.
             ip = last_acceptable_node + last_acceptable_link_count * 2 + 4
             loop (last_acceptable_lookahead) buffer.print( scanner.read )
+            nextIteration
+
+          case Opcode.WHICH_BUFFER
+            local cur_node = ip
+            local start_node = cur_node
+            local lookahead = 0
+            loop
+              local link_count = code[cur_node+1]
+              if (lookahead == buffer.count) escapeLoop
+              local c = buffer[ lookahead ]
+              ip = cur_node + 2
+              contingent
+                loop (link_count)
+                  if (c == code[ip])
+                    cur_node = code[ ip+1 ]
+                    sufficient true
+                  endIf
+                  ip += 2
+                endLoop
+                local on_letter = code[ip]
+                if (on_letter and ((c>='a' and c<='z') or (c>='A' and c<='Z')))
+                  cur_node = on_letter
+                  sufficient true
+                endIf
+                local on_digit = code[ip+1]
+                if (on_digit and c>='0' and c<='9')
+                  cur_node = on_digit
+                  sufficient true
+                endIf
+                escapeLoop
+              satisfied
+                ++lookahead
+              endContingent
+            endLoop
+
+            # Either no links match or EOI
+            if (code[cur_node] == 0 or lookahead < buffer.count)
+              # Not a complete match; use the 'others' code in the start node
+              cur_node = start_node
+            endIf
+            ip = cur_node + code[cur_node+1] * 2 + 4
             nextIteration
           others
             throw FroleyError( "[INTERNAL] Unhandled opcode: " + Opcode(opcode) )

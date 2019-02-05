@@ -48,5 +48,6 @@ enum Opcode( size=1:Int32 )
   ADD_CH_INT32(2)       # ch    += ARG1
   ADD_COUNT_INT32(2)    # count += ARG1
   SCAN_TABLE            # (complex)
+  WHICH_BUFFER          # (complex)
 endEnum
 

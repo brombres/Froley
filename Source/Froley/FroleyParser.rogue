@@ -31,14 +31,25 @@ class FroleyParser : Parser
       rule = add_nested(
         PostUnaryParseRule( "is_digit_is_letter",
           function (rule:ParseRule)->Cmd
+            local t = rule.parser.peek
             local term = rule.parser.parse_term()
             if (rule.parser.consume(TokenType.KEYWORD_IS))
-              if (rule.parser.consume(TokenType.KEYWORD_DIGIT))
-                return term.to_is_digit
-              elseIf (rule.parser.consume(TokenType.KEYWORD_LETTER))
-                return term.to_is_letter
+              if (rule.parser.consume(TokenType.KEYWORD_NOT))
+                if (rule.parser.consume(TokenType.KEYWORD_DIGIT))
+                  return CmdNot( t, term.to_is_digit )
+                elseIf (rule.parser.consume(TokenType.KEYWORD_LETTER))
+                  return CmdNot( t, term.to_is_letter )
+                else
+                  throw rule.parser.peek.error( "'is not digit' or 'is not letter' expected." )
+                endIf
               else
-                throw rule.parser.peek.error( "'is digit' or 'is letter' expected." )
+                if (rule.parser.consume(TokenType.KEYWORD_DIGIT))
+                  return term.to_is_digit
+                elseIf (rule.parser.consume(TokenType.KEYWORD_LETTER))
+                  return term.to_is_letter
+                else
+                  throw rule.parser.peek.error( "'is digit' or 'is letter' expected." )
+                endIf
               endIf
             else
               return term
@@ -336,6 +347,13 @@ class FroleyParser : Parser
         endIf
         return true
 
+      elseIf (consume(TokenType.KEYWORD_WHICH))
+        local cmd_which = CmdWhich( t )
+        statements.add( cmd_which )
+        parse_which( cmd_which )
+        must_consume( TokenType.KEYWORD_END_WHICH )
+        return true
+
       else
         local expr = parse_expression()
 
@@ -491,6 +509,83 @@ class FroleyParser : Parser
 
       forEach ((pattern,state) in patterns)
         PatternGraphBuilder( pattern, state ).apply( cmd_scan_table.start )
+      endForEach
+
+
+    method parse_which( cmd_which:CmdWhich )
+      local patterns = (Pattern,ScanState)[]
+
+      local has_parens = consume( TokenType.SYMBOL_OPEN_PAREN )
+      must_consume( TokenType.KEYWORD_BUFFER )
+      if (has_parens) must_consume( TokenType.SYMBOL_CLOSE_PAREN )
+
+      consume_eols
+      while (has_another and not next_is(TokenType.KEYWORD_END_WHICH))
+        if (consume(TokenType.KEYWORD_CASE))
+          if (next_is(TokenType.SYMBOL_OPEN_CURLY))
+            local pattern = parse_pattern
+            local state = ScanState()
+            consume( TokenType.SYMBOL_COLON )
+            parse_statements( state.statements )
+            patterns.add( (pattern,state) )
+          else
+            local expr = parse_expression()
+            local node = cmd_which.start
+            if (expr.is_integer)
+              node = node.link( expr->Int32->Character )
+            elseIf (expr instanceOf CmdLiteralString)
+              local st = (expr as CmdLiteralString).value
+              node = node.link( forEach in st )
+            else
+              throw expr.t.error( "Syntax error - expected character, character code, or string." )
+            endIf
+            consume( TokenType.SYMBOL_COLON )
+            parse_statements( node.statements )
+          endIf
+
+        elseIf (consume(TokenType.KEYWORD_ACCEPT_ALL))
+          local t    = peek
+          must_consume( TokenType.SYMBOL_OPEN_BRACKET )
+          local name = read_identifier
+          must_consume( TokenType.SYMBOL_CLOSE_BRACKET )
+          if (Froley.token_defs_by_section.contains(name))
+            forEach (def in Froley.section_defs(name))
+              if (def.symbol)
+                local node = cmd_which.start
+                node = node.link( forEach in def.symbol )
+                node.statements.add( CmdAcceptInt32(t,def.type) )
+              endIf
+            endForEach
+          else
+            throw t.error( "No token definitions for [$] exist." (name) )
+          endIf
+        elseIf (consume(TokenType.KEYWORD_DISCARD_ALL))
+          local t    = peek
+          must_consume( TokenType.SYMBOL_OPEN_BRACKET )
+          local name = read_identifier
+          must_consume( TokenType.SYMBOL_CLOSE_BRACKET )
+          if (Froley.token_defs_by_section.contains(name))
+            forEach (def in Froley.section_defs(name))
+              if (def.symbol)
+                local node = cmd_which.start
+                node = node.link( forEach in def.symbol )
+                node.statements.add( CmdStatement(t,"restart",Opcode.RESTART) )
+              endIf
+            endForEach
+          else
+            throw t.error( "No token definitions for [$] exist." (name) )
+          endIf
+        elseIf (consume(TokenType.KEYWORD_OTHERS))
+          consume( TokenType.SYMBOL_COLON )
+          parse_statements( cmd_which.start.statements )
+        else
+          throw peek.error( "Syntax error - expected one of: 'case', 'acceptIdentifier <TOKEN-TYPE>', 'acceptAll [<section-name>]', 'discardAll [<section-name>]', 'others', 'endScanTable'." )
+        endIf
+        consume_eols
+      endWhile
+
+      forEach ((pattern,state) in patterns)
+        PatternGraphBuilder( pattern, state ).apply( cmd_which.start )
       endForEach
 
     method parse_pattern->Pattern

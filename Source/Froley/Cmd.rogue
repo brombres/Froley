@@ -611,7 +611,7 @@ endClass
 
 class CmdScanTable : Cmd
   PROPERTIES
-    start         = ScanState()
+    start = ScanState()
 
   METHODS
     method init( t )
@@ -623,6 +623,28 @@ class CmdScanTable : Cmd
 
     method write( assembler:Assembler )
       assembler.write( Opcode.SCAN_TABLE )
+      local label_end = Label()
+      local states = ScanState[]
+      start.collect( states )
+      (forEach in states).is_collected = false
+      (forEach in states).write( assembler, label_end )
+      assembler.define( label_end )
+endClass
+
+class CmdWhich : Cmd
+  PROPERTIES
+    start = ScanState()
+
+  METHODS
+    method init( t )
+      start.is_acceptable = true
+
+    method resolved->Cmd
+      start.resolve
+      return this
+
+    method write( assembler:Assembler )
+      assembler.write( Opcode.WHICH_BUFFER )
       local label_end = Label()
       local states = ScanState[]
       start.collect( states )

@@ -50,6 +50,7 @@ augment TokenType
   KEYWORD_READ           ( "read",              &is_keyword )
   KEYWORD_RESTART        ( "restart",           &is_keyword )
   KEYWORD_SCAN_DIGITS    ( "scanDigits",        &is_keyword )
+  KEYWORD_SCAN_IDENTIFIER( "scanIdentifier",    &is_keyword )
   KEYWORD_SCAN_TABLE     ( "scanTable",         &is_keyword )
   KEYWORD_RETURN         ( "return",            &is_keyword )
   KEYWORD_WHICH          ( "which",             &is_keyword )

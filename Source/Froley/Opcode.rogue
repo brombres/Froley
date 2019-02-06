@@ -22,6 +22,7 @@ enum Opcode( size=1:Int32 )
   READ_CH               # CH = read
   CONSUME_CHARACTER(2)  # if consume(character:ARG1) then RESULT=1 else RESULT=0
   SCAN_DIGITS(4)        # min..max:ARG1..ARG2, base:ARG3; result = n_read - min_digits
+  SCAN_IDENTIFIER
   CLEAR_BUFFER          # BUFFER.clear
   COLLECT_CH            # BUFFER.print(ch)
   COLLECT_CHARACTER(2)  # BUFFER.print(character:ARG1)

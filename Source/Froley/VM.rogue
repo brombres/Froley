@@ -24,13 +24,19 @@ class VM
 
     start_ip = 0
 
+    id_characters = Array<<Int32>>(128)
+
   METHODS
     method init( data:Byte[] )
+      forEach (ch in 'a'..'z') id_characters[ch->Int32] = 1
+      forEach (ch in 'A'..'Z') id_characters[ch->Int32] = 1
+      forEach (ch in '0'..'9') id_characters[ch->Int32] = 2
+      id_characters['_'->Int32] = 1
       load( data )
 
     method accept( token_type:Int32 )
       #println "Accepting $ ($)" (token_type,buffer->String.to_escaped_ascii)
-      println "Accepting $ ($)" (Froley.token_def(token_type).name,buffer->String.to_escaped_ascii)
+      #println "Accepting $ ($)" (Froley.token_def(token_type).name,buffer->String.to_escaped_ascii)
 
     method execute
       local ip = start_ip
@@ -132,6 +138,18 @@ class VM
               endIf
             endLoop
             result = n - min_digits
+            nextIteration
+          case Opcode.SCAN_IDENTIFIER
+            if (scanner.has_another and id_characters[scanner.peek&0x7F] == 1)
+              buffer.clear
+              buffer.print( scanner.read )
+              while (scanner.has_another and id_characters[scanner.peek&0x7f])
+                buffer.print( scanner.read )
+              endWhile
+              result = 1
+            else
+              result = 0
+            endIf
             nextIteration
           case Opcode.CLEAR_BUFFER
             buffer.clear

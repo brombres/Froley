@@ -256,6 +256,19 @@ class CmdScanDigits( t, min_digits:Int32, max_digits:Int32, base:Int32 ) : Cmd
 endClass
 
 
+class CmdScanIdentfier( t ) : Cmd
+  METHODS
+    method jump_if_true->Opcode
+      return Opcode.JUMP_GT
+
+    method to->String
+      return "scanIdentifier"
+
+    method write( assembler:Assembler )
+      assembler.write( Opcode.SCAN_IDENTIFIER )
+endClass
+
+
 class CmdWhile( t, condition:Cmd ) : Cmd
   PROPERTIES
     statements = CmdStatements()

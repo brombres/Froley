@@ -102,13 +102,15 @@ class Froley [singleton]
       println
 
       println "[Code IntX + UTF-8]"
-      #println bytes.to_base64
+      println bytes.to_base64
+      #{
       local b64 = bytes.to_base64
       while (b64.count >= 64)
         println b64.leftmost(64)
         b64 = b64.rightmost(-64)
       endWhile
       if (b64.count) println b64
+      }#
       println
       @trace bytes.count
 

@@ -120,6 +120,7 @@ class FroleyParser : Parser
           return CmdScanDigits(t,min_digits,max_digits,base)
         endFunction
       )
+      rule.on( "scanIdentifier", <<CmdScanIdentfier>> )
       rule.on( "peek",
         function(parser:FroleyParser)->Cmd
           local t = parser.read  # 'peek'

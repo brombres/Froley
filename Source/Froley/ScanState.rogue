@@ -7,12 +7,9 @@ class ScanState
     is_visited    : Logical
     is_collected  : Logical
     is_redirected : Logical
-    is_loop_state : Logical
     label         = Label()
     code_label    = Label()
     links         = Table<<Character,ScanState>>()
-    on_letter     : ScanState
-    on_digit      : ScanState
     statements    = CmdStatements()
 
   METHODS
@@ -20,8 +17,6 @@ class ScanState
       local result = ScanState()
       result.is_acceptable = is_acceptable
       forEach (key in links.keys) result.links[ key ] = links[ key ]
-      result.on_letter = on_letter
-      result.on_digit = on_digit
       result.statements.add( statements )
       return result
 
@@ -30,9 +25,6 @@ class ScanState
       is_collected = true
       states.add( this )
       (forEach in links).collect( states )
-      if (on_letter) on_letter.collect( states )
-      if (on_digit)  on_digit.collect( states )
-
 
     method link( ch:Character )->ScanState
       local entry = links.find( ch )
@@ -48,8 +40,6 @@ class ScanState
       if (is_visited) return
       is_visited = true
       (forEach in links).resolve
-      if (on_letter) on_letter.resolve
-      if (on_digit)  on_digit.resolve
       statements.resolve
       is_visited = false
 
@@ -64,10 +54,6 @@ class ScanState
         assembler.write( key->Int32 )
         assembler.write_address( links[key].label )
       endForEach
-      if (on_letter) assembler.write_address( on_letter.label )
-      else           assembler.write( 0 )
-      if (on_digit)  assembler.write_address( on_digit.label )
-      else           assembler.write( 0 )
 
       # Write code
       if (not is_redirected) assembler.define( code_label )
@@ -85,15 +71,6 @@ class ScanState
       if (is_acceptable or statements.count) builder.print('[')
 
       local st = links->String.leftmost(-1)
-
-      if (on_letter)
-        if (st.count > 1) st += ","
-        st += "letter:" + on_letter
-      endIf
-      if (on_digit)
-        if (st.count > 1) st += ","
-        st += "digit:" + on_digit
-      endIf
 
       is_collected = false
 

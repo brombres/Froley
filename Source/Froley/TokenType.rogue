@@ -11,6 +11,7 @@ augment TokenType
 
   KEYWORD_ACCEPT         ( "accept",            &is_keyword )
   KEYWORD_ACCEPT_ALL     ( "acceptAll",         &is_keyword, &is_structural )
+  KEYWORD_AND            ( "and",               &is_keyword )
   KEYWORD_BASE           ( "base",              &is_keyword )
   KEYWORD_BUFFER         ( "buffer",            &is_keyword )
   KEYWORD_CASE           ( "case",              &is_keyword, &is_structural )
@@ -41,6 +42,7 @@ augment TokenType
   KEYWORD_MODE           ( "mode",              &is_keyword )
   KEYWORD_NOT            ( "not",               &is_keyword )
   KEYWORD_OTHERS         ( "others",            &is_keyword, &is_structural )
+  KEYWORD_OR             ( "or",                &is_keyword )
   KEYWORD_PEEK           ( "peek",              &is_keyword )
   KEYWORD_PRINT          ( "print",             &is_keyword )
   KEYWORD_POP            ( "pop",               &is_keyword )

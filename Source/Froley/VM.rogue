@@ -172,8 +172,15 @@ class VM
             result = count - code[ip]
             ++ip
             nextIteration
-          case Opcode.CH_IS_DIGIT
-            result = select{ (ch>='0' and ch<='9') }
+          case Opcode.CH_IS_DIGIT_INT32
+            local base = code[ip]
+            ++ip
+            local n = (ch->Character).to_number( base )
+            result = select{ (n>=0 and n<base):1 || 0 }
+            nextIteration
+          case Opcode.CH_IS_DIGIT_COUNT
+            local n = (ch->Character).to_number( count )
+            result = select{ (n>=0 and n<count):1 || 0 }
             nextIteration
           case Opcode.CH_IS_LETTER
             result = select{ ((ch>='a' and ch<='z') or (ch>='A' and ch<='Z')):1 || 0 }
@@ -248,16 +255,6 @@ class VM
                   endIf
                   ip += 2
                 endLoop
-                local on_letter = code[ip]
-                if (on_letter and ((c>='a' and c<='z') or (c>='A' and c<='Z')))
-                  cur_node = on_letter
-                  sufficient true
-                endIf
-                local on_digit = code[ip+1]
-                if (on_digit and c>='0' and c<='9')
-                  cur_node = on_digit
-                  sufficient true
-                endIf
                 escapeLoop
               satisfied
                 ++lookahead
@@ -266,7 +263,7 @@ class VM
             # Either no links match or EOI - jump to code of last acceptable node.
             # The start node is always acceptable and either contains the
             # 'others' case or jumps to the end of the scan table.
-            ip = last_acceptable_node + last_acceptable_link_count * 2 + 4
+            ip = last_acceptable_node + last_acceptable_link_count * 2 + 2
             loop (last_acceptable_lookahead) buffer.print( scanner.read )
             nextIteration
 
@@ -287,16 +284,6 @@ class VM
                   endIf
                   ip += 2
                 endLoop
-                local on_letter = code[ip]
-                if (on_letter and ((c>='a' and c<='z') or (c>='A' and c<='Z')))
-                  cur_node = on_letter
-                  sufficient true
-                endIf
-                local on_digit = code[ip+1]
-                if (on_digit and c>='0' and c<='9')
-                  cur_node = on_digit
-                  sufficient true
-                endIf
                 escapeLoop
               satisfied
                 ++lookahead
@@ -308,7 +295,7 @@ class VM
               # Not a complete match; use the 'others' code in the start node
               cur_node = start_node
             endIf
-            ip = cur_node + code[cur_node+1] * 2 + 4
+            ip = cur_node + code[cur_node+1] * 2 + 2
             nextIteration
           others
             throw FroleyError( "[INTERNAL] Unhandled opcode: " + Opcode(opcode) )

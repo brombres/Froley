@@ -15,6 +15,14 @@ class FroleyParser : Parser
       rule = add_nested( RightAssociativeBinaryParseRule("assignment") )
       rule.on( "=", <<CmdAssign>> )
 
+      # logical or
+      rule = add_nested( BinaryParseRule("logical_or") )
+      rule.on( "or", <<CmdLogicalOr>> )
+
+      # logical and
+      rule = add_nested( BinaryParseRule("logical_and") )
+      rule.on( "and", <<CmdLogicalAnd>> )
+
       # comparison
       rule = add_nested( BinaryParseRule("comparison") )
       rule.on( "==", <<CmdCompareEQ>> )
@@ -33,22 +41,45 @@ class FroleyParser : Parser
           function (rule:ParseRule)->Cmd
             local t = rule.parser.peek
             local term = rule.parser.parse_term()
-            if (rule.parser.consume(TokenType.KEYWORD_IS))
-              if (rule.parser.consume(TokenType.KEYWORD_NOT))
-                if (rule.parser.consume(TokenType.KEYWORD_DIGIT))
-                  return CmdNot( t, term.to_is_digit )
-                elseIf (rule.parser.consume(TokenType.KEYWORD_LETTER))
+            local parser = rule.parser
+            if (parser.consume(TokenType.KEYWORD_IS))
+              if (parser.consume(TokenType.KEYWORD_NOT))
+                if (parser.consume(TokenType.KEYWORD_DIGIT))
+                  local base = 10
+                  if (parser.consume(TokenType.SYMBOL_OPEN_PAREN))
+                    if (parser.consume(TokenType.KEYWORD_COUNT))
+                      parser.must_consume( TokenType.SYMBOL_CLOSE_PAREN )
+                      return CmdNot( t, term.to_is_digit_count )
+                    elseIf (not parser.next_is(TokenType.INTEGER))
+                      throw parser.peek.error( "Base '2'..'16' or 'count' expected." )
+                    endIf
+                    base = parser.read->Int32
+                    parser.must_consume( TokenType.SYMBOL_CLOSE_PAREN )
+                  endIf
+                  return CmdNot( t, term.to_is_digit(base) )
+                elseIf (parser.consume(TokenType.KEYWORD_LETTER))
                   return CmdNot( t, term.to_is_letter )
                 else
-                  throw rule.parser.peek.error( "'is not digit' or 'is not letter' expected." )
+                  throw parser.peek.error( "'is not digit' or 'is not letter' expected." )
                 endIf
               else
-                if (rule.parser.consume(TokenType.KEYWORD_DIGIT))
-                  return term.to_is_digit
-                elseIf (rule.parser.consume(TokenType.KEYWORD_LETTER))
+                if (parser.consume(TokenType.KEYWORD_DIGIT))
+                  local base = 10
+                  if (parser.consume(TokenType.SYMBOL_OPEN_PAREN))
+                    if (parser.consume(TokenType.KEYWORD_COUNT))
+                      parser.must_consume( TokenType.SYMBOL_CLOSE_PAREN )
+                      return term.to_is_digit_count
+                    elseIf (not parser.next_is(TokenType.INTEGER))
+                      throw parser.peek.error( "Base '2'..'16' or 'count' expected." )
+                    endIf
+                    base = parser.read->Int32
+                    parser.must_consume( TokenType.SYMBOL_CLOSE_PAREN )
+                  endIf
+                  return term.to_is_digit( base )
+                elseIf (parser.consume(TokenType.KEYWORD_LETTER))
                   return term.to_is_letter
                 else
-                  throw rule.parser.peek.error( "'is digit' or 'is letter' expected." )
+                  throw parser.peek.error( "'is digit' or 'is letter' expected." )
                 endIf
               endIf
             else
@@ -318,6 +349,7 @@ class FroleyParser : Parser
         local cmd_scan_table = CmdScanTable( t )
         statements.add( cmd_scan_table )
         parse_scan_table( cmd_scan_table )
+        #println cmd_scan_table.start
         must_consume( TokenType.KEYWORD_END_SCAN_TABLE )
         return true
 
@@ -440,11 +472,12 @@ class FroleyParser : Parser
       throw t.error( "Register 'ch' or 'count' expected." )
 
     method parse_scan_table( cmd_scan_table:CmdScanTable )
-      local patterns = (Pattern,ScanState)[]
+      #local patterns = (Pattern,ScanState)[]
 
       consume_eols
       while (has_another and not next_is(TokenType.KEYWORD_END_SCAN_TABLE))
         if (consume(TokenType.KEYWORD_CASE))
+          #{
           if (next_is(TokenType.SYMBOL_OPEN_CURLY))
             local pattern = parse_pattern
             local state = ScanState()
@@ -452,19 +485,20 @@ class FroleyParser : Parser
             parse_statements( state.statements )
             patterns.add( (pattern,state) )
           else
-            local expr = parse_expression()
-            local node = cmd_scan_table.start
-            if (expr.is_integer)
-              node = node.link( expr->Int32->Character )
-            elseIf (expr instanceOf CmdLiteralString)
-              local st = (expr as CmdLiteralString).value
-              node = node.link( forEach in st )
-            else
-              throw expr.t.error( "Syntax error - expected character, character code, or string." )
-            endIf
-            consume( TokenType.SYMBOL_COLON )
-            parse_statements( node.statements )
+            }#
+          local expr = parse_expression()
+          local node = cmd_scan_table.start
+          if (expr.is_integer)
+            node = node.link( expr->Int32->Character )
+          elseIf (expr instanceOf CmdLiteralString)
+            local st = (expr as CmdLiteralString).value
+            node = node.link( forEach in st )
+          else
+            throw expr.t.error( "Syntax error - expected character, character code, or string." )
           endIf
+          consume( TokenType.SYMBOL_COLON )
+          parse_statements( node.statements )
+          #endIf
 
         elseIf (consume(TokenType.KEYWORD_ACCEPT_ALL))
           local t    = peek
@@ -507,13 +541,13 @@ class FroleyParser : Parser
         consume_eols
       endWhile
 
-      forEach ((pattern,state) in patterns)
-        PatternGraphBuilder( pattern, state ).apply( cmd_scan_table.start )
-      endForEach
+      #forEach ((pattern,state) in patterns)
+      #  PatternGraphBuilder( pattern, state ).apply( cmd_scan_table.start )
+      #endForEach
 
 
     method parse_which( cmd_which:CmdWhich )
-      local patterns = (Pattern,ScanState)[]
+      #local patterns = (Pattern,ScanState)[]
 
       local has_parens = consume( TokenType.SYMBOL_OPEN_PAREN )
       must_consume( TokenType.KEYWORD_BUFFER )
@@ -522,6 +556,7 @@ class FroleyParser : Parser
       consume_eols
       while (has_another and not next_is(TokenType.KEYWORD_END_WHICH))
         if (consume(TokenType.KEYWORD_CASE))
+          #{
           if (next_is(TokenType.SYMBOL_OPEN_CURLY))
             local pattern = parse_pattern
             local state = ScanState()
@@ -529,19 +564,20 @@ class FroleyParser : Parser
             parse_statements( state.statements )
             patterns.add( (pattern,state) )
           else
-            local expr = parse_expression()
-            local node = cmd_which.start
-            if (expr.is_integer)
-              node = node.link( expr->Int32->Character )
-            elseIf (expr instanceOf CmdLiteralString)
-              local st = (expr as CmdLiteralString).value
-              node = node.link( forEach in st )
-            else
-              throw expr.t.error( "Syntax error - expected character, character code, or string." )
-            endIf
-            consume( TokenType.SYMBOL_COLON )
-            parse_statements( node.statements )
+          }#
+          local expr = parse_expression()
+          local node = cmd_which.start
+          if (expr.is_integer)
+            node = node.link( expr->Int32->Character )
+          elseIf (expr instanceOf CmdLiteralString)
+            local st = (expr as CmdLiteralString).value
+            node = node.link( forEach in st )
+          else
+            throw expr.t.error( "Syntax error - expected character, character code, or string." )
           endIf
+          consume( TokenType.SYMBOL_COLON )
+          parse_statements( node.statements )
+          #endIf
 
         elseIf (consume(TokenType.KEYWORD_ACCEPT_ALL))
           local t    = peek
@@ -584,68 +620,68 @@ class FroleyParser : Parser
         consume_eols
       endWhile
 
-      forEach ((pattern,state) in patterns)
-        PatternGraphBuilder( pattern, state ).apply( cmd_which.start )
-      endForEach
+      #forEach ((pattern,state) in patterns)
+      #  PatternGraphBuilder( pattern, state ).apply( cmd_which.start )
+      #endForEach
 
-    method parse_pattern->Pattern
-      local t = peek
-      must_consume( TokenType.SYMBOL_OPEN_CURLY )
-      return parse_pattern_sequence( t, TokenType.SYMBOL_CLOSE_CURLY )
+      #method parse_pattern->Pattern
+      #  local t = peek
+      #  must_consume( TokenType.SYMBOL_OPEN_CURLY )
+      #  return parse_pattern_sequence( t, TokenType.SYMBOL_CLOSE_CURLY )
 
-    method parse_pattern_sequence( t:Token, close_type:TokenType )->Pattern
-      local sequence = SequencePattern( t )
-      while (reader.has_another and not next_is(close_type))
-        sequence.add( parse_pattern_or )
-      endWhile
-      must_consume( close_type )
-      return sequence
+      #method parse_pattern_sequence( t:Token, close_type:TokenType )->Pattern
+      #  local sequence = SequencePattern( t )
+      #  while (reader.has_another and not next_is(close_type))
+      #    sequence.add( parse_pattern_or )
+      #  endWhile
+      #  must_consume( close_type )
+      #  return sequence
 
-    method parse_pattern_or->Pattern
-      local pattern = parse_pattern_multiples
-      if (not next_is(TokenType.SYMBOL_VERTICAL_BAR)) return pattern
+      #method parse_pattern_or->Pattern
+      #  local pattern = parse_pattern_multiples
+      #  if (not next_is(TokenType.SYMBOL_VERTICAL_BAR)) return pattern
 
-      local result = OrPattern( peek )
-      result.add( pattern )
-      while (consume(TokenType.SYMBOL_VERTICAL_BAR))
-        consume_eols
-        result.add( parse_pattern_multiples )
-      endWhile
-      return result
+      #  local result = OrPattern( peek )
+      #  result.add( pattern )
+      #  while (consume(TokenType.SYMBOL_VERTICAL_BAR))
+      #    consume_eols
+      #    result.add( parse_pattern_multiples )
+      #  endWhile
+      #  return result
 
-    method parse_pattern_multiples->Pattern
-      local pattern = parse_pattern_term
-      if (next_is(TokenType.SYMBOL_ASTERISK))
-        return ZeroOrMorePattern( read, pattern )
-      else
-        return pattern
-      endIf
+      #method parse_pattern_multiples->Pattern
+      #  local pattern = parse_pattern_term
+      #  if (next_is(TokenType.SYMBOL_ASTERISK))
+      #    return ZeroOrMorePattern( read, pattern )
+      #  else
+      #    return pattern
+      #  endIf
 
-    method parse_pattern_term->Pattern
-      local t = peek
-      if (consume(TokenType.STRING))
-        return StringPattern( t, t.text )
-      elseIf (consume(TokenType.KEYWORD_LETTER))
-        return LetterPattern( t )
-      elseIf (consume(TokenType.KEYWORD_DIGIT))
-        return DigitPattern( t )
-      elseIf (consume(TokenType.INTEGER))
-        return CharacterPattern( t, t->Int32 )
-      elseIf (consume(TokenType.SYMBOL_OPEN_PAREN))
-        return parse_pattern_sequence( t, TokenType.SYMBOL_CLOSE_PAREN )
-      else
-        throw t.error( "Syntax error - unexpected '$'." (t->String) )
-      endIf
+      #method parse_pattern_term->Pattern
+      #  local t = peek
+      #  if (consume(TokenType.STRING))
+      #    return StringPattern( t, t.text )
+      #  elseIf (consume(TokenType.KEYWORD_LETTER))
+      #    return LetterPattern( t )
+      #  elseIf (consume(TokenType.KEYWORD_DIGIT))
+      #    return DigitPattern( t )
+      #  elseIf (consume(TokenType.INTEGER))
+      #    return CharacterPattern( t, t->Int32 )
+      #  elseIf (consume(TokenType.SYMBOL_OPEN_PAREN))
+      #    return parse_pattern_sequence( t, TokenType.SYMBOL_CLOSE_PAREN )
+      #  else
+      #    throw t.error( "Syntax error - unexpected '$'." (t->String) )
+      #  endIf
 
-      #{
-      if consume( TokenType.SYMBOL_OPEN_PAREN )
-      local sequence = SequencePattern()
-      while (reader.has_another and not next_is(TokenType.SYMBOL_CLOSE_CURLY))
-        sequence.add( parse_pattern_element )
-      endWhile
-      must_consume( TokenType.SYMBOL_CLOSE_CURLY )
-      return sequence
-      }#
+      #  #{
+      #  if consume( TokenType.SYMBOL_OPEN_PAREN )
+      #  local sequence = SequencePattern()
+      #  while (reader.has_another and not next_is(TokenType.SYMBOL_CLOSE_CURLY))
+      #    sequence.add( parse_pattern_element )
+      #  endWhile
+      #  must_consume( TokenType.SYMBOL_CLOSE_CURLY )
+      #  return sequence
+      #  }#
 
     method read_identifier->String
       if (next_is(TokenType.IDENTIFIER))

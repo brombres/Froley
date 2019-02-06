@@ -36,8 +36,11 @@ augment Cmd
     method to->Int32
       throw UnsupportedOperationError()
 
-    method to_is_digit->Cmd
-      throw t.error( "Syntax error; expected 'ch is digit'." )
+    method to_is_digit( base:Int32 )->Cmd
+      throw t.error( "Syntax error; expected 'ch is digit' or 'ch is digit(10)'." )
+
+    method to_is_digit_count->Cmd
+      throw t.error( "Syntax error; expected 'ch is digit(count)." )
 
     method to_is_letter->Cmd
       throw t.error( "Syntax error; expected 'ch is letter'." )
@@ -47,6 +50,14 @@ augment Cmd
 
     method write_add( assembler:Assembler, expression:Cmd )
       throw t.error( "Illegal operation target - target must be 'ch' or 'count'." )
+
+    method write_logical_ands( assembler:Assembler, target_if_false:Label )
+      write( assembler )
+      assembler.write( jump_if_false, target_if_false )
+
+    method write_logical_ors( assembler:Assembler, target_if_true:Label )
+      write( assembler )
+      assembler.write( jump_if_true, target_if_true )
 
     method write_subtract( assembler:Assembler, expression:Cmd )
       throw t.error( "Illegal operation target - target must be 'ch' or 'count'." )
@@ -258,12 +269,21 @@ class CmdWhile( t, condition:Cmd ) : Cmd
     method write( assembler:Assembler )
       local label_test = Label()
       local label_top  = Label()
+      local label_end  = Label()
       assembler.write( Opcode.JUMP, label_test )
       assembler.define( label_top )
       statements.write( assembler )
       assembler.define( label_test )
-      condition.write( assembler )
-      assembler.write( condition.jump_if_true, label_top )
+      if (condition instanceOf CmdLogicalAnd)
+        condition.write_logical_ands( assembler, label_end )
+        assembler.write( Opcode.JUMP, label_top )
+      elseIf (condition instanceOf CmdLogicalOr)
+        condition.write_logical_ors( assembler, label_top )
+      else
+        condition.write( assembler )
+        assembler.write( condition.jump_if_true, label_top )
+      endIf
+      assembler.define( label_end )
 endClass
 
 class CmdIf( t, condition:Cmd ) : Cmd
@@ -279,10 +299,19 @@ class CmdIf( t, condition:Cmd ) : Cmd
       return this
 
     method write( assembler:Assembler )
+      local label_body   = Label()
       local label_else   = Label()
       local label_end_if = Label()
-      condition.write( assembler )
-      assembler.write( condition.jump_if_false, label_else )
+      if (condition instanceOf CmdLogicalAnd)
+        condition.write_logical_ands( assembler, label_else )
+      elseIf (condition instanceOf CmdLogicalOr)
+        condition.write_logical_ors( assembler, label_body )
+        assembler.write( Opcode.JUMP, label_else )
+      else
+        condition.write( assembler )
+        assembler.write( condition.jump_if_false, label_else )
+      endIf
+      assembler.define( label_body )
       statements.write( assembler )
       assembler.write( Opcode.JUMP, label_end_if )
       assembler.define( label_else )
@@ -329,13 +358,22 @@ class CmdReadCh( t ) : Cmd
       assembler.write( Opcode.READ_CH )
 endClass
 
-class CmdChIsDigit( t ) : Cmd
+class CmdChIsDigit( t, base:Int32 ) : Cmd
   METHODS
     method jump_if_true->Opcode
       return Opcode.JUMP_NE
 
     method write( assembler:Assembler )
-      assembler.write( Opcode.CH_IS_DIGIT )
+      assembler.write( Opcode.CH_IS_DIGIT_INT32, base )
+endClass
+
+class CmdChIsDigitCount( t ) : Cmd
+  METHODS
+    method jump_if_true->Opcode
+      return Opcode.JUMP_NE
+
+    method write( assembler:Assembler )
+      assembler.write( Opcode.CH_IS_DIGIT_COUNT )
 endClass
 
 
@@ -380,8 +418,11 @@ class CmdRegisterCh( t ) : Cmd
     method to->String
       return "ch"
 
-    method to_is_digit->Cmd
-      return CmdChIsDigit( t )
+    method to_is_digit( base:Int32 )->Cmd
+      return CmdChIsDigit( t, base )
+
+    method to_is_digit_count->Cmd
+      return CmdChIsDigitCount( t )
 
     method to_is_letter->Cmd
       return CmdChIsLetter( t )
@@ -670,5 +711,37 @@ class CmdNot( t, operand ) : CmdUnary
 
     method write( assembler:Assembler )
       operand.write( assembler )
+endClass
+
+class CmdLogicalAnd : CmdBinary
+  METHODS
+    method resolved->Cmd
+      left  = left.resolved
+      right = right.resolved
+      return this
+
+    method write( assembler:Assembler )
+      throw t.error( "Condition too complex - only simple 'a or b or ...', 'a and b and...' conditions are allowed." )
+
+    method write_logical_ands( assembler:Assembler, target_if_false:Label )
+      left.write_logical_ands( assembler, target_if_false )
+      right.write_logical_ands( assembler, target_if_false )
+
+endClass
+
+class CmdLogicalOr : CmdBinary
+  METHODS
+    method resolved->Cmd
+      left  = left.resolved
+      right = right.resolved
+      return this
+
+    method write( assembler:Assembler )
+      throw t.error( "Condition too complex - only simple 'a or b or ...', 'a and b and...' conditions are allowed." )
+
+    method write_logical_ors( assembler:Assembler, target_if_true:Label )
+      left.write_logical_ors( assembler, target_if_true )
+      right.write_logical_ors( assembler, target_if_true )
+
 endClass
 

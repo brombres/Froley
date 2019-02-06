@@ -33,7 +33,8 @@ enum Opcode( size=1:Int32 )
   PRINT_STRING(2)       # println strings[index:ARG1]
   COMPARE_CH_INT32      # result = ch - ARG1
   COMPARE_COUNT_INT32   # result = count - ARG1
-  CH_IS_DIGIT           # result = select{ ch.is_digit:1 || 0 }
+  CH_IS_DIGIT_INT32(2)  # result = select{ ch.is_digit(base:ARG1):1 || 0 }
+  CH_IS_DIGIT_COUNT     # result = select{ ch.is_digit(base:count):1 || 0 }
   CH_IS_LETTER          # result = select{ ch.is_letter:1 || 0 }
   TEST_CH               # result = ch
   TEST_COUNT            # result = count

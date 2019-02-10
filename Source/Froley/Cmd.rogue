@@ -663,7 +663,7 @@ class CmdLiteralString( t, value:String ) : Cmd
       throw t.error( "Syntax error - unexpected literal string." )
 endClass
 
-class CmdScanTable : Cmd
+class CmdWhichInput : Cmd
   PROPERTIES
     start = ScanState()
 
@@ -685,7 +685,7 @@ class CmdScanTable : Cmd
       assembler.define( label_end )
 endClass
 
-class CmdWhich : Cmd
+class CmdWhichBuffer : Cmd
   PROPERTIES
     start = ScanState()
 

@@ -101,7 +101,7 @@ class Froley [singleton]
       endForEach
       println
 
-      println "[Code IntX + UTF-8]"
+      println "[Tokenizer IntX+base64]"
       println bytes.to_base64
       #{
       local b64 = bytes.to_base64
@@ -121,24 +121,29 @@ class Froley [singleton]
       $localDefine PARSING_CONFIGURE   0
       $localDefine PARSING_ATTRIBUTES  1
       $localDefine PARSING_DEFINITIONS 2
-      $localDefine PARSING_CODE        3
-      local code = StringBuilder( 2048 )
+      $localDefine PARSING_TOKENIZER   3
+      $localDefine PARSING_PARSER      4
+      local tokenizer_code = StringBuilder( 2048 )
+      local parser_code = StringBuilder( 2048 )
       local cur_section_name = "tokenizer"
       local cur_section_defs : TokenDef[]
-      local parse_type = PARSING_CODE
+      local parse_type = PARSING_TOKENIZER
       local buffer = StringBuilder()
       local next_attribute_value = 1
       forEach (line at index in LineReader(source))
         if (line.begins_with('['))  # new section
-          code.println  # keep line numbers consistent
+          tokenizer_code.println  # keep line numbers consistent
+          parser_code.println  # keep line numbers consistent
           cur_section_name = line.extract_string( "[$]*" )
           which (cur_section_name)
             case "configure"
               parse_type = PARSING_CONFIGURE
             case "attributes"
               parse_type = PARSING_ATTRIBUTES
-            case "code"
-              parse_type = PARSING_CODE
+            case "tokenizer"
+              parse_type = PARSING_TOKENIZER
+            case "parser"
+              parse_type = PARSING_PARSER
             others
               parse_type = PARSING_DEFINITIONS
           endWhich
@@ -147,86 +152,17 @@ class Froley [singleton]
             cur_section_defs = section_defs( cur_section_name )
           endIf
 
-          #{
-        elseIf (parse_type == PARSING_CONFIGURE)
-          code.println  # keep line numbers consistent
-          local scanner = Scanner( line, &spaces_per_tab=2 ).[ line=index+1 ]
-          discard_whitespace( scanner )
-          if (not scanner.has_another) nextIteration
-          local config_name = scanner.scan_identifier
-          if (config_name is null)
-            throw FroleyError( filepath, source, scanner.line, scanner.column, "Expected 'id_begin' or 'id_continue'." )
-          endIf
-          which (config_name)
-            case "id_begin"
-              id_begin_letter = false
-              id_begin_digit  = false
-              id_begin_other  = ""
-              discard_whitespace( scanner )
-              while (scanner.has_another)
-                local id = scanner.scan_identifier
-                if (id)
-                  if (id == "letter")
-                    id_begin_letter = true
-                  elseIf (id == "digit")
-                    id_begin_digit = true
-                  else
-                    forEach (ch in id)
-                      if (not id_begin_other.contains(ch)) id_begin_other += ch
-                    endForEach
-                  endIf
-                else
-                  local chars = scanner.scan_string
-                  if (chars)
-                    forEach (ch in chars)
-                      if (not id_begin_other.contains(ch)) id_begin_other += ch
-                    endForEach
-                  else
-                    local ch = scanner.read
-                    if (not id_begin_other.contains(ch)) id_begin_other += ch
-                  endIf
-                endIf
-                discard_whitespace(scanner)
-              endWhile
+        elseIf (parse_type == PARSING_TOKENIZER)
+          tokenizer_code.println( line )
+          parser_code.println  # keep line numbers consistent
 
-            case "id_continue"
-              id_continue_letter = false
-              id_continue_digit  = false
-              id_continue_other  = ""
-              discard_whitespace( scanner )
-              while (scanner.has_another)
-                local id = scanner.scan_identifier
-                if (id)
-                  if (id == "letter")
-                    id_continue_letter = true
-                  elseIf (id == "digit")
-                    id_continue_digit = true
-                  else
-                    forEach (ch in id)
-                      if (not id_continue_other.contains(ch)) id_continue_other += ch
-                    endForEach
-                  endIf
-                else
-                  local chars = scanner.scan_string
-                  if (chars)
-                    forEach (ch in chars)
-                      if (not id_continue_other.contains(ch)) id_continue_other += ch
-                    endForEach
-                  else
-                    local ch = scanner.read
-                    if (not id_continue_other.contains(ch)) id_continue_other += ch
-                  endIf
-                endIf
-                discard_whitespace(scanner)
-              endWhile
-          endWhich
-          }#
-
-        elseIf (parse_type == PARSING_CODE)
-          code.println( line )
+        elseIf (parse_type == PARSING_PARSER)
+          parser_code.println( line )
+          tokenizer_code.println  # keep line numbers consistent
 
         elseIf (parse_type == PARSING_ATTRIBUTES)
-          code.println  # keep line numbers consistent
+          tokenizer_code.println  # keep line numbers consistent
+          parser_code.println  # keep line numbers consistent
           local scanner = Scanner( line, &spaces_per_tab=2 ).[ line=index+1 ]
           discard_whitespace( scanner )
           if (scanner.has_another)
@@ -250,7 +186,8 @@ class Froley [singleton]
           endIf
         else
           # Token definitions
-          code.println  # keep line numbers consistent
+          tokenizer_code.println  # keep line numbers consistent
+          parser_code.println  # keep line numbers consistent
           local scanner = Scanner( line, &spaces_per_tab=2 ).[ line=index+1 ]
           discard_whitespace( scanner )
           if (scanner.has_another)
@@ -310,7 +247,7 @@ class Froley [singleton]
           endIf
         endIf
       endForEach
-      return code->String
+      return tokenizer_code->String
 
     method discard_whitespace( scanner:Scanner )
       while (scanner.consume(' ')) noAction

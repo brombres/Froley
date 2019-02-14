@@ -1,7 +1,7 @@
 module Froley
   uses ParseKit<<Froley>>
 
-class VM
+class TokenizerVM
   DEFINITIONS
     VERSION     = 1
     MIN_VERSION = 1
@@ -36,7 +36,7 @@ class VM
 
     method accept( token_type:Int32 )
       #println "Accepting $ ($)" (token_type,buffer->String.to_escaped_ascii)
-      #println "Accepting $ ($)" (Froley.token_def(token_type).name,buffer->String.to_escaped_ascii)
+      println "Accepting $ ($)" (Froley.token_def(token_type).name,buffer->String.to_escaped_ascii)
 
     method execute
       local ip = start_ip

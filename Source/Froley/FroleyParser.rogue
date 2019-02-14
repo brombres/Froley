@@ -13,27 +13,27 @@ class FroleyParser : Parser
 
       # assignment
       rule = add_nested( RightAssociativeBinaryParseRule("assignment") )
-      rule.on( "=", <<CmdAssign>> )
+      rule.on( "=", <<TokenizerCmdAssign>> )
 
       # logical or
       rule = add_nested( BinaryParseRule("logical_or") )
-      rule.on( "or", <<CmdLogicalOr>> )
+      rule.on( "or", <<TokenizerCmdLogicalOr>> )
 
       # logical and
       rule = add_nested( BinaryParseRule("logical_and") )
-      rule.on( "and", <<CmdLogicalAnd>> )
+      rule.on( "and", <<TokenizerCmdLogicalAnd>> )
 
       # comparison
       rule = add_nested( BinaryParseRule("comparison") )
-      rule.on( "==", <<CmdCompareEQ>> )
-      rule.on( "!=", <<CmdCompareNE>> )
-      rule.on( "<",  <<CmdCompareLT>> )
-      rule.on( "<=", <<CmdCompareLE>> )
-      rule.on( ">",  <<CmdCompareGT>> )
-      rule.on( ">=", <<CmdCompareGE>> )
+      rule.on( "==", <<TokenizerCmdCompareEQ>> )
+      rule.on( "!=", <<TokenizerCmdCompareNE>> )
+      rule.on( "<",  <<TokenizerCmdCompareLT>> )
+      rule.on( "<=", <<TokenizerCmdCompareLE>> )
+      rule.on( ">",  <<TokenizerCmdCompareGT>> )
+      rule.on( ">=", <<TokenizerCmdCompareGE>> )
 
       rule = add_nested( PreUnaryParseRule("pre_unary") )
-      rule.on( "not", <<CmdNot>> )
+      rule.on( "not", <<TokenizerCmdNot>> )
 
       # is digit, is letter
       rule = add_nested(
@@ -49,16 +49,16 @@ class FroleyParser : Parser
                   if (parser.consume(TokenType.SYMBOL_OPEN_PAREN))
                     if (parser.consume(TokenType.KEYWORD_COUNT))
                       parser.must_consume( TokenType.SYMBOL_CLOSE_PAREN )
-                      return CmdNot( t, term.to_is_digit_count )
+                      return TokenizerCmdNot( t, term.to_is_digit_count )
                     elseIf (not parser.next_is(TokenType.INTEGER))
                       throw parser.peek.error( "Base '2'..'16' or 'count' expected." )
                     endIf
                     base = parser.read->Int32
                     parser.must_consume( TokenType.SYMBOL_CLOSE_PAREN )
                   endIf
-                  return CmdNot( t, term.to_is_digit(base) )
+                  return TokenizerCmdNot( t, term.to_is_digit(base) )
                 elseIf (parser.consume(TokenType.KEYWORD_LETTER))
-                  return CmdNot( t, term.to_is_letter )
+                  return TokenizerCmdNot( t, term.to_is_letter )
                 else
                   throw parser.peek.error( "'is not digit' or 'is not letter' expected." )
                 endIf
@@ -99,14 +99,24 @@ class FroleyParser : Parser
           return result
         endFunction
       )
-      rule.on( "ch",            <<CmdRegisterCh>> )
-      rule.on( "count",         <<CmdRegisterCount>> )
-      rule.on( "hasAnother",    <<CmdHasAnother>> )
-      rule.on( "identifier",    <<CmdAccess>> )
-      rule.on( "integer value", <<CmdLiteralInt32>> )
-      rule.on( "literal string",<<CmdLiteralString>> )
-      rule.on( "read",          <<CmdRead>> )
-      rule.on( "pop",           <<CmdPop>> )
+      rule.on( "ch",            <<TokenizerCmdRegisterCh>> )
+      rule.on( "count",         <<TokenizerCmdRegisterCount>> )
+      rule.on( "hasAnother",    <<TokenizerCmdHasAnother>> )
+      rule.on( "integer value", <<TokenizerCmdLiteralInt32>> )
+      rule.on( "literal string",<<TokenizerCmdLiteralString>> )
+      rule.on( "read",          <<TokenizerCmdRead>> )
+      rule.on( "pop",           <<TokenizerCmdPop>> )
+      rule.on( "identifier",
+        function(parser:FroleyParser)->Cmd
+          local t = parser.read  # (identifier)
+          if (parser.consume(TokenType.SYMBOL_OPEN_PAREN))
+            parser.must_consume( TokenType.SYMBOL_CLOSE_PAREN )
+            return TokenizerCmdCall( t, t.text )
+          else
+            return TokenizerCmdAccess( t )
+          endIf
+        endFunction
+      )
       rule.on( "scanDigits",
         function(parser:FroleyParser)->Cmd
           local t = parser.read  # 'scanDigits'
@@ -117,20 +127,20 @@ class FroleyParser : Parser
           if (parser.consume(TokenType.KEYWORD_BASE))
             base = parser.read_integer
           endIf
-          return CmdScanDigits(t,min_digits,max_digits,base)
+          return TokenizerCmdScanDigits(t,min_digits,max_digits,base)
         endFunction
       )
-      rule.on( "scanIdentifier", <<CmdScanIdentfier>> )
+      rule.on( "scanIdentifier", <<TokenizerCmdScanIdentfier>> )
       rule.on( "peek",
         function(parser:FroleyParser)->Cmd
           local t = parser.read  # 'peek'
           if (parser.next_is(TokenType.SYMBOL_OPEN_PAREN))
             local expr = parser.parse_expression()
-            if (expr.is_integer) return CmdPeekInt32( t, expr->Int32 )
-            if (expr.is_count)   return CmdPeekCount( t )
+            if (expr.is_integer) return TokenizerCmdPeekInt32( t, expr->Int32 )
+            if (expr.is_count)   return TokenizerCmdPeekCount( t )
             throw expr.t.error( "'Expected 'peek', 'peek(<integer>)', or 'peek(count)'." )
           else
-            return CmdPeek( t )
+            return TokenizerCmdPeek( t )
           endIf
         endFunction
       )
@@ -140,7 +150,7 @@ class FroleyParser : Parser
           if (parser.next_is(TokenType.SYMBOL_OPEN_PAREN))
             local expr = parser.parse_expression()
             t = expr.t
-            if (expr.is_integer)                      return CmdConsumeCharacter( t, expr->Int32 )
+            if (expr.is_integer)                      return TokenizerCmdConsumeCharacter( t, expr->Int32 )
           endIf
           throw t.error( "'Expected 'consume(<character>)'." )
         endFunction
@@ -186,14 +196,14 @@ class FroleyParser : Parser
 
       if (allow_control_structures)
         if (consume(TokenType.KEYWORD_IF))
-          local cmd_if = CmdIf( t, parse_expression() )
+          local cmd_if = TokenizerCmdIf( t, parse_expression() )
           if (parse_statements(cmd_if.statements))
             # Multi-line statements
             local outer_if = cmd_if
             while (next_is_else_if(&multi_line))
               consume_eols
               local t2 = read
-              local inner_if = CmdIf( t2, parse_expression() )
+              local inner_if = TokenizerCmdIf( t2, parse_expression() )
               parse_multi_line_statements( inner_if.statements )
               ensure outer_if.else_statements
               outer_if.else_statements.add( inner_if )
@@ -214,7 +224,7 @@ class FroleyParser : Parser
             while (next_is_else_if(&single_line))
               consume_eols
               local t2 = read
-              local inner_if = CmdIf( t2, parse_expression() )
+              local inner_if = TokenizerCmdIf( t2, parse_expression() )
               parse_single_line_statements( inner_if.statements )
               ensure outer_if.else_statements
               outer_if.else_statements.add( inner_if )
@@ -233,7 +243,7 @@ class FroleyParser : Parser
           return true
 
         elseIf (consume(TokenType.KEYWORD_WHILE))
-          local cmd_while = CmdWhile( t, parse_expression() )
+          local cmd_while = TokenizerCmdWhile( t, parse_expression() )
           if (parse_statements(cmd_while.statements))
             # Returns true if multi-line statements were parsed
             must_consume( TokenType.KEYWORD_END_WHILE )
@@ -246,12 +256,7 @@ class FroleyParser : Parser
 
       if (consume(TokenType.KEYWORD_ACCEPT))
         local name = read_identifier
-        statements.add( CmdAcceptInt32(t,Froley.token_def(name).type) )
-        return true
-
-      elseIf (consume(TokenType.KEYWORD_CALL))
-        local label_name = read_label_name
-        statements.add( CmdCall(t,label_name) )
+        statements.add( TokenizerCmdAcceptInt32(t,Froley.token_def(name).type) )
         return true
 
       elseIf (consume(TokenType.KEYWORD_CLEAR))
@@ -268,10 +273,10 @@ class FroleyParser : Parser
           statements.add( CmdStatement(t,"collect ch",Opcode.COLLECT_CH) )
           return true
         elseIf (next_is(TokenType.STRING))
-          statements.add( CmdCollectString(t,read.text) )
+          statements.add( TokenizerCmdCollectString(t,read.text) )
           return true
         elseIf (next_is(TokenType.INTEGER))
-          statements.add( CmdCollectCharacter(t,read_integer) )
+          statements.add( TokenizerCmdCollectCharacter(t,read_integer) )
           return true
         else
           throw t.error( "Syntax error - expected 'ch' or a literal string.")
@@ -287,7 +292,7 @@ class FroleyParser : Parser
           statements.add( CmdStatement(t,"error buffer",Opcode.ERROR) )
         elseIf (next_is(TokenType.STRING))
           statements.add( CmdStatement(t,"clear buffer",Opcode.CLEAR_BUFFER) )
-          statements.add( CmdCollectString(t,read.text) )
+          statements.add( TokenizerCmdCollectString(t,read.text) )
           statements.add( CmdStatement(t,"error <message>",Opcode.ERROR) )
         else
           throw peek.error( "Expected 'buffer'." )
@@ -295,7 +300,7 @@ class FroleyParser : Parser
         return true
 
       elseIf (consume(TokenType.KEYWORD_GOTO))
-        statements.add( CmdGoto(t,read_label_name) )
+        statements.add( TokenizerCmdGoto(t,read_identifier) )
         return true
 
       elseIf (consume(TokenType.KEYWORD_HALT))
@@ -308,7 +313,7 @@ class FroleyParser : Parser
 
       elseIf (consume(TokenType.KEYWORD_MODE))
         local label_name = read_label_name
-        statements.add( CmdMode(t,label_name) )
+        statements.add( TokenizerCmdMode(t,label_name) )
         return true
 
       elseIf (consume(TokenType.KEYWORD_PRINT))
@@ -316,7 +321,7 @@ class FroleyParser : Parser
           statements.add( CmdStatement(t,"print buffer",Opcode.PRINT_BUFFER) )
           return true
         elseIf (next_is(TokenType.STRING))
-          statements.add( CmdPrintString(t,read.text) )
+          statements.add( TokenizerCmdPrintString(t,read.text) )
           return true
         else
           if (not (next_is(TokenType.EOL) or next_is(TokenType.SYMBOL_SEMICOLON)))
@@ -328,7 +333,7 @@ class FroleyParser : Parser
               statements.add( CmdStatement(t,"print count",Opcode.PRINT_COUNT) )
               return true
             elseIf (expr.is_integer)
-              statements.add( CmdPrintCharacter(t,expr->Int32) )
+              statements.add( TokenizerCmdPrintCharacter(t,expr->Int32) )
               return true
             endIf
           endIf
@@ -355,12 +360,12 @@ class FroleyParser : Parser
         if (has_parens) must_consume( TokenType.SYMBOL_CLOSE_PAREN )
 
         if (uses_input)
-          local cmd_which_input = CmdWhichInput( t )
+          local cmd_which_input = TokenizerCmdWhichInput( t )
           statements.add( cmd_which_input )
           parse_which_input( cmd_which_input )
         else
           # Uses buffer
-          local cmd_which = CmdWhichBuffer( t )
+          local cmd_which = TokenizerCmdWhichBuffer( t )
           statements.add( cmd_which )
           parse_which_buffer( cmd_which )
         endIf
@@ -370,17 +375,17 @@ class FroleyParser : Parser
       elseIf (next_is(TokenType.SYMBOL_LT))
         local name = read_label_name
         must_consume( TokenType.EOL )
-        statements.add( CmdLabel(t,name) )
+        statements.add( TokenizerCmdLabel(t,name) )
         return true
 
       elseIf (consume(TokenType.SYMBOL_MINUS_MINUS))
         local target = parse_register
-        statements.add( CmdSubtract(t,target,CmdLiteralInt32(t,1)) )
+        statements.add( TokenizerCmdSubtract(t,target,TokenizerCmdLiteralInt32(t,1)) )
         return true
 
       elseIf (consume(TokenType.SYMBOL_PLUS_PLUS))
         local target = parse_register
-        statements.add( CmdAdd(t,target,CmdLiteralInt32(t,1)) )
+        statements.add( TokenizerCmdAdd(t,target,TokenizerCmdLiteralInt32(t,1)) )
         return true
 
       elseIf (consume(TokenType.KEYWORD_PUSH))
@@ -398,13 +403,13 @@ class FroleyParser : Parser
 
         local t2 = peek
         if (consume(TokenType.SYMBOL_PLUS_PLUS))
-          statements.add( CmdAdd(t,expr,CmdLiteralInt32(t2,1)) )
+          statements.add( TokenizerCmdAdd(t,expr,TokenizerCmdLiteralInt32(t2,1)) )
         elseIf (consume(TokenType.SYMBOL_MINUS_MINUS))
-          statements.add( CmdSubtract(t,expr,CmdLiteralInt32(t2,1)) )
+          statements.add( TokenizerCmdSubtract(t,expr,TokenizerCmdLiteralInt32(t2,1)) )
         elseIf (consume(TokenType.SYMBOL_PLUS_EQUALS))
-          statements.add( CmdAdd(t,expr,parse_expression()) )
+          statements.add( TokenizerCmdAdd(t,expr,parse_expression()) )
         elseIf (consume(TokenType.SYMBOL_MINUS_EQUALS))
-          statements.add( CmdSubtract(t,expr,parse_expression()) )
+          statements.add( TokenizerCmdSubtract(t,expr,parse_expression()) )
         else
           statements.add( expr )
         endIf
@@ -467,18 +472,13 @@ class FroleyParser : Parser
         return result
       endIf
 
-    method parse_access->Cmd
-      local t = peek
-      local name = read_identifier
-      return CmdAccess( t, name )
-
     method parse_register->Cmd
       local t = peek
-      if (consume(TokenType.KEYWORD_CH)) return CmdRegisterCh( t )
-      if (consume(TokenType.KEYWORD_COUNT)) return CmdRegisterCount( t )
+      if (consume(TokenType.KEYWORD_CH)) return TokenizerCmdRegisterCh( t )
+      if (consume(TokenType.KEYWORD_COUNT)) return TokenizerCmdRegisterCount( t )
       throw t.error( "Register 'ch' or 'count' expected." )
 
-    method parse_which_input( cmd_which_input:CmdWhichInput )
+    method parse_which_input( cmd_which_input:TokenizerCmdWhichInput )
       #local patterns = (Pattern,ScanState)[]
       consume_eols
       while (has_another and not next_is(TokenType.KEYWORD_END_WHICH))
@@ -496,8 +496,8 @@ class FroleyParser : Parser
           local node = cmd_which_input.start
           if (expr.is_integer)
             node = node.link( expr->Int32->Character )
-          elseIf (expr instanceOf CmdLiteralString)
-            local st = (expr as CmdLiteralString).value
+          elseIf (expr instanceOf TokenizerCmdLiteralString)
+            local st = (expr as TokenizerCmdLiteralString).value
             node = node.link( forEach in st )
           else
             throw expr.t.error( "Syntax error - expected character, character code, or string." )
@@ -516,7 +516,7 @@ class FroleyParser : Parser
               if (def.symbol)
                 local node = cmd_which_input.start
                 node = node.link( forEach in def.symbol )
-                node.statements.add( CmdAcceptInt32(t,def.type) )
+                node.statements.add( TokenizerCmdAcceptInt32(t,def.type) )
               endIf
             endForEach
           else
@@ -552,7 +552,7 @@ class FroleyParser : Parser
       #endForEach
 
 
-    method parse_which_buffer( cmd_which:CmdWhichBuffer )
+    method parse_which_buffer( cmd_which:TokenizerCmdWhichBuffer )
       #local patterns = (Pattern,ScanState)[]
 
       consume_eols
@@ -571,8 +571,8 @@ class FroleyParser : Parser
           local node = cmd_which.start
           if (expr.is_integer)
             node = node.link( expr->Int32->Character )
-          elseIf (expr instanceOf CmdLiteralString)
-            local st = (expr as CmdLiteralString).value
+          elseIf (expr instanceOf TokenizerCmdLiteralString)
+            local st = (expr as TokenizerCmdLiteralString).value
             node = node.link( forEach in st )
           else
             throw expr.t.error( "Syntax error - expected character, character code, or string." )
@@ -591,7 +591,7 @@ class FroleyParser : Parser
               if (def.symbol)
                 local node = cmd_which.start
                 node = node.link( forEach in def.symbol )
-                node.statements.add( CmdAcceptInt32(t,def.type) )
+                node.statements.add( TokenizerCmdAcceptInt32(t,def.type) )
               endIf
             endForEach
           else

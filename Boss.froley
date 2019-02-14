@@ -1,278 +1,313 @@
-#{
-[whitespace]
-' '
-'\t'
+#---------------------------------------------------------------------
+[attributes]
+#---------------------------------------------------------------------
+structural
 
-
-[definitions]
-binary     { '0'..'1' }
-octal      { '0'..'7' }
-hex        { digit | a..f | A..F }
-identifier { (alpha|_) (alpha|_|digit)* }
-real       { [+|-] digit* ['.' digit+] [(e|E) [+|-] digit+] }
-integer    { [+|-] digit+ }
-character  { escape | any }
-escape     { esc_e | esc_n | esc_r | esc_backslash | ESC_OCTAL | ESC_HEX | ESC_UNICODE_4 | ESC_UNICODE_N }
-
-esc_e          \e -> 27
-esc_n          \n -> 10
-esc_r          \r -> 13
-esc_backslash  \\ -> '\\'
-
-single_line_comment   { '//' (character until '\n') } -> '\n'
-
-
-[custom]
-ESC_OCTAL             {\  octal*1..3}
-ESC_UNICODE_4         {\u hex*4}
-ESC_UNICODE_N         {\  '[' hex*1..6 ']'}
-
-VERBATIM_STRING       @|
-MULTI_LINE_COMMENT    '#{'
-
-
-[tokens]
-EOI                   {}              (end of input) [structural]
-EOL                   {'\n'}          (end of line)
-IDENTIFIER            {identifier}    (identifier)
-REAL64                {real}          (Real64)
-REAL64_AS_INT32       {}              (Real64)
-INT32                 {}              (Int32)
-INTEGER               {integer}       (integer)
-BINARY_INTEGER        {'0b' binary+}  (binary integer)
-OCTAL_INTEGER         {'0c' octal+}   (octal integer
-HEX_INTEGER           {'0x' hex+}     (hex integer)
-CHARACTER             {}              (Character)
-
-STRING                      {'"' (character* until '"')}
-SINGLE_QUOTED_STRING        {"'" (character except "'")* "'"}
-DOUBLE_SINGLE_QUOTED_STRING {"''" (character except "''")* "''"}
-
-
+#---------------------------------------------------------------------
 [keywords]
-KEYWORD_CLASS         class        [structural]
-KEYWORD_ELSE          else         [structural]
-KEYWORD_ELSE_IF       elseIf       [structural]
-KEYWORD_END_CLASS     endClass     [structural]
-KEYWORD_END_IF        endIf        [structural]
-KEYWORD_END_ROUTINE   endRoutine   [structural]
-KEYWORD_END_WHILE     endWhile     [structural]
-KEYWORD_FALSE         false
-KEYWORD_GLOBAL        global
-KEYWORD_IF            if
-KEYWORD_IMPORT        import
-KEYWORD_LOCAL         local
-KEYWORD_METHOD        method       [structural]
-KEYWORD_METHODS       METHODS      [structural]
-KEYWORD_NULL          null
-KEYWORD_PRINTLN       println
-KEYWORD_PROPERTIES    PROPERTIES   [structural]
-KEYWORD_RETURN        return
-KEYWORD_ROUTINE       routine      [structural]
-KEYWORD_TRUE          true         [structural]
-KEYWORD_WHILE         while
+#---------------------------------------------------------------------
+KEYWORD_AUGMENT     augment
+KEYWORD_CLASS       class
+KEYWORD_ELSE        else
+KEYWORD_ELSE_IF     elseIf
+KEYWORD_END_CLASS   endClass
+KEYWORD_END_IF      endIf
+KEYWORD_END_ROUTINE endRoutine
+KEYWORD_END_WHILE   endWhile
+KEYWORD_FALSE       false
+KEYWORD_GLOBAL      global
+KEYWORD_IF          if
+KEYWORD_IMPORT      import
+KEYWORD_LOCAL       local
+KEYWORD_METHOD      method
+KEYWORD_METHODS     METHODS
+KEYWORD_NULL        null
+KEYWORD_PRINTLN     println
+KEYWORD_PROPERTIES  PROPERTIES
+KEYWORD_RETURN      return
+KEYWORD_ROUTINE     routine
+KEYWORD_THIS_CALL   thisCall
+KEYWORD_TRUE        true
+KEYWORD_UNDEFINED   undefined
+KEYWORD_WHILE       while
 
+#---------------------------------------------------------------------
 [symbols]
-SYMBOL_AMPERSAND      &
-SYMBOL_ARROW          ->
-SYMBOL_ASTERISK       *
-SYMBOL_AT             @
-SYMBOL_BANG           !
-SYMBOL_CARET          ^
-SYMBOL_CLOSE_BRACE    }
-SYMBOL_CLOSE_BRACKET  ]
-SYMBOL_CLOSE_PAREN    )
-SYMBOL_COLON          :
-SYMBOL_COLON_COLON    ::
-SYMBOL_COMMA          ,
-SYMBOL_DOLLAR         $
-SYMBOL_DOUBLE_QUOTE   "
-SYMBOL_EQUALS         =
-SYMBOL_EQ             ==
-SYMBOL_GE             >=
-SYMBOL_GT             >
-SYMBOL_LEFT_SHIFT     <<
-SYMBOL_LE             <=
-SYMBOL_LT             <
-SYMBOL_MINUS          -
-SYMBOL_MINUS_MINUS    --
-SYMBOL_NE             !=
-SYMBOL_OPEN_BRACE     {
-SYMBOL_OPEN_BRACKET   [
-SYMBOL_OPEN_PAREN     (
-SYMBOL_PERCENT        %
-SYMBOL_PERIOD         .
-SYMBOL_PLUS           +
-SYMBOL_PLUS_PLUS      ++
-SYMBOL_QUESTION       ?
-SYMBOL_QUESTION_COLON ?:
-SYMBOL_RIGHT_SHIFT    >>
-SYMBOL_RIGHT_SHIFT_X  >>>
-SYMBOL_SEMICOLON      ;
-SYMBOL_SINGLE_QUOTE   '
-SYMBOL_SLASH          /
-SYMBOL_TILDE          ~
-SYMBOL_VERTICAL_BAR   |
+#---------------------------------------------------------------------
+SYMBOL_AMPERSAND            &
+SYMBOL_ARROW                ->
+SYMBOL_ASTERISK             *
+SYMBOL_AT                   @
+SYMBOL_BANG                 !
+SYMBOL_CARET                ^
+SYMBOL_CLOSE_BRACE          }   [structural]
+SYMBOL_CLOSE_BRACKET        ]   [structural]
+SYMBOL_CLOSE_PAREN          )   [structural]
+SYMBOL_COLON                :   [structural]
+SYMBOL_COLON_COLON          ::
+SYMBOL_COMMA                ,   [structural]
+SYMBOL_DOLLAR               $
+SYMBOL_DOUBLE_VERTICAL_BAR  ||  [structural]
+SYMBOL_EQ                   ==
+SYMBOL_EQUALS               =
+SYMBOL_GE                   >=
+SYMBOL_GT                   >
+SYMBOL_GT_GT                >>
+SYMBOL_LE                   <=
+SYMBOL_LEFT_SHIFT           :<<:
+SYMBOL_LITERAL_OPEN_BRACKET @[
+SYMBOL_LT                   <
+SYMBOL_LT_LT                <<
+SYMBOL_MINUS                -
+SYMBOL_MINUS_MINUS          --
+SYMBOL_NE                   !=
+SYMBOL_OPEN_BRACE           {
+SYMBOL_OPEN_BRACKET         [
+SYMBOL_OPEN_PAREN           (
+SYMBOL_PERCENT              %
+SYMBOL_PERIOD               .
+SYMBOL_PLUS                 +
+SYMBOL_PLUS_PLUS            ++
+SYMBOL_QUESTION             ?
+SYMBOL_QUESTION_COLON       ?:
+SYMBOL_RIGHT_SHIFT          :>>:
+SYMBOL_RIGHT_SHIFT_X        :>>>:
+SYMBOL_SEMICOLON            ;
+SYMBOL_SLASH                /
+SYMBOL_TILDE                ~
+SYMBOL_VERTICAL_BAR         |
 
-[token types]
-KEYWORD_CLASS         class        [structural]
-KEYWORD_ELSE          else         [structural]
-KEYWORD_ELSE_IF       elseIf       [structural]
-KEYWORD_END_CLASS     endClass     [structural]
-KEYWORD_END_IF        endIf        [structural]
-KEYWORD_END_ROUTINE   endRoutine   [structural]
-KEYWORD_END_WHILE     endWhile     [structural]
-KEYWORD_FALSE         false
-KEYWORD_GLOBAL        global
-KEYWORD_IF            if
-KEYWORD_IMPORT        import
-KEYWORD_LOCAL         local
-KEYWORD_METHOD        method       [structural]
-KEYWORD_METHODS       METHODS      [structural]
-KEYWORD_NULL          null
-KEYWORD_PRINTLN       println
-KEYWORD_PROPERTIES    PROPERTIES   [structural]
-KEYWORD_RETURN        return
-KEYWORD_ROUTINE       routine      [structural]
-KEYWORD_TRUE          true         [structural]
-KEYWORD_WHILE         while
-
+#---------------------------------------------------------------------
 [tokenizer]
-while (consume(' ') or consume('\t') or consume('\r')) no_action
+#---------------------------------------------------------------------
+<<tokenize>>
+while (hasAnother)
+  ch = peek
+  if (ch != 32)
+    if (ch != '\t') goto whitespace_consumed
+  endIf
+  ch = read
+endWhile
 
-mark_source_position
-if (not has_another) finished
+<whitespace_consumed>
+markSourcePosition
+if (not hasAnother) halt
 
-# We need to scan identfiers in a separate table so that if it fails
-# to accept a keyword then we still know that what's gathered so far
-# can be turned into an identifier.
-peek
-if (is_letter or '_')
-  scanTable
-    handle KEYWORD_TRUE
-    handle KEYWORD_FALSE
-    others
-      # Some of an identifier may have already been read. Read the rest.
-      while (consume(letter) or consume('_') or consume('0'..'9'))
-        accept IDENTIFIER
-      endWhile
-  endScanTable
+
+<tokenize_identifier>
+if (scanIdentifier)
+  which (buffer)
+    acceptAll [keywords]
+    others: accept IDENTIFIER
+  endWhich
 endIf
 
-scanTable
-  case '\n'
-    accept EOL
-
-  case '#'
-    # Comment
-    if (consume('{'))
-      # Multi-line comment
-      count = 1
-      while (has another)
-        if (consume("#{"))
-          ++count
-        elseIf (consume("}#"))
-          --count
-          if (zero) discard
-        else
-          consume
-        endIf
-      endWhile
-      throw "Unterminated multi-line comment."
-    else
-      # Single-line comment
-      while (not '\n') consume
-      accept EOL
-    endIf
-
-  case [']
-    if (consume(['])
-      clear
-      while (has_another)
-        if (peek(0)==['] and peek(1)==['])
-          read
-          read
-          accept STRING
-        endIf
-        call <scan character>
-      endWhile
-      throw "Unterminated literal string."
-    else
-      clear
-      while (has_another)
-        if (peek==['])
-          read
-          accept SINGLE_QUOTE_STRING
-        endIf
-        call <scan character>
-      endWhile
-      throw "Unterminated literal string."
-    endIf
-
-  case ["]
-    clear
-    while (has_another)
-      if (peek==['])
-        read
-        accept SINGLE_QUOTE_STRING
-      endIf
-      call <scan character>
-    endWhile
-    throw "Unterminated literal string."
-
+<tokenize_numbers>
+which (input)
+  case "0b"
+    count = 2
+    clear buffer
+    scan_integer
+    accept BINARY_INTEGER
+  case "0c"
+    count = 8
+    clear buffer
+    scan_integer
+    accept OCTAL_INTEGER
+  case "0x"
+    count = 16
+    clear buffer
+    scan_integer
+    accept HEX_INTEGER
   others
-    clear
-    print "Syntax error - unexpected "
-    peek
-    if (a < 32 or a == 127)
-      scanTable
-        case '\n': print "end of line"
-        case '\t': print "tab"
-        others:    print "character code "; print_integer
-      endScanTable
+    ch = peek
+    if (ch is digit)
+      count = 10
+      scan_integer
+      accept INTEGER
+    endIf
+endWhich
+
+<tokenize_symbols>
+which (input)
+  acceptAll [symbols]
+  case '\n': accept EOL
+  case '#'
+    ch = read
+    while (ch != '\n') ch = read
+    discard
+  case '"'
+    goto scan_string
+  case "''"
+    goto scan_double_single_quote_string
+  case '\''
+    clear buffer
+    scan_character
+    consume('\'')
+    accept CHARACTER
+endWhich
+
+
+print "Syntax error\n"
+print "got: "
+print ch
+print "\n"
+
+halt
+
+<scan_identifier>
+while (ch is letter or ch is digit or ch == '_')
+  ch = read
+  collect ch
+  if (not hasAnother) return
+  ch = peek
+endWhile
+return
+
+<scan_integer>
+while (ch is digit(count) or ch == '_')
+  ch = read
+  if (ch != '_') collect ch
+  if (not hasAnother) return
+  ch = peek
+endWhile
+return
+
+
+<scan_string>
+clear buffer
+ch = read
+while (ch != '"')
+  collect ch
+  ch = read
+endWhile
+accept STRING
+
+<scan_double_single_quote_string>
+clear buffer
+while (hasAnother)
+  ch = read
+  if (ch == '\'')
+    ch = peek
+    if (ch == '\'')
+      ch = read
+      accept STRING
     else
-      print [']
-      print_character
-      print [']
+      collect '\''
     endIf
-    print "."
-    throw error
+  else
+    collect ch
+  endIf
+endWhile
+accept STRING
 
-    <scan character>
-    scanTable
-      case [\n]: a = '\n'
-      case [\t]: a = '\t'
-      case [\x]
-        call <scan hex>
-        int64 = a
-        call <scan hex>
-        int64 << 4
-        int64 + a
-      case "\\["
-        int64 = 0
-        while (has_another)
-          if (consume(']'))
-            a = int64
-            return
-          endIf
-          call <scan hex>
-          int64 << 4
-          int64 + a
-        endWhile
-      others
-        read
-    endScanTable
-    return
+<scan_character>
+ch = read
+if (ch == '\\')
+  ch = read
+endIf
+collect ch
+return
 
-    <scan hex>
-    peek
-    if (not is_hex)
-      mark_source_position
-      throw "Hexadecimal digit expected."
-    endIf
-    read
-    convert_hex_to_value
-    return
+#---------------------------------------------------------------------
+[parser]
+#---------------------------------------------------------------------
+- parse_expression
 
-endScanTable
++ BinaryParseRule
+  on "+" -> CmdAdd
+  on "-" -> CmdSubtract
 
++ BinaryParseRule
+  on "+" -> CmdAdd
+  on "-" -> CmdSubtract
+
+
+#{
+<parse_program>
+while (hasAnother)
+  parse_section
+endWhile
+
+<consume_eols>
+local flag = false
+while (consume(EOL)) flag = true
+return flag
+
+<consume_end_tokens>
+local flag = false
+while (consume_eols or consume(';')) flag = true
+endWhile
+
+<parse_expression>
+parse_expression( )
+
+- ParseRule
+
+- parse_statement
+  on "if"
+    return parse_if
+  on "while"
+    return parse_while
+
+- parse_if
+  consume "if"
+  push parse_condition
+  if (nextIs(EOL))
+    parse_single_line_statements
+
+- parse_while
+  consume "while"
+  push parse_condition
+  push parse_single_or_multi_line_statements( "endWhile" )
+  -> CmdWhile
+
+- parse_condition
+  local has_parens = consume "("
+  push parse_expression
+  if (has_parens) mustConsume ")"
+
+- parse_single_or_multi_line_statements( end_token_type )
+  if (consume(EOL))
+    push parse_multi_line_statements
+    mustConsume( end_token_type )
+  else
+    push parse_single_line_statements
+  endIf
+
+- parse_single_line_statements
+  local statements = CmdStatements
+  while (hasAnother and not peek is [structural])
+    parse_statement( statements, &!allow_control_structures )
+    if (not consume(";")) return statements
+    while (consume(";")) noAction
+
+    if (nextIs(EOL)) escapeWhile
+  endWhile
+
+  if (not consume(EOL) and not peek is [structural]) mustConsume( EOL )
+  return statements
+
+- parse_expression
+
+
++ RightAssociativeBinaryParseRule
+  on "=" -> CmdAssign
+
++ BinaryParseRule
+  on "+" -> CmdAdd
+  on "-" -> CmdSubtract
+
++ BinaryParseRule
+  on "*" -> CmdMultiply
+  on "/" -> CmdDivide
+  on "%" -> CmdMod
+
++ ParseRule
+  on INT32  -> CmdLiteralInt32
+  on STRING -> CmdLiteralString
+
+
++ parse_add_subtract
+  parse_next
+}#

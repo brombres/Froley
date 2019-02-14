@@ -10,7 +10,7 @@ $include "Opcode.rogue"
 $include "ScanState.rogue"
 $include "Token.rogue"
 $include "TokenType.rogue"
-$include "VM.rogue"
+$include "TokenizerVM.rogue"
 
 Launcher( System.command_line_arguments )
 
@@ -62,15 +62,8 @@ class Froley [singleton]
 
     entry_points          = StringLookupList()
 
-    #{
-    id_begin_letter = true
-    id_begin_digit  = false
-    id_begin_other  = "_"
-
-    id_continue_letter = true
-    id_continue_digit  = true
-    id_continue_other  = "_"
-    }#
+    tokenizer_code = StringBuilder( 2048 )
+    parser_code    = StringBuilder( 2048 )
 
   METHODS
     method parse( file:File )
@@ -87,8 +80,10 @@ class Froley [singleton]
       parser.parse_multi_line_statements( statements )
 
       statements.resolve
+      local tokenizer_bytes = Assembler().assemble( statements )
 
-      local bytes = Assembler().assemble( statements )
+      statements.clear
+
       local max_count  = 0
       local max_digits = 0
       forEach (def in token_defs_by_name)
@@ -102,9 +97,9 @@ class Froley [singleton]
       println
 
       println "[Tokenizer IntX+base64]"
-      println bytes.to_base64
+      println tokenizer_bytes.to_base64
       #{
-      local b64 = bytes.to_base64
+      local b64 = tokenizer_bytes.to_base64
       while (b64.count >= 64)
         println b64.leftmost(64)
         b64 = b64.rightmost(-64)
@@ -112,9 +107,9 @@ class Froley [singleton]
       if (b64.count) println b64
       }#
       println
-      @trace bytes.count
+      @trace tokenizer_bytes.count
 
-      local vm = VM( bytes )
+      local vm = TokenizerVM( tokenizer_bytes )
       vm.tokenize( File("Test.txt") )
 
     method collect_definitions_and_extract_code( filepath:String, source:String )->String
@@ -123,8 +118,8 @@ class Froley [singleton]
       $localDefine PARSING_DEFINITIONS 2
       $localDefine PARSING_TOKENIZER   3
       $localDefine PARSING_PARSER      4
-      local tokenizer_code = StringBuilder( 2048 )
-      local parser_code = StringBuilder( 2048 )
+      tokenizer_code.clear
+      parser_code.clear
       local cur_section_name = "tokenizer"
       local cur_section_defs : TokenDef[]
       local parse_type = PARSING_TOKENIZER

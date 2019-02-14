@@ -99,7 +99,7 @@ class CmdStatement( t, name:String, opcode:Opcode ) : Cmd
       assembler.write( opcode )
 endClass
 
-class CmdGoto( t, label_name:String ) : Cmd
+class TokenizerCmdGoto( t, label_name:String ) : Cmd
   METHODS
     method write( assembler:Assembler )
       assembler.[ write(Opcode.JUMP), write_address(label_name) ]
@@ -108,7 +108,7 @@ class CmdGoto( t, label_name:String ) : Cmd
       return "goto " + label_name
 endClass
 
-class CmdGotoLabel( t, label:Label ) : Cmd
+class TokenizerCmdGotoLabel( t, label:Label ) : Cmd
   METHODS
     method write( assembler:Assembler )
       assembler.[ write(Opcode.JUMP), write_address(label) ]
@@ -117,7 +117,7 @@ class CmdGotoLabel( t, label:Label ) : Cmd
       return "goto " + label.name
 endClass
 
-class CmdJump( t, address:Int32 ) : Cmd
+class TokenizerCmdJump( t, address:Int32 ) : Cmd
   METHODS
     method write( assembler:Assembler )
       assembler.write( Opcode.JUMP, address )
@@ -126,7 +126,7 @@ class CmdJump( t, address:Int32 ) : Cmd
       return "jump " + address
 endClass
 
-class CmdMode( t, label_name:String) : Cmd
+class TokenizerCmdMode( t, label_name:String) : Cmd
   METHODS
     method write( assembler:Assembler )
       assembler.[ write(Opcode.MODE_INT32), write_address(label_name) ]
@@ -135,7 +135,7 @@ class CmdMode( t, label_name:String) : Cmd
       return "mode " + label_name
 endClass
 
-class CmdLabel( t, name:String ) : Cmd
+class TokenizerCmdLabel( t, name:String ) : Cmd
   METHODS
     method write( assembler:Assembler )
       if (assembler.label(name).exists)
@@ -147,7 +147,7 @@ class CmdLabel( t, name:String ) : Cmd
       return "<$>" (name)
 endClass
 
-class CmdPrintCharacter( t, code:Int32 ) : Cmd
+class TokenizerCmdPrintCharacter( t, code:Int32 ) : Cmd
   METHODS
     method write( assembler:Assembler )
       assembler.write( Opcode.PRINT_CHARACTER, code )
@@ -157,7 +157,7 @@ class CmdPrintCharacter( t, code:Int32 ) : Cmd
 endClass
 
 
-class CmdPrintString( t, value:String ) : Cmd
+class TokenizerCmdPrintString( t, value:String ) : Cmd
   METHODS
     method write( assembler:Assembler )
       assembler.write( Opcode.PRINT_STRING, value )
@@ -166,7 +166,7 @@ class CmdPrintString( t, value:String ) : Cmd
       return ''print "$"'' (value.to_escaped_ascii)
 endClass
 
-class CmdAccess( t, name:String ) : Cmd
+class TokenizerCmdAccess( t, name:String ) : Cmd
   METHODS
     method init( t )
       name = t.text
@@ -178,10 +178,10 @@ class CmdAccess( t, name:String ) : Cmd
       throw t.error( "Illegal assignment target. Valid targets are 'ch' and 'count'." )
 
     method write( assembler:Assembler )
-      throw t.error( ''No such function or register "$".'' (name) )
+      TokenizerCmdCall( t, name ).write( assembler )
 endClass
 
-class CmdAssign : CmdBinary
+class TokenizerCmdAssign : CmdBinary
   METHODS
     method resolved->Cmd
       return left.resolve_assignment( right )
@@ -190,7 +190,7 @@ class CmdAssign : CmdBinary
       throw t.error( "Illegal assignment: $ = $" (left,right) )
 endClass
 
-class CmdLiteralInt32( t, value:Int32 ) : Cmd
+class TokenizerCmdLiteralInt32( t, value:Int32 ) : Cmd
   METHODS
     method init( t )
       value = t->Int32
@@ -205,26 +205,26 @@ class CmdLiteralInt32( t, value:Int32 ) : Cmd
       return value->String
 endClass
 
-class CmdAdd( t, target:Cmd, value:Cmd ) : Cmd
+class TokenizerCmdAdd( t, target:Cmd, value:Cmd ) : Cmd
   METHODS
     method write( assembler:Assembler )
       target.write_add( assembler, value )
 endClass
 
-class CmdSubtract( t, target:Cmd, value:Cmd ) : Cmd
+class TokenizerCmdSubtract( t, target:Cmd, value:Cmd ) : Cmd
   METHODS
     method write( assembler:Assembler )
       target.write_subtract( assembler, value )
 endClass
 
-class CmdCall( t, label_name:String ) : Cmd
+class TokenizerCmdCall( t, label_name:String ) : Cmd
   METHODS
     method write( assembler:Assembler )
       assembler.write( Opcode.CALL )
       assembler.write_address( label_name )
 endClass
 
-class CmdRead( t ) : Cmd
+class TokenizerCmdRead( t ) : Cmd
   METHODS
     method write( assembler:Assembler )
       throw t.error( "Syntax error - expected 'ch = read'." )
@@ -233,7 +233,7 @@ class CmdRead( t ) : Cmd
       return "read"
 endClass
 
-class CmdScanDigits( t, min_digits:Int32, max_digits:Int32, base:Int32 ) : Cmd
+class TokenizerCmdScanDigits( t, min_digits:Int32, max_digits:Int32, base:Int32 ) : Cmd
   PROPERTIES
     is_resolved : Logical
 
@@ -256,7 +256,7 @@ class CmdScanDigits( t, min_digits:Int32, max_digits:Int32, base:Int32 ) : Cmd
 endClass
 
 
-class CmdScanIdentfier( t ) : Cmd
+class TokenizerCmdScanIdentfier( t ) : Cmd
   METHODS
     method jump_if_true->Opcode
       return Opcode.JUMP_GT
@@ -269,7 +269,7 @@ class CmdScanIdentfier( t ) : Cmd
 endClass
 
 
-class CmdWhile( t, condition:Cmd ) : Cmd
+class TokenizerCmdWhile( t, condition:Cmd ) : Cmd
   PROPERTIES
     statements = CmdStatements()
 
@@ -287,10 +287,10 @@ class CmdWhile( t, condition:Cmd ) : Cmd
       assembler.define( label_top )
       statements.write( assembler )
       assembler.define( label_test )
-      if (condition instanceOf CmdLogicalAnd)
+      if (condition instanceOf TokenizerCmdLogicalAnd)
         condition.write_logical_ands( assembler, label_end )
         assembler.write( Opcode.JUMP, label_top )
-      elseIf (condition instanceOf CmdLogicalOr)
+      elseIf (condition instanceOf TokenizerCmdLogicalOr)
         condition.write_logical_ors( assembler, label_top )
       else
         condition.write( assembler )
@@ -299,7 +299,7 @@ class CmdWhile( t, condition:Cmd ) : Cmd
       assembler.define( label_end )
 endClass
 
-class CmdIf( t, condition:Cmd ) : Cmd
+class TokenizerCmdIf( t, condition:Cmd ) : Cmd
   PROPERTIES
     statements      = CmdStatements()
     else_statements : CmdStatements
@@ -315,9 +315,9 @@ class CmdIf( t, condition:Cmd ) : Cmd
       local label_body   = Label()
       local label_else   = Label()
       local label_end_if = Label()
-      if (condition instanceOf CmdLogicalAnd)
+      if (condition instanceOf TokenizerCmdLogicalAnd)
         condition.write_logical_ands( assembler, label_else )
-      elseIf (condition instanceOf CmdLogicalOr)
+      elseIf (condition instanceOf TokenizerCmdLogicalOr)
         condition.write_logical_ors( assembler, label_body )
         assembler.write( Opcode.JUMP, label_else )
       else
@@ -332,7 +332,7 @@ class CmdIf( t, condition:Cmd ) : Cmd
       assembler.define( label_end_if )
 endClass
 
-class CmdHasAnother( t ) : Cmd
+class TokenizerCmdHasAnother( t ) : Cmd
   METHODS
     method jump_if_true->Opcode
       return Opcode.JUMP_GT
@@ -344,7 +344,7 @@ class CmdHasAnother( t ) : Cmd
       assembler.write( Opcode.HAS_ANOTHER )
 endClass
 
-class CmdSetChToInt32( t, value:Int32 ) : Cmd
+class TokenizerCmdSetChToInt32( t, value:Int32 ) : Cmd
   METHODS
     method jump_if_true->Opcode
       return Opcode.JUMP_NE
@@ -353,7 +353,7 @@ class CmdSetChToInt32( t, value:Int32 ) : Cmd
       assembler.write( Opcode.SET_CH_TO_INT32, value )
 endClass
 
-class CmdSetChToCount( t ) : Cmd
+class TokenizerCmdSetChToCount( t ) : Cmd
   METHODS
     method jump_if_true->Opcode
       return Opcode.JUMP_NE
@@ -362,7 +362,7 @@ class CmdSetChToCount( t ) : Cmd
       assembler.write( Opcode.SET_CH_TO_COUNT )
 endClass
 
-class CmdReadCh( t ) : Cmd
+class TokenizerCmdReadCh( t ) : Cmd
   METHODS
     method jump_if_true->Opcode
       return Opcode.JUMP_NE
@@ -371,7 +371,7 @@ class CmdReadCh( t ) : Cmd
       assembler.write( Opcode.READ_CH )
 endClass
 
-class CmdChIsDigit( t, base:Int32 ) : Cmd
+class TokenizerCmdChIsDigit( t, base:Int32 ) : Cmd
   METHODS
     method jump_if_true->Opcode
       return Opcode.JUMP_NE
@@ -380,7 +380,7 @@ class CmdChIsDigit( t, base:Int32 ) : Cmd
       assembler.write( Opcode.CH_IS_DIGIT_INT32, base )
 endClass
 
-class CmdChIsDigitCount( t ) : Cmd
+class TokenizerCmdChIsDigitCount( t ) : Cmd
   METHODS
     method jump_if_true->Opcode
       return Opcode.JUMP_NE
@@ -390,7 +390,7 @@ class CmdChIsDigitCount( t ) : Cmd
 endClass
 
 
-class CmdChIsLetter( t ) : Cmd
+class TokenizerCmdChIsLetter( t ) : Cmd
   METHODS
     method jump_if_true->Opcode
       return Opcode.JUMP_NE
@@ -400,29 +400,29 @@ class CmdChIsLetter( t ) : Cmd
 endClass
 
 
-class CmdRegisterCh( t ) : Cmd
+class TokenizerCmdRegisterCh( t ) : Cmd
   METHODS
     method is_ch->Logical
       return true
 
     method resolve_assignment( new_value:Cmd )->Cmd
-      local cmd_int32 = new_value as CmdLiteralInt32
+      local cmd_int32 = new_value as TokenizerCmdLiteralInt32
       if (new_value.is_integer)
-        return CmdSetChToInt32( t, new_value->Int32 )
-      elseIf (new_value instanceOf CmdRegisterCount)
-        return CmdSetChToCount( t )
-      elseIf (new_value instanceOf CmdRead)
-        return CmdReadCh( t )
-      elseIf (new_value instanceOf CmdPeek)
-        return CmdPeekChInt32( t, 0 )
-      elseIf (new_value instanceOf CmdPeekInt32)
-        return CmdPeekChInt32( t, (new_value as CmdPeekInt32).lookahead )
-      elseIf (new_value instanceOf CmdPeekCount)
-        return CmdPeekChCount( t )
-      elseIf (new_value instanceOf CmdScanDigits)
-        (new_value as CmdScanDigits).is_resolved = true
+        return TokenizerCmdSetChToInt32( t, new_value->Int32 )
+      elseIf (new_value instanceOf TokenizerCmdRegisterCount)
+        return TokenizerCmdSetChToCount( t )
+      elseIf (new_value instanceOf TokenizerCmdRead)
+        return TokenizerCmdReadCh( t )
+      elseIf (new_value instanceOf TokenizerCmdPeek)
+        return TokenizerCmdPeekChInt32( t, 0 )
+      elseIf (new_value instanceOf TokenizerCmdPeekInt32)
+        return TokenizerCmdPeekChInt32( t, (new_value as TokenizerCmdPeekInt32).lookahead )
+      elseIf (new_value instanceOf TokenizerCmdPeekCount)
+        return TokenizerCmdPeekChCount( t )
+      elseIf (new_value instanceOf TokenizerCmdScanDigits)
+        (new_value as TokenizerCmdScanDigits).is_resolved = true
         return new_value
-      elseIf (new_value instanceOf CmdPop)
+      elseIf (new_value instanceOf TokenizerCmdPop)
         return CmdStatement( t, "ch = pop", Opcode.POP_CH )
       else
         throw t.error( "Illegal 'ch' assignment. Expected 'count', 'read', 'scanDigits', or an integer." )
@@ -432,19 +432,19 @@ class CmdRegisterCh( t ) : Cmd
       return "ch"
 
     method to_is_digit( base:Int32 )->Cmd
-      return CmdChIsDigit( t, base )
+      return TokenizerCmdChIsDigit( t, base )
 
     method to_is_digit_count->Cmd
-      return CmdChIsDigitCount( t )
+      return TokenizerCmdChIsDigitCount( t )
 
     method to_is_letter->Cmd
-      return CmdChIsLetter( t )
+      return TokenizerCmdChIsLetter( t )
 
     method write( assembler:Assembler )
       assembler.write( Opcode.TEST_CH )
 
     method write_add( assembler:Assembler, expression:Cmd )
-      local cmd_int = expression as CmdLiteralInt32
+      local cmd_int = expression as TokenizerCmdLiteralInt32
       if (cmd_int)
         assembler.write( Opcode.ADD_CH_INT32, cmd_int.value )
       else
@@ -452,7 +452,7 @@ class CmdRegisterCh( t ) : Cmd
       endIf
 
     method write_subtract( assembler:Assembler, expression:Cmd )
-      local cmd_int = expression as CmdLiteralInt32
+      local cmd_int = expression as TokenizerCmdLiteralInt32
       if (cmd_int)
         assembler.write( Opcode.ADD_CH_INT32, -cmd_int.value )
       else
@@ -460,7 +460,7 @@ class CmdRegisterCh( t ) : Cmd
       endIf
 endClass
 
-class CmdSetCountToInt32( t, value:Int32 ) : Cmd
+class TokenizerCmdSetCountToInt32( t, value:Int32 ) : Cmd
   METHODS
     method jump_if_true->Opcode
       return Opcode.JUMP_NE
@@ -469,7 +469,7 @@ class CmdSetCountToInt32( t, value:Int32 ) : Cmd
       assembler.write( Opcode.SET_COUNT_TO_INT32, value )
 endClass
 
-class CmdSetCountToCh( t ) : Cmd
+class TokenizerCmdSetCountToCh( t ) : Cmd
   METHODS
     method jump_if_true->Opcode
       return Opcode.JUMP_NE
@@ -479,7 +479,7 @@ class CmdSetCountToCh( t ) : Cmd
 endClass
 
 
-class CmdRegisterCount( t ) : Cmd
+class TokenizerCmdRegisterCount( t ) : Cmd
   METHODS
     method is_count->Logical
       return true
@@ -489,10 +489,10 @@ class CmdRegisterCount( t ) : Cmd
 
     method resolve_assignment( new_value:Cmd )->Cmd
       if (new_value.is_integer)
-        return CmdSetCountToInt32( t, new_value->Int32 )
+        return TokenizerCmdSetCountToInt32( t, new_value->Int32 )
       elseIf (new_value.is_ch)
-        return CmdSetCountToCh( t )
-      elseIf (new_value instanceOf CmdPop)
+        return TokenizerCmdSetCountToCh( t )
+      elseIf (new_value instanceOf TokenizerCmdPop)
         return CmdStatement( t, "count = pop", Opcode.POP_COUNT )
       else
         throw t.error( "Illegal 'count' assignment. Expected 'ch', 'pop', or an integer." )
@@ -505,7 +505,7 @@ class CmdRegisterCount( t ) : Cmd
       assembler.write( Opcode.TEST_COUNT )
 
     method write_add( assembler:Assembler, expression:Cmd )
-      local cmd_int32 = expression as CmdLiteralInt32
+      local cmd_int32 = expression as TokenizerCmdLiteralInt32
       if (cmd_int32)
         assembler.write( Opcode.ADD_COUNT_INT32, cmd_int32.value )
       else
@@ -513,7 +513,7 @@ class CmdRegisterCount( t ) : Cmd
       endIf
 
     method write_subtract( assembler:Assembler, expression:Cmd )
-      local cmd_int32 = expression as CmdLiteralInt32
+      local cmd_int32 = expression as TokenizerCmdLiteralInt32
       if (cmd_int32)
         assembler.write( Opcode.ADD_COUNT_INT32, -cmd_int32.value )
       else
@@ -521,13 +521,13 @@ class CmdRegisterCount( t ) : Cmd
       endIf
 endClass
 
-class CmdPop( t ) : Cmd
+class TokenizerCmdPop( t ) : Cmd
   METHODS
     method write( assembler:Assembler )
       throw t.error( "Syntax error - expected 'ch = pop' or 'count = pop'." )
 endClass
 
-class CmdCompare<<$OPCODE>> : CmdBinary
+class TokenizerCmdCompare<<$OPCODE>> : CmdBinary
   METHODS
     method jump_if_true->Opcode
       return Opcode.$OPCODE
@@ -560,14 +560,14 @@ class CmdCompare<<$OPCODE>> : CmdBinary
       throw t.error( "Unsupported comparison between '$' and '$'." (left,right) )
 endClass
 
-class CmdCompareEQ : CmdCompare<<JUMP_EQ>>;
-class CmdCompareNE : CmdCompare<<JUMP_NE>>;
-class CmdCompareLT : CmdCompare<<JUMP_LT>>;
-class CmdCompareLE : CmdCompare<<JUMP_LE>>;
-class CmdCompareGT : CmdCompare<<JUMP_GT>>;
-class CmdCompareGE : CmdCompare<<JUMP_GE>>;
+class TokenizerCmdCompareEQ : TokenizerCmdCompare<<JUMP_EQ>>;
+class TokenizerCmdCompareNE : TokenizerCmdCompare<<JUMP_NE>>;
+class TokenizerCmdCompareLT : TokenizerCmdCompare<<JUMP_LT>>;
+class TokenizerCmdCompareLE : TokenizerCmdCompare<<JUMP_LE>>;
+class TokenizerCmdCompareGT : TokenizerCmdCompare<<JUMP_GT>>;
+class TokenizerCmdCompareGE : TokenizerCmdCompare<<JUMP_GE>>;
 
-class CmdCollectCharacter( t, value:Int32 ) : Cmd
+class TokenizerCmdCollectCharacter( t, value:Int32 ) : Cmd
   METHODS
     method to->String
       return "collect '$'" (value->Character.to_escaped_ascii)
@@ -576,7 +576,7 @@ class CmdCollectCharacter( t, value:Int32 ) : Cmd
       assembler.write( Opcode.COLLECT_CHARACTER, value )
 endClass
 
-class CmdCollectString( t, value:String ) : Cmd
+class TokenizerCmdCollectString( t, value:String ) : Cmd
   METHODS
     method to->String
       return ''collect "$"'' (value.to_escaped_ascii)
@@ -585,7 +585,7 @@ class CmdCollectString( t, value:String ) : Cmd
       assembler.write( Opcode.COLLECT_STRING, value )
 endClass
 
-class CmdAcceptInt32( t, token_type:Int32 ) : Cmd
+class TokenizerCmdAcceptInt32( t, token_type:Int32 ) : Cmd
   METHODS
     method to->String
       return Froley.token_def( token_type ).name
@@ -594,7 +594,7 @@ class CmdAcceptInt32( t, token_type:Int32 ) : Cmd
       assembler.write( Opcode.ACCEPT_INT32, token_type )
 endClass
 
-class CmdPeek( t ) : Cmd
+class TokenizerCmdPeek( t ) : Cmd
   METHODS
     method to->String
       return "peek"
@@ -603,7 +603,7 @@ class CmdPeek( t ) : Cmd
       throw t.error( "Syntax error - expected 'ch = peek'." )
 endClass
 
-class CmdPeekCount( t ) : Cmd
+class TokenizerCmdPeekCount( t ) : Cmd
   METHODS
     method to->String
       return "peek(count)"
@@ -612,7 +612,7 @@ class CmdPeekCount( t ) : Cmd
       throw t.error( "Syntax error - expected 'ch = peek(count)'." )
 endClass
 
-class CmdPeekInt32( t, lookahead:Int32 ) : Cmd
+class TokenizerCmdPeekInt32( t, lookahead:Int32 ) : Cmd
   METHODS
     method to->String
       return "peek($)" (lookahead)
@@ -621,7 +621,7 @@ class CmdPeekInt32( t, lookahead:Int32 ) : Cmd
       throw t.error( "Syntax error - expected 'ch = peek($)'." (lookahead) )
 endClass
 
-class CmdPeekChCount( t ) : Cmd
+class TokenizerCmdPeekChCount( t ) : Cmd
   METHODS
     method to->String
       return "ch = peek(count)"
@@ -630,7 +630,7 @@ class CmdPeekChCount( t ) : Cmd
       assembler.write( Opcode.PEEK_CH_COUNT )
 endClass
 
-class CmdPeekChInt32( t, lookahead:Int32 ) : Cmd
+class TokenizerCmdPeekChInt32( t, lookahead:Int32 ) : Cmd
   METHODS
     method to->String
       return "ch = peek($)" (lookahead)
@@ -639,7 +639,7 @@ class CmdPeekChInt32( t, lookahead:Int32 ) : Cmd
       assembler.write( Opcode.PEEK_CH_INT32, lookahead )
 endClass
 
-class CmdConsumeCharacter( t, value:Int32 ) : Cmd
+class TokenizerCmdConsumeCharacter( t, value:Int32 ) : Cmd
   METHODS
     method jump_if_true->Opcode
       return Opcode.JUMP_GT
@@ -651,7 +651,7 @@ class CmdConsumeCharacter( t, value:Int32 ) : Cmd
       assembler.write( Opcode.CONSUME_CHARACTER, value )
 endClass
 
-class CmdLiteralString( t, value:String ) : Cmd
+class TokenizerCmdLiteralString( t, value:String ) : Cmd
   METHODS
     method init( t )
       value = t.text
@@ -663,7 +663,7 @@ class CmdLiteralString( t, value:String ) : Cmd
       throw t.error( "Syntax error - unexpected literal string." )
 endClass
 
-class CmdWhichInput : Cmd
+class TokenizerCmdWhichInput : Cmd
   PROPERTIES
     start = ScanState()
 
@@ -685,7 +685,7 @@ class CmdWhichInput : Cmd
       assembler.define( label_end )
 endClass
 
-class CmdWhichBuffer : Cmd
+class TokenizerCmdWhichBuffer : Cmd
   PROPERTIES
     start = ScanState()
 
@@ -707,7 +707,7 @@ class CmdWhichBuffer : Cmd
       assembler.define( label_end )
 endClass
 
-class CmdNot( t, operand ) : CmdUnary
+class TokenizerCmdNot( t, operand ) : CmdUnary
   METHODS
     method jump_if_true->Opcode
       return operand.jump_if_false
@@ -726,7 +726,7 @@ class CmdNot( t, operand ) : CmdUnary
       operand.write( assembler )
 endClass
 
-class CmdLogicalAnd : CmdBinary
+class TokenizerCmdLogicalAnd : CmdBinary
   METHODS
     method resolved->Cmd
       left  = left.resolved
@@ -742,7 +742,7 @@ class CmdLogicalAnd : CmdBinary
 
 endClass
 
-class CmdLogicalOr : CmdBinary
+class TokenizerCmdLogicalOr : CmdBinary
   METHODS
     method resolved->Cmd
       left  = left.resolved

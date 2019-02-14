@@ -20,7 +20,6 @@ augment TokenType
   KEYWORD_COLLECT        ( "collect",           &is_keyword )
   KEYWORD_CONSUME        ( "consume",           &is_keyword )
   KEYWORD_COUNT          ( "count",             &is_keyword )
-  KEYWORD_CALL           ( "call",              &is_keyword )
   KEYWORD_DIGIT          ( "digit",             &is_keyword )
   KEYWORD_DISCARD        ( "discard",           &is_keyword )
   KEYWORD_DISCARD_ALL    ( "discardAll",        &is_keyword, &is_structural )

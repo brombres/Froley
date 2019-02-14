@@ -1,6 +1,6 @@
 module Froley
 
-enum Opcode( size=1:Int32 )
+enum TokenizerOpcode( size=1:Int32 )
   HALT                  # Tokenization complete; VM.tokenize() returns
   RESTART               # BUFFER.clear, IP = START_IP
   MODE_INT32            # START_IP = ARG1

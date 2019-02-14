@@ -42,87 +42,87 @@ class TokenizerVM
       local ip = start_ip
       loop
         local opcode = code[ ip ]
-        #println "$ $" (ip.format("03"),Opcode(opcode))
+        #println "$ $" (ip.format("03"),TokenizerOpcode(opcode))
         ++ip
         which (opcode)
-          case Opcode.HALT
+          case TokenizerOpcode.HALT
             return
-          case Opcode.RESTART
+          case TokenizerOpcode.RESTART
             buffer.clear
             ip = start_ip
             nextIteration
-          case Opcode.MODE_INT32
+          case TokenizerOpcode.MODE_INT32
             start_ip = code[ ip ]
             ++ip
             nextIteration
-          case Opcode.ERROR
+          case TokenizerOpcode.ERROR
             throw FroleyError( filepath, scanner.source, scanner.line, scanner.column, buffer->String )
-          case Opcode.ACCEPT_INT32
+          case TokenizerOpcode.ACCEPT_INT32
             local token_type = code[ ip ]
             ip = start_ip
             accept( token_type )
             buffer.clear
             nextIteration
-          case Opcode.JUMP
+          case TokenizerOpcode.JUMP
             ip = code[ ip ]
             nextIteration
-          case Opcode.JUMP_EQ
+          case TokenizerOpcode.JUMP_EQ
             if (result == 0) ip = code[ ip ]
             else             ++ip
             nextIteration
-          case Opcode.JUMP_NE
+          case TokenizerOpcode.JUMP_NE
             if (result != 0) ip = code[ ip ]
             else             ++ip
             nextIteration
-          case Opcode.JUMP_LT
+          case TokenizerOpcode.JUMP_LT
             if (result < 0) ip = code[ ip ]
             else            ++ip
             nextIteration
-          case Opcode.JUMP_LE
+          case TokenizerOpcode.JUMP_LE
             if (result <= 0) ip = code[ ip ]
             else             ++ip
             nextIteration
-          case Opcode.JUMP_GT
+          case TokenizerOpcode.JUMP_GT
             if (result > 0) ip = code[ ip ]
             else            ++ip
             nextIteration
-          case Opcode.JUMP_GE
+          case TokenizerOpcode.JUMP_GE
             if (result >= 0) ip = code[ ip ]
             else             ++ip
             nextIteration
-          case Opcode.CALL
+          case TokenizerOpcode.CALL
             stack.add( ip+1 )
             ip = code[ ip ]
             nextIteration
-          case Opcode.RETURN
+          case TokenizerOpcode.RETURN
             if (stack.is_empty) throw FroleyError( "[Compiled Code]", "'return' on empty stack." )
             ip = stack.remove_last
             nextIteration
-          case Opcode.MARK_SOURCE_POS
+          case TokenizerOpcode.MARK_SOURCE_POS
             next_line = scanner.line
             next_column = scanner.column
             nextIteration
-          case Opcode.HAS_ANOTHER
+          case TokenizerOpcode.HAS_ANOTHER
             result = select{ scanner.has_another:1 || 0 }
             nextIteration
-          case Opcode.READ_CH
+          case TokenizerOpcode.READ_CH
             ch = scanner.read
             nextIteration
-          case Opcode.PEEK_CH_INT32
+          case TokenizerOpcode.PEEK_CH_INT32
 #trace "peek " + code[ip]
             ch = scanner.peek( code[ip] )
 #trace ch->Character
             ++ip
             nextIteration
-          case Opcode.PEEK_CH_COUNT
+          case TokenizerOpcode.PEEK_CH_COUNT
             ch = scanner.peek( count )
             nextIteration
-          case Opcode.CONSUME_CHARACTER
+          case TokenizerOpcode.CONSUME_CHARACTER
             local value = code[ip]->Character
             result = select{ scanner.consume(value):1 || 0 }
             ++ip
             nextIteration
-          case Opcode.SCAN_DIGITS
+          case TokenizerOpcode.SCAN_DIGITS
             local min_digits = code[ ip ]
             local max_digits = code[ ip+1 ]
             local base = code[ ip+2 ]
@@ -139,7 +139,7 @@ class TokenizerVM
             endLoop
             result = n - min_digits
             nextIteration
-          case Opcode.SCAN_IDENTIFIER
+          case TokenizerOpcode.SCAN_IDENTIFIER
             if (scanner.has_another and id_characters[scanner.peek&0x7F] == 1)
               buffer.clear
               buffer.print( scanner.read )
@@ -151,105 +151,105 @@ class TokenizerVM
               result = 0
             endIf
             nextIteration
-          case Opcode.CLEAR_BUFFER
+          case TokenizerOpcode.CLEAR_BUFFER
             buffer.clear
             nextIteration
-          case Opcode.COLLECT_CH
+          case TokenizerOpcode.COLLECT_CH
             buffer.print( ch->Character )
             nextIteration
-          case Opcode.COLLECT_CHARACTER
+          case TokenizerOpcode.COLLECT_CHARACTER
             buffer.print( code[ip]->Character )
             ++ip
             nextIteration
-          case Opcode.COLLECT_STRING
+          case TokenizerOpcode.COLLECT_STRING
             buffer.print( strings[code[ip]] )
             ++ip
             nextIteration
-          case Opcode.PRINT_BUFFER
+          case TokenizerOpcode.PRINT_BUFFER
             print (forEach in buffer)
             nextIteration
-          case Opcode.PRINT_CH
+          case TokenizerOpcode.PRINT_CH
             print ch->Character
             nextIteration
-          case Opcode.PRINT_COUNT
+          case TokenizerOpcode.PRINT_COUNT
             print count
             nextIteration
-          case Opcode.PRINT_CHARACTER
+          case TokenizerOpcode.PRINT_CHARACTER
             print code[ip]->Character
             ++ip
             nextIteration
-          case Opcode.PRINT_STRING
+          case TokenizerOpcode.PRINT_STRING
             print strings[ code[ip] ]
             ++ip
             nextIteration
-          case Opcode.COMPARE_CH_INT32
+          case TokenizerOpcode.COMPARE_CH_INT32
             result = ch - code[ip]
             ++ip
             nextIteration
-          case Opcode.COMPARE_COUNT_INT32
+          case TokenizerOpcode.COMPARE_COUNT_INT32
             result = count - code[ip]
             ++ip
             nextIteration
-          case Opcode.CH_IS_DIGIT_INT32
+          case TokenizerOpcode.CH_IS_DIGIT_INT32
             local base = code[ip]
             ++ip
             local n = (ch->Character).to_number( base )
             result = select{ (n>=0 and n<base):1 || 0 }
             nextIteration
-          case Opcode.CH_IS_DIGIT_COUNT
+          case TokenizerOpcode.CH_IS_DIGIT_COUNT
             local n = (ch->Character).to_number( count )
             result = select{ (n>=0 and n<count):1 || 0 }
             nextIteration
-          case Opcode.CH_IS_LETTER
+          case TokenizerOpcode.CH_IS_LETTER
             result = select{ ((ch>='a' and ch<='z') or (ch>='A' and ch<='Z')):1 || 0 }
             nextIteration
-          case Opcode.TEST_CH
+          case TokenizerOpcode.TEST_CH
             result = ch
             nextIteration
-          case Opcode.TEST_COUNT
+          case TokenizerOpcode.TEST_COUNT
             result = count
             nextIteration
-          case Opcode.PUSH_CH
+          case TokenizerOpcode.PUSH_CH
             stack.add( ch )
             nextIteration
-          case Opcode.POP_CH
+          case TokenizerOpcode.POP_CH
             if (stack.is_empty) throw FroleyError( "[Compiled Code]", "'pop ch' on empty stack." )
             ch = stack.remove_last
             nextIteration
-          case Opcode.PUSH_COUNT
+          case TokenizerOpcode.PUSH_COUNT
             stack.add( count )
             nextIteration
-          case Opcode.POP_COUNT
+          case TokenizerOpcode.POP_COUNT
             if (stack.is_empty) throw FroleyError( "[Compiled Code]", "'pop count' on empty stack." )
             count = stack.remove_last
             nextIteration
-          case Opcode.SET_CH_TO_INT32
+          case TokenizerOpcode.SET_CH_TO_INT32
             ch = code[ ip ]
             result = ch
             ++ip
             nextIteration
-          case Opcode.SET_CH_TO_COUNT
+          case TokenizerOpcode.SET_CH_TO_COUNT
             ch = count
             result = ch
             nextIteration
-          case Opcode.SET_COUNT_TO_INT32
+          case TokenizerOpcode.SET_COUNT_TO_INT32
             count = code[ ip ]
             result = count
             ++ip
             nextIteration
-          case Opcode.SET_COUNT_TO_CH
+          case TokenizerOpcode.SET_COUNT_TO_CH
             count = ch
             result = count
             nextIteration
-          case Opcode.ADD_CH_INT32
+          case TokenizerOpcode.ADD_CH_INT32
             ch += code[ ip ]
             ++ip
             nextIteration
-          case Opcode.ADD_COUNT_INT32
+          case TokenizerOpcode.ADD_COUNT_INT32
             count += code[ ip ]
             ++ip
             nextIteration
-          case Opcode.SCAN_TABLE
+          case TokenizerOpcode.SCAN_TABLE
             local cur_node = ip
             local lookahead = 0
             local last_acceptable_node = 0
@@ -285,7 +285,7 @@ class TokenizerVM
             loop (last_acceptable_lookahead) buffer.print( scanner.read )
             nextIteration
 
-          case Opcode.WHICH_BUFFER
+          case TokenizerOpcode.WHICH_BUFFER
             local cur_node = ip
             local start_node = cur_node
             local lookahead = 0
@@ -316,7 +316,7 @@ class TokenizerVM
             ip = cur_node + code[cur_node+1] * 2 + 2
             nextIteration
           others
-            throw FroleyError( "[INTERNAL] Unhandled opcode: " + Opcode(opcode) )
+            throw FroleyError( "[INTERNAL] Unhandled opcode: " + TokenizerOpcode(opcode) )
         endWhich
       endLoop
 

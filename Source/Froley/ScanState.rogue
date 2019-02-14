@@ -59,7 +59,7 @@ class ScanState
       if (not is_redirected) assembler.define( code_label )
       statements.write( assembler )
       if (is_acceptable)
-        assembler.write( Opcode.JUMP )
+        assembler.write( TokenizerOpcode.JUMP )
         assembler.write_address( label_end )
       endIf
 

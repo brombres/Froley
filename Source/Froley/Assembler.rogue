@@ -17,7 +17,7 @@ class Assembler
 
     method assemble( statements:CmdStatements )->Byte[]
       statements.write( this )
-      write( Opcode.HALT )
+      write( TokenizerOpcode.HALT )
       return this->Byte[]
 
     method define( label:Label )
@@ -70,18 +70,18 @@ class Assembler
       #trace code.count, " -> ", result.count
       return result
 
-    method write( opcode:Opcode ) [macro]
+    method write( opcode:TokenizerOpcode ) [macro]
       this.write( opcode->Int32 )
 
-    method write( opcode:Opcode, value:Int32 )
+    method write( opcode:TokenizerOpcode, value:Int32 )
       write( opcode->Int32 )
       write( value )
 
-    method write( opcode:Opcode, label:Label )
+    method write( opcode:TokenizerOpcode, label:Label )
       write( opcode->Int32 )
       write_address( label )
 
-    method write( opcode:Opcode, value:String )
+    method write( opcode:TokenizerOpcode, value:String )
       write( opcode->Int32 )
       strings.add( value )
       write( strings.locate(value).value )  # String index

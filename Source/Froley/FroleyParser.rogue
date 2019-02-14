@@ -261,7 +261,7 @@ class FroleyParser : Parser
 
       elseIf (consume(TokenType.KEYWORD_CLEAR))
         if (consume(TokenType.KEYWORD_BUFFER))
-          statements.add( CmdStatement(t,"clear buffer",Opcode.CLEAR_BUFFER) )
+          statements.add( CmdStatement(t,"clear buffer",TokenizerOpcode.CLEAR_BUFFER) )
           return true
         else
           throw peek.error( "Expected 'buffer'." )
@@ -270,7 +270,7 @@ class FroleyParser : Parser
       elseIf (consume(TokenType.KEYWORD_COLLECT))
         if (next_is(TokenType.KEYWORD_CH))
           must_consume_register_ch
-          statements.add( CmdStatement(t,"collect ch",Opcode.COLLECT_CH) )
+          statements.add( CmdStatement(t,"collect ch",TokenizerOpcode.COLLECT_CH) )
           return true
         elseIf (next_is(TokenType.STRING))
           statements.add( TokenizerCmdCollectString(t,read.text) )
@@ -284,16 +284,16 @@ class FroleyParser : Parser
         return true
 
       elseIf (consume(TokenType.KEYWORD_DISCARD))
-        statements.add( CmdStatement(t,"restart",Opcode.RESTART) )
+        statements.add( CmdStatement(t,"restart",TokenizerOpcode.RESTART) )
         return true
 
       elseIf (consume(TokenType.KEYWORD_ERROR))
         if (consume(TokenType.KEYWORD_BUFFER))
-          statements.add( CmdStatement(t,"error buffer",Opcode.ERROR) )
+          statements.add( CmdStatement(t,"error buffer",TokenizerOpcode.ERROR) )
         elseIf (next_is(TokenType.STRING))
-          statements.add( CmdStatement(t,"clear buffer",Opcode.CLEAR_BUFFER) )
+          statements.add( CmdStatement(t,"clear buffer",TokenizerOpcode.CLEAR_BUFFER) )
           statements.add( TokenizerCmdCollectString(t,read.text) )
-          statements.add( CmdStatement(t,"error <message>",Opcode.ERROR) )
+          statements.add( CmdStatement(t,"error <message>",TokenizerOpcode.ERROR) )
         else
           throw peek.error( "Expected 'buffer'." )
         endIf
@@ -304,11 +304,11 @@ class FroleyParser : Parser
         return true
 
       elseIf (consume(TokenType.KEYWORD_HALT))
-        statements.add( CmdStatement(t,"halt",Opcode.HALT) )
+        statements.add( CmdStatement(t,"halt",TokenizerOpcode.HALT) )
         return true
 
       elseIf (consume(TokenType.KEYWORD_MARK_SRC_POS))
-        statements.add( CmdStatement(t,"markSourcePosition",Opcode.MARK_SOURCE_POS) )
+        statements.add( CmdStatement(t,"markSourcePosition",TokenizerOpcode.MARK_SOURCE_POS) )
         return true
 
       elseIf (consume(TokenType.KEYWORD_MODE))
@@ -318,7 +318,7 @@ class FroleyParser : Parser
 
       elseIf (consume(TokenType.KEYWORD_PRINT))
         if (consume(TokenType.KEYWORD_BUFFER))
-          statements.add( CmdStatement(t,"print buffer",Opcode.PRINT_BUFFER) )
+          statements.add( CmdStatement(t,"print buffer",TokenizerOpcode.PRINT_BUFFER) )
           return true
         elseIf (next_is(TokenType.STRING))
           statements.add( TokenizerCmdPrintString(t,read.text) )
@@ -327,10 +327,10 @@ class FroleyParser : Parser
           if (not (next_is(TokenType.EOL) or next_is(TokenType.SYMBOL_SEMICOLON)))
             local expr = parse_expression()
             if (expr.is_ch)
-              statements.add( CmdStatement(t,"print ch",Opcode.PRINT_CH) )
+              statements.add( CmdStatement(t,"print ch",TokenizerOpcode.PRINT_CH) )
               return true
             elseIf (expr.is_count)
-              statements.add( CmdStatement(t,"print count",Opcode.PRINT_COUNT) )
+              statements.add( CmdStatement(t,"print count",TokenizerOpcode.PRINT_COUNT) )
               return true
             elseIf (expr.is_integer)
               statements.add( TokenizerCmdPrintCharacter(t,expr->Int32) )
@@ -341,11 +341,11 @@ class FroleyParser : Parser
         endIf
 
       elseIf (consume(TokenType.KEYWORD_RESTART))
-        statements.add( CmdStatement(t,"restart",Opcode.RESTART) )
+        statements.add( CmdStatement(t,"restart",TokenizerOpcode.RESTART) )
         return true
 
       elseIf (consume(TokenType.KEYWORD_RETURN))
-        statements.add( CmdStatement(t,"return",Opcode.RETURN) )
+        statements.add( CmdStatement(t,"return",TokenizerOpcode.RETURN) )
         return true
 
       elseIf (consume(TokenType.KEYWORD_SCAN_DIGITS))
@@ -390,9 +390,9 @@ class FroleyParser : Parser
 
       elseIf (consume(TokenType.KEYWORD_PUSH))
         if (consume(TokenType.KEYWORD_CH))
-          statements.add( CmdStatement(t,"push ch",Opcode.PUSH_CH) )
+          statements.add( CmdStatement(t,"push ch",TokenizerOpcode.PUSH_CH) )
         elseIf (consume(TokenType.KEYWORD_COUNT))
-          statements.add( CmdStatement(t,"push count",Opcode.PUSH_COUNT) )
+          statements.add( CmdStatement(t,"push count",TokenizerOpcode.PUSH_COUNT) )
         else
           throw peek.error( "Expected 'ch' or 'count'." )
         endIf
@@ -532,7 +532,7 @@ class FroleyParser : Parser
               if (def.symbol)
                 local node = cmd_which_input.start
                 node = node.link( forEach in def.symbol )
-                node.statements.add( CmdStatement(t,"restart",Opcode.RESTART) )
+                node.statements.add( CmdStatement(t,"restart",TokenizerOpcode.RESTART) )
               endIf
             endForEach
           else
@@ -607,7 +607,7 @@ class FroleyParser : Parser
               if (def.symbol)
                 local node = cmd_which.start
                 node = node.link( forEach in def.symbol )
-                node.statements.add( CmdStatement(t,"restart",Opcode.RESTART) )
+                node.statements.add( CmdStatement(t,"restart",TokenizerOpcode.RESTART) )
               endIf
             endForEach
           else

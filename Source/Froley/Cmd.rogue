@@ -45,21 +45,24 @@ augment Cmd
     method to_is_letter->Cmd
       throw t.error( "Syntax error; expected 'ch is letter'." )
 
-    method write( assembler:Assembler )
+    method write( assembler:TokenizerAssembler )
       throw UnsupportedOperationError()
 
-    method write_add( assembler:Assembler, expression:Cmd )
+    method write( assembler:ParserAssembler )
+      throw UnsupportedOperationError()
+
+    method write_add( assembler:TokenizerAssembler, expression:Cmd )
       throw t.error( "Illegal operation target - target must be 'ch' or 'count'." )
 
-    method write_logical_ands( assembler:Assembler, target_if_false:Label )
+    method write_logical_ands( assembler:TokenizerAssembler, target_if_false:Label )
       write( assembler )
       assembler.write( jump_if_false, target_if_false )
 
-    method write_logical_ors( assembler:Assembler, target_if_true:Label )
+    method write_logical_ors( assembler:TokenizerAssembler, target_if_true:Label )
       write( assembler )
       assembler.write( jump_if_true, target_if_true )
 
-    method write_subtract( assembler:Assembler, expression:Cmd )
+    method write_subtract( assembler:TokenizerAssembler, expression:Cmd )
       throw t.error( "Illegal operation target - target must be 'ch' or 'count'." )
 
     method error( message:String )->Error
@@ -73,7 +76,10 @@ augment CmdStatements
         this[ index ] = statement.resolved
       endForEach
 
-    method write( assembler:Assembler )
+    method write( assembler:ParserAssembler )
+      (forEach in this).write( assembler )
+
+    method write( assembler:TokenizerAssembler )
       (forEach in this).write( assembler )
 endAugment
 
@@ -85,7 +91,10 @@ augment CmdArgs
         this[ index ] = statement.resolved
       endForEach
 
-    method write( assembler:Assembler )
+    method write( assembler:ParserAssembler )
+      (forEach in this).write( assembler )
+
+    method write( assembler:TokenizerAssembler )
       (forEach in this).write( assembler )
 endAugment
 
@@ -95,13 +104,13 @@ class CmdStatement( t, name:String, opcode:TokenizerOpcode ) : Cmd
     method to->String
       return name
 
-    method write( assembler:Assembler )
+    method write( assembler:TokenizerAssembler )
       assembler.write( opcode )
 endClass
 
 class TokenizerCmdGoto( t, label_name:String ) : Cmd
   METHODS
-    method write( assembler:Assembler )
+    method write( assembler:TokenizerAssembler )
       assembler.[ write(TokenizerOpcode.JUMP), write_address(label_name) ]
 
     method to->String
@@ -110,7 +119,7 @@ endClass
 
 class TokenizerCmdGotoLabel( t, label:Label ) : Cmd
   METHODS
-    method write( assembler:Assembler )
+    method write( assembler:TokenizerAssembler )
       assembler.[ write(TokenizerOpcode.JUMP), write_address(label) ]
 
     method to->String
@@ -119,7 +128,7 @@ endClass
 
 class TokenizerCmdJump( t, address:Int32 ) : Cmd
   METHODS
-    method write( assembler:Assembler )
+    method write( assembler:TokenizerAssembler )
       assembler.write( TokenizerOpcode.JUMP, address )
 
     method to->String
@@ -128,7 +137,7 @@ endClass
 
 class TokenizerCmdMode( t, label_name:String) : Cmd
   METHODS
-    method write( assembler:Assembler )
+    method write( assembler:TokenizerAssembler )
       assembler.[ write(TokenizerOpcode.MODE_INT32), write_address(label_name) ]
 
     method to->String
@@ -137,7 +146,7 @@ endClass
 
 class TokenizerCmdLabel( t, name:String ) : Cmd
   METHODS
-    method write( assembler:Assembler )
+    method write( assembler:TokenizerAssembler )
       if (assembler.label(name).exists)
         throw error( "Label <$> has already been defined." (name) )
       endIf
@@ -149,7 +158,7 @@ endClass
 
 class TokenizerCmdPrintCharacter( t, code:Int32 ) : Cmd
   METHODS
-    method write( assembler:Assembler )
+    method write( assembler:TokenizerAssembler )
       assembler.write( TokenizerOpcode.PRINT_CHARACTER, code )
 
     method to->String
@@ -159,7 +168,7 @@ endClass
 
 class TokenizerCmdPrintString( t, value:String ) : Cmd
   METHODS
-    method write( assembler:Assembler )
+    method write( assembler:TokenizerAssembler )
       assembler.write( TokenizerOpcode.PRINT_STRING, value )
 
     method to->String
@@ -177,7 +186,7 @@ class TokenizerCmdAccess( t, name:String ) : Cmd
     method resolve_assignment( new_value:Cmd )->Cmd
       throw t.error( "Illegal assignment target. Valid targets are 'ch' and 'count'." )
 
-    method write( assembler:Assembler )
+    method write( assembler:TokenizerAssembler )
       TokenizerCmdCall( t, name ).write( assembler )
 endClass
 
@@ -186,7 +195,7 @@ class TokenizerCmdAssign : CmdBinary
     method resolved->Cmd
       return left.resolve_assignment( right )
 
-    method write( assembler:Assembler )
+    method write( assembler:TokenizerAssembler )
       throw t.error( "Illegal assignment: $ = $" (left,right) )
 endClass
 
@@ -207,26 +216,26 @@ endClass
 
 class TokenizerCmdAdd( t, target:Cmd, value:Cmd ) : Cmd
   METHODS
-    method write( assembler:Assembler )
+    method write( assembler:TokenizerAssembler )
       target.write_add( assembler, value )
 endClass
 
 class TokenizerCmdSubtract( t, target:Cmd, value:Cmd ) : Cmd
   METHODS
-    method write( assembler:Assembler )
+    method write( assembler:TokenizerAssembler )
       target.write_subtract( assembler, value )
 endClass
 
 class TokenizerCmdCall( t, label_name:String ) : Cmd
   METHODS
-    method write( assembler:Assembler )
+    method write( assembler:TokenizerAssembler )
       assembler.write( TokenizerOpcode.CALL )
       assembler.write_address( label_name )
 endClass
 
 class TokenizerCmdRead( t ) : Cmd
   METHODS
-    method write( assembler:Assembler )
+    method write( assembler:TokenizerAssembler )
       throw t.error( "Syntax error - expected 'ch = read'." )
 
     method to->String
@@ -244,7 +253,7 @@ class TokenizerCmdScanDigits( t, min_digits:Int32, max_digits:Int32, base:Int32 
     method to->String
       return "scanDigits $..$ base $" (min_digits,max_digits,base)
 
-    method write( assembler:Assembler )
+    method write( assembler:TokenizerAssembler )
       if (is_resolved)
         assembler.write( TokenizerOpcode.SCAN_DIGITS )
         assembler.write( min_digits )
@@ -264,7 +273,7 @@ class TokenizerCmdScanIdentfier( t ) : Cmd
     method to->String
       return "scanIdentifier"
 
-    method write( assembler:Assembler )
+    method write( assembler:TokenizerAssembler )
       assembler.write( TokenizerOpcode.SCAN_IDENTIFIER )
 endClass
 
@@ -279,7 +288,7 @@ class TokenizerCmdWhile( t, condition:Cmd ) : Cmd
       statements.resolve
       return this
 
-    method write( assembler:Assembler )
+    method write( assembler:TokenizerAssembler )
       local label_test = Label()
       local label_top  = Label()
       local label_end  = Label()
@@ -311,7 +320,7 @@ class TokenizerCmdIf( t, condition:Cmd ) : Cmd
       if (else_statements) else_statements.resolve
       return this
 
-    method write( assembler:Assembler )
+    method write( assembler:TokenizerAssembler )
       local label_body   = Label()
       local label_else   = Label()
       local label_end_if = Label()
@@ -340,7 +349,7 @@ class TokenizerCmdHasAnother( t ) : Cmd
     method to->String
       return "hasAnother"
 
-    method write( assembler:Assembler )
+    method write( assembler:TokenizerAssembler )
       assembler.write( TokenizerOpcode.HAS_ANOTHER )
 endClass
 
@@ -349,7 +358,7 @@ class TokenizerCmdSetChToInt32( t, value:Int32 ) : Cmd
     method jump_if_true->TokenizerOpcode
       return TokenizerOpcode.JUMP_NE
 
-    method write( assembler:Assembler )
+    method write( assembler:TokenizerAssembler )
       assembler.write( TokenizerOpcode.SET_CH_TO_INT32, value )
 endClass
 
@@ -358,7 +367,7 @@ class TokenizerCmdSetChToCount( t ) : Cmd
     method jump_if_true->TokenizerOpcode
       return TokenizerOpcode.JUMP_NE
 
-    method write( assembler:Assembler )
+    method write( assembler:TokenizerAssembler )
       assembler.write( TokenizerOpcode.SET_CH_TO_COUNT )
 endClass
 
@@ -367,7 +376,7 @@ class TokenizerCmdReadCh( t ) : Cmd
     method jump_if_true->TokenizerOpcode
       return TokenizerOpcode.JUMP_NE
 
-    method write( assembler:Assembler )
+    method write( assembler:TokenizerAssembler )
       assembler.write( TokenizerOpcode.READ_CH )
 endClass
 
@@ -376,7 +385,7 @@ class TokenizerCmdChIsDigit( t, base:Int32 ) : Cmd
     method jump_if_true->TokenizerOpcode
       return TokenizerOpcode.JUMP_NE
 
-    method write( assembler:Assembler )
+    method write( assembler:TokenizerAssembler )
       assembler.write( TokenizerOpcode.CH_IS_DIGIT_INT32, base )
 endClass
 
@@ -385,7 +394,7 @@ class TokenizerCmdChIsDigitCount( t ) : Cmd
     method jump_if_true->TokenizerOpcode
       return TokenizerOpcode.JUMP_NE
 
-    method write( assembler:Assembler )
+    method write( assembler:TokenizerAssembler )
       assembler.write( TokenizerOpcode.CH_IS_DIGIT_COUNT )
 endClass
 
@@ -395,7 +404,7 @@ class TokenizerCmdChIsLetter( t ) : Cmd
     method jump_if_true->TokenizerOpcode
       return TokenizerOpcode.JUMP_NE
 
-    method write( assembler:Assembler )
+    method write( assembler:TokenizerAssembler )
       assembler.write( TokenizerOpcode.CH_IS_LETTER )
 endClass
 
@@ -440,10 +449,10 @@ class TokenizerCmdRegisterCh( t ) : Cmd
     method to_is_letter->Cmd
       return TokenizerCmdChIsLetter( t )
 
-    method write( assembler:Assembler )
+    method write( assembler:TokenizerAssembler )
       assembler.write( TokenizerOpcode.TEST_CH )
 
-    method write_add( assembler:Assembler, expression:Cmd )
+    method write_add( assembler:TokenizerAssembler, expression:Cmd )
       local cmd_int = expression as TokenizerCmdLiteralInt32
       if (cmd_int)
         assembler.write( TokenizerOpcode.ADD_CH_INT32, cmd_int.value )
@@ -451,7 +460,7 @@ class TokenizerCmdRegisterCh( t ) : Cmd
         throw expression.error( "Illegal operation value; integer expected." )
       endIf
 
-    method write_subtract( assembler:Assembler, expression:Cmd )
+    method write_subtract( assembler:TokenizerAssembler, expression:Cmd )
       local cmd_int = expression as TokenizerCmdLiteralInt32
       if (cmd_int)
         assembler.write( TokenizerOpcode.ADD_CH_INT32, -cmd_int.value )
@@ -465,7 +474,7 @@ class TokenizerCmdSetCountToInt32( t, value:Int32 ) : Cmd
     method jump_if_true->TokenizerOpcode
       return TokenizerOpcode.JUMP_NE
 
-    method write( assembler:Assembler )
+    method write( assembler:TokenizerAssembler )
       assembler.write( TokenizerOpcode.SET_COUNT_TO_INT32, value )
 endClass
 
@@ -474,7 +483,7 @@ class TokenizerCmdSetCountToCh( t ) : Cmd
     method jump_if_true->TokenizerOpcode
       return TokenizerOpcode.JUMP_NE
 
-    method write( assembler:Assembler )
+    method write( assembler:TokenizerAssembler )
       assembler.write( TokenizerOpcode.SET_COUNT_TO_CH )
 endClass
 
@@ -501,10 +510,10 @@ class TokenizerCmdRegisterCount( t ) : Cmd
     method to->String
       return "count"
 
-    method write( assembler:Assembler )
+    method write( assembler:TokenizerAssembler )
       assembler.write( TokenizerOpcode.TEST_COUNT )
 
-    method write_add( assembler:Assembler, expression:Cmd )
+    method write_add( assembler:TokenizerAssembler, expression:Cmd )
       local cmd_int32 = expression as TokenizerCmdLiteralInt32
       if (cmd_int32)
         assembler.write( TokenizerOpcode.ADD_COUNT_INT32, cmd_int32.value )
@@ -512,7 +521,7 @@ class TokenizerCmdRegisterCount( t ) : Cmd
         throw expression.error( "Illegal operation value; integer expected." )
       endIf
 
-    method write_subtract( assembler:Assembler, expression:Cmd )
+    method write_subtract( assembler:TokenizerAssembler, expression:Cmd )
       local cmd_int32 = expression as TokenizerCmdLiteralInt32
       if (cmd_int32)
         assembler.write( TokenizerOpcode.ADD_COUNT_INT32, -cmd_int32.value )
@@ -523,7 +532,7 @@ endClass
 
 class TokenizerCmdPop( t ) : Cmd
   METHODS
-    method write( assembler:Assembler )
+    method write( assembler:TokenizerAssembler )
       throw t.error( "Syntax error - expected 'ch = pop' or 'count = pop'." )
 endClass
 
@@ -544,7 +553,7 @@ class TokenizerCmdCompare<<$OPCODE>> : CmdBinary
       endWhich
       return "$ $ $" (left,symbol,right)
 
-    method write( assembler:Assembler )
+    method write( assembler:TokenizerAssembler )
       if (left.is_ch)
         if (right.is_integer)
           assembler.write( TokenizerOpcode.COMPARE_CH_INT32, right->Int32 )
@@ -572,7 +581,7 @@ class TokenizerCmdCollectCharacter( t, value:Int32 ) : Cmd
     method to->String
       return "collect '$'" (value->Character.to_escaped_ascii)
 
-    method write( assembler:Assembler )
+    method write( assembler:TokenizerAssembler )
       assembler.write( TokenizerOpcode.COLLECT_CHARACTER, value )
 endClass
 
@@ -581,7 +590,7 @@ class TokenizerCmdCollectString( t, value:String ) : Cmd
     method to->String
       return ''collect "$"'' (value.to_escaped_ascii)
 
-    method write( assembler:Assembler )
+    method write( assembler:TokenizerAssembler )
       assembler.write( TokenizerOpcode.COLLECT_STRING, value )
 endClass
 
@@ -590,7 +599,7 @@ class TokenizerCmdAcceptInt32( t, token_type:Int32 ) : Cmd
     method to->String
       return Froley.token_def( token_type ).name
 
-    method write( assembler:Assembler )
+    method write( assembler:TokenizerAssembler )
       assembler.write( TokenizerOpcode.ACCEPT_INT32, token_type )
 endClass
 
@@ -599,7 +608,7 @@ class TokenizerCmdPeek( t ) : Cmd
     method to->String
       return "peek"
 
-    method write( assembler:Assembler )
+    method write( assembler:TokenizerAssembler )
       throw t.error( "Syntax error - expected 'ch = peek'." )
 endClass
 
@@ -608,7 +617,7 @@ class TokenizerCmdPeekCount( t ) : Cmd
     method to->String
       return "peek(count)"
 
-    method write( assembler:Assembler )
+    method write( assembler:TokenizerAssembler )
       throw t.error( "Syntax error - expected 'ch = peek(count)'." )
 endClass
 
@@ -617,7 +626,7 @@ class TokenizerCmdPeekInt32( t, lookahead:Int32 ) : Cmd
     method to->String
       return "peek($)" (lookahead)
 
-    method write( assembler:Assembler )
+    method write( assembler:TokenizerAssembler )
       throw t.error( "Syntax error - expected 'ch = peek($)'." (lookahead) )
 endClass
 
@@ -626,7 +635,7 @@ class TokenizerCmdPeekChCount( t ) : Cmd
     method to->String
       return "ch = peek(count)"
 
-    method write( assembler:Assembler )
+    method write( assembler:TokenizerAssembler )
       assembler.write( TokenizerOpcode.PEEK_CH_COUNT )
 endClass
 
@@ -635,7 +644,7 @@ class TokenizerCmdPeekChInt32( t, lookahead:Int32 ) : Cmd
     method to->String
       return "ch = peek($)" (lookahead)
 
-    method write( assembler:Assembler )
+    method write( assembler:TokenizerAssembler )
       assembler.write( TokenizerOpcode.PEEK_CH_INT32, lookahead )
 endClass
 
@@ -647,7 +656,7 @@ class TokenizerCmdConsumeCharacter( t, value:Int32 ) : Cmd
     method to->String
       return "consume($)" (value->Character.to_escaped_ascii)
 
-    method write( assembler:Assembler )
+    method write( assembler:TokenizerAssembler )
       assembler.write( TokenizerOpcode.CONSUME_CHARACTER, value )
 endClass
 
@@ -659,7 +668,7 @@ class TokenizerCmdLiteralString( t, value:String ) : Cmd
     method to->String
       return ''"$"'' (value.to_escaped_ascii)
 
-    method write( assembler:Assembler )
+    method write( assembler:TokenizerAssembler )
       throw t.error( "Syntax error - unexpected literal string." )
 endClass
 
@@ -675,7 +684,7 @@ class TokenizerCmdWhichInput : Cmd
       start.resolve
       return this
 
-    method write( assembler:Assembler )
+    method write( assembler:TokenizerAssembler )
       assembler.write( TokenizerOpcode.SCAN_TABLE )
       local label_end = Label()
       local states = ScanState[]
@@ -697,7 +706,7 @@ class TokenizerCmdWhichBuffer : Cmd
       start.resolve
       return this
 
-    method write( assembler:Assembler )
+    method write( assembler:TokenizerAssembler )
       assembler.write( TokenizerOpcode.WHICH_BUFFER )
       local label_end = Label()
       local states = ScanState[]
@@ -722,7 +731,7 @@ class TokenizerCmdNot( t, operand ) : CmdUnary
     method to->String
       return "not " + operand
 
-    method write( assembler:Assembler )
+    method write( assembler:TokenizerAssembler )
       operand.write( assembler )
 endClass
 
@@ -733,10 +742,10 @@ class TokenizerCmdLogicalAnd : CmdBinary
       right = right.resolved
       return this
 
-    method write( assembler:Assembler )
+    method write( assembler:TokenizerAssembler )
       throw t.error( "Condition too complex - only simple 'a or b or ...', 'a and b and...' conditions are allowed." )
 
-    method write_logical_ands( assembler:Assembler, target_if_false:Label )
+    method write_logical_ands( assembler:TokenizerAssembler, target_if_false:Label )
       left.write_logical_ands( assembler, target_if_false )
       right.write_logical_ands( assembler, target_if_false )
 
@@ -749,12 +758,50 @@ class TokenizerCmdLogicalOr : CmdBinary
       right = right.resolved
       return this
 
-    method write( assembler:Assembler )
+    method write( assembler:TokenizerAssembler )
       throw t.error( "Condition too complex - only simple 'a or b or ...', 'a and b and...' conditions are allowed." )
 
-    method write_logical_ors( assembler:Assembler, target_if_true:Label )
+    method write_logical_ors( assembler:TokenizerAssembler, target_if_true:Label )
       left.write_logical_ors( assembler, target_if_true )
       right.write_logical_ors( assembler, target_if_true )
 
 endClass
 
+class ParserCmdOnType( t, token_type_name:String ) : Cmd
+  PROPERTIES
+    statements = CmdStatements()
+
+  METHODS
+    method write( assembler:ParserAssembler )
+      local label_if_no_match = Label()
+      assembler.write( ParserOpcode.ON_TOKEN_TYPE, Froley.token_defs_by_symbol[token_type_name].type )
+      statements.write( assembler )
+      assembler.write_address( label_if_no_match )
+endClass
+
+class ParserCmdOnTypeProduce( t, token_type_name:String, cmd_type_name:String ) : Cmd
+  PROPERTIES
+    statements = CmdStatements()
+
+  METHODS
+    method write( assembler:ParserAssembler )
+      assembler.this_method.write( this, assembler )
+endClass
+
+class ParserCmdReturn( t, expression:Cmd ) : Cmd
+  METHODS
+    method write( assembler:ParserAssembler )
+      if (expression) expression.write( assembler )
+      assembler.write( ParserOpcode.RETURN )
+
+endClass
+
+class ParserCmdAccess : Cmd
+  METHODS
+    #method write( assembler:ParserAssembler )
+      #if (expression) expression.write( assembler )
+      #assembler.write( ParserOpcode.RETURN )
+endClass
+
+class ParserCmdSyntaxError : Cmd
+endClass

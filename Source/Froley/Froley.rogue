@@ -6,10 +6,15 @@ $include "Cmd.rogue"
 $include "FroleyError.rogue"
 $include "FroleyParser.rogue"
 $include "FroleyTokenizer.rogue"
-$include "TokenizerOpcode.rogue"
+$include "Label.rogue"
+$include "ParserAssembler.rogue"
+$include "ParserMethod.rogue"
+$include "ParserOpcode.rogue"
 $include "ScanState.rogue"
 $include "Token.rogue"
 $include "TokenType.rogue"
+$include "TokenizerAssembler.rogue"
+$include "TokenizerOpcode.rogue"
 $include "TokenizerVM.rogue"
 
 Launcher( System.command_line_arguments )
@@ -55,6 +60,7 @@ class Froley [singleton]
   PROPERTIES
     token_defs_by_name    = LookupList<<TokenDef>>()
     token_defs_by_type    = Table<<Int32,TokenDef>>()
+    token_defs_by_symbol  = LookupList<<TokenDef>>()
     last_token_type       = 0
 
     token_defs_by_section = StringTable<<TokenDef[]>>()
@@ -65,24 +71,33 @@ class Froley [singleton]
     tokenizer_code = StringBuilder( 2048 )
     parser_code    = StringBuilder( 2048 )
 
+    parser_methods = LookupList<<ParserMethod>>()
+
   METHODS
     method parse( file:File )
       local source = file.load_as_string
       parse( file.filepath, source )
 
     method parse( filepath:String, source:String )
-      source = collect_definitions_and_extract_code( filepath, source )
+      collect_definitions_and_extract_code( filepath, source )
 
-      local statements = CmdStatements()
+      local tokenizer_statements = CmdStatements()
       local parser = FroleyParser()
-      parser.set_source( filepath, source )
+      parser.set_source( filepath, tokenizer_code->String )
       parser.consume_eols
-      parser.parse_multi_line_statements( statements )
+      parser.parse_multi_line_tokenizer_statements( tokenizer_statements )
+      tokenizer_statements.resolve
 
-      statements.resolve
-      local tokenizer_bytes = Assembler().assemble( statements )
+      forEach (def in token_defs_by_name)
+        if (def.symbol) token_defs_by_symbol[ def.symbol ] = def
+        else            token_defs_by_symbol[ def.name ]   = def
+      endForEach
 
-      statements.clear
+      local tokenizer_bytes = TokenizerAssembler().assemble( tokenizer_statements )
+
+      parser.set_source( filepath, parser_code->String )
+      parser.parse_parser_methods
+      local parser_bytes = ParserAssembler().assemble( parser_methods )
 
       local max_count  = 0
       local max_digits = 0
@@ -112,7 +127,7 @@ class Froley [singleton]
       local vm = TokenizerVM( tokenizer_bytes )
       vm.tokenize( File("Test.txt") )
 
-    method collect_definitions_and_extract_code( filepath:String, source:String )->String
+    method collect_definitions_and_extract_code( filepath:String, source:String )
       $localDefine PARSING_CONFIGURE   0
       $localDefine PARSING_ATTRIBUTES  1
       $localDefine PARSING_DEFINITIONS 2
@@ -242,7 +257,6 @@ class Froley [singleton]
           endIf
         endIf
       endForEach
-      return tokenizer_code->String
 
     method discard_whitespace( scanner:Scanner )
       while (scanner.consume(' ')) noAction

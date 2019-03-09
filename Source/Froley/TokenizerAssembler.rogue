@@ -1,0 +1,65 @@
+module Froley
+  uses ParseKit<<Froley>>
+
+class TokenizerAssembler : Assembler
+  DEFINITIONS
+    VERSION = 1
+
+  METHODS
+    method init
+      strings.add( forEach in Froley.entry_points )
+
+    method assemble( statements:CmdStatements )->Byte[]
+      statements.write( this )
+      write( TokenizerOpcode.HALT )
+      return this->Byte[]
+
+    method to->Byte[]
+      if (unresolved_labels.count)
+        local labels = unresolved_labels
+        throw FroleyError( "References to undefined $: $" ("label".pluralized(labels.count),labels.join(", ")) )
+      endIf
+
+      local result = Byte[]
+      local writer = DataWriter( result )
+
+      writer.write_int32x( VERSION )
+
+      writer.write_int32x( strings.count )
+      forEach (value in strings)
+        writer.write_string( value )
+      endForEach
+
+      writer.write_int32x( Froley.entry_points.count )
+      forEach (entry_point_name in Froley.entry_points)
+        writer.write_int32x( strings.locate(entry_point_name).value )
+        writer.write_int32x( label(entry_point_name).address.value )
+      endForEach
+
+      writer.write_int32x( code.count )
+      forEach (value in code)
+        writer.write_int32x( value )
+      endForEach
+
+      writer.close
+      #trace code.count, " -> ", result.count
+      return result
+
+    method write( opcode:TokenizerOpcode ) [macro]
+      this.write( opcode->Int32 )
+
+    method write( opcode:TokenizerOpcode, value:Int32 )
+      write( opcode->Int32 )
+      write( value )
+
+    method write( opcode:TokenizerOpcode, label:Label )
+      write( opcode->Int32 )
+      write_address( label )
+
+    method write( opcode:TokenizerOpcode, value:String )
+      write( opcode->Int32 )
+      strings.add( value )
+      write( strings.locate(value).value )  # String index
+
+endClass
+

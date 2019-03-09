@@ -43,7 +43,7 @@ class ScanState
       statements.resolve
       is_visited = false
 
-    method write( assembler:Assembler, label_end:Label )
+    method write( assembler:TokenizerAssembler, label_end:Label )
       assembler.define( label )
       if (statements.count) is_acceptable = true
       assembler.write( select{is_acceptable:1 || 0} )

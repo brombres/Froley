@@ -3,27 +3,28 @@ module Froley
 
 class FroleyParser : Parser
   PROPERTIES
-    parse_expression : ParseRule
-    parse_term       : ParseRule
+    parse_tokenizer_expression : ParseRule
+    parse_tokenizer_term       : ParseRule
+    parse_parser_expression    : ParseRule
 
   METHODS
     method init
-      # expression
-      local rule = add( ParseRule("expression") )
+      # tokenizer expression
+      local rule = add( ParseRule("tokenizer_expression") )
 
-      # assignment
+      # tokenizer assignment
       rule = add_nested( RightAssociativeBinaryParseRule("assignment") )
       rule.on( "=", <<TokenizerCmdAssign>> )
 
-      # logical or
+      # tokenizer logical or
       rule = add_nested( BinaryParseRule("logical_or") )
       rule.on( "or", <<TokenizerCmdLogicalOr>> )
 
-      # logical and
+      # tokenizer logical and
       rule = add_nested( BinaryParseRule("logical_and") )
       rule.on( "and", <<TokenizerCmdLogicalAnd>> )
 
-      # comparison
+      # tokenizer comparison
       rule = add_nested( BinaryParseRule("comparison") )
       rule.on( "==", <<TokenizerCmdCompareEQ>> )
       rule.on( "!=", <<TokenizerCmdCompareNE>> )
@@ -35,12 +36,12 @@ class FroleyParser : Parser
       rule = add_nested( PreUnaryParseRule("pre_unary") )
       rule.on( "not", <<TokenizerCmdNot>> )
 
-      # is digit, is letter
+      # tokenizer is digit, is letter
       rule = add_nested(
         PostUnaryParseRule( "is_digit_is_letter",
           function (rule:ParseRule)->Cmd
             local t = rule.parser.peek
-            local term = rule.parser.parse_term()
+            local term = rule.parser.parse_tokenizer_term()
             local parser = rule.parser
             if (parser.consume(TokenType.KEYWORD_IS))
               if (parser.consume(TokenType.KEYWORD_NOT))
@@ -89,12 +90,12 @@ class FroleyParser : Parser
         )
       )
 
-      # term
-      rule = add_nested( ParseRule("term") )
+      # tokenizer term
+      rule = add_nested( ParseRule("tokenizer_term") )
       rule.on( "(",
         function (parser:FroleyParser)->Cmd
           parser.must_consume( TokenType.SYMBOL_OPEN_PAREN )
-          local result = parser.parse_expression()
+          local result = parser.parse_tokenizer_expression()
           parser.must_consume( TokenType.SYMBOL_CLOSE_PAREN )
           return result
         endFunction
@@ -135,7 +136,7 @@ class FroleyParser : Parser
         function(parser:FroleyParser)->Cmd
           local t = parser.read  # 'peek'
           if (parser.next_is(TokenType.SYMBOL_OPEN_PAREN))
-            local expr = parser.parse_expression()
+            local expr = parser.parse_tokenizer_expression()
             if (expr.is_integer) return TokenizerCmdPeekInt32( t, expr->Int32 )
             if (expr.is_count)   return TokenizerCmdPeekCount( t )
             throw expr.t.error( "'Expected 'peek', 'peek(<integer>)', or 'peek(count)'." )
@@ -148,7 +149,7 @@ class FroleyParser : Parser
         function(parser:FroleyParser)->Cmd
           local t = parser.read  # 'consume'
           if (parser.next_is(TokenType.SYMBOL_OPEN_PAREN))
-            local expr = parser.parse_expression()
+            local expr = parser.parse_tokenizer_expression()
             t = expr.t
             if (expr.is_integer)                      return TokenizerCmdConsumeCharacter( t, expr->Int32 )
           endIf
@@ -156,25 +157,182 @@ class FroleyParser : Parser
         endFunction
       )
 
-    method parse_statements( statements:CmdStatements )->Logical
+      # parser expression
+      rule = add( ParseRule("parser_expression") )
+
+      #{
+      # parser assignment
+      rule = add_nested( RightAssociativeBinaryParseRule("assignment") )
+      rule.on( "=", <<TokenizerCmdAssign>> )
+
+      # parser logical or
+      rule = add_nested( BinaryParseRule("logical_or") )
+      rule.on( "or", <<TokenizerCmdLogicalOr>> )
+
+      # parser logical and
+      rule = add_nested( BinaryParseRule("logical_and") )
+      rule.on( "and", <<TokenizerCmdLogicalAnd>> )
+
+      # parser comparison
+      rule = add_nested( BinaryParseRule("comparison") )
+      rule.on( "==", <<TokenizerCmdCompareEQ>> )
+      rule.on( "!=", <<TokenizerCmdCompareNE>> )
+      rule.on( "<",  <<TokenizerCmdCompareLT>> )
+      rule.on( "<=", <<TokenizerCmdCompareLE>> )
+      rule.on( ">",  <<TokenizerCmdCompareGT>> )
+      rule.on( ">=", <<TokenizerCmdCompareGE>> )
+
+      rule = add_nested( PreUnaryParseRule("pre_unary") )
+      rule.on( "not", <<TokenizerCmdNot>> )
+
+      # parser is digit, is letter
+      rule = add_nested(
+        PostUnaryParseRule( "is_digit_is_letter",
+          function (rule:ParseRule)->Cmd
+            local t = rule.parser.peek
+            local term = rule.parser.parse_tokenizer_term()
+            local parser = rule.parser
+            if (parser.consume(TokenType.KEYWORD_IS))
+              if (parser.consume(TokenType.KEYWORD_NOT))
+                if (parser.consume(TokenType.KEYWORD_DIGIT))
+                  local base = 10
+                  if (parser.consume(TokenType.SYMBOL_OPEN_PAREN))
+                    if (parser.consume(TokenType.KEYWORD_COUNT))
+                      parser.must_consume( TokenType.SYMBOL_CLOSE_PAREN )
+                      return TokenizerCmdNot( t, term.to_is_digit_count )
+                    elseIf (not parser.next_is(TokenType.INTEGER))
+                      throw parser.peek.error( "Base '2'..'16' or 'count' expected." )
+                    endIf
+                    base = parser.read->Int32
+                    parser.must_consume( TokenType.SYMBOL_CLOSE_PAREN )
+                  endIf
+                  return TokenizerCmdNot( t, term.to_is_digit(base) )
+                elseIf (parser.consume(TokenType.KEYWORD_LETTER))
+                  return TokenizerCmdNot( t, term.to_is_letter )
+                else
+                  throw parser.peek.error( "'is not digit' or 'is not letter' expected." )
+                endIf
+              else
+                if (parser.consume(TokenType.KEYWORD_DIGIT))
+                  local base = 10
+                  if (parser.consume(TokenType.SYMBOL_OPEN_PAREN))
+                    if (parser.consume(TokenType.KEYWORD_COUNT))
+                      parser.must_consume( TokenType.SYMBOL_CLOSE_PAREN )
+                      return term.to_is_digit_count
+                    elseIf (not parser.next_is(TokenType.INTEGER))
+                      throw parser.peek.error( "Base '2'..'16' or 'count' expected." )
+                    endIf
+                    base = parser.read->Int32
+                    parser.must_consume( TokenType.SYMBOL_CLOSE_PAREN )
+                  endIf
+                  return term.to_is_digit( base )
+                elseIf (parser.consume(TokenType.KEYWORD_LETTER))
+                  return term.to_is_letter
+                else
+                  throw parser.peek.error( "'is digit' or 'is letter' expected." )
+                endIf
+              endIf
+            else
+              return term
+            endIf
+          endFunction
+        )
+      )
+      }#
+
+      # parser term
+      rule = add_nested( ParseRule("parser_term") )
+      #{
+      rule.on( "(",
+        function (parser:FroleyParser)->Cmd
+          parser.must_consume( TokenType.SYMBOL_OPEN_PAREN )
+          local result = parser.parse_tokenizer_expression()
+          parser.must_consume( TokenType.SYMBOL_CLOSE_PAREN )
+          return result
+        endFunction
+      )
+      rule.on( "ch",            <<TokenizerCmdRegisterCh>> )
+      rule.on( "count",         <<TokenizerCmdRegisterCount>> )
+      rule.on( "hasAnother",    <<TokenizerCmdHasAnother>> )
+      rule.on( "integer value", <<TokenizerCmdLiteralInt32>> )
+      rule.on( "literal string",<<TokenizerCmdLiteralString>> )
+      rule.on( "read",          <<TokenizerCmdRead>> )
+      rule.on( "pop",           <<TokenizerCmdPop>> )
+      }#
+      rule.on( "identifier",
+        function(parser:FroleyParser)->Cmd
+          local t = parser.read  # (identifier)
+          return ParserCmdAccess( t )
+          #{
+          if (parser.consume(TokenType.SYMBOL_OPEN_PAREN))
+            parser.must_consume( TokenType.SYMBOL_CLOSE_PAREN )
+            return TokenizerCmdCall( t, t.text )
+          else
+            return TokenizerCmdAccess( t )
+          endIf
+          }#
+        endFunction
+      )
+      #{
+      rule.on( "scanDigits",
+        function(parser:FroleyParser)->Cmd
+          local t = parser.read  # 'scanDigits'
+          local min_digits = parser.read_integer
+          local max_digits = min_digits
+          if (parser.consume(TokenType.SYMBOL_DOT_DOT)) max_digits = parser.read_integer
+          local base = 10
+          if (parser.consume(TokenType.KEYWORD_BASE))
+            base = parser.read_integer
+          endIf
+          return TokenizerCmdScanDigits(t,min_digits,max_digits,base)
+        endFunction
+      )
+      rule.on( "scanIdentifier", <<TokenizerCmdScanIdentfier>> )
+      rule.on( "peek",
+        function(parser:FroleyParser)->Cmd
+          local t = parser.read  # 'peek'
+          if (parser.next_is(TokenType.SYMBOL_OPEN_PAREN))
+            local expr = parser.parse_tokenizer_expression()
+            if (expr.is_integer) return TokenizerCmdPeekInt32( t, expr->Int32 )
+            if (expr.is_count)   return TokenizerCmdPeekCount( t )
+            throw expr.t.error( "'Expected 'peek', 'peek(<integer>)', or 'peek(count)'." )
+          else
+            return TokenizerCmdPeek( t )
+          endIf
+        endFunction
+      )
+      rule.on( "consume",
+        function(parser:FroleyParser)->Cmd
+          local t = parser.read  # 'consume'
+          if (parser.next_is(TokenType.SYMBOL_OPEN_PAREN))
+            local expr = parser.parse_tokenizer_expression()
+            t = expr.t
+            if (expr.is_integer)                      return TokenizerCmdConsumeCharacter( t, expr->Int32 )
+          endIf
+          throw t.error( "'Expected 'consume(<character>)'." )
+        endFunction
+      )
+    }#
+
+    method parse_tokenizer_statements( statements:CmdStatements )->Logical
       if (consume_eols)
-        parse_multi_line_statements( statements )
+        parse_multi_line_tokenizer_statements( statements )
         return true
       else
-        parse_single_line_statements( statements )
+        parse_single_line_tokenizer_statements( statements )
         return false
       endIf
 
-    method parse_multi_line_statements( statements:CmdStatements )
+    method parse_multi_line_tokenizer_statements( statements:CmdStatements )
       consume_eols
       while (reader.has_another and not reader.peek.type.is_structural)
-        parse_statement( statements, &allow_control_structures )
+        parse_tokenizer_statement( statements, &allow_control_structures )
         while (consume_eols or consume(TokenType.SYMBOL_SEMICOLON)) noAction
       endWhile
 
-    method parse_single_line_statements( statements:CmdStatements )
+    method parse_single_line_tokenizer_statements( statements:CmdStatements )
       while (reader.has_another and not reader.peek.type.is_structural)
-        parse_statement( statements, &!allow_control_structures )
+        parse_tokenizer_statement( statements, &!allow_control_structures )
         if (not consume(TokenType.SYMBOL_SEMICOLON)) return
         while (consume(TokenType.SYMBOL_SEMICOLON)) noAction
 
@@ -188,23 +346,23 @@ class FroleyParser : Parser
         endIf
       endIf
 
-    method parse_statement( statements:CmdStatements, &allow_control_structures )->Logical
+    method parse_tokenizer_statement( statements:CmdStatements, &allow_control_structures )
       consume_eols
-      if (not has_another) return false
+      if (not has_another) return
       local t = peek
-      if (t.type.is_structural) return false
+      if (t.type.is_structural) return
 
       if (allow_control_structures)
         if (consume(TokenType.KEYWORD_IF))
-          local cmd_if = TokenizerCmdIf( t, parse_expression() )
-          if (parse_statements(cmd_if.statements))
+          local cmd_if = TokenizerCmdIf( t, parse_tokenizer_expression() )
+          if (parse_tokenizer_statements(cmd_if.statements))
             # Multi-line statements
             local outer_if = cmd_if
-            while (next_is_else_if(&multi_line))
+            while (next_is_tokenizer_end_if(&multi_line))
               consume_eols
               local t2 = read
-              local inner_if = TokenizerCmdIf( t2, parse_expression() )
-              parse_multi_line_statements( inner_if.statements )
+              local inner_if = TokenizerCmdIf( t2, parse_tokenizer_expression() )
+              parse_multi_line_tokenizer_statements( inner_if.statements )
               ensure outer_if.else_statements
               outer_if.else_statements.add( inner_if )
               outer_if = inner_if
@@ -214,18 +372,18 @@ class FroleyParser : Parser
               if (next_is(TokenType.KEYWORD_ELSE) and reader.peek(1).type == TokenType.EOL)
                 read
                 ensure outer_if.else_statements
-                parse_multi_line_statements( outer_if.else_statements )
+                parse_multi_line_tokenizer_statements( outer_if.else_statements )
               endIf
             endIf
             must_consume( TokenType.KEYWORD_END_IF )
           else
             # Single line statements
             local outer_if = cmd_if
-            while (next_is_else_if(&single_line))
+            while (next_is_tokenizer_end_if(&single_line))
               consume_eols
               local t2 = read
-              local inner_if = TokenizerCmdIf( t2, parse_expression() )
-              parse_single_line_statements( inner_if.statements )
+              local inner_if = TokenizerCmdIf( t2, parse_tokenizer_expression() )
+              parse_single_line_tokenizer_statements( inner_if.statements )
               ensure outer_if.else_statements
               outer_if.else_statements.add( inner_if )
               outer_if = inner_if
@@ -235,21 +393,21 @@ class FroleyParser : Parser
               if (next_is(TokenType.KEYWORD_ELSE) and reader.peek(1).type != TokenType.EOL)
                 read
                 ensure outer_if.else_statements
-                parse_single_line_statements( outer_if.else_statements )
+                parse_single_line_tokenizer_statements( outer_if.else_statements )
               endIf
             endIf
           endIf
           statements.add( cmd_if )
-          return true
+          return
 
         elseIf (consume(TokenType.KEYWORD_WHILE))
-          local cmd_while = TokenizerCmdWhile( t, parse_expression() )
-          if (parse_statements(cmd_while.statements))
+          local cmd_while = TokenizerCmdWhile( t, parse_tokenizer_expression() )
+          if (parse_tokenizer_statements(cmd_while.statements))
             # Returns true if multi-line statements were parsed
             must_consume( TokenType.KEYWORD_END_WHILE )
           endIf
           statements.add( cmd_while )
-          return true
+          return
 
         endIf
       endIf
@@ -257,12 +415,12 @@ class FroleyParser : Parser
       if (consume(TokenType.KEYWORD_ACCEPT))
         local name = read_identifier
         statements.add( TokenizerCmdAcceptInt32(t,Froley.token_def(name).type) )
-        return true
+        return
 
       elseIf (consume(TokenType.KEYWORD_CLEAR))
         if (consume(TokenType.KEYWORD_BUFFER))
           statements.add( CmdStatement(t,"clear buffer",TokenizerOpcode.CLEAR_BUFFER) )
-          return true
+          return
         else
           throw peek.error( "Expected 'buffer'." )
         endIf
@@ -271,21 +429,21 @@ class FroleyParser : Parser
         if (next_is(TokenType.KEYWORD_CH))
           must_consume_register_ch
           statements.add( CmdStatement(t,"collect ch",TokenizerOpcode.COLLECT_CH) )
-          return true
+          return
         elseIf (next_is(TokenType.STRING))
           statements.add( TokenizerCmdCollectString(t,read.text) )
-          return true
+          return
         elseIf (next_is(TokenType.INTEGER))
           statements.add( TokenizerCmdCollectCharacter(t,read_integer) )
-          return true
+          return
         else
           throw t.error( "Syntax error - expected 'ch' or a literal string.")
         endIf
-        return true
+        return
 
       elseIf (consume(TokenType.KEYWORD_DISCARD))
         statements.add( CmdStatement(t,"restart",TokenizerOpcode.RESTART) )
-        return true
+        return
 
       elseIf (consume(TokenType.KEYWORD_ERROR))
         if (consume(TokenType.KEYWORD_BUFFER))
@@ -297,44 +455,44 @@ class FroleyParser : Parser
         else
           throw peek.error( "Expected 'buffer'." )
         endIf
-        return true
+        return
 
       elseIf (consume(TokenType.KEYWORD_GOTO))
         statements.add( TokenizerCmdGoto(t,read_identifier) )
-        return true
+        return
 
       elseIf (consume(TokenType.KEYWORD_HALT))
         statements.add( CmdStatement(t,"halt",TokenizerOpcode.HALT) )
-        return true
+        return
 
       elseIf (consume(TokenType.KEYWORD_MARK_SRC_POS))
         statements.add( CmdStatement(t,"markSourcePosition",TokenizerOpcode.MARK_SOURCE_POS) )
-        return true
+        return
 
       elseIf (consume(TokenType.KEYWORD_MODE))
         local label_name = read_label_name
         statements.add( TokenizerCmdMode(t,label_name) )
-        return true
+        return
 
       elseIf (consume(TokenType.KEYWORD_PRINT))
         if (consume(TokenType.KEYWORD_BUFFER))
           statements.add( CmdStatement(t,"print buffer",TokenizerOpcode.PRINT_BUFFER) )
-          return true
+          return
         elseIf (next_is(TokenType.STRING))
           statements.add( TokenizerCmdPrintString(t,read.text) )
-          return true
+          return
         else
           if (not (next_is(TokenType.EOL) or next_is(TokenType.SYMBOL_SEMICOLON)))
-            local expr = parse_expression()
+            local expr = parse_tokenizer_expression()
             if (expr.is_ch)
               statements.add( CmdStatement(t,"print ch",TokenizerOpcode.PRINT_CH) )
-              return true
+              return
             elseIf (expr.is_count)
               statements.add( CmdStatement(t,"print count",TokenizerOpcode.PRINT_COUNT) )
-              return true
+              return
             elseIf (expr.is_integer)
               statements.add( TokenizerCmdPrintCharacter(t,expr->Int32) )
-              return true
+              return
             endIf
           endIf
           throw t.error( "Syntax error - valid 'print' arguments are  'ch', 'count', and '<string>'." )
@@ -342,11 +500,11 @@ class FroleyParser : Parser
 
       elseIf (consume(TokenType.KEYWORD_RESTART))
         statements.add( CmdStatement(t,"restart",TokenizerOpcode.RESTART) )
-        return true
+        return
 
       elseIf (consume(TokenType.KEYWORD_RETURN))
         statements.add( CmdStatement(t,"return",TokenizerOpcode.RETURN) )
-        return true
+        return
 
       elseIf (consume(TokenType.KEYWORD_SCAN_DIGITS))
         throw t.error( "Syntax error. Expected 'ch = scanDigits <min-digits>[..<max-digits>] [base <number-base>]'." )
@@ -370,23 +528,23 @@ class FroleyParser : Parser
           parse_which_buffer( cmd_which )
         endIf
         must_consume( TokenType.KEYWORD_END_WHICH )
-        return true
+        return
 
       elseIf (next_is(TokenType.SYMBOL_LT))
         local name = read_label_name
         must_consume( TokenType.EOL )
         statements.add( TokenizerCmdLabel(t,name) )
-        return true
+        return
 
       elseIf (consume(TokenType.SYMBOL_MINUS_MINUS))
         local target = parse_register
         statements.add( TokenizerCmdSubtract(t,target,TokenizerCmdLiteralInt32(t,1)) )
-        return true
+        return
 
       elseIf (consume(TokenType.SYMBOL_PLUS_PLUS))
         local target = parse_register
         statements.add( TokenizerCmdAdd(t,target,TokenizerCmdLiteralInt32(t,1)) )
-        return true
+        return
 
       elseIf (consume(TokenType.KEYWORD_PUSH))
         if (consume(TokenType.KEYWORD_CH))
@@ -396,10 +554,10 @@ class FroleyParser : Parser
         else
           throw peek.error( "Expected 'ch' or 'count'." )
         endIf
-        return true
+        return
 
       else
-        local expr = parse_expression()
+        local expr = parse_tokenizer_expression()
 
         local t2 = peek
         if (consume(TokenType.SYMBOL_PLUS_PLUS))
@@ -407,17 +565,317 @@ class FroleyParser : Parser
         elseIf (consume(TokenType.SYMBOL_MINUS_MINUS))
           statements.add( TokenizerCmdSubtract(t,expr,TokenizerCmdLiteralInt32(t2,1)) )
         elseIf (consume(TokenType.SYMBOL_PLUS_EQUALS))
-          statements.add( TokenizerCmdAdd(t,expr,parse_expression()) )
+          statements.add( TokenizerCmdAdd(t,expr,parse_tokenizer_expression()) )
         elseIf (consume(TokenType.SYMBOL_MINUS_EQUALS))
-          statements.add( TokenizerCmdSubtract(t,expr,parse_expression()) )
+          statements.add( TokenizerCmdSubtract(t,expr,parse_tokenizer_expression()) )
         else
           statements.add( expr )
         endIf
-        return true
+        return
 
       endIf
 
       throw peek.error( "Syntax error - unexpected '$'." (peek->String) )
+
+    method parse_parser_statements( statements:CmdStatements )->Logical
+      if (consume_eols)
+        parse_multi_line_parser_statements( statements )
+        return true
+      else
+        parse_single_line_parser_statements( statements )
+        return false
+      endIf
+
+    method parse_multi_line_parser_statements( statements:CmdStatements )
+      consume_eols
+      while (reader.has_another and not reader.peek.type.is_structural)
+        local t = peek
+        if (t.type == TokenType.SYMBOL_MINUS or t.type == TokenType.SYMBOL_PLUS) return
+        parse_parser_statement( statements, &allow_control_structures )
+        while (consume_eols or consume(TokenType.SYMBOL_SEMICOLON)) noAction
+      endWhile
+
+    method parse_single_line_parser_statements( statements:CmdStatements )
+      while (reader.has_another and not reader.peek.type.is_structural)
+        parse_parser_statement( statements, &!allow_control_structures )
+        if (not consume(TokenType.SYMBOL_SEMICOLON)) return
+        while (consume(TokenType.SYMBOL_SEMICOLON)) noAction
+
+        # Don't let a trailing ';' act as a next-line continuation.
+        if (next_is(TokenType.EOL)) escapeWhile
+      endWhile
+
+      if (not consume(TokenType.EOL))
+        if (not reader.peek.type.is_structural)
+          must_consume( TokenType.EOL )  # force an error
+        endIf
+      endIf
+
+    method parse_parser_statement( statements:CmdStatements, &allow_control_structures )
+      consume_eols
+      if (not has_another) return
+      local t = peek
+      if (t.type.is_structural) return
+
+      if (consume(TokenType.KEYWORD_ON))
+        local token_type_name : String
+        if (next_is(TokenType.STRING))
+          token_type_name = read.text
+        elseIf (next_is(TokenType.IDENTIFIER))
+          token_type_name = read_identifier
+        else
+          throw peek.error( "Token type name expected." )
+        endIf
+
+        if (not Froley.token_defs_by_symbol.contains(token_type_name))
+          throw peek.error( "Invalid token type: '$'." (token_type_name) )
+        endIf
+
+        local t2 = peek
+        if (consume(TokenType.SYMBOL_ARROW))
+          local cmd = ParserCmdOnTypeProduce( t, token_type_name, read_identifier )
+          statements.add( cmd )
+          return
+        elseIf (consume(TokenType.EOL) or consume(TokenType.SYMBOL_COLON))
+          local cmd = ParserCmdOnType( t, token_type_name )
+          statements.add( cmd )
+          parse_multi_line_parser_statements( cmd.statements )
+          return
+        endIf
+
+      elseIf (consume(TokenType.KEYWORD_SYNTAX_ERROR))
+        statements.add( ParserCmdSyntaxError(t) )
+        return
+      endIf
+
+      throw t.error( "TODO" )
+
+      #{
+      if (allow_control_structures)
+        if (consume(TokenType.KEYWORD_IF))
+          local cmd_if = TokenizerCmdIf( t, parse_parser_expression() )
+          if (parse_tokenizer_statements(cmd_if.statements))
+            # Multi-line statements
+            local outer_if = cmd_if
+            while (next_is_tokenizer_end_if(&multi_line))
+              consume_eols
+              local t2 = read
+              local inner_if = TokenizerCmdIf( t2, parse_parser_expression() )
+              parse_multi_line_tokenizer_statements( inner_if.statements )
+              ensure outer_if.else_statements
+              outer_if.else_statements.add( inner_if )
+              outer_if = inner_if
+            endWhile
+            if (next_is_else(&multi_line))
+              consume_eols
+              if (next_is(TokenType.KEYWORD_ELSE) and reader.peek(1).type == TokenType.EOL)
+                read
+                ensure outer_if.else_statements
+                parse_multi_line_tokenizer_statements( outer_if.else_statements )
+              endIf
+            endIf
+            must_consume( TokenType.KEYWORD_END_IF )
+          else
+            # Single line statements
+            local outer_if = cmd_if
+            while (next_is_tokenizer_end_if(&single_line))
+              consume_eols
+              local t2 = read
+              local inner_if = TokenizerCmdIf( t2, parse_parser_expression() )
+              parse_single_line_tokenizer_statements( inner_if.statements )
+              ensure outer_if.else_statements
+              outer_if.else_statements.add( inner_if )
+              outer_if = inner_if
+            endWhile
+            if (next_is_else(&single_line))
+              consume_eols
+              if (next_is(TokenType.KEYWORD_ELSE) and reader.peek(1).type != TokenType.EOL)
+                read
+                ensure outer_if.else_statements
+                parse_single_line_tokenizer_statements( outer_if.else_statements )
+              endIf
+            endIf
+          endIf
+          statements.add( cmd_if )
+          return
+
+        elseIf (consume(TokenType.KEYWORD_WHILE))
+          local cmd_while = TokenizerCmdWhile( t, parse_parser_expression() )
+          if (parse_tokenizer_statements(cmd_while.statements))
+            # Returns true if multi-line statements were parsed
+            must_consume( TokenType.KEYWORD_END_WHILE )
+          endIf
+          statements.add( cmd_while )
+          return
+
+        endIf
+      endIf
+
+      if (consume(TokenType.KEYWORD_ACCEPT))
+        local name = read_identifier
+        statements.add( TokenizerCmdAcceptInt32(t,Froley.token_def(name).type) )
+        return
+
+      elseIf (consume(TokenType.KEYWORD_CLEAR))
+        if (consume(TokenType.KEYWORD_BUFFER))
+          statements.add( CmdStatement(t,"clear buffer",TokenizerOpcode.CLEAR_BUFFER) )
+          return
+        else
+          throw peek.error( "Expected 'buffer'." )
+        endIf
+
+      elseIf (consume(TokenType.KEYWORD_COLLECT))
+        if (next_is(TokenType.KEYWORD_CH))
+          must_consume_register_ch
+          statements.add( CmdStatement(t,"collect ch",TokenizerOpcode.COLLECT_CH) )
+          return
+        elseIf (next_is(TokenType.STRING))
+          statements.add( TokenizerCmdCollectString(t,read.text) )
+          return
+        elseIf (next_is(TokenType.INTEGER))
+          statements.add( TokenizerCmdCollectCharacter(t,read_integer) )
+          return
+        else
+          throw t.error( "Syntax error - expected 'ch' or a literal string.")
+        endIf
+        return
+
+      elseIf (consume(TokenType.KEYWORD_DISCARD))
+        statements.add( CmdStatement(t,"restart",TokenizerOpcode.RESTART) )
+        return
+
+      elseIf (consume(TokenType.KEYWORD_ERROR))
+        if (consume(TokenType.KEYWORD_BUFFER))
+          statements.add( CmdStatement(t,"error buffer",TokenizerOpcode.ERROR) )
+        elseIf (next_is(TokenType.STRING))
+          statements.add( CmdStatement(t,"clear buffer",TokenizerOpcode.CLEAR_BUFFER) )
+          statements.add( TokenizerCmdCollectString(t,read.text) )
+          statements.add( CmdStatement(t,"error <message>",TokenizerOpcode.ERROR) )
+        else
+          throw peek.error( "Expected 'buffer'." )
+        endIf
+        return
+
+      elseIf (consume(TokenType.KEYWORD_GOTO))
+        statements.add( TokenizerCmdGoto(t,read_identifier) )
+        return
+
+      elseIf (consume(TokenType.KEYWORD_HALT))
+        statements.add( CmdStatement(t,"halt",TokenizerOpcode.HALT) )
+        return
+
+      elseIf (consume(TokenType.KEYWORD_MARK_SRC_POS))
+        statements.add( CmdStatement(t,"markSourcePosition",TokenizerOpcode.MARK_SOURCE_POS) )
+        return
+
+      elseIf (consume(TokenType.KEYWORD_MODE))
+        local label_name = read_label_name
+        statements.add( TokenizerCmdMode(t,label_name) )
+        return
+
+      elseIf (consume(TokenType.KEYWORD_PRINT))
+        if (consume(TokenType.KEYWORD_BUFFER))
+          statements.add( CmdStatement(t,"print buffer",TokenizerOpcode.PRINT_BUFFER) )
+          return
+        elseIf (next_is(TokenType.STRING))
+          statements.add( TokenizerCmdPrintString(t,read.text) )
+          return
+        else
+          if (not (next_is(TokenType.EOL) or next_is(TokenType.SYMBOL_SEMICOLON)))
+            local expr = parse_parser_expression()
+            if (expr.is_ch)
+              statements.add( CmdStatement(t,"print ch",TokenizerOpcode.PRINT_CH) )
+              return
+            elseIf (expr.is_count)
+              statements.add( CmdStatement(t,"print count",TokenizerOpcode.PRINT_COUNT) )
+              return
+            elseIf (expr.is_integer)
+              statements.add( TokenizerCmdPrintCharacter(t,expr->Int32) )
+              return
+            endIf
+          endIf
+          throw t.error( "Syntax error - valid 'print' arguments are  'ch', 'count', and '<string>'." )
+        endIf
+
+      elseIf (consume(TokenType.KEYWORD_RESTART))
+        statements.add( CmdStatement(t,"restart",TokenizerOpcode.RESTART) )
+        return
+
+      elseIf (consume(TokenType.KEYWORD_RETURN))
+        statements.add( CmdStatement(t,"return",TokenizerOpcode.RETURN) )
+        return
+
+      elseIf (consume(TokenType.KEYWORD_SCAN_DIGITS))
+        throw t.error( "Syntax error. Expected 'ch = scanDigits <min-digits>[..<max-digits>] [base <number-base>]'." )
+
+      elseIf (consume(TokenType.KEYWORD_WHICH))
+        local has_parens = consume( TokenType.SYMBOL_OPEN_PAREN )
+        local uses_input = consume( TokenType.KEYWORD_INPUT )
+        if (not uses_input and not consume(TokenType.KEYWORD_BUFFER))
+          throw t.error( "Expected 'which (input)' or 'which (buffer)'." )
+        endIf
+        if (has_parens) must_consume( TokenType.SYMBOL_CLOSE_PAREN )
+
+        if (uses_input)
+          local cmd_which_input = TokenizerCmdWhichInput( t )
+          statements.add( cmd_which_input )
+          parse_which_input( cmd_which_input )
+        else
+          # Uses buffer
+          local cmd_which = TokenizerCmdWhichBuffer( t )
+          statements.add( cmd_which )
+          parse_which_buffer( cmd_which )
+        endIf
+        must_consume( TokenType.KEYWORD_END_WHICH )
+        return
+
+      elseIf (next_is(TokenType.SYMBOL_LT))
+        local name = read_label_name
+        must_consume( TokenType.EOL )
+        statements.add( TokenizerCmdLabel(t,name) )
+        return
+
+      elseIf (consume(TokenType.SYMBOL_MINUS_MINUS))
+        local target = parse_register
+        statements.add( TokenizerCmdSubtract(t,target,TokenizerCmdLiteralInt32(t,1)) )
+        return
+
+      elseIf (consume(TokenType.SYMBOL_PLUS_PLUS))
+        local target = parse_register
+        statements.add( TokenizerCmdAdd(t,target,TokenizerCmdLiteralInt32(t,1)) )
+        return
+
+      elseIf (consume(TokenType.KEYWORD_PUSH))
+        if (consume(TokenType.KEYWORD_CH))
+          statements.add( CmdStatement(t,"push ch",TokenizerOpcode.PUSH_CH) )
+        elseIf (consume(TokenType.KEYWORD_COUNT))
+          statements.add( CmdStatement(t,"push count",TokenizerOpcode.PUSH_COUNT) )
+        else
+          throw peek.error( "Expected 'ch' or 'count'." )
+        endIf
+        return
+
+      else
+        local expr = parse_parser_expression()
+
+        local t2 = peek
+        if (consume(TokenType.SYMBOL_PLUS_PLUS))
+          statements.add( TokenizerCmdAdd(t,expr,TokenizerCmdLiteralInt32(t2,1)) )
+        elseIf (consume(TokenType.SYMBOL_MINUS_MINUS))
+          statements.add( TokenizerCmdSubtract(t,expr,TokenizerCmdLiteralInt32(t2,1)) )
+        elseIf (consume(TokenType.SYMBOL_PLUS_EQUALS))
+          statements.add( TokenizerCmdAdd(t,expr,parse_parser_expression()) )
+        elseIf (consume(TokenType.SYMBOL_MINUS_EQUALS))
+          statements.add( TokenizerCmdSubtract(t,expr,parse_parser_expression()) )
+        else
+          statements.add( expr )
+        endIf
+        return
+
+      endIf
+
+      throw peek.error( "Syntax error - unexpected '$'." (peek->String) )
+    }#
 
     method must_consume_register_ch
       local t = peek
@@ -429,7 +887,7 @@ class FroleyParser : Parser
       if (consume(TokenType.KEYWORD_COUNT)) return
       throw t.error( "Register 'count' expected." )
 
-    method next_is_else_if( &single_line, &multi_line )->Logical
+    method next_is_tokenizer_end_if( &single_line, &multi_line )->Logical
       local original_pos = reader.position
       consume_eols
       if (not next_is(TokenType.KEYWORD_ELSE_IF))
@@ -439,7 +897,7 @@ class FroleyParser : Parser
 
       # Scan to just after the elseIf() conditional
       read  # elseIf
-      parse_expression()
+      parse_tokenizer_expression()
 
       if (single_line)
         local result = not next_is( TokenType.EOL )
@@ -488,11 +946,11 @@ class FroleyParser : Parser
             local pattern = parse_pattern
             local state = ScanState()
             consume( TokenType.SYMBOL_COLON )
-            parse_statements( state.statements )
+            parse_tokenizer_statements( state.statements )
             patterns.add( (pattern,state) )
           else
             }#
-          local expr = parse_expression()
+          local expr = parse_tokenizer_expression()
           local node = cmd_which_input.start
           if (expr.is_integer)
             node = node.link( expr->Int32->Character )
@@ -503,7 +961,7 @@ class FroleyParser : Parser
             throw expr.t.error( "Syntax error - expected character, character code, or string." )
           endIf
           consume( TokenType.SYMBOL_COLON )
-          parse_statements( node.statements )
+          parse_tokenizer_statements( node.statements )
           #endIf
 
         elseIf (consume(TokenType.KEYWORD_ACCEPT_ALL))
@@ -540,7 +998,7 @@ class FroleyParser : Parser
           endIf
         elseIf (consume(TokenType.KEYWORD_OTHERS))
           consume( TokenType.SYMBOL_COLON )
-          parse_statements( cmd_which_input.start.statements )
+          parse_tokenizer_statements( cmd_which_input.start.statements )
         else
           throw peek.error( "Syntax error - expected one of: 'case', 'acceptIdentifier <TOKEN-TYPE>', 'acceptAll [<section-name>]', 'discardAll [<section-name>]', 'others', 'endWhich'." )
         endIf
@@ -563,11 +1021,11 @@ class FroleyParser : Parser
             local pattern = parse_pattern
             local state = ScanState()
             consume( TokenType.SYMBOL_COLON )
-            parse_statements( state.statements )
+            parse_tokenizer_statements( state.statements )
             patterns.add( (pattern,state) )
           else
           }#
-          local expr = parse_expression()
+          local expr = parse_tokenizer_expression()
           local node = cmd_which.start
           if (expr.is_integer)
             node = node.link( expr->Int32->Character )
@@ -578,7 +1036,7 @@ class FroleyParser : Parser
             throw expr.t.error( "Syntax error - expected character, character code, or string." )
           endIf
           consume( TokenType.SYMBOL_COLON )
-          parse_statements( node.statements )
+          parse_tokenizer_statements( node.statements )
           #endIf
 
         elseIf (consume(TokenType.KEYWORD_ACCEPT_ALL))
@@ -615,7 +1073,7 @@ class FroleyParser : Parser
           endIf
         elseIf (consume(TokenType.KEYWORD_OTHERS))
           consume( TokenType.SYMBOL_COLON )
-          parse_statements( cmd_which.start.statements )
+          parse_tokenizer_statements( cmd_which.start.statements )
         else
           throw peek.error( "Syntax error - expected one of: 'case', 'acceptIdentifier <TOKEN-TYPE>', 'acceptAll [<section-name>]', 'discardAll [<section-name>]', 'others', 'endWhich'." )
         endIf
@@ -710,5 +1168,45 @@ class FroleyParser : Parser
         Froley.entry_points.add( name )
       endIf
       return name
+
+    method parse_parser_methods
+      local top_level_method : ParserMethod
+      loop
+        consume_eols
+        if (not has_another) return
+        local t = peek
+        if (consume(TokenType.SYMBOL_MINUS))
+          top_level_method = parse_parser_method( t )
+        elseIf (consume(TokenType.SYMBOL_PLUS))
+          if (top_level_method is null)
+            throw t.error( "Must define a top-level method ('- ...') before defining a nested method." )
+          endIf
+          local m = parse_parser_method( t )
+          top_level_method.nested_method = m
+          top_level_method = m
+        else
+          throw t.error( "Syntax error - unexpected '$'." (t->String) )
+        endIf
+      endLoop
+
+    method parse_parser_method( t:Token )->ParserMethod
+      local m = ParserMethod( t, read_identifier )
+      Froley.parser_methods[ m.name ] = m
+
+      if (consume(TokenType.SYMBOL_COLON))
+        t = peek
+        local type_name = read_identifier
+        which (type_name)
+          case "ParseRule":       m.type = MethodTypeParseRule
+          case "BinaryParseRule": m.type = MethodTypeBinaryParseRule
+          others
+            throw t.error( "No such rule type '$'."(type_name) )
+        endWhich
+      endIf
+      must_consume( TokenType.EOL )
+
+      parse_multi_line_parser_statements( m.statements )
+
+      return m
 
 endClass

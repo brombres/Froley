@@ -1,0 +1,79 @@
+#---------------------------------------------------------------------
+[attributes]
+#---------------------------------------------------------------------
+structural
+
+#---------------------------------------------------------------------
+[symbols]
+#---------------------------------------------------------------------
+SYMBOL_ASTERISK             *
+SYMBOL_CLOSE_PAREN          )
+SYMBOL_MINUS                -
+SYMBOL_OPEN_PAREN           (
+SYMBOL_PLUS                 +
+SYMBOL_SLASH                /
+
+#---------------------------------------------------------------------
+[tokenizer]
+#---------------------------------------------------------------------
+<<tokenize>>
+while (hasAnother)
+  ch = peek
+  if (ch != ' ' and ch != '\n')
+    if (ch != '\t') goto whitespace_consumed
+  endIf
+  ch = read
+endWhile
+
+<whitespace_consumed>
+markSourcePosition
+if (not hasAnother) halt
+
+which (input)
+  acceptAll [symbols]
+  case '#'
+    ch = read
+    while (ch != '\n') ch = read
+    discard
+  others
+    ch = peek
+    if (ch is digit)
+      count = 10
+      scan_integer
+      accept INTEGER
+    endIf
+endWhich
+
+clear buffer
+collect "Syntax error - unexpected '"
+ch = peek
+collect ch
+collect "'."
+error buffer
+
+<scan_integer>
+while (ch is digit(count) or ch == '_')
+  ch = read
+  if (ch != '_') collect ch
+  if (not hasAnother) return
+  ch = peek
+endWhile
+return
+
+
+#---------------------------------------------------------------------
+[parser]
+#---------------------------------------------------------------------
+- parse_expression
+
++ parse_add_subtract : BinaryParseRule
+  on "+" -> CmdAdd
+  on "-" -> CmdSubtract
+
++ parse_multiply_divide : BinaryParseRule
+  on "*" -> CmdMultiply
+  on "/" -> CmdDivide
+
++ parse_term
+  on INTEGER -> CmdLiteralInt32
+

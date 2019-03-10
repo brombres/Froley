@@ -6,8 +6,8 @@ class ParserAssembler : Assembler
     VERSION = 1
 
   PROPERTIES
-    this_method : ParserMethod
-    cmd_types   = StringLookupList()
+    this_method    : ParserMethod
+    cmd_type_names = StringLookupList()
 
   METHODS
     method assemble( methods:LookupList<<ParserMethod>> )->Byte[]
@@ -19,7 +19,7 @@ class ParserAssembler : Assembler
 
     method cmd_type_index( name:String )->Int32
       strings.add( name )
-      return cmd_types.add( name )
+      return cmd_type_names.add( name )
 
     method to->Byte[]
       if (unresolved_labels.count)
@@ -37,13 +37,16 @@ class ParserAssembler : Assembler
         writer.write_string( value )
       endForEach
 
-      #{
-      writer.write_int32x( Froley.entry_points.count )
-      forEach (entry_point_name in Froley.entry_points)
-        writer.write_int32x( strings.locate(entry_point_name).value )
-        writer.write_int32x( label(entry_point_name).address.value )
+      writer.write_int32x( cmd_type_names.count )
+      forEach (value in cmd_type_names)
+        writer.write_int32x( strings.index(value) )
       endForEach
-      }#
+
+      writer.write_int32x( Froley.parser_methods.count )
+      forEach (m in Froley.parser_methods)
+        writer.write_int32x( strings.index(m.name) )
+        writer.write_int32x( m.start_label.address.value )
+      endForEach
 
       writer.write_int32x( code.count )
       forEach (value in code)

@@ -1,0 +1,17 @@
+$include "Code.rogue"
+$include "SimpleTokenizerVM.rogue"
+$include "TokenType.rogue"
+$include "TokenizerOpcode.rogue"
+$include "TokenizerVM.rogue"
+
+Simple()
+
+class Simple
+  PROPERTIES
+    tokenizer = SimpleTokenizerVM( Code.tokenizer_code )
+
+  METHODS
+    method init
+      tokenizer.tokenize( File("Test.simple") )
+endClass
+

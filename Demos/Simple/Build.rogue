@@ -1,7 +1,5 @@
 # To run this build file, install Rogue from github.com/AbePralle/Rogue and type "rogo" at the command line.
 
-#$ ROGUEC_ARGS = --api
-
 # Rogo is a "build your own build system" facilitator. At its core Rogo just recompiles build files if
 # needed and then runs the build executable while forwarding any command line arguments. This file contains
 # a default framework which uses introspection to turn command line arguments into parameterized routine calls.
@@ -10,78 +8,98 @@
 
 # "rogo_default" will run in the absence of any other command line argument.
 
-augment Build
-  PROPERTIES
-    EXE = select{System.os=="Windows":"Build/froley.exe" || "Build/Froley-"+System.os} : String
-    BINDIR   = "/usr/local/bin"
-endAugment
-
 routine rogo_default
-  rogo_build
-  execute( "cd Demos/Simple && rogo" )
-endRoutine
+  execute( "froley Simple.froley" )
+  local info = JSON.load( File("Simple.json") )
+  #trace info
 
-routine rogo_clean
-  execute( "rm -rf Build" )
-endRoutine
+  local max_name_count  = 0
+  local max_type_digit_count = 0
+  forEach (token_type in info//token_types)
+    max_name_count = max_name_count.or_larger( token_type//name.count )
+    max_type_digit_count = max_type_digit_count.or_larger( token_type//type->Int32.digit_count )
+  endForEach
 
-routine rogo_build
-  if (Files("Source/Froley","**.rogue").any_newer_than(Build.EXE))
-    File.create_folder( "Build" )
-    execute "roguec Source/Froley/Froley.rogue --output=$ --compile" (Build.EXE)
-  endIf
+  local writer = PrintWriter( File.writer("TokenType.rogue") )
+  writer.println "enum TokenType"
+  forEach (token_type in info//token_types)
+    writer.print "  "
+    writer.print token_type//name->String.left_justified( max_name_count )
+    writer.print " = "
+    writer.print token_type//type->String.right_justified( max_type_digit_count )
+    writer.println
+  endForEach
+  writer.println "endEnum"
+  writer.close
 
-  if (System.os != "Windows" and Process.run( "which froley", &inherit_environment ).output_string == "") install_launcher
-endRoutine
+  max_name_count  = 0
+  max_type_digit_count = 0
+  forEach (tokenizer_opcode in info//tokenizer_opcodes)
+    max_name_count = max_name_count.or_larger( tokenizer_opcode//name.count )
+    max_type_digit_count = max_type_digit_count.or_larger( tokenizer_opcode//value->Int32.digit_count )
+  endForEach
+  writer = PrintWriter( File.writer("TokenizerOpcode.rogue") )
+  writer.println "enum TokenizerOpcode"
+  forEach (tokenizer_opcode in info//tokenizer_opcodes)
+    writer.print "  "
+    writer.print tokenizer_opcode//name->String.left_justified( max_name_count )
+    writer.print " = "
+    writer.print tokenizer_opcode//value->String.right_justified( max_type_digit_count )
+    writer.println
+  endForEach
+  writer.println "endEnum"
+  writer.close
 
-routine rogo_execute( arg:String )
-  execute "$ $" (Build.EXE,arg)
-endRoutine
+  max_name_count  = 0
+  max_type_digit_count = 0
+  forEach (parser_opcode in info//parser_opcodes)
+    max_name_count = max_name_count.or_larger( parser_opcode//name.count )
+    max_type_digit_count = max_type_digit_count.or_larger( parser_opcode//value->Int32.digit_count )
+  endForEach
+  writer = PrintWriter( File.writer("ParserOpcode.rogue") )
+  writer.println "enum ParserOpcode"
+  forEach (parser_opcode in info//parser_opcodes)
+    writer.print "  "
+    writer.print parser_opcode//name->String.left_justified( max_name_count )
+    writer.print " = "
+    writer.print parser_opcode//value->String.right_justified( max_type_digit_count )
+    writer.println
+  endForEach
+  writer.println "endEnum"
+  writer.close
 
-routine rogo_link
-  install_launcher
-endRoutine
+  writer = PrintWriter( File.writer("Code.rogue") )
+  writer.println "class Code"
+  writer.println "  GLOBAL PROPERTIES"
 
-routine rogo_unlink
-  if (System.os == "Windows") return
-  local launcher = Process.run( "which froley", &inherit_environment ).output_string
-  if (launcher != "")
-    local cmd = "rm " + launcher
-    if (not execute(cmd,&suppress_error))
-      println "Error deleting $ - retrying with 'sudo'." (launcher)
-      #execute( "sudo " + cmd )
-    endIf
-  endIf
-endRoutine
+  writer.println "    tokenizer_code ="
+  forEach (line at index in info//tokenizer_code->String.word_wrap(64))
+    if (index > 0) writer.println( " ..." )
+    writer.print '      "'
+    writer.print line
+    writer.print '"'
+  endForEach
+  writer.println
+  writer.println
 
-routine install_launcher
-  if (System.os == "Windows") return
-  println "-------------------------------------------------------------------------------"
-  println "Creating $/froley launcher linked to $" (Build.BINDIR,Build.EXE)
-  println "-------------------------------------------------------------------------------"
+  writer.println "    parser_code ="
+  forEach (line at index in info//parser_code->String.word_wrap(64))
+    if (index > 0) writer.println( " ..." )
+    writer.print '      "'
+    writer.print line
+    writer.print '"'
+  endForEach
+  writer.println
+  writer.println
 
-  local sudo = ""
-  if (not File.exists(Build.BINDIR))
-    println "$ does not exist. Creating..." (Build.BINDIR)
-    if (not execute( "mkdir -p $" (Build.BINDIR), &suppress_error ))
-      println "Error creating folder, trying again with 'sudo'"
-      sudo = "sudo "
-      execute( "sudo mkdir -p $" (Build.BINDIR) )
-    endIf
-    println "Created."
-  endIf
+  writer.println "endClass"
+  writer.close
 
-  local folder = Process.run( "pwd" ).output_string.before_first('\n')
-  local script = "#!/bin/sh\n"
-  script += ''exec "$/$" "$@"\n'' (folder,Build.EXE,'$')
-  File.save( ".rogo/launcher.script", script )
-  if (not execute("$cp .rogo/launcher.script $/froley" (sudo,Build.BINDIR), &suppress_error=(sudo=="")))
-    println "Error copying launcher script - retrying with 'sudo'."
-    sudo = "sudo "
-    execute "sudo cp .rogo/launcher.script $/froley" (Build.BINDIR)
-  endIf
-  execute "$chmod a+x $/froley" (sudo,Build.BINDIR)
-  File.delete( ".rogo/launcher.script" )
+  #execute "cat TokenType.rogue"
+  #execute "cat Code.rogue"
+  File.create_folder( "Build" )
+  execute "roguec --execute Simple.rogue --output=Build"
+
 endRoutine
 
 routine execute( commands:String, &suppress_error )->Logical
@@ -132,7 +150,7 @@ class Build [singleton]
   METHODS
     method launch
       rogo_args.add( forEach in System.command_line_arguments )
-      read_local_defs
+      read_defs
       on_launch
       parse_args
       dispatch_command
@@ -203,10 +221,10 @@ class Build [singleton]
         on_command_found
       endBlock
 
-    method read_local_defs
-      read_local_defs( LOCAL_DEFS_FILE )
+    method read_defs
+      read_defs( LOCAL_DEFS_FILE )
 
-    method read_local_defs( defs_filepath:String )
+    method read_defs( defs_filepath:String )
       # Attempt to read defs from Local.mk
       local overrides = String[]
       if (File.exists(defs_filepath))

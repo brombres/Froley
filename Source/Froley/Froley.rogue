@@ -99,20 +99,30 @@ class Froley [singleton]
       parser.parse_parser_methods
       local parser_bytes = ParserAssembler().assemble( parser_methods )
 
+      #{
       local max_count  = 0
       local max_digits = 0
       forEach (def in token_defs_by_name)
         max_count = max_count.or_larger( def.name.count )
         max_digits = max_digits.or_larger( def.type.digit_count )
       endForEach
-      println "[Token Types]"
-      forEach (def at index in token_defs_by_name)
-        println "$ = $" (def.name.left_justified(max_count), def.type.format(max_digits->String))
-      endForEach
-      println
+      }#
 
-      println "[Tokenizer IntX+base64]"
-      println tokenizer_bytes.to_base64
+      local token_types = @[]
+      forEach (def at index in token_defs_by_name)
+        token_types.add( @{ name:def.name, type:def.type } )
+      endForEach
+
+      local tokenizer_opcodes = @[]
+      forEach (name in TokenizerOpcode.names)
+        tokenizer_opcodes.add( @{ :name, value:TokenizerOpcode(name)->Int32 } )
+      endForEach
+
+      local parser_opcodes = @[]
+      forEach (name in ParserOpcode.names)
+        parser_opcodes.add( @{ :name, value:ParserOpcode(name)->Int32 } )
+      endForEach
+
       #{
       local b64 = tokenizer_bytes.to_base64
       while (b64.count >= 64)
@@ -121,11 +131,27 @@ class Froley [singleton]
       endWhile
       if (b64.count) println b64
       }#
-      println
-      @trace tokenizer_bytes.count
+      #@trace tokenizer_bytes.count
 
-      local vm = TokenizerVM( tokenizer_bytes )
-      vm.tokenize( File("Test.txt") )
+      local language_name = filepath.before_last( ".froley", &ignore_case )
+      local output =
+      @{
+        language: language_name,
+        :token_types,
+        :tokenizer_opcodes,
+        tokenizer_code:tokenizer_bytes.to_base64,
+        :parser_opcodes,
+        parser_code:parser_bytes.to_base64
+      }
+
+      #@trace output
+      local output_filepath = "$.json"(language_name)
+      println "Writing " + output_filepath
+      File.save( output_filepath, output.to_json )
+
+      #local vm = TestVM( tokenizer_bytes )
+      #vm.tokenize( File("Test.txt") )
+
 
     method collect_definitions_and_extract_code( filepath:String, source:String )
       $localDefine PARSING_CONFIGURE   0
@@ -288,5 +314,11 @@ class Froley [singleton]
     method token_def( token_type:Int32 )->TokenDef
       return token_defs_by_type[ token_type ]
 
+endClass
+
+class TestVM : TokenizerVM
+  METHODS
+    method accept( token_type:Int32 )
+      @trace token_type, buffer
 endClass
 

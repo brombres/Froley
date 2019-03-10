@@ -16,6 +16,7 @@ class ParserMethod
 
     method write( assembler:ParserAssembler )
       assembler.this_method = this
+      assembler.strings.add( name )
       assembler.define( start_label )
       type.on_begin_method( this, assembler )
       assembler.define( recurse_label )

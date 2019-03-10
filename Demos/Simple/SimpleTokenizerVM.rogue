@@ -1,0 +1,8 @@
+class SimpleTokenizerVM : TokenizerVM
+  METHODS
+    method init( base64_code:String )
+      prior.init( base64_code.decode_base64 )
+
+    method accept( token_type:Int32 )
+      trace token_type, buffer
+endClass

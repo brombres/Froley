@@ -1,6 +1,3 @@
-module Froley
-  uses ParseKit<<Froley>>
-
 class TokenizerVM
   DEFINITIONS
     VERSION     = 1
@@ -36,7 +33,6 @@ class TokenizerVM
 
     method accept( token_type:Int32 )
       println "Accepting $ ($)" (token_type,buffer->String.to_escaped_ascii)
-      #println "Accepting $ ($)" (Froley.token_def(token_type).name,buffer->String.to_escaped_ascii)
 
     method execute
       local ip = start_ip
@@ -56,7 +52,8 @@ class TokenizerVM
             ++ip
             nextIteration
           case TokenizerOpcode.ERROR
-            throw FroleyError( filepath, scanner.source, scanner.line, scanner.column, buffer->String )
+            #throw FroleyError( filepath, scanner.source, scanner.line, scanner.column, buffer->String )
+            throw Error( buffer->String )
           case TokenizerOpcode.ACCEPT_INT32
             local token_type = code[ ip ]
             ip = start_ip
@@ -95,7 +92,7 @@ class TokenizerVM
             ip = code[ ip ]
             nextIteration
           case TokenizerOpcode.RETURN
-            if (stack.is_empty) throw FroleyError( "[Compiled Code]", "'return' on empty stack." )
+            if (stack.is_empty) throw Error( "[Compiled Code] 'return' on empty stack." )
             ip = stack.remove_last
             nextIteration
           case TokenizerOpcode.MARK_SOURCE_POS
@@ -109,9 +106,7 @@ class TokenizerVM
             ch = scanner.read
             nextIteration
           case TokenizerOpcode.PEEK_CH_INT32
-#trace "peek " + code[ip]
             ch = scanner.peek( code[ip] )
-#trace ch->Character
             ++ip
             nextIteration
           case TokenizerOpcode.PEEK_CH_COUNT
@@ -213,14 +208,14 @@ class TokenizerVM
             stack.add( ch )
             nextIteration
           case TokenizerOpcode.POP_CH
-            if (stack.is_empty) throw FroleyError( "[Compiled Code]", "'pop ch' on empty stack." )
+            if (stack.is_empty) throw Error( "[Compiled Code] 'pop ch' on empty stack." )
             ch = stack.remove_last
             nextIteration
           case TokenizerOpcode.PUSH_COUNT
             stack.add( count )
             nextIteration
           case TokenizerOpcode.POP_COUNT
-            if (stack.is_empty) throw FroleyError( "[Compiled Code]", "'pop count' on empty stack." )
+            if (stack.is_empty) throw Error( "[Compiled Code] 'pop count' on empty stack." )
             count = stack.remove_last
             nextIteration
           case TokenizerOpcode.SET_CH_TO_INT32
@@ -316,7 +311,7 @@ class TokenizerVM
             ip = cur_node + code[cur_node+1] * 2 + 2
             nextIteration
           others
-            throw FroleyError( "[INTERNAL] Unhandled opcode: " + TokenizerOpcode(opcode) )
+            throw Error( "[INTERNAL] Unhandled opcode: " + TokenizerOpcode(opcode) )
         endWhich
       endLoop
 
@@ -342,7 +337,7 @@ class TokenizerVM
       loop (n) code.add( reader.read_int32x )
 
     method tokenize( file:File )
-      if (not file.exists) throw FroleyError( "File not found: $." (file.filepath) )
+      if (not file.exists) throw Error( "File not found: $." (file.filepath) )
       tokenize( file.filepath, file.load_as_string )
 
     method tokenize( filepath, source:String )

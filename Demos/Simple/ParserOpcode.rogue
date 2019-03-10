@@ -1,0 +1,9 @@
+enum ParserOpcode
+  SYNTAX_ERROR  = 0
+  RETURN        = 1
+  JUMP          = 2
+  CALL          = 3
+  ON_TOKEN_TYPE = 4
+  CREATE_CMD    = 5
+  CONSUME_EOLS  = 6
+endEnum

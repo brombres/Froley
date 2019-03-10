@@ -64,16 +64,16 @@ return
 #---------------------------------------------------------------------
 [parser]
 #---------------------------------------------------------------------
-- parse_expression
+- expression
 
-+ parse_add_subtract : BinaryParseRule
++ add_subtract : BinaryParseRule
   on "+" -> CmdAdd
   on "-" -> CmdSubtract
 
-+ parse_multiply_divide : BinaryParseRule
++ multiply_divide : BinaryParseRule
   on "*" -> CmdMultiply
   on "/" -> CmdDivide
 
-+ parse_term
++ term
   on INTEGER -> CmdLiteralInt32
 

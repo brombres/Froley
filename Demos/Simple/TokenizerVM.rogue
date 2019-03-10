@@ -12,12 +12,13 @@ class TokenizerVM
     count        : Int32
     result       : Int32
     buffer       = StringBuilder()
+    tokens       = Token[](1024)
 
     filepath : String
     scanner  : Scanner
 
-    next_line   : Int32
-    next_column : Int32
+    line   : Int32
+    column : Int32
 
     start_ip = 0
 
@@ -31,8 +32,13 @@ class TokenizerVM
       id_characters['_'->Int32] = 1
       load( data )
 
+    method init( base64_code:String )
+      init( base64_code.decode_base64 )
+
     method accept( token_type:Int32 )
-      println "Accepting $ ($)" (token_type,buffer->String.to_escaped_ascii)
+      local t = Token( filepath, scanner.source, line, column, TokenType(token_type) )
+      if (buffer.count) t.content = buffer->String
+      tokens.add( t )
 
     method execute
       local ip = start_ip
@@ -52,8 +58,7 @@ class TokenizerVM
             ++ip
             nextIteration
           case TokenizerOpcode.ERROR
-            #throw FroleyError( filepath, scanner.source, scanner.line, scanner.column, buffer->String )
-            throw Error( buffer->String )
+            throw SimpleError( filepath, scanner.source, scanner.line, scanner.column, buffer->String )
           case TokenizerOpcode.ACCEPT_INT32
             local token_type = code[ ip ]
             ip = start_ip
@@ -92,12 +97,12 @@ class TokenizerVM
             ip = code[ ip ]
             nextIteration
           case TokenizerOpcode.RETURN
-            if (stack.is_empty) throw Error( "[Compiled Code] 'return' on empty stack." )
+            if (stack.is_empty) throw SimpleError( "[Compiled Code]", "'return' on empty stack." )
             ip = stack.remove_last
             nextIteration
           case TokenizerOpcode.MARK_SOURCE_POS
-            next_line = scanner.line
-            next_column = scanner.column
+            line   = scanner.line
+            column = scanner.column
             nextIteration
           case TokenizerOpcode.HAS_ANOTHER
             result = select{ scanner.has_another:1 || 0 }
@@ -208,14 +213,14 @@ class TokenizerVM
             stack.add( ch )
             nextIteration
           case TokenizerOpcode.POP_CH
-            if (stack.is_empty) throw Error( "[Compiled Code] 'pop ch' on empty stack." )
+            if (stack.is_empty) throw SimpleError( "[Compiled Code]", "'pop ch' on empty stack." )
             ch = stack.remove_last
             nextIteration
           case TokenizerOpcode.PUSH_COUNT
             stack.add( count )
             nextIteration
           case TokenizerOpcode.POP_COUNT
-            if (stack.is_empty) throw Error( "[Compiled Code] 'pop count' on empty stack." )
+            if (stack.is_empty) throw SimpleError( "[Compiled Code]", "'pop count' on empty stack." )
             count = stack.remove_last
             nextIteration
           case TokenizerOpcode.SET_CH_TO_INT32
@@ -311,7 +316,7 @@ class TokenizerVM
             ip = cur_node + code[cur_node+1] * 2 + 2
             nextIteration
           others
-            throw Error( "[INTERNAL] Unhandled opcode: " + TokenizerOpcode(opcode) )
+            throw SimpleError( "[INTERNAL]", "Unhandled tokenizer opcode: " + TokenizerOpcode(opcode) )
         endWhich
       endLoop
 
@@ -336,13 +341,16 @@ class TokenizerVM
       code.reserve( n )
       loop (n) code.add( reader.read_int32x )
 
-    method tokenize( file:File )
-      if (not file.exists) throw Error( "File not found: $." (file.filepath) )
+    method tokenize( file:File )->Token[]
+      if (not file.exists) throw SimpleError( "File not found: $." (file.filepath) )
       tokenize( file.filepath, file.load_as_string )
+      return tokens
 
-    method tokenize( filepath, source:String )
+    method tokenize( filepath, source:String )->Token[]
+      tokens.clear
       scanner = Scanner( source )
       execute
+      return tokens
 endClass
 
 class EntryPoint( name:String, ip:Int32 ) [compound]

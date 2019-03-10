@@ -42,14 +42,19 @@ class MethodTypeParseRule : MethodType [singleton]
       noAction
 
     method on_end_method( m:ParserMethod, assembler:ParserAssembler )
-      assembler.write( ParserOpcode.SYNTAX_ERROR )
+      if (m.nested_method)
+        assembler.write( ParserOpcode.JUMP, m.nested_method.start_label )
+      else
+        assembler.write( ParserOpcode.SYNTAX_ERROR )
+      endIf
 
     method write( m:ParserMethod, cmd:ParserCmdOnTypeProduce, assembler:ParserAssembler )
       local label_no_match = Label()
       assembler.write( ParserOpcode.ON_TOKEN_TYPE, Froley.token_defs_by_symbol[cmd.token_type_name].type )
       assembler.write_address( label_no_match )
       assembler.write( ParserOpcode.CREATE_CMD, assembler.cmd_type_index(cmd.cmd_type_name) )
-      assembler.write( 1 )
+      assembler.write( 0 )  # 0 Cmd args
+      assembler.write( ParserOpcode.RETURN )
       assembler.define( label_no_match )
 endClass
 
@@ -73,7 +78,7 @@ class MethodTypeBinaryParseRule : MethodType [singleton]
       assembler.write( ParserOpcode.CONSUME_EOLS )
       assembler.write( ParserOpcode.CALL, m.nested_method.start_label )
       assembler.write( ParserOpcode.CREATE_CMD, assembler.cmd_type_index(cmd.cmd_type_name) )
-      assembler.write( 3 )
+      assembler.write( 2 ) # 2 Cmd args
       assembler.write( ParserOpcode.JUMP, m.recurse_label )
       assembler.define( label_no_match )
 endClass

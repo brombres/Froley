@@ -1,0 +1,12 @@
+class Token( filepath:String, source:String, line:Int32, column:Int32, type:TokenType, content=null:String )
+  METHODS
+    method cloned->Token
+      return Token( filepath, source, line, column, type, content )
+
+    method error( message:String )->SimpleError
+      return SimpleError( filepath, source, line, column, message )
+
+    method to->String
+      if (content) return "$($)"(type,content)
+      else         return type->String
+endClass

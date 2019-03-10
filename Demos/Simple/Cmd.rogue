@@ -1,0 +1,59 @@
+module [essential]
+
+class Cmd
+  PROPERTIES
+    t : Token
+
+  METHODS
+    method init( t, args:Cmd[] )
+      throw UnsupportedOperationError()
+endClass
+
+class CmdLiteralInt32( t, value:Int32 ) : Cmd
+  METHODS
+    method init( t, args:Cmd[] )
+      assert args.is_empty
+      assert t.content
+      value = t.content->Int32
+
+    method to->String
+      return value->String
+endClass
+
+class CmdBinary( t, left:Cmd, right:Cmd ) : Cmd
+  METHODS
+    method init( t, args:Cmd[] )
+      assert args.count == 2
+      left = args.first
+      right = args.last
+
+    method op->String
+      throw UnsupportedOperationError()
+
+    method to->String
+      return "$ $ $" (left,op,right)
+endClass
+
+class CmdAdd : CmdBinary
+  METHODS
+    method op->String
+      return "+"
+endClass
+
+class CmdSubtract : CmdBinary
+  METHODS
+    method op->String
+      return "-"
+endClass
+
+class CmdMultiply : CmdBinary
+  METHODS
+    method op->String
+      return "*"
+endClass
+
+class CmdDivide : CmdBinary
+  METHODS
+    method op->String
+      return "/"
+endClass

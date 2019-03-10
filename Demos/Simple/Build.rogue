@@ -98,7 +98,7 @@ routine rogo_default
   #execute "cat TokenType.rogue"
   #execute "cat Code.rogue"
   File.create_folder( "Build" )
-  execute "roguec --execute Simple.rogue --output=Build"
+  execute "roguec --execute --debug Simple.rogue --output=Build"
 
 endRoutine
 

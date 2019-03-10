@@ -1,0 +1,151 @@
+class ParserVM
+  DEFINITIONS
+    VERSION     = 1
+    MIN_VERSION = 1
+
+  PROPERTIES
+    code          = Int32[]
+    strings       = String[]
+    tokens        = Token[]
+    methods       = LookupList<<Int32>>()
+    cmd_types     = TypeInfo[]
+
+    call_stack    = Int32[]
+    token_stack   = Token[]
+
+    cmd_queue     = Cmd[]
+    cmd_args      = Cmd[]
+
+    position        = 0
+    cur_token       : Token
+    next_token_type : Int32
+
+  METHODS
+    method init( data:Byte[] )
+      load( data )
+
+    method init( base64_code:String )
+      init( base64_code.decode_base64 )
+
+    method execute( ip:Int32 )
+      loop
+        local opcode = code[ ip ]
+        #println "$ $" (ip.format("03"),ParserOpcode(opcode))
+        ++ip
+        which (opcode)
+          case ParserOpcode.SYNTAX_ERROR
+            if (position == tokens.count)
+              local message = "Unexpected end of input."
+              if (tokens.is_empty) throw SimpleError( message )
+              local t = tokens.last.cloned
+              ++t.column
+              throw t.error( message )
+            else
+              local t = tokens[ position ]
+              throw t.error( "Syntax error - unexpected '$'." (t) )
+            endIf
+          case ParserOpcode.RETURN
+            if (call_stack.is_empty) return
+            ip = call_stack.remove_last
+            cur_token = token_stack.remove_last
+            nextIteration
+          case ParserOpcode.JUMP
+            ip = code[ ip ]
+            nextIteration
+          case ParserOpcode.CALL
+            call_stack.add( ip+1 )
+            token_stack.add( cur_token )
+            ip = code[ ip ]
+            nextIteration
+          case ParserOpcode.ON_TOKEN_TYPE
+            if (code[ip] == next_token_type)
+              ip += 2
+              cur_token = read
+            else
+              ip = code[ ip+1 ]
+            endIf
+            nextIteration
+          case ParserOpcode.CREATE_CMD
+            local cmd_type = cmd_types[ code[ip] ]
+            local arg_count = code[ ip+1 ]
+            ip += 2
+            cmd_args.clear
+            if (arg_count > 0)
+              local i1 = cmd_queue.count - arg_count
+              cmd_args.add( forEach in cmd_queue from i1 )
+              cmd_queue.discard_from( i1 )
+            endIf
+            cmd_queue.add( cmd_type.create_object<<Cmd>>.init(cur_token, cmd_args) )
+            nextIteration
+
+          case ParserOpcode.CONSUME_EOLS
+            #while (next_token_type == TokenType.EOL) read
+            nextIteration
+          others
+            throw SimpleError( "[INTERNAL]", "Unhandled parser opcode: " + ParserOpcode(opcode) )
+        endWhich
+      endLoop
+
+    method load( data:Byte[] )
+      load( DataReader(data) )
+
+    method load( reader:DataReader )
+      local version = reader.read_int32x
+      require version >= MIN_VERSION
+      local n = reader.read_int32x
+
+      strings.reserve( n )
+      loop (n) strings.add( reader.read_string )
+
+      # Cmd Names
+      n = reader.read_int32x
+      loop (n)
+        local name = strings[ reader.read_int32x ]
+        local type = TypeInfo[ name ]
+        if (type is null) throw SimpleError( "[INTERNAL]", "No such command class: $."(name) )
+        cmd_types.add( type )
+      endLoop
+
+      # Method names & addresses
+      n = reader.read_int32x
+      methods.reserve( n )
+      loop (n)
+        local name = strings[ reader.read_int32x ]
+        methods[ name ] = reader.read_int32x
+      endLoop
+
+      n = reader.read_int32x
+      code.reserve( n )
+      loop (n) code.add( reader.read_int32x )
+
+    method parse( rule_name:String )->Cmd
+      local index = methods.locate( rule_name )
+      if (not index.exists) throw SimpleError( "[INTERNAL]", "No parse rule '$' exists."(rule_name) )
+      return parse( methods[index.value] )
+
+    method parse( address:Int32 )->Cmd
+      call_stack.clear
+      cmd_queue.clear
+      execute( address )
+      if (cmd_queue.count) return cmd_queue.remove_last
+      else                 return null
+
+    method read->Token
+      ++position
+      if (position < tokens.count) next_token_type = tokens[position].type->Int32
+      else                         next_token_type = -1
+      return tokens[ position-1 ]
+
+    method set_tokens( tokens:Token[] )
+      @tokens.clear
+      @tokens.add( tokens )
+      if (tokens.count)
+        next_token_type = tokens.first.type->Int32
+      else
+        next_token_type = -1
+      endIf
+      position = 0
+      cur_token = null
+
+endClass
+

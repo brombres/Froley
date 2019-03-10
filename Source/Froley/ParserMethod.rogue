@@ -50,7 +50,7 @@ class MethodTypeParseRule : MethodType [singleton]
 
     method write( m:ParserMethod, cmd:ParserCmdOnTypeProduce, assembler:ParserAssembler )
       local label_no_match = Label()
-      assembler.write( ParserOpcode.ON_TOKEN_TYPE, Froley.token_defs_by_symbol[cmd.token_type_name].type )
+      assembler.write( ParserOpcode.ON_TOKEN_TYPE, Froley.token_defs_by_name[cmd.token_type_name].type )
       assembler.write_address( label_no_match )
       assembler.write( ParserOpcode.CREATE_CMD, assembler.cmd_type_index(cmd.cmd_type_name) )
       assembler.write( 0 )  # 0 Cmd args
@@ -72,7 +72,7 @@ class MethodTypeBinaryParseRule : MethodType [singleton]
 
     method write( m:ParserMethod, cmd:ParserCmdOnTypeProduce, assembler:ParserAssembler )
       local label_no_match = Label()
-      assembler.write( ParserOpcode.ON_TOKEN_TYPE, Froley.token_defs_by_symbol[cmd.token_type_name].type )
+      assembler.write( ParserOpcode.ON_TOKEN_TYPE, Froley.token_defs_by_name[cmd.token_type_name].type )
       assembler.write_address( label_no_match )
 
       assembler.write( ParserOpcode.CONSUME_EOLS )

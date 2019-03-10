@@ -31,7 +31,7 @@ class CmdBinary( t, left:Cmd, right:Cmd ) : Cmd
       throw UnsupportedOperationError()
 
     method to->String
-      return "$ $ $" (left,op,right)
+      return "($ $ $)" (left,op,right)
 endClass
 
 class CmdAdd : CmdBinary

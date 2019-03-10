@@ -19,7 +19,7 @@ class Simple
     method init
       try
         local tokens = tokenizer.tokenize( File("Test.simple") )
-        parser.tokens = tokens
+        parser.open( "Test.simple", tokens )
         local cmd = parser.parse( "expression" )
         @trace cmd
       catch (err:SimpleError)

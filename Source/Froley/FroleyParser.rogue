@@ -611,6 +611,27 @@ class FroleyParser : Parser
         endIf
       endIf
 
+    method read_token_type_name->String
+      local token_type_name : String
+      if (next_is(TokenType.STRING))
+        local symbol = read.text
+        if (Froley.token_defs_by_symbol.contains(symbol))
+          token_type_name = Froley.token_defs_by_symbol[ symbol ].name
+        else
+          throw peek.error( "No token has symbol '$'." (symbol) )
+        endIf
+      elseIf (next_is(TokenType.IDENTIFIER))
+        token_type_name = read_identifier
+      else
+        throw peek.error( "Token symbol or type name expected." )
+      endIf
+
+      if (not Froley.token_defs_by_name.contains(token_type_name))
+        throw peek.error( "Invalid token type: '$'." (token_type_name) )
+      endIf
+
+      return token_type_name
+
     method parse_parser_statement( statements:CmdStatements, &allow_control_structures )
       consume_eols
       if (not has_another) return
@@ -618,25 +639,14 @@ class FroleyParser : Parser
       if (t.type.is_structural) return
 
       if (consume(TokenType.KEYWORD_ON))
-        local token_type_name : String
-        if (next_is(TokenType.STRING))
-          token_type_name = read.text
-        elseIf (next_is(TokenType.IDENTIFIER))
-          token_type_name = read_identifier
-        else
-          throw peek.error( "Token type name expected." )
-        endIf
-
-        if (not Froley.token_defs_by_symbol.contains(token_type_name))
-          throw peek.error( "Invalid token type: '$'." (token_type_name) )
-        endIf
-
+        local token_type_name = read_token_type_name
         local t2 = peek
         if (consume(TokenType.SYMBOL_ARROW))
           local cmd = ParserCmdOnTypeProduce( t, token_type_name, read_identifier )
           statements.add( cmd )
           return
-        elseIf (consume(TokenType.EOL) or consume(TokenType.SYMBOL_COLON))
+        else
+          consume( TokenType.SYMBOL_COLON )
           local cmd = ParserCmdOnType( t, token_type_name )
           statements.add( cmd )
           parse_multi_line_parser_statements( cmd.statements )
@@ -646,9 +656,17 @@ class FroleyParser : Parser
       elseIf (consume(TokenType.KEYWORD_SYNTAX_ERROR))
         statements.add( ParserCmdSyntaxError(t) )
         return
+
+      elseIf (consume(TokenType.KEYWORD_MUST_CONSUME))
+        statements.add( ParserCmdMustConsumeType(t,read_token_type_name) )
+        return
+
+      elseIf (consume(TokenType.KEYWORD_RETURN))
+        statements.add( ParserCmdReturn(t,null) )
+        return
       endIf
 
-      throw t.error( "TODO" )
+      statements.add( parse_parser_expression() )
 
       #{
       if (allow_control_structures)

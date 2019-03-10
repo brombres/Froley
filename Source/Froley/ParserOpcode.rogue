@@ -8,6 +8,7 @@ enum ParserOpcode( size=1:Int32 )
   ON_TOKEN_TYPE(3)      # TYPE:INT32:ARG1 ADDRESS_IF_NO_MATCH:ARG2
   CREATE_CMD(3)         # TYPE_INDEX:ARG1 ARGC:ARG2
   CONSUME_EOLS          #
+  MUST_CONSUME_TYPE(2)  # TYPE_INDEX:ARG1
 
   #{
   RESTART               # BUFFER.clear, IP = START_IP

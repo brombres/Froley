@@ -4,6 +4,7 @@ class ParserVM
     MIN_VERSION = 1
 
   PROPERTIES
+    filepath      : String
     code          = Int32[]
     strings       = String[]
     tokens        = Token[]
@@ -35,11 +36,7 @@ class ParserVM
         which (opcode)
           case ParserOpcode.SYNTAX_ERROR
             if (position == tokens.count)
-              local message = "Unexpected end of input."
-              if (tokens.is_empty) throw SimpleError( message )
-              local t = tokens.last.cloned
-              ++t.column
-              throw t.error( message )
+              throw peek.error( "Syntax error - unexpected end of input." )
             else
               local t = tokens[ position ]
               throw t.error( "Syntax error - unexpected '$'." (t) )
@@ -81,6 +78,15 @@ class ParserVM
           case ParserOpcode.CONSUME_EOLS
             #while (next_token_type == TokenType.EOL) read
             nextIteration
+
+          case ParserOpcode.MUST_CONSUME_TYPE
+            if (next_token_type == code[ip])
+              read
+              ++ip
+            else
+              throw peek.error( "Expected '$'."(TokenType(code[ip])) )
+            endIf
+
           others
             throw SimpleError( "[INTERNAL]", "Unhandled parser opcode: " + ParserOpcode(opcode) )
         endWhich
@@ -130,13 +136,23 @@ class ParserVM
       if (cmd_queue.count) return cmd_queue.remove_last
       else                 return null
 
+    method peek->Token
+      if (position == tokens.count)
+        if (tokens.is_empty) return Token( filepath, "", 0, 0, TokenType(0) )
+        local t = tokens.last.cloned
+        ++t.column
+        return t
+      else
+        return tokens[ position ]
+      endIf
+
     method read->Token
       ++position
       if (position < tokens.count) next_token_type = tokens[position].type->Int32
       else                         next_token_type = -1
       return tokens[ position-1 ]
 
-    method set_tokens( tokens:Token[] )
+    method open( filepath, tokens:Token[] )
       @tokens.clear
       @tokens.add( tokens )
       if (tokens.count)

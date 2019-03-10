@@ -45,8 +45,10 @@ class Launcher
           Froley.parse( File(target) )
         endForEach
 
-      catch (error:FroleyError)
-        println error
+      catch (error:Error)
+        Console.error.println error
+        System.exit 1
+
       endTry
 endClass
 

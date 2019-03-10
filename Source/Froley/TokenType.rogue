@@ -39,6 +39,7 @@ augment TokenType
   KEYWORD_LETTER          ( "letter",            &is_keyword )
   KEYWORD_MARK_SRC_POS    ( "markSourcePosition",&is_keyword )
   KEYWORD_MODE            ( "mode",              &is_keyword )
+  KEYWORD_MUST_CONSUME    ( "mustConsume",       &is_keyword )
   KEYWORD_NOT             ( "not",               &is_keyword )
   KEYWORD_OTHERS          ( "others",            &is_keyword, &is_structural )
   KEYWORD_OR              ( "or",                &is_keyword )

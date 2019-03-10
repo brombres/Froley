@@ -774,9 +774,10 @@ class ParserCmdOnType( t, token_type_name:String ) : Cmd
   METHODS
     method write( assembler:ParserAssembler )
       local label_if_no_match = Label()
-      assembler.write( ParserOpcode.ON_TOKEN_TYPE, Froley.token_defs_by_symbol[token_type_name].type )
-      statements.write( assembler )
+      assembler.write( ParserOpcode.ON_TOKEN_TYPE, Froley.token_defs_by_name[token_type_name].type )
       assembler.write_address( label_if_no_match )
+      statements.write( assembler )
+      assembler.define( label_if_no_match )
 endClass
 
 class ParserCmdOnTypeProduce( t, token_type_name:String, cmd_type_name:String ) : Cmd
@@ -788,6 +789,12 @@ class ParserCmdOnTypeProduce( t, token_type_name:String, cmd_type_name:String ) 
       assembler.this_method.write( this, assembler )
 endClass
 
+class ParserCmdMustConsumeType( t, token_type_name:String ) : Cmd
+  METHODS
+    method write( assembler:ParserAssembler )
+      assembler.write( ParserOpcode.MUST_CONSUME_TYPE, Froley.token_defs_by_name[token_type_name].type )
+endClass
+
 class ParserCmdReturn( t, expression:Cmd ) : Cmd
   METHODS
     method write( assembler:ParserAssembler )
@@ -796,11 +803,18 @@ class ParserCmdReturn( t, expression:Cmd ) : Cmd
 
 endClass
 
-class ParserCmdAccess : Cmd
+class ParserCmdAccess( t, name:String ) : Cmd
   METHODS
-    #method write( assembler:ParserAssembler )
-      #if (expression) expression.write( assembler )
-      #assembler.write( ParserOpcode.RETURN )
+    method init( t )
+      name = t->String
+
+    method write( assembler:ParserAssembler )
+      local m = Froley.parser_methods[ t ]
+      if (m)
+        assembler.write( ParserOpcode.CALL, m.start_label )
+      else
+        throw t.error( "No such rule or method '$'." (name) )
+      endIf
 endClass
 
 class ParserCmdSyntaxError : Cmd

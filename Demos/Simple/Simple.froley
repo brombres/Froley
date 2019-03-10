@@ -76,4 +76,8 @@ return
 
 + term
   on INTEGER -> CmdLiteralInt32
+  on "("
+    expression
+    mustConsume ")"
+    return
 

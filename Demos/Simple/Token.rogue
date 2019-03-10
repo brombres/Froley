@@ -7,6 +7,6 @@ class Token( filepath:String, source:String, line:Int32, column:Int32, type:Toke
       return SimpleError( filepath, source, line, column, message )
 
     method to->String
-      if (content) return "$($)"(type,content)
-      else         return type->String
+      if (content) return content
+      return type->String
 endClass

@@ -84,3 +84,29 @@ class MethodTypeBinaryParseRule : MethodType [singleton]
 endClass
 
 
+class MethodTypeRightAssociativeBinaryParseRule : MethodType [singleton]
+  METHODS
+    method on_begin_method( m:ParserMethod, assembler:ParserAssembler )
+      if (m.nested_method)
+        assembler.write( ParserOpcode.CALL, m.nested_method.start_label )
+      else
+        throw m.t.error( "No nested method for RightAssociativeBinaryParseRule." )
+      endIf
+
+    method on_end_method( m:ParserMethod, assembler:ParserAssembler )
+      assembler.write( ParserOpcode.RETURN )
+
+    method write( m:ParserMethod, cmd:ParserCmdOnTypeProduce, assembler:ParserAssembler )
+      local label_no_match = Label()
+      assembler.write( ParserOpcode.ON_TOKEN_TYPE, Froley.token_defs_by_name[cmd.token_type_name].type )
+      assembler.write_address( label_no_match )
+
+      assembler.write( ParserOpcode.CONSUME_EOLS )
+      assembler.write( ParserOpcode.CALL, m.start_label )
+      assembler.write( ParserOpcode.CREATE_CMD, assembler.cmd_type_index(cmd.cmd_type_name) )
+      assembler.write( 2 ) # 2 Cmd args
+      assembler.write( ParserOpcode.RETURN )
+      assembler.define( label_no_match )
+endClass
+
+

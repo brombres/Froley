@@ -63,3 +63,9 @@ class CmdPower : CmdBinary
     method op->String
       return "^"
 endClass
+
+class CmdAssign : CmdBinary
+  METHODS
+    method op->String
+      return "="
+endClass

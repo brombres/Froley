@@ -69,6 +69,9 @@ class ParserVM
             cmd_args.clear
             if (arg_count > 0)
               local i1 = cmd_queue.count - arg_count
+              if (i1 < 0)
+                throw cur_token.error( "[INTERNAL] Command queue too small." )
+              endIf
               cmd_args.add( forEach in cmd_queue from i1 )
               cmd_queue.discard_from( i1 )
             endIf

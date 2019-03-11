@@ -14,6 +14,7 @@ INTEGER integer
 SYMBOL_ASTERISK             *
 SYMBOL_CARET                ^
 SYMBOL_CLOSE_PAREN          )
+SYMBOL_EQUALS               =
 SYMBOL_MINUS                -
 SYMBOL_OPEN_PAREN           (
 SYMBOL_PLUS                 +
@@ -71,6 +72,9 @@ return
 [parser]
 #---------------------------------------------------------------------
 - expression
+
++ assign : RightAssociativeBinaryParseRule
+  on "=" -> CmdAssign
 
 + add_subtract : BinaryParseRule
   on "+" -> CmdAdd

@@ -12,6 +12,7 @@ INTEGER integer
 [symbols]
 #---------------------------------------------------------------------
 SYMBOL_ASTERISK             *
+SYMBOL_CARET                ^
 SYMBOL_CLOSE_PAREN          )
 SYMBOL_MINUS                -
 SYMBOL_OPEN_PAREN           (
@@ -78,6 +79,9 @@ return
 + multiply_divide : BinaryParseRule
   on "*" -> CmdMultiply
   on "/" -> CmdDivide
+
++ power : BinaryParseRule
+  on "^" -> CmdPower
 
 + term
   on INTEGER -> CmdLiteralInt32

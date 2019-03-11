@@ -92,6 +92,9 @@ class ParserVM
         endWhich
       endLoop
 
+    method has_another->Logical
+      return (position < tokens.count)
+
     method load( data:Byte[] )
       load( DataReader(data) )
 

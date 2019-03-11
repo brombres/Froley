@@ -9,98 +9,104 @@
 # "rogo_default" will run in the absence of any other command line argument.
 
 routine rogo_default
-  execute( "froley Simple.froley" )
-  local info = JSON.load( File("Simple.json") )
-  #trace info
+  if (File.is_newer_than("Simple.froley","Simple.json"))
+    execute( "froley Simple.froley" )
+    local info = JSON.load( File("Simple.json") )
+    #trace info
 
-  # TokenType
-  local max_name_count  = 0
-  local max_type_digit_count = 0
-  forEach (token_type in info//token_types)
-    max_name_count = max_name_count.or_larger( token_type//name.count + token_type//symbol->String.to_escaped_ascii("\"").count + 4 )
-    max_type_digit_count = max_type_digit_count.or_larger( token_type//type->Int32.digit_count )
-  endForEach
+    # TokenType
+    local max_name_count  = 0
+    local max_type_digit_count = 0
+    forEach (token_type in info//token_types)
+      max_name_count = max_name_count.or_larger( token_type//name.count + token_type//symbol->String.to_escaped_ascii("\"").count + 4 )
+      max_type_digit_count = max_type_digit_count.or_larger( token_type//type->Int32.digit_count )
+    endForEach
 
-  local writer = PrintWriter( File.writer("TokenType.rogue") )
-  writer.println "enum TokenType( symbol:String )"
-  forEach (token_type in info//token_types)
-    writer.print "  "
-    local declaration = '$("$")' (token_type//name,token_type//symbol->String.to_escaped_ascii("\""))
-    writer.print declaration.left_justified( max_name_count )
-    writer.print " = "
-    writer.print token_type//type->String.right_justified( max_type_digit_count )
+    local writer = PrintWriter( File.writer("TokenType.rogue") )
+    writer.println "enum TokenType( symbol:String )"
+    forEach (token_type in info//token_types)
+      writer.print "  "
+      local declaration = '$("$")' (token_type//name,token_type//symbol->String.to_escaped_ascii("\""))
+      writer.print declaration.left_justified( max_name_count )
+      writer.print " = "
+      writer.print token_type//type->String.right_justified( max_type_digit_count )
+      writer.println
+    endForEach
+    writer.println "endEnum"
+    writer.close
+
+    max_name_count  = 0
+    max_type_digit_count = 0
+    forEach (tokenizer_opcode in info//tokenizer_opcodes)
+      max_name_count = max_name_count.or_larger( tokenizer_opcode//name.count )
+      max_type_digit_count = max_type_digit_count.or_larger( tokenizer_opcode//value->Int32.digit_count )
+    endForEach
+    writer = PrintWriter( File.writer("TokenizerOpcode.rogue") )
+    writer.println "enum TokenizerOpcode"
+    forEach (tokenizer_opcode in info//tokenizer_opcodes)
+      writer.print "  "
+      writer.print tokenizer_opcode//name->String.left_justified( max_name_count )
+      writer.print " = "
+      writer.print tokenizer_opcode//value->String.right_justified( max_type_digit_count )
+      writer.println
+    endForEach
+    writer.println "endEnum"
+    writer.close
+
+    max_name_count  = 0
+    max_type_digit_count = 0
+    forEach (parser_opcode in info//parser_opcodes)
+      max_name_count = max_name_count.or_larger( parser_opcode//name.count )
+      max_type_digit_count = max_type_digit_count.or_larger( parser_opcode//value->Int32.digit_count )
+    endForEach
+    writer = PrintWriter( File.writer("ParserOpcode.rogue") )
+    writer.println "enum ParserOpcode"
+    forEach (parser_opcode in info//parser_opcodes)
+      writer.print "  "
+      writer.print parser_opcode//name->String.left_justified( max_name_count )
+      writer.print " = "
+      writer.print parser_opcode//value->String.right_justified( max_type_digit_count )
+      writer.println
+    endForEach
+    writer.println "endEnum"
+    writer.close
+
+    writer = PrintWriter( File.writer("Code.rogue") )
+    writer.println "class Code"
+    writer.println "  GLOBAL PROPERTIES"
+
+    writer.println "    tokenizer_code ="
+    forEach (line at index in info//tokenizer_code->String.word_wrap(64))
+      if (index > 0) writer.println( " ..." )
+      writer.print '      "'
+      writer.print line
+      writer.print '"'
+    endForEach
     writer.println
-  endForEach
-  writer.println "endEnum"
-  writer.close
-
-  max_name_count  = 0
-  max_type_digit_count = 0
-  forEach (tokenizer_opcode in info//tokenizer_opcodes)
-    max_name_count = max_name_count.or_larger( tokenizer_opcode//name.count )
-    max_type_digit_count = max_type_digit_count.or_larger( tokenizer_opcode//value->Int32.digit_count )
-  endForEach
-  writer = PrintWriter( File.writer("TokenizerOpcode.rogue") )
-  writer.println "enum TokenizerOpcode"
-  forEach (tokenizer_opcode in info//tokenizer_opcodes)
-    writer.print "  "
-    writer.print tokenizer_opcode//name->String.left_justified( max_name_count )
-    writer.print " = "
-    writer.print tokenizer_opcode//value->String.right_justified( max_type_digit_count )
     writer.println
-  endForEach
-  writer.println "endEnum"
-  writer.close
 
-  max_name_count  = 0
-  max_type_digit_count = 0
-  forEach (parser_opcode in info//parser_opcodes)
-    max_name_count = max_name_count.or_larger( parser_opcode//name.count )
-    max_type_digit_count = max_type_digit_count.or_larger( parser_opcode//value->Int32.digit_count )
-  endForEach
-  writer = PrintWriter( File.writer("ParserOpcode.rogue") )
-  writer.println "enum ParserOpcode"
-  forEach (parser_opcode in info//parser_opcodes)
-    writer.print "  "
-    writer.print parser_opcode//name->String.left_justified( max_name_count )
-    writer.print " = "
-    writer.print parser_opcode//value->String.right_justified( max_type_digit_count )
+    writer.println "    parser_code ="
+    forEach (line at index in info//parser_code->String.word_wrap(64))
+      if (index > 0) writer.println( " ..." )
+      writer.print '      "'
+      writer.print line
+      writer.print '"'
+    endForEach
     writer.println
-  endForEach
-  writer.println "endEnum"
-  writer.close
+    writer.println
 
-  writer = PrintWriter( File.writer("Code.rogue") )
-  writer.println "class Code"
-  writer.println "  GLOBAL PROPERTIES"
-
-  writer.println "    tokenizer_code ="
-  forEach (line at index in info//tokenizer_code->String.word_wrap(64))
-    if (index > 0) writer.println( " ..." )
-    writer.print '      "'
-    writer.print line
-    writer.print '"'
-  endForEach
-  writer.println
-  writer.println
-
-  writer.println "    parser_code ="
-  forEach (line at index in info//parser_code->String.word_wrap(64))
-    if (index > 0) writer.println( " ..." )
-    writer.print '      "'
-    writer.print line
-    writer.print '"'
-  endForEach
-  writer.println
-  writer.println
-
-  writer.println "endClass"
-  writer.close
+    writer.println "endClass"
+    writer.close
+  endIf
 
   #execute "cat TokenType.rogue"
   #execute "cat Code.rogue"
-  File.create_folder( "Build" )
-  execute "roguec --execute --debug Simple.rogue --output=Build"
+  if (Files(".","*.rogue").any_newer_than("Build/Simple"))
+    File.create_folder( "Build" )
+    execute "roguec --execute --debug Simple.rogue --output=Build"
+  else
+    execute "Build/Simple"
+  endIf
 
 endRoutine
 

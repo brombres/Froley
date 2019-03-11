@@ -20,8 +20,10 @@ class Simple
       try
         local tokens = tokenizer.tokenize( File("Test.simple") )
         parser.open( "Test.simple", tokens )
-        local cmd = parser.parse( "expression" )
-        @trace cmd
+        while (parser.has_another)
+          local cmd = parser.parse( "expression" )
+          println cmd
+        endWhile
       catch (err:SimpleError)
         Console.error.println err
       endTry

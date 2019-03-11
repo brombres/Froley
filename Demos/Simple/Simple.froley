@@ -87,6 +87,9 @@ return
 + power : BinaryParseRule
   on "^" -> CmdPower
 
++ pre_unary : PreUnaryParseRule
+  on "-" -> CmdNegate
+
 + term
   on INTEGER -> CmdLiteralInt32
   on "("

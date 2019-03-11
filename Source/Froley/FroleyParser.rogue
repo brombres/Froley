@@ -1215,8 +1215,10 @@ class FroleyParser : Parser
         t = peek
         local type_name = read_identifier
         which (type_name)
-          case "ParseRule":       m.type = MethodTypeParseRule
-          case "BinaryParseRule": m.type = MethodTypeBinaryParseRule
+          case "ParseRule":          m.type = MethodTypeParseRule
+          case "PreUnaryParseRule":  m.type = MethodTypePreUnaryParseRule
+          case "PostUnaryParseRule": m.type = MethodTypePostUnaryParseRule
+          case "BinaryParseRule":    m.type = MethodTypeBinaryParseRule
           case "RightAssociativeBinaryParseRule": m.type = MethodTypeRightAssociativeBinaryParseRule
           others
             throw t.error( "No such rule type '$'."(type_name) )

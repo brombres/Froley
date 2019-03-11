@@ -1,3 +1,5 @@
+$define TRACE 0
+
 class ParserVM
   DEFINITIONS
     VERSION     = 1
@@ -21,6 +23,8 @@ class ParserVM
     cur_token       : Token
     next_token_type : Int32
 
+    methods_by_address = Table<<Int32,String>>()
+
   METHODS
     method init( data:Byte[] )
       load( data )
@@ -31,7 +35,10 @@ class ParserVM
     method execute( ip:Int32 )
       loop
         local opcode = code[ ip ]
-        #println "$ $" (ip.format("03"),ParserOpcode(opcode))
+        $if TRACE
+          if (methods_by_address.contains(ip)) println methods_by_address[ip]
+          println "  $ $ (next:$)" (ip.format("03"),ParserOpcode(opcode),peek)
+        $endIf
         ++ip
         which (opcode)
           case ParserOpcode.SYNTAX_ERROR
@@ -124,6 +131,7 @@ class ParserVM
       loop (n)
         local name = strings[ reader.read_int32x ]
         methods[ name ] = reader.read_int32x
+        methods_by_address[ methods[name] ] = name
       endLoop
 
       n = reader.read_int32x

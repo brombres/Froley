@@ -20,6 +20,31 @@ class CmdLiteralInt32( t, value:Int32 ) : Cmd
       return value->String
 endClass
 
+class CmdUnary( t, operand:Cmd ) : Cmd
+  METHODS
+    method init( t, args:Cmd[] )
+      assert args.count == 1
+      operand = args.first
+
+    method op->String
+      throw UnsupportedOperationError()
+
+    method to->String
+      return "($$)" (op,operand)
+endClass
+
+class CmdPostUnary : CmdUnary
+  METHODS
+    method to->String
+      return "($$)" (operand,op)
+endClass
+
+class CmdNegate : CmdUnary
+  METHODS
+    method op->String
+      return "-"
+endClass
+
 class CmdBinary( t, left:Cmd, right:Cmd ) : Cmd
   METHODS
     method init( t, args:Cmd[] )

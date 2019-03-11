@@ -112,7 +112,8 @@ class Froley [singleton]
 
       local token_types = @[]
       forEach (def at index in token_defs_by_name)
-        token_types.add( @{ name:def.name, type:def.type } )
+        local symbol = select{ def.symbol || def.name }
+        token_types.add( @{ name:def.name, type:def.type, symbol:symbol } )
       endForEach
 
       local tokenizer_opcodes = @[]

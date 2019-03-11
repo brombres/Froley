@@ -84,7 +84,7 @@ class ParserVM
               read
               ++ip
             else
-              throw peek.error( "Expected '$'."(TokenType(code[ip])) )
+              throw peek.error( "Expected '$', found '$'."(TokenType(code[ip]).symbol,peek.type.symbol) )
             endIf
 
           others

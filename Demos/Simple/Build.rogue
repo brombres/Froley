@@ -13,18 +13,20 @@ routine rogo_default
   local info = JSON.load( File("Simple.json") )
   #trace info
 
+  # TokenType
   local max_name_count  = 0
   local max_type_digit_count = 0
   forEach (token_type in info//token_types)
-    max_name_count = max_name_count.or_larger( token_type//name.count )
+    max_name_count = max_name_count.or_larger( token_type//name.count + token_type//symbol->String.to_escaped_ascii("\"").count + 4 )
     max_type_digit_count = max_type_digit_count.or_larger( token_type//type->Int32.digit_count )
   endForEach
 
   local writer = PrintWriter( File.writer("TokenType.rogue") )
-  writer.println "enum TokenType"
+  writer.println "enum TokenType( symbol:String )"
   forEach (token_type in info//token_types)
     writer.print "  "
-    writer.print token_type//name->String.left_justified( max_name_count )
+    local declaration = '$("$")' (token_type//name,token_type//symbol->String.to_escaped_ascii("\""))
+    writer.print declaration.left_justified( max_name_count )
     writer.print " = "
     writer.print token_type//type->String.right_justified( max_type_digit_count )
     writer.println

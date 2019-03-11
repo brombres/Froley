@@ -1,9 +1,9 @@
-enum TokenType
-  SYMBOL_ASTERISK    = 1
-  SYMBOL_CLOSE_PAREN = 2
-  SYMBOL_MINUS       = 3
-  SYMBOL_OPEN_PAREN  = 4
-  SYMBOL_PLUS        = 5
-  SYMBOL_SLASH       = 6
-  INTEGER            = 7
+enum TokenType( symbol:String )
+  INTEGER("integer")      = 1
+  SYMBOL_ASTERISK("*")    = 2
+  SYMBOL_CLOSE_PAREN(")") = 3
+  SYMBOL_MINUS("-")       = 4
+  SYMBOL_OPEN_PAREN("(")  = 5
+  SYMBOL_PLUS("+")        = 6
+  SYMBOL_SLASH("/")       = 7
 endEnum

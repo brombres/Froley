@@ -94,3 +94,13 @@ class CmdAssign : CmdBinary
     method op->String
       return "="
 endClass
+
+class CmdAccess( t, name:String ) : Cmd
+  METHODS
+    method init( t, args:Cmd[] )
+      assert args.is_empty
+      name = t->String
+
+    method to->String
+      return name
+endClass

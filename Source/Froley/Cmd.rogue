@@ -180,6 +180,9 @@ class TokenizerCmdAccess( t, name:String ) : Cmd
     method init( t )
       name = t.text
 
+    method jump_if_true->TokenizerOpcode
+      return TokenizerOpcode.JUMP_NE
+
     method to->String
       return name
 

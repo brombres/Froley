@@ -47,7 +47,6 @@ class ParserAssembler : Assembler
         writer.write_int32x( strings.index(m.name) )
         writer.write_int32x( m.start_label.address.value )
       endForEach
-
       writer.write_int32x( code.count )
       forEach (value in code)
         writer.write_int32x( value )

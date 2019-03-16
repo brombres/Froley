@@ -6,7 +6,12 @@ structural
 #---------------------------------------------------------------------
 [tokens]
 #---------------------------------------------------------------------
-INTEGER integer
+IDENTIFIER identifier
+INTEGER    integer
+
+#---------------------------------------------------------------------
+[keywords]
+#---------------------------------------------------------------------
 
 #---------------------------------------------------------------------
 [symbols]
@@ -35,6 +40,13 @@ endWhile
 <whitespace_consumed>
 markSourcePosition
 if (not hasAnother) halt
+
+if (scanIdentifier)
+  which (buffer)
+    acceptAll [keywords]
+    others: accept IDENTIFIER
+  endWhich
+endIf
 
 which (input)
   acceptAll [symbols]
@@ -67,10 +79,9 @@ while (ch is digit(count) or ch == '_')
 endWhile
 return
 
-
 #---------------------------------------------------------------------
 [parser]
-#---------------------------------------------------------------------
+
 - expression
 
 + assign : RightAssociativeBinaryParseRule
@@ -91,7 +102,8 @@ return
   on "-" -> CmdNegate
 
 + term
-  on INTEGER -> CmdLiteralInt32
+  on IDENTIFIER -> CmdAccess
+  on INTEGER    -> CmdLiteralInt32
   on "("
     expression
     mustConsume ")"

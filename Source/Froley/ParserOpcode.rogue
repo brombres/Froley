@@ -1,65 +1,13 @@
 module Froley
 
 enum ParserOpcode( size=1:Int32 )
-  SYNTAX_ERROR          #
-  RETURN                #
-  JUMP(2)               # ADDRESS:ARG1
-  CALL(2)               # ADDRESS:ARG1
-  ON_TOKEN_TYPE(3)      # TYPE:INT32:ARG1 ADDRESS_IF_NO_MATCH:ARG2
-  CREATE_CMD(3)         # TYPE_INDEX:ARG1 ARGC:ARG2
-  CONSUME_EOLS          #
-  MUST_CONSUME_TYPE(2)  # TYPE_INDEX:ARG1
-
-  #{
-  RESTART               # BUFFER.clear, IP = START_IP
-  MODE_INT32            # START_IP = ARG1
-  ERROR                 # Throws error using current line, column, and message in BUFFER
-  MARK_SOURCE_POS       # Implementation-dependent; usually records scanner line and column for later token creation
-  ACCEPT_INT32(2)       # Invokes VM callback accept(token_type:ARG1) then clears BUFFER & jumps to START_IP
-  JUMP(2)               # IP = ARG1
-  JUMP_EQ(2)            # if (RESULT == 0) IP = ARG1
-  JUMP_NE(2)            # if (RESULT != 0) IP = ARG1
-  JUMP_LT(2)            # if (RESULT <  0) IP = ARG1
-  JUMP_LE(2)            # if (RESULT <= 0) IP = ARG1
-  JUMP_GT(2)            # if (RESULT >  0) IP = ARG1
-  JUMP_GE(2)            # if (RESULT >= 0) IP = ARG1
-  CALL(2)               # STACK.push(IP); IP = ARG1
-  RETURN                # IP = STACK.remove_last
-  HAS_ANOTHER           # if another character of input is available then RESULT=1 else RESULT=0
-  PEEK_CH_INT32(2)      # CH = peek(lookahead:ARG1)
-  PEEK_CH_COUNT         # CH = peek(lookahead=COUNT)
-  READ_CH               # CH = read
-  CONSUME_CHARACTER(2)  # if consume(character:ARG1) then RESULT=1 else RESULT=0
-  SCAN_DIGITS(4)        # min..max:ARG1..ARG2, base:ARG3; result = n_read - min_digits
-  SCAN_IDENTIFIER
-  CLEAR_BUFFER          # BUFFER.clear
-  COLLECT_CH            # BUFFER.print(ch)
-  COLLECT_CHARACTER(2)  # BUFFER.print(character:ARG1)
-  COLLECT_STRING(2)     # BUFFER.print(strings[index:ARG1])
-  PRINT_BUFFER          # println buffer
-  PRINT_CH              # println ch->Character
-  PRINT_COUNT           # println count->Int32
-  PRINT_CHARACTER(2)    # println ARG1->Character
-  PRINT_STRING(2)       # println strings[index:ARG1]
-  COMPARE_CH_INT32      # result = ch - ARG1
-  COMPARE_COUNT_INT32   # result = count - ARG1
-  CH_IS_DIGIT_INT32(2)  # result = select{ ch.is_digit(base:ARG1):1 || 0 }
-  CH_IS_DIGIT_COUNT     # result = select{ ch.is_digit(base:count):1 || 0 }
-  CH_IS_LETTER          # result = select{ ch.is_letter:1 || 0 }
-  TEST_CH               # result = ch
-  TEST_COUNT            # result = count
-  PUSH_CH               # STACK.add( ch )
-  PUSH_COUNT            # STACK.add( count )
-  POP_CH                # ch = STACK.remove_last
-  POP_COUNT             # count = STACK.remove_last
-  SET_CH_TO_INT32(2)    # ch = ARG1
-  SET_CH_TO_COUNT       # ch = count
-  SET_COUNT_TO_INT32(2) # count = ARG1
-  SET_COUNT_TO_CH       # count = ch
-  ADD_CH_INT32(2)       # ch    += ARG1
-  ADD_COUNT_INT32(2)    # count += ARG1
-  SCAN_TABLE            # (complex)
-  WHICH_BUFFER          # (complex)
-  }#
+  SYNTAX_ERROR          # Throw "Syntax error, unexpected '<token>'
+  RETURN                # Pop ip and cur_token off call stack
+  JUMP(2)               # ip = ADDRESS:ARG1
+  CALL(2)               # Push ip and cur_token on call stack; ip = ADDRESS:ARG1
+  ON_TOKEN_TYPE(3)      # Continue if peek.tyep == TYPE:ARG1 or else ip=ADDRESS_IF_NO_MATCH:ARG2
+  CREATE_CMD(3)         # Create command of type TYPE_INDEX:ARG1 using cur_tokena and ARGC:ARG2 commands off stackq
+  CONSUME_EOLS          # Automatically called between operator and next operand; implement as desired
+  MUST_CONSUME_TYPE(2)  # Throws error if next token.type != TYPE_INDEX:ARG1
 endEnum
 

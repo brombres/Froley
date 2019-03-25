@@ -453,22 +453,26 @@ class TokenizerCmdRegisterCh( t ) : Cmd
       return TokenizerCmdChIsLetter( t )
 
     method write( assembler:TokenizerAssembler )
-      assembler.write( TokenizerOpcode.TEST_CH )
+      assembler.write( TokenizerOpcode.SET_RESULT_TO_CH )
 
     method write_add( assembler:TokenizerAssembler, expression:Cmd )
       local cmd_int = expression as TokenizerCmdLiteralInt32
       if (cmd_int)
         assembler.write( TokenizerOpcode.ADD_CH_INT32, cmd_int.value )
+      elseIf (expression instanceOf TokenizerCmdRegisterCount)
+        assembler.write( TokenizerOpcode.ADD_CH_COUNT )
       else
-        throw expression.error( "Illegal operation value; integer expected." )
+        throw expression.error( "Illegal operation value; integer or 'count' expected." )
       endIf
 
     method write_subtract( assembler:TokenizerAssembler, expression:Cmd )
       local cmd_int = expression as TokenizerCmdLiteralInt32
       if (cmd_int)
         assembler.write( TokenizerOpcode.ADD_CH_INT32, -cmd_int.value )
+      elseIf (expression instanceOf TokenizerCmdRegisterCount)
+        assembler.write( TokenizerOpcode.SUBTRACT_CH_COUNT )
       else
-        throw expression.error( "Illegal operation value; integer expected." )
+        throw expression.error( "Illegal operation value; integer or 'count' expected." )
       endIf
 endClass
 
@@ -514,7 +518,7 @@ class TokenizerCmdRegisterCount( t ) : Cmd
       return "count"
 
     method write( assembler:TokenizerAssembler )
-      assembler.write( TokenizerOpcode.TEST_COUNT )
+      assembler.write( TokenizerOpcode.SET_RESULT_TO_COUNT )
 
     method write_add( assembler:TokenizerAssembler, expression:Cmd )
       local cmd_int32 = expression as TokenizerCmdLiteralInt32
@@ -688,7 +692,7 @@ class TokenizerCmdWhichInput : Cmd
       return this
 
     method write( assembler:TokenizerAssembler )
-      assembler.write( TokenizerOpcode.SCAN_TABLE )
+      assembler.write( TokenizerOpcode.WHICH_INPUT )
       local label_end = Label()
       local states = ScanState[]
       start.collect( states )

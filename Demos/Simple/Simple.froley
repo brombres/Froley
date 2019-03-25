@@ -1,21 +1,15 @@
-#---------------------------------------------------------------------
-[attributes]
-#---------------------------------------------------------------------
-structural
+[whitespace]
+WS_SPACE   ' '
+WS_TAB     '\t'
+WS_NEWLINE '\n'
 
-#---------------------------------------------------------------------
 [tokens]
-#---------------------------------------------------------------------
 IDENTIFIER identifier
 INTEGER    integer
 
-#---------------------------------------------------------------------
 [keywords]
-#---------------------------------------------------------------------
 
-#---------------------------------------------------------------------
 [symbols]
-#---------------------------------------------------------------------
 SYMBOL_ASTERISK             *
 SYMBOL_CARET                ^
 SYMBOL_CLOSE_PAREN          )
@@ -25,17 +19,11 @@ SYMBOL_OPEN_PAREN           (
 SYMBOL_PLUS                 +
 SYMBOL_SLASH                /
 
-#---------------------------------------------------------------------
 [tokenizer]
-#---------------------------------------------------------------------
 <<tokenize>>
-while (hasAnother)
-  ch = peek
-  if (ch != ' ' and ch != '\n')
-    if (ch != '\t') goto whitespace_consumed
-  endIf
-  ch = read
-endWhile
+which (input)
+  discardAll [whitespace]
+endWhich
 
 <whitespace_consumed>
 markSourcePosition
@@ -51,13 +39,13 @@ endIf
 which (input)
   acceptAll [symbols]
   case '#'
+    # Single-line comment
     ch = read
     while (ch != '\n') ch = read
     discard
   others
     ch = peek
     if (ch is digit)
-      count = 10
       scan_integer
       accept INTEGER
     endIf
@@ -71,7 +59,7 @@ collect "'."
 error buffer
 
 <scan_integer>
-while (ch is digit(count) or ch == '_')
+while (ch is digit or ch == '_')
   ch = read
   if (ch != '_') collect ch
   if (not hasAnother) return
@@ -79,7 +67,6 @@ while (ch is digit(count) or ch == '_')
 endWhile
 return
 
-#---------------------------------------------------------------------
 [parser]
 
 - expression

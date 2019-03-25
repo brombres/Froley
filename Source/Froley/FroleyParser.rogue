@@ -47,15 +47,13 @@ class FroleyParser : Parser
               if (parser.consume(TokenType.KEYWORD_NOT))
                 if (parser.consume(TokenType.KEYWORD_DIGIT))
                   local base = 10
-                  if (parser.consume(TokenType.SYMBOL_OPEN_PAREN))
+                  if (parser.consume(TokenType.KEYWORD_BASE))
                     if (parser.consume(TokenType.KEYWORD_COUNT))
-                      parser.must_consume( TokenType.SYMBOL_CLOSE_PAREN )
                       return TokenizerCmdNot( t, term.to_is_digit_count )
                     elseIf (not parser.next_is(TokenType.INTEGER))
                       throw parser.peek.error( "Base '2'..'16' or 'count' expected." )
                     endIf
                     base = parser.read->Int32
-                    parser.must_consume( TokenType.SYMBOL_CLOSE_PAREN )
                   endIf
                   return TokenizerCmdNot( t, term.to_is_digit(base) )
                 elseIf (parser.consume(TokenType.KEYWORD_LETTER))
@@ -66,15 +64,13 @@ class FroleyParser : Parser
               else
                 if (parser.consume(TokenType.KEYWORD_DIGIT))
                   local base = 10
-                  if (parser.consume(TokenType.SYMBOL_OPEN_PAREN))
+                  if (parser.consume(TokenType.KEYWORD_BASE))
                     if (parser.consume(TokenType.KEYWORD_COUNT))
-                      parser.must_consume( TokenType.SYMBOL_CLOSE_PAREN )
                       return term.to_is_digit_count
                     elseIf (not parser.next_is(TokenType.INTEGER))
                       throw parser.peek.error( "Base '2'..'16' or 'count' expected." )
                     endIf
                     base = parser.read->Int32
-                    parser.must_consume( TokenType.SYMBOL_CLOSE_PAREN )
                   endIf
                   return term.to_is_digit( base )
                 elseIf (parser.consume(TokenType.KEYWORD_LETTER))
@@ -499,6 +495,10 @@ class FroleyParser : Parser
         endIf
 
       elseIf (consume(TokenType.KEYWORD_RESTART))
+        if (next_is(TokenType.IDENTIFIER))
+          local t2 = peek
+          statements.add( TokenizerCmdMode(t2,read_identifier) )
+        endIf
         statements.add( CmdStatement(t,"restart",TokenizerOpcode.RESTART) )
         return
 
@@ -1177,6 +1177,7 @@ class FroleyParser : Parser
       endIf
 
     method read_label_name->String
+      if (next_is(TokenType.IDENTIFIER)) return read_identifier
       must_consume( TokenType.SYMBOL_LT )
       local is_entry_point = consume( TokenType.SYMBOL_LT )
       local name = read->String

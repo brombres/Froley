@@ -57,6 +57,10 @@ class TokenizerVM
             nextIteration
           case TokenizerOpcode.ERROR
             throw FroleyError( filepath, scanner.source, scanner.line, scanner.column, buffer->String )
+          case TokenizerOpcode.MARK_SOURCE_POS
+            next_line = scanner.line
+            next_column = scanner.column
+            nextIteration
           case TokenizerOpcode.ACCEPT_INT32
             local token_type = code[ ip ]
             ip = start_ip
@@ -98,24 +102,18 @@ class TokenizerVM
             if (stack.is_empty) throw FroleyError( "[Compiled Code]", "'return' on empty stack." )
             ip = stack.remove_last
             nextIteration
-          case TokenizerOpcode.MARK_SOURCE_POS
-            next_line = scanner.line
-            next_column = scanner.column
-            nextIteration
           case TokenizerOpcode.HAS_ANOTHER
             result = select{ scanner.has_another:1 || 0 }
             nextIteration
-          case TokenizerOpcode.READ_CH
-            ch = scanner.read
-            nextIteration
           case TokenizerOpcode.PEEK_CH_INT32
-#trace "peek " + code[ip]
             ch = scanner.peek( code[ip] )
-#trace ch->Character
             ++ip
             nextIteration
           case TokenizerOpcode.PEEK_CH_COUNT
             ch = scanner.peek( count )
+            nextIteration
+          case TokenizerOpcode.READ_CH
+            ch = scanner.read
             nextIteration
           case TokenizerOpcode.CONSUME_CHARACTER
             local value = code[ip]->Character
@@ -203,21 +201,15 @@ class TokenizerVM
           case TokenizerOpcode.CH_IS_LETTER
             result = select{ ((ch>='a' and ch<='z') or (ch>='A' and ch<='Z')):1 || 0 }
             nextIteration
-          case TokenizerOpcode.TEST_CH
-            result = ch
-            nextIteration
-          case TokenizerOpcode.TEST_COUNT
-            result = count
-            nextIteration
           case TokenizerOpcode.PUSH_CH
             stack.add( ch )
+            nextIteration
+          case TokenizerOpcode.PUSH_COUNT
+            stack.add( count )
             nextIteration
           case TokenizerOpcode.POP_CH
             if (stack.is_empty) throw FroleyError( "[Compiled Code]", "'pop ch' on empty stack." )
             ch = stack.remove_last
-            nextIteration
-          case TokenizerOpcode.PUSH_COUNT
-            stack.add( count )
             nextIteration
           case TokenizerOpcode.POP_COUNT
             if (stack.is_empty) throw FroleyError( "[Compiled Code]", "'pop count' on empty stack." )
@@ -241,6 +233,19 @@ class TokenizerVM
             count = ch
             result = count
             nextIteration
+          case TokenizerOpcode.SET_RESULT_TO_CH
+            result = ch
+            nextIteration
+          case TokenizerOpcode.SET_RESULT_TO_COUNT
+            result = count
+            nextIteration
+          case TokenizerOpcode.SET_RESULT_TO_INT32
+            result = code[ ip ]
+            ++ip
+            nextIteration
+          case TokenizerOpcode.ADD_CH_COUNT
+            ch += count
+            nextIteration
           case TokenizerOpcode.ADD_CH_INT32
             ch += code[ ip ]
             ++ip
@@ -249,7 +254,10 @@ class TokenizerVM
             count += code[ ip ]
             ++ip
             nextIteration
-          case TokenizerOpcode.SCAN_TABLE
+          case TokenizerOpcode.SUBTRACT_CH_COUNT
+            ch -= count
+            nextIteration
+          case TokenizerOpcode.WHICH_INPUT
             local cur_node = ip
             local lookahead = 0
             local last_acceptable_node = 0

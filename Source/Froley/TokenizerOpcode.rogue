@@ -21,7 +21,7 @@ enum TokenizerOpcode( size=1:Int32 )
   PEEK_CH_COUNT         # CH = peek(lookahead=COUNT)
   READ_CH               # CH = read
   CONSUME_CHARACTER(2)  # if consume(character:ARG1) then RESULT=1 else RESULT=0
-  SCAN_DIGITS(4)        # min..max:ARG1..ARG2, base:ARG3; result = n_read - min_digits
+  SCAN_DIGITS(4)        # min..max:ARG1..ARG2, base:ARG3; RESULT = n_read - min_digits
   SCAN_IDENTIFIER
   CLEAR_BUFFER          # BUFFER.clear
   COLLECT_CH            # BUFFER.print(ch)
@@ -32,13 +32,11 @@ enum TokenizerOpcode( size=1:Int32 )
   PRINT_COUNT           # println count->Int32
   PRINT_CHARACTER(2)    # println ARG1->Character
   PRINT_STRING(2)       # println strings[index:ARG1]
-  COMPARE_CH_INT32      # result = ch - ARG1
-  COMPARE_COUNT_INT32   # result = count - ARG1
-  CH_IS_DIGIT_INT32(2)  # result = select{ ch.is_digit(base:ARG1):1 || 0 }
-  CH_IS_DIGIT_COUNT     # result = select{ ch.is_digit(base:count):1 || 0 }
-  CH_IS_LETTER          # result = select{ ch.is_letter:1 || 0 }
-  TEST_CH               # result = ch
-  TEST_COUNT            # result = count
+  COMPARE_CH_INT32      # RESULT = ch - ARG1
+  COMPARE_COUNT_INT32   # RESULT = count - ARG1
+  CH_IS_DIGIT_INT32(2)  # RESULT = select{ ch.is_digit(base:ARG1):1 || 0 }
+  CH_IS_DIGIT_COUNT     # RESULT = select{ ch.is_digit(base:count):1 || 0 }
+  CH_IS_LETTER          # RESULT = select{ ch.is_letter:1 || 0 }
   PUSH_CH               # STACK.add( ch )
   PUSH_COUNT            # STACK.add( count )
   POP_CH                # ch = STACK.remove_last
@@ -47,9 +45,14 @@ enum TokenizerOpcode( size=1:Int32 )
   SET_CH_TO_COUNT       # ch = count
   SET_COUNT_TO_INT32(2) # count = ARG1
   SET_COUNT_TO_CH       # count = ch
+  SET_RESULT_TO_CH      # RESULT = ch
+  SET_RESULT_TO_COUNT   # RESULT = count
+  SET_RESULT_TO_INT32(2)# RESULT = ARG1
+  ADD_CH_COUNT          # ch    += count
   ADD_CH_INT32(2)       # ch    += ARG1
   ADD_COUNT_INT32(2)    # count += ARG1
-  SCAN_TABLE            # (complex)
+  SUBTRACT_CH_COUNT     # ch    += count
+  WHICH_INPUT           # (complex)
   WHICH_BUFFER          # (complex)
 endEnum
 

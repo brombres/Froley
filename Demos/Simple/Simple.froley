@@ -1,7 +1,7 @@
 [whitespace]
-WS_SPACE   ' '
-WS_TAB     '\t'
-WS_NEWLINE '\n'
+SPACE ' '
+TAB   '\t'
+EOL   '\n'
 
 [tokens]
 IDENTIFIER identifier

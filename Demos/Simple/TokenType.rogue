@@ -1,7 +1,7 @@
 enum TokenType( symbol:String )
-  WS_SPACE(" ")            =  1
-  WS_TAB("\x09")           =  2
-  WS_NEWLINE("\n")         =  3
+  SPACE(" ")               =  1
+  TAB("\x09")              =  2
+  EOL("\n")                =  3
   IDENTIFIER("identifier") =  4
   INTEGER("integer")       =  5
   SYMBOL_ASTERISK("*")     =  6

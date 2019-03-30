@@ -99,7 +99,8 @@ class Froley [singleton]
 
       parser.set_source( filepath, parser_code->String )
       parser.parse_parser_methods
-      local parser_bytes = ParserAssembler().assemble( parser_methods )
+      local parser_assembler = ParserAssembler()
+      local parser_bytes = parser_assembler.assemble( parser_methods )
 
       #{
       local max_count  = 0
@@ -120,6 +121,9 @@ class Froley [singleton]
       forEach (name in TokenizerOpcode.names)
         tokenizer_opcodes.add( @{ :name, value:TokenizerOpcode(name)->Int32 } )
       endForEach
+
+      local parser_cmd_type_names = @[]
+      parser_cmd_type_names.add( forEach in parser_assembler.cmd_type_names )
 
       local parser_opcodes = @[]
       forEach (name in ParserOpcode.names)
@@ -143,6 +147,7 @@ class Froley [singleton]
         :token_types,
         :tokenizer_opcodes,
         tokenizer_code:tokenizer_bytes.to_base64,
+        :parser_cmd_type_names,
         :parser_opcodes,
         parser_code:parser_bytes.to_base64
       }

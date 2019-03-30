@@ -11,7 +11,6 @@ class ParserVM
     strings       = String[]
     tokens        = Token[]
     methods       = LookupList<<Int32>>()
-    cmd_types     = TypeInfo[]
 
     call_stack    = Int32[]
     token_stack   = Token[]
@@ -70,7 +69,7 @@ class ParserVM
             endIf
             nextIteration
           case ParserOpcode.CREATE_CMD
-            local cmd_type = cmd_types[ code[ip] ]
+            local cmd_type_index = code[ ip ]
             local arg_count = code[ ip+1 ]
             ip += 2
             cmd_args.clear
@@ -82,7 +81,7 @@ class ParserVM
               cmd_args.add( forEach in cmd_queue from i1 )
               cmd_queue.discard_from( i1 )
             endIf
-            cmd_queue.add( cmd_type.create_object<<Cmd>>.init(cur_token, cmd_args) )
+            cmd_queue.add( CmdFactory.create_cmd(cmd_type_index).init(cur_token, cmd_args) )
             nextIteration
 
           case ParserOpcode.CONSUME_EOLS
@@ -115,15 +114,6 @@ class ParserVM
 
       strings.reserve( n )
       loop (n) strings.add( reader.read_string )
-
-      # Cmd Names
-      n = reader.read_int32x
-      loop (n)
-        local name = strings[ reader.read_int32x ]
-        local type = TypeInfo[ name ]
-        if (type is null) throw SimpleError( "[INTERNAL]", "No such command class: $."(name) )
-        cmd_types.add( type )
-      endLoop
 
       # Method names & addresses
       n = reader.read_int32x

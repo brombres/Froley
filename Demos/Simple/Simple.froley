@@ -67,8 +67,8 @@ while (ch is digit or ch == '_')
 endWhile
 return
 
-[parser]
 
+[parser]
 - expression
 
 + assign : RightAssociativeBinaryParseRule

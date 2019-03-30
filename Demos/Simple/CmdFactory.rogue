@@ -1,0 +1,23 @@
+class CmdFactory [singleton]
+  PROPERTIES
+    cmd_types = TypeInfo[]
+
+  METHODS
+    method init
+      cmd_types.add( <<CmdAssign>> )
+      cmd_types.add( <<CmdAdd>> )
+      cmd_types.add( <<CmdSubtract>> )
+      cmd_types.add( <<CmdMultiply>> )
+      cmd_types.add( <<CmdDivide>> )
+      cmd_types.add( <<CmdPower>> )
+      cmd_types.add( <<CmdNegate>> )
+      cmd_types.add( <<CmdAccess>> )
+      cmd_types.add( <<CmdLiteralInt32>> )
+
+    method create_cmd( index:Int32 )->Cmd
+      if (index < 0 or index >= cmd_types.count)
+        throw SimpleError( "[INTERNAL] CmdFactory.create_cmd() index out of bounds: " + index )
+      else
+        return cmd_types[ index ].create_object<<Cmd>>
+      endIf
+endClass

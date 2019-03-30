@@ -9,66 +9,63 @@
 # "rogo_default" will run in the absence of any other command line argument.
 
 routine rogo_default
-  if (File.is_newer_than("Simple.froley","Simple.json"))
+  if (File.is_newer_than("Simple.froley","Simple.json") or true)
     execute( "froley Simple.froley" )
     local info = JSON.load( File("Simple.json") )
     #trace info
 
     # TokenType
-    local max_name_count  = 0
-    local max_type_digit_count = 0
+    local defs = Defs( &indent=2 )
     forEach (token_type in info//token_types)
-      max_name_count = max_name_count.or_larger( token_type//name.count + token_type//symbol->String.to_escaped_ascii("\"").count + 4 )
-      max_type_digit_count = max_type_digit_count.or_larger( token_type//type->Int32.digit_count )
+      defs.add( '$("$")' (token_type//name,token_type//symbol->String.to_escaped_ascii("\"")), token_type//type )
     endForEach
 
     local writer = PrintWriter( File.writer("TokenType.rogue") )
     writer.println "enum TokenType( symbol:String )"
-    forEach (token_type in info//token_types)
-      writer.print "  "
-      local declaration = '$("$")' (token_type//name,token_type//symbol->String.to_escaped_ascii("\""))
-      writer.print declaration.left_justified( max_name_count )
-      writer.print " = "
-      writer.print token_type//type->String.right_justified( max_type_digit_count )
-      writer.println
-    endForEach
+    defs.print( writer )
     writer.println "endEnum"
     writer.close
 
-    max_name_count  = 0
-    max_type_digit_count = 0
+    defs = Defs( &indent=2 )
     forEach (tokenizer_opcode in info//tokenizer_opcodes)
-      max_name_count = max_name_count.or_larger( tokenizer_opcode//name.count )
-      max_type_digit_count = max_type_digit_count.or_larger( tokenizer_opcode//value->Int32.digit_count )
+      defs.add( tokenizer_opcode//name, tokenizer_opcode//value )
     endForEach
     writer = PrintWriter( File.writer("TokenizerOpcode.rogue") )
     writer.println "enum TokenizerOpcode"
-    forEach (tokenizer_opcode in info//tokenizer_opcodes)
-      writer.print "  "
-      writer.print tokenizer_opcode//name->String.left_justified( max_name_count )
-      writer.print " = "
-      writer.print tokenizer_opcode//value->String.right_justified( max_type_digit_count )
-      writer.println
-    endForEach
+    defs.print( writer )
     writer.println "endEnum"
     writer.close
 
-    max_name_count  = 0
-    max_type_digit_count = 0
+    defs = Defs( &indent=2 )
     forEach (parser_opcode in info//parser_opcodes)
-      max_name_count = max_name_count.or_larger( parser_opcode//name.count )
-      max_type_digit_count = max_type_digit_count.or_larger( parser_opcode//value->Int32.digit_count )
+      defs.add( parser_opcode//name, parser_opcode//value )
     endForEach
     writer = PrintWriter( File.writer("ParserOpcode.rogue") )
     writer.println "enum ParserOpcode"
-    forEach (parser_opcode in info//parser_opcodes)
-      writer.print "  "
-      writer.print parser_opcode//name->String.left_justified( max_name_count )
-      writer.print " = "
-      writer.print parser_opcode//value->String.right_justified( max_type_digit_count )
-      writer.println
-    endForEach
+    defs.print( writer )
     writer.println "endEnum"
+    writer.close
+
+    writer = PrintWriter( File.writer("CmdFactory.rogue") )
+    writer.println @|class CmdFactory [singleton]
+                    |  PROPERTIES
+                    |    cmd_types = TypeInfo[]
+                    |
+                    |  METHODS
+                    |    method init
+    forEach (cmd_type_name in info//parser_cmd_type_names)
+      writer.print   "      cmd_types.add( <<"
+      writer.print cmd_type_name
+      writer.println ">> )"
+    endForEach
+    writer.println @|
+                    |    method create_cmd( index:Int32 )->Cmd
+                    |      if (index < 0 or index >= cmd_types.count)
+                    |        throw SimpleError( "[INTERNAL] CmdFactory.create_cmd() index out of bounds: " + index )
+                    |      else
+                    |        return cmd_types[ index ].create_object<<Cmd>>
+                    |      endIf
+                    |endClass
     writer.close
 
     writer = PrintWriter( File.writer("Code.rogue") )
@@ -120,6 +117,32 @@ routine execute( commands:String, &suppress_error )->Logical
   endForEach
   return true
 endRoutine
+
+class Defs
+  PROPERTIES
+    indent       : Int32
+    definitions  = (String,Int32)[]
+    longest_name : Int32
+    most_digits  : Int32
+
+  METHODS
+    method init( indent )
+
+    method add( name:String, value:Int32 )
+      longest_name = longest_name.or_larger( name.count )
+      most_digits = most_digits.or_larger( value.digit_count )
+      definitions.add( (name,value) )
+
+    method print( writer:PrintWriter )
+      forEach ((name,value) in definitions)
+        loop (indent) writer.print ' '
+        writer.print name
+        loop (longest_name - name.count) writer.print ' '
+        writer.print " = "
+        loop (most_digits - value.digit_count) writer.print ' '
+        writer.println value
+      endForEach
+endClass
 
 #------------------------------------------------------------------------------
 # Introspection-based Launcher Framework

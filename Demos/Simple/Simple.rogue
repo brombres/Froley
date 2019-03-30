@@ -1,4 +1,5 @@
 $include "Cmd.rogue"
+$include "CmdFactory.rogue"
 $include "Code.rogue"
 $include "ParserOpcode.rogue"
 $include "ParserVM.rogue"

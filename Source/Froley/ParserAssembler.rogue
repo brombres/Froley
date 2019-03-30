@@ -37,11 +37,6 @@ class ParserAssembler : Assembler
         writer.write_string( value )
       endForEach
 
-      writer.write_int32x( cmd_type_names.count )
-      forEach (value in cmd_type_names)
-        writer.write_int32x( strings.index(value) )
-      endForEach
-
       writer.write_int32x( Froley.parser_methods.count )
       forEach (m in Froley.parser_methods)
         writer.write_int32x( strings.index(m.name) )

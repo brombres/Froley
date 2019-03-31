@@ -3,6 +3,7 @@ module Froley
 
 $include "Assembler.rogue"
 $include "Cmd.rogue"
+$include "CodeGenerator.rogue"
 $include "FroleyError.rogue"
 $include "FroleyParser.rogue"
 $include "FroleyTokenizer.rogue"
@@ -17,6 +18,8 @@ $include "TokenizerAssembler.rogue"
 $include "TokenizerOpcode.rogue"
 $include "TokenizerVM.rogue"
 
+$include "CodeGenerators"
+
 Launcher( System.command_line_arguments )
 
 class Launcher
@@ -29,9 +32,31 @@ class Launcher
         else                       targets.add( arg )
       endForEach
 
-      init( options, targets )
+      local first_ends_with = targets.count and targets.first.ends_with( ".froley", &ignore_case )
+      local last_ends_with = targets.count == 2 and targets.last.ends_with( ".froley", &ignore_case )
 
-    method init( options:String[], targets:String[] )
+      which (targets.count)
+        case 0
+          print_usage
+          return
+
+        case 1
+          if (not first_ends_with) throw FroleyError( 'Input file must end with ".froley".' )
+          targets.add( "json" )
+
+        case 2
+          if (first_ends_with)
+            if (last_ends_with) throw FroleyError( "Froley can only compile one .froley file at a time." )
+          elseIf (last_ends_with)
+            targets.add( targets.remove_first )  # swap first and last
+          else
+            throw FroleyError( "No .froley input file specified." )
+          endIf
+      endWhich
+
+      init( options, targets.first, targets.last )
+
+    method init( options:String[], input_filepath:String, host_language:String  )
       try
         forEach (option in options)
           which (option.before_first('='))
@@ -40,16 +65,34 @@ class Launcher
           endWhich
         endForEach
 
-        forEach (target in targets)
-          Froley = Froley() # new singleton
-          Froley.parse( File(target) )
-        endForEach
+        if (not File.exists(input_filepath))
+          throw FroleyError( "Cannot read input file $." (input_filepath) )
+        endIf
+
+        if (not Froley.code_generators.contains(host_language))
+          throw FroleyError( "Host language '$' is not supported." (host_language) )
+        endIf
+
+        Froley.parse( File(input_filepath), host_language )
 
       catch (error:Error)
         Console.error.println error
         System.exit 1
 
       endTry
+
+    method print_usage
+      println @|USAGE
+               |  froley filename.froley [host-language]
+               |
+               |HOST LANGUAGES
+               |  Froley can generate code for the following host languages:
+      forEach (key in Froley.code_generators.keys)
+        print  "    - "
+        println key
+      endForEach
+
+      println
 endClass
 
 class TokenDef( name:String, type:Int32, symbol=null:String, attributes=0:Int32 )
@@ -60,6 +103,8 @@ endClass
 
 class Froley [singleton]
   PROPERTIES
+    code_generators       = StringTable<<CodeGenerator>>()
+
     token_defs_by_name    = LookupList<<TokenDef>>()
     token_defs_by_type    = Table<<Int32,TokenDef>>()
     token_defs_by_symbol  = LookupList<<TokenDef>>()
@@ -76,11 +121,11 @@ class Froley [singleton]
     parser_methods = LookupList<<ParserMethod>>()
 
   METHODS
-    method parse( file:File )
+    method parse( file:File, host_language:String )
       local source = file.load_as_string
-      parse( file.filepath, source )
+      parse( file.filepath, source, host_language )
 
-    method parse( filepath:String, source:String )
+    method parse( filepath:String, source:String, host_language:String )
       collect_definitions_and_extract_code( filepath, source )
 
       local tokenizer_statements = CmdStatements()
@@ -153,13 +198,7 @@ class Froley [singleton]
       }
 
       #@trace output
-      local output_filepath = "$.json"(language_name)
-      println "Writing " + output_filepath
-      File.save( output_filepath, output.to_json )
-
-      #local vm = TestVM( tokenizer_bytes )
-      #vm.tokenize( File("Test.txt") )
-
+      code_generators[host_language].process( output )
 
     method collect_definitions_and_extract_code( filepath:String, source:String )
       $localDefine PARSING_CONFIGURE   0

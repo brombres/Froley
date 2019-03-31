@@ -1,0 +1,11 @@
+module Froley
+
+Froley.code_generators//json = GenerateJSON()
+
+class GenerateJSON : CodeGenerator
+  METHODS
+    method process( info:Value )
+      local output_filepath = "$.json"(info//language)
+      println "Writing " + output_filepath
+      File.save( output_filepath, info.to_json )
+endClass

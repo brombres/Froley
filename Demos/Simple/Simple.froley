@@ -72,25 +72,25 @@ return
 - expression
 
 + assign : RightAssociativeBinaryParseRule
-  on "=" -> CmdAssign
+  on "=" -> SimpleCmdAssign
 
 + add_subtract : BinaryParseRule
-  on "+" -> CmdAdd
-  on "-" -> CmdSubtract
+  on "+" -> SimpleCmdAdd
+  on "-" -> SimpleCmdSubtract
 
 + multiply_divide : BinaryParseRule
-  on "*" -> CmdMultiply
-  on "/" -> CmdDivide
+  on "*" -> SimpleCmdMultiply
+  on "/" -> SimpleCmdDivide
 
 + power : BinaryParseRule
-  on "^" -> CmdPower
+  on "^" -> SimpleCmdPower
 
 + pre_unary : PreUnaryParseRule
-  on "-" -> CmdNegate
+  on "-" -> SimpleCmdNegate
 
 + term
-  on IDENTIFIER -> CmdAccess
-  on INTEGER    -> CmdLiteralInt32
+  on IDENTIFIER -> SimpleCmdAccess
+  on INTEGER    -> SimpleCmdLiteralInt32
   on "("
     expression
     mustConsume ")"

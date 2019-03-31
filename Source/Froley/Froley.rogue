@@ -3,10 +3,10 @@ module Froley
 
 $include "Assembler.rogue"
 $include "Cmd.rogue"
-$include "CodeGenerator.rogue"
 $include "FroleyError.rogue"
 $include "FroleyParser.rogue"
 $include "FroleyTokenizer.rogue"
+$include "Int32DefsBuilder.rogue"
 $include "Label.rogue"
 $include "ParserAssembler.rogue"
 $include "ParserMethod.rogue"
@@ -28,7 +28,7 @@ class Launcher
       local options = String[]
       local targets = String[]
       forEach (arg in args)
-        if (arg.begins_with("--")) options.add( arg )
+        if (arg.begins_with("--")) options.add( arg.after_first("--") )
         else                       targets.add( arg )
       endForEach
 
@@ -58,13 +58,6 @@ class Launcher
 
     method init( options:String[], input_filepath:String, host_language:String  )
       try
-        forEach (option in options)
-          which (option.before_first('='))
-            others
-              throw FroleyError( "Unrecognized option: " + option )
-          endWhich
-        endForEach
-
         if (not File.exists(input_filepath))
           throw FroleyError( "Cannot read input file $." (input_filepath) )
         endIf
@@ -73,9 +66,18 @@ class Launcher
           throw FroleyError( "Host language '$' is not supported." (host_language) )
         endIf
 
-        Froley.parse( File(input_filepath), host_language )
+        local info = Froley.parse( File(input_filepath) )
+
+        local gen = Froley.code_generators[ host_language ]
+        forEach (option in options)
+          gen.add_option( option.before_first('='), option.after_first('=') )
+        endForEach
+        gen.process( info )
 
       catch (error:Error)
+        if (error not instanceOf FroleyError) error = FroleyError( error.message )
+        # Turn other errors into FroleyErrors to get the nice banner-style output
+
         Console.error.println error
         System.exit 1
 
@@ -83,7 +85,7 @@ class Launcher
 
     method print_usage
       println @|USAGE
-               |  froley filename.froley [host-language]
+               |  froley filename.froley [host-language] [options]
                |
                |HOST LANGUAGES
                |  Froley can generate code for the following host languages:
@@ -91,6 +93,10 @@ class Launcher
         print  "    - "
         println key
       endForEach
+      println
+
+      println @|OPTIONS
+               |  --output=<folder>
 
       println
 endClass
@@ -121,11 +127,11 @@ class Froley [singleton]
     parser_methods = LookupList<<ParserMethod>>()
 
   METHODS
-    method parse( file:File, host_language:String )
+    method parse( file:File )->Value
       local source = file.load_as_string
-      parse( file.filepath, source, host_language )
+      return parse( file.filepath, source )
 
-    method parse( filepath:String, source:String, host_language:String )
+    method parse( filepath:String, source:String )->Value
       collect_definitions_and_extract_code( filepath, source )
 
       local tokenizer_statements = CmdStatements()
@@ -189,6 +195,7 @@ class Froley [singleton]
       local output =
       @{
         language: language_name,
+        source_filepath: filepath,
         :token_types,
         :tokenizer_opcodes,
         tokenizer_code:tokenizer_bytes.to_base64,
@@ -197,8 +204,7 @@ class Froley [singleton]
         parser_code:parser_bytes.to_base64
       }
 
-      #@trace output
-      code_generators[host_language].process( output )
+      return output
 
     method collect_definitions_and_extract_code( filepath:String, source:String )
       $localDefine PARSING_CONFIGURE   0

@@ -1,0 +1,21 @@
+module Froley
+
+class CodeGenerator
+  PROPERTIES
+    info    : Value
+    options = StringTable<<String>>()
+
+  METHODS
+    method add_option( name:String, value:String )
+      which (name)
+        case "output"
+          if (value == "") throw FroleyError( "Output folder expected (--output=<folder>)." )
+          value = File.ensure_ends_with_separator( value )
+        others
+          throw FroleyError( "Unrecognized option: " + name )
+      endWhich
+      options[ name ] = value
+
+    method process( info )
+      throw UnsupportedOperationError()
+endClass

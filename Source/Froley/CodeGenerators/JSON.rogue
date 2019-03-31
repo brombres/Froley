@@ -4,8 +4,22 @@ Froley.code_generators//json = GenerateJSON()
 
 class GenerateJSON : CodeGenerator
   METHODS
+    method add_option( name:String, value:String )
+      which (name)
+        case "output"
+          # Override 'output' to avoid putting the separator on the end
+          if (value == "") throw FroleyError( "Output folder or filepath expected (--output=<folder>)." )
+          options//output = value
+        others
+          prior.add_option( name, value )
+      endWhich
+
     method process( info:Value )
-      local output_filepath = "$.json"(info//language)
+      local output_filepath = options//output
+      if (File.is_folder(output_filepath))
+        output_filepath = "$$.json" (File.ensure_ends_with_separator(output_filepath),info//language)
+      endIf
+
       println "Writing " + output_filepath
       File.save( output_filepath, info.to_json )
 endClass

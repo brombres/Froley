@@ -1,17 +1,17 @@
 module [essential]
 
-class Cmd
+class SimpleCmd
   PROPERTIES
-    t : Token
+    t : SimpleToken
 
   METHODS
-    method init( t, args:Cmd[] )
+    method init( t, args:SimpleCmd[] )
       throw UnsupportedOperationError()
 endClass
 
-class CmdLiteralInt32( t, value:Int32 ) : Cmd
+class SimpleCmdLiteralInt32( t, value:Int32 ) : SimpleCmd
   METHODS
-    method init( t, args:Cmd[] )
+    method init( t, args:SimpleCmd[] )
       assert args.is_empty
       assert t.content
       value = t.content->Int32
@@ -20,9 +20,9 @@ class CmdLiteralInt32( t, value:Int32 ) : Cmd
       return value->String
 endClass
 
-class CmdUnary( t, operand:Cmd ) : Cmd
+class SimpleCmdUnary( t, operand:SimpleCmd ) : SimpleCmd
   METHODS
-    method init( t, args:Cmd[] )
+    method init( t, args:SimpleCmd[] )
       assert args.count == 1
       operand = args.first
 
@@ -33,21 +33,21 @@ class CmdUnary( t, operand:Cmd ) : Cmd
       return "($$)" (op,operand)
 endClass
 
-class CmdPostUnary : CmdUnary
+class SimpleCmdPostUnary : SimpleCmdUnary
   METHODS
     method to->String
       return "($$)" (operand,op)
 endClass
 
-class CmdNegate : CmdUnary
+class SimpleCmdNegate : SimpleCmdUnary
   METHODS
     method op->String
       return "-"
 endClass
 
-class CmdBinary( t, left:Cmd, right:Cmd ) : Cmd
+class SimpleCmdBinary( t, left:SimpleCmd, right:SimpleCmd ) : SimpleCmd
   METHODS
-    method init( t, args:Cmd[] )
+    method init( t, args:SimpleCmd[] )
       assert args.count == 2
       left = args.first
       right = args.last
@@ -59,48 +59,49 @@ class CmdBinary( t, left:Cmd, right:Cmd ) : Cmd
       return "($ $ $)" (left,op,right)
 endClass
 
-class CmdAdd : CmdBinary
+class SimpleCmdAdd : SimpleCmdBinary
   METHODS
     method op->String
       return "+"
 endClass
 
-class CmdSubtract : CmdBinary
+class SimpleCmdSubtract : SimpleCmdBinary
   METHODS
     method op->String
       return "-"
 endClass
 
-class CmdMultiply : CmdBinary
+class SimpleCmdMultiply : SimpleCmdBinary
   METHODS
     method op->String
       return "*"
 endClass
 
-class CmdDivide : CmdBinary
+class SimpleCmdDivide : SimpleCmdBinary
   METHODS
     method op->String
       return "/"
 endClass
 
-class CmdPower : CmdBinary
+class SimpleCmdPower : SimpleCmdBinary
   METHODS
     method op->String
       return "^"
 endClass
 
-class CmdAssign : CmdBinary
+class SimpleCmdAssign : SimpleCmdBinary
   METHODS
     method op->String
       return "="
 endClass
 
-class CmdAccess( t, name:String ) : Cmd
+class SimpleCmdAccess( t, name:String ) : SimpleCmd
   METHODS
-    method init( t, args:Cmd[] )
+    method init( t, args:SimpleCmd[] )
       assert args.is_empty
       name = t->String
 
     method to->String
       return name
 endClass
+

@@ -1,7 +1,0 @@
-module Froley
-
-class CodeGenerator
-  METHODS
-    method process( info:Value )
-      throw UnsupportedOperationError()
-endClass

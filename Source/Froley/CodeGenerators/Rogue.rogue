@@ -2,6 +2,13 @@ module Froley
 
 Froley.code_generators//rogue = GenerateRogue()
 
+# Simple.rogue
+# SimpleCmd.rogue
+# SimpleError.rogue
+# SimpleParserVM.rogue
+# SimpleToken.rogue
+# SimpleTokenizerVM.rogue
+
 class GenerateRogue : CodeGenerator
   PROPERTIES
     language         : String
@@ -12,13 +19,13 @@ class GenerateRogue : CodeGenerator
       language = info//language
       source_timestamp = File.timestamp( info//source_filepath )
 
-      generate_CmdFactory
-      generate_Code
-      generate_ParserOpcode
-      generate_TokenType
-      generate_TokeninzerOpcode
+      regenerate_CmdFactory
+      regenerate_Code
+      regenerate_ParserOpcode
+      regenerate_TokenType
+      regenerate_TokeninzerOpcode
 
-    method generate_CmdFactory
+    method regenerate_CmdFactory
       local filepath = select{options//output||""} + language + "CmdFactory.rogue"
       if (File.timestamp(filepath) >= source_timestamp) return
 
@@ -41,7 +48,7 @@ class GenerateRogue : CodeGenerator
                       |endClass
       writer.close
 
-    method generate_Code
+    method regenerate_Code
       local filepath = select{options//output||""} + language + "Code.rogue"
       if (File.timestamp(filepath) >= source_timestamp) return
 
@@ -74,7 +81,7 @@ class GenerateRogue : CodeGenerator
       writer.println "endClass"
       writer.close
 
-    method generate_ParserOpcode
+    method regenerate_ParserOpcode
       local filepath = select{options//output||""} + language + "ParserOpcode.rogue"
       if (File.timestamp(filepath) >= source_timestamp) return
 
@@ -92,7 +99,7 @@ class GenerateRogue : CodeGenerator
       writer.println @|endEnum
       writer.close
 
-    method generate_TokenType
+    method regenerate_TokenType
       local filepath = select{options//output||""} + language + "TokenType.rogue"
       if (File.timestamp(filepath) >= source_timestamp) return
 
@@ -110,7 +117,7 @@ class GenerateRogue : CodeGenerator
       writer.println @|endEnum
       writer.close
 
-    method generate_TokeninzerOpcode
+    method regenerate_TokeninzerOpcode
       local filepath = select{options//output||""} + language + "TokenizerOpcode.rogue"
       if (File.timestamp(filepath) >= source_timestamp) return
 

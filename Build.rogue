@@ -26,9 +26,9 @@ routine rogo_clean
 endRoutine
 
 routine rogo_build
-  if (Files("Source/Froley","**.rogue").any_newer_than(Build.EXE))
+  if (Files("Source","**.rogue").any_newer_than(Build.EXE))
     File.create_folder( "Build" )
-    execute "roguec Source/Froley/Froley.rogue --output=$ --compile" (Build.EXE)
+    execute "roguec Source/Froley.rogue --output=$ --compile" (Build.EXE)
   endIf
 
   if (System.os != "Windows" and Process.run( "which froley", &inherit_environment ).output_string == "") install_launcher

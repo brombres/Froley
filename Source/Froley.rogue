@@ -66,12 +66,15 @@ class Launcher
           throw FroleyError( "Host language '$' is not supported." (host_language) )
         endIf
 
-        local info = Froley.parse( File(input_filepath) )
-
         local gen = Froley.code_generators[ host_language ]
         forEach (option in options)
           gen.add_option( option.before_first('='), option.after_first('=') )
         endForEach
+
+        local info = Froley.parse( File(input_filepath) )
+        local language = select{ gen.options//language || input_filepath.before_last(".froley",&ignore_case) }
+        info//language = language
+
         gen.process( info )
 
       catch (error:Error)
@@ -96,7 +99,12 @@ class Launcher
       println
 
       println @|OPTIONS
-               |  --output=<folder>
+      forEach (key in Froley.code_generators.keys)
+        print  "  "
+        println key
+        println(forEach in Froley.code_generators[ key ].usage_options.sort((a,b)=>a<b)).println
+        println
+      endForEach
 
       println
 endClass
@@ -191,10 +199,9 @@ class Froley [singleton]
       }#
       #@trace tokenizer_bytes.count
 
-      local language_name = filepath.before_last( ".froley", &ignore_case )
       local output =
       @{
-        language: language_name,
+        language: "TODO",
         source_filepath: filepath,
         :token_types,
         :tokenizer_opcodes,

@@ -8,6 +8,8 @@ class CodeGenerator
   METHODS
     method add_option( name:String, value:String )
       which (name)
+        case "language"
+          if (value == "") throw FroleyError( "Language name expected (--language=<language-name>)." )
         case "output"
           if (value == "") throw FroleyError( "Output folder expected (--output=<folder>)." )
           value = File.ensure_ends_with_separator( value )
@@ -15,6 +17,16 @@ class CodeGenerator
           throw FroleyError( "Unrecognized option: " + name )
       endWhich
       options[ name ] = value
+
+    method usage_options->String[]
+      return String[].add(
+        @|    --language=<name>
+         |      Specifies the language name. If not specified, the base name of the
+         |      .froley file is used as the language name.
+      ).add(
+        @|    --output=<folder>
+         |      Specifies the output folder.
+      )
 
     method process( info )
       throw UnsupportedOperationError()

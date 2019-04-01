@@ -15,6 +15,16 @@ class GenerateRogue : CodeGenerator
     source_timestamp : Real64
 
   METHODS
+    method usage_options->String[]
+      return prior.usage_options.add(
+        @|    --framework
+         |      Creates the following framework files for language "XYZ" if they do not
+         |      exist:
+         |        - XYZError.rogue, XYZParser.rogue, XYZToken.rogue, XYZTokenizer.rogue
+         |      Updates XYZCmd.rogue with starter class definitions of any command nodes
+         |      that are not yet defined. Does not delete any code.
+      )
+
     method process( info )
       language = info//language
       source_timestamp = File.timestamp( info//source_filepath )

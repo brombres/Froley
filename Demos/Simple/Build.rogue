@@ -9,7 +9,7 @@
 # "rogo_default" will run in the absence of any other command line argument.
 
 routine rogo_default
-  execute( "froley Simple.froley rogue" )
+  execute( "froley Simple.froley rogue --framework" )
 
   if (Files(".","*.rogue").any_newer_than("Build/Simple"))
     File.create_folder( "Build" )

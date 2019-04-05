@@ -1,5 +1,7 @@
 module Froley
 
+$include "Template/RogueFroleyError.rogue"
+
 Froley.code_generators//rogue = GenerateRogue()
 
 # Simple.rogue
@@ -11,8 +13,8 @@ Froley.code_generators//rogue = GenerateRogue()
 
 class GenerateRogue : CodeGenerator
   PROPERTIES
-    language         : String
-    source_timestamp : Real64
+    source_timestamp   : Real64
+    generate_framework : Logical
 
   METHODS
     method usage_options->String[]
@@ -25,6 +27,15 @@ class GenerateRogue : CodeGenerator
          |      that are not yet defined. Does not delete any code.
       )
 
+    method add_option( name:String, value:String )
+      which (name)
+        case "framework"
+          generate_framework = true
+          if (value != "") throw FroleyError( "The --framework option should not have any arguments." )
+        others
+          prior.add_option( name, value )
+      endWhich
+
     method process( info )
       language = info//language
       source_timestamp = File.timestamp( info//source_filepath )
@@ -34,6 +45,18 @@ class GenerateRogue : CodeGenerator
       regenerate_ParserOpcode
       regenerate_TokenType
       regenerate_TokeninzerOpcode
+
+      if (generate_framework)
+        generate_Error
+      endIf
+
+    method generate( content:String, output_filepath:String )
+      if (File.exists(output_filepath)) return
+      println "Creating " + output_filepath
+      File.save( output_filepath, content.replacing("RogueFroley",language) )
+
+    method generate_Error
+      generate( rogue_froley_error, language + "Error.rogue" )
 
     method regenerate_CmdFactory
       local filepath = select{options//output||""} + language + "CmdFactory.rogue"

@@ -2,17 +2,20 @@ module Froley
 
 class CodeGenerator
   PROPERTIES
-    info    : Value
-    options = StringTable<<String>>()
+    info     : Value
+    options  = StringTable<<String>>()
+    language = "undefined"
+    output   = "./"
 
   METHODS
     method add_option( name:String, value:String )
       which (name)
         case "language"
           if (value == "") throw FroleyError( "Language name expected (--language=<language-name>)." )
+          language = value
         case "output"
           if (value == "") throw FroleyError( "Output folder expected (--output=<folder>)." )
-          value = File.ensure_ends_with_separator( value )
+          output = File.ensure_ends_with_separator( value )
         others
           throw FroleyError( "Unrecognized option: " + name )
       endWhich

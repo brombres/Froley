@@ -18,7 +18,8 @@ $include "TokenizerAssembler.rogue"
 $include "TokenizerOpcode.rogue"
 $include "TokenizerVM.rogue"
 
-$include "CodeGenerators"
+$includeFolder "CodeGenerators"
+$includeFolder "CodeGenerators/Template"
 
 Launcher( System.command_line_arguments )
 

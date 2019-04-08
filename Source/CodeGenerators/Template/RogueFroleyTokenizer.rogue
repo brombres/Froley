@@ -1,0 +1,376 @@
+augment RogueTemplate
+  PROPERTIES
+    tokenizer =
+      @|class RogueFroleyTokenizer
+       |  DEFINITIONS
+       |    VERSION     = 1
+       |    MIN_VERSION = 1
+       |
+       |  PROPERTIES
+       |    code         = Int32[]
+       |    stack        = Int32[]
+       |    strings      = String[]
+       |    entry_points = EntryPoint[]
+       |    ch           : Int32
+       |    count        : Int32
+       |    result       : Int32
+       |    buffer       = StringBuilder()
+       |    tokens       = RogueFroleyToken[](1024)
+       |
+       |    filepath : String
+       |    scanner  : Scanner
+       |
+       |    line   : Int32
+       |    column : Int32
+       |
+       |    start_ip = 0
+       |
+       |    id_characters = Array<<Int32>>(128)
+       |
+       |  METHODS
+       |    method init( data:Byte[] )
+       |      forEach (ch in 'a'..'z') id_characters[ch->Int32] = 1
+       |      forEach (ch in 'A'..'Z') id_characters[ch->Int32] = 1
+       |      forEach (ch in '0'..'9') id_characters[ch->Int32] = 2
+       |      id_characters['_'->Int32] = 1
+       |      load( data )
+       |
+       |    method init( base64_code:String )
+       |      init( base64_code.decode_base64 )
+       |
+       |    method accept( token_type:Int32 )
+       |      local t = RogueFroleyToken( RogueFroleyTokenType(token_type), filepath, scanner.source, line, column )
+       |      if (buffer.count) t.content = buffer->String
+       |      tokens.add( t )
+       |
+       |    method execute
+       |      local ip = start_ip
+       |      loop
+       |        local opcode = code[ ip ]
+       |        #println "$ $" (ip.format("03"),RogueFroleyTokenizerOpcode(opcode))
+       |        ++ip
+       |        which (opcode)
+       |          case RogueFroleyTokenizerOpcode.HALT
+       |            return
+       |          case RogueFroleyTokenizerOpcode.RESTART
+       |            buffer.clear
+       |            ip = start_ip
+       |            nextIteration
+       |          case RogueFroleyTokenizerOpcode.MODE_INT32
+       |            start_ip = code[ ip ]
+       |            ++ip
+       |            nextIteration
+       |          case RogueFroleyTokenizerOpcode.ERROR
+       |            throw RogueFroleyError( filepath, scanner.source, scanner.line, scanner.column, buffer->String )
+       |          case RogueFroleyTokenizerOpcode.MARK_SOURCE_POS
+       |            line   = scanner.line
+       |            column = scanner.column
+       |            nextIteration
+       |          case RogueFroleyTokenizerOpcode.ACCEPT_INT32
+       |            local token_type = code[ ip ]
+       |            ip = start_ip
+       |            accept( token_type )
+       |            buffer.clear
+       |            nextIteration
+       |          case RogueFroleyTokenizerOpcode.JUMP
+       |            ip = code[ ip ]
+       |            nextIteration
+       |          case RogueFroleyTokenizerOpcode.JUMP_EQ
+       |            if (result == 0) ip = code[ ip ]
+       |            else             ++ip
+       |            nextIteration
+       |          case RogueFroleyTokenizerOpcode.JUMP_NE
+       |            if (result != 0) ip = code[ ip ]
+       |            else             ++ip
+       |            nextIteration
+       |          case RogueFroleyTokenizerOpcode.JUMP_LT
+       |            if (result < 0) ip = code[ ip ]
+       |            else            ++ip
+       |            nextIteration
+       |          case RogueFroleyTokenizerOpcode.JUMP_LE
+       |            if (result <= 0) ip = code[ ip ]
+       |            else             ++ip
+       |            nextIteration
+       |          case RogueFroleyTokenizerOpcode.JUMP_GT
+       |            if (result > 0) ip = code[ ip ]
+       |            else            ++ip
+       |            nextIteration
+       |          case RogueFroleyTokenizerOpcode.JUMP_GE
+       |            if (result >= 0) ip = code[ ip ]
+       |            else             ++ip
+       |            nextIteration
+       |          case RogueFroleyTokenizerOpcode.CALL
+       |            stack.add( ip+1 )
+       |            ip = code[ ip ]
+       |            nextIteration
+       |          case RogueFroleyTokenizerOpcode.RETURN
+       |            if (stack.is_empty) throw RogueFroleyError( "[Compiled Code]", "'return' on empty stack." )
+       |            ip = stack.remove_last
+       |            nextIteration
+       |          case RogueFroleyTokenizerOpcode.HAS_ANOTHER
+       |            result = select{ scanner.has_another:1 || 0 }
+       |            nextIteration
+       |          case RogueFroleyTokenizerOpcode.PEEK_CH_INT32
+       |            ch = scanner.peek( code[ip] )
+       |            ++ip
+       |            nextIteration
+       |          case RogueFroleyTokenizerOpcode.PEEK_CH_COUNT
+       |            ch = scanner.peek( count )
+       |            nextIteration
+       |          case RogueFroleyTokenizerOpcode.READ_CH
+       |            ch = scanner.read
+       |            nextIteration
+       |          case RogueFroleyTokenizerOpcode.CONSUME_CHARACTER
+       |            local value = code[ip]->Character
+       |            result = select{ scanner.consume(value):1 || 0 }
+       |            ++ip
+       |            nextIteration
+       |          case RogueFroleyTokenizerOpcode.SCAN_DIGITS
+       |            local min_digits = code[ ip ]
+       |            local max_digits = code[ ip+1 ]
+       |            local base = code[ ip+2 ]
+       |            ip += 3
+       |            ch = 0
+       |            local n = 0
+       |            loop (max_digits)
+       |              if (scanner.has_another and scanner.peek.is_number(base))
+       |                ch = ch * base + scanner.read.to_number(base)
+       |                ++n
+       |              else
+       |                escapeLoop
+       |              endIf
+       |            endLoop
+       |            result = n - min_digits
+       |            nextIteration
+       |          case RogueFroleyTokenizerOpcode.SCAN_IDENTIFIER
+       |            if (scanner.has_another and id_characters[scanner.peek&0x7F] == 1)
+       |              buffer.clear
+       |              buffer.print( scanner.read )
+       |              while (scanner.has_another and id_characters[scanner.peek&0x7f])
+       |                buffer.print( scanner.read )
+       |              endWhile
+       |              result = 1
+       |            else
+       |              result = 0
+       |            endIf
+       |            nextIteration
+       |          case RogueFroleyTokenizerOpcode.CLEAR_BUFFER
+       |            buffer.clear
+       |            nextIteration
+       |          case RogueFroleyTokenizerOpcode.COLLECT_CH
+       |            buffer.print( ch->Character )
+       |            nextIteration
+       |          case RogueFroleyTokenizerOpcode.COLLECT_CHARACTER
+       |            buffer.print( code[ip]->Character )
+       |            ++ip
+       |            nextIteration
+       |          case RogueFroleyTokenizerOpcode.COLLECT_STRING
+       |            buffer.print( strings[code[ip]] )
+       |            ++ip
+       |            nextIteration
+       |          case RogueFroleyTokenizerOpcode.PRINT_BUFFER
+       |            print (forEach in buffer)
+       |            nextIteration
+       |          case RogueFroleyTokenizerOpcode.PRINT_CH
+       |            print ch->Character
+       |            nextIteration
+       |          case RogueFroleyTokenizerOpcode.PRINT_COUNT
+       |            print count
+       |            nextIteration
+       |          case RogueFroleyTokenizerOpcode.PRINT_CHARACTER
+       |            print code[ip]->Character
+       |            ++ip
+       |            nextIteration
+       |          case RogueFroleyTokenizerOpcode.PRINT_STRING
+       |            print strings[ code[ip] ]
+       |            ++ip
+       |            nextIteration
+       |          case RogueFroleyTokenizerOpcode.COMPARE_CH_INT32
+       |            result = ch - code[ip]
+       |            ++ip
+       |            nextIteration
+       |          case RogueFroleyTokenizerOpcode.COMPARE_COUNT_INT32
+       |            result = count - code[ip]
+       |            ++ip
+       |            nextIteration
+       |          case RogueFroleyTokenizerOpcode.CH_IS_DIGIT_INT32
+       |            local base = code[ip]
+       |            ++ip
+       |            local n = (ch->Character).to_number( base )
+       |            result = select{ (n>=0 and n<base):1 || 0 }
+       |            nextIteration
+       |          case RogueFroleyTokenizerOpcode.CH_IS_DIGIT_COUNT
+       |            local n = (ch->Character).to_number( count )
+       |            result = select{ (n>=0 and n<count):1 || 0 }
+       |            nextIteration
+       |          case RogueFroleyTokenizerOpcode.CH_IS_LETTER
+       |            result = select{ ((ch>='a' and ch<='z') or (ch>='A' and ch<='Z')):1 || 0 }
+       |            nextIteration
+       |          case RogueFroleyTokenizerOpcode.PUSH_CH
+       |            stack.add( ch )
+       |            nextIteration
+       |          case RogueFroleyTokenizerOpcode.PUSH_COUNT
+       |            stack.add( count )
+       |            nextIteration
+       |          case RogueFroleyTokenizerOpcode.POP_CH
+       |            if (stack.is_empty) throw RogueFroleyError( "[Compiled Code]", "'pop ch' on empty stack." )
+       |            ch = stack.remove_last
+       |            nextIteration
+       |          case RogueFroleyTokenizerOpcode.POP_COUNT
+       |            if (stack.is_empty) throw RogueFroleyError( "[Compiled Code]", "'pop count' on empty stack." )
+       |            count = stack.remove_last
+       |            nextIteration
+       |          case RogueFroleyTokenizerOpcode.SET_CH_TO_INT32
+       |            ch = code[ ip ]
+       |            result = ch
+       |            ++ip
+       |            nextIteration
+       |          case RogueFroleyTokenizerOpcode.SET_CH_TO_COUNT
+       |            ch = count
+       |            result = ch
+       |            nextIteration
+       |          case RogueFroleyTokenizerOpcode.SET_COUNT_TO_INT32
+       |            count = code[ ip ]
+       |            result = count
+       |            ++ip
+       |            nextIteration
+       |          case RogueFroleyTokenizerOpcode.SET_COUNT_TO_CH
+       |            count = ch
+       |            result = count
+       |            nextIteration
+       |          case RogueFroleyTokenizerOpcode.SET_RESULT_TO_CH
+       |            result = ch
+       |            nextIteration
+       |          case RogueFroleyTokenizerOpcode.SET_RESULT_TO_COUNT
+       |            result = count
+       |            nextIteration
+       |          case RogueFroleyTokenizerOpcode.SET_RESULT_TO_INT32
+       |            result = code[ ip ]
+       |            ++ip
+       |            nextIteration
+       |          case RogueFroleyTokenizerOpcode.ADD_CH_COUNT
+       |            ch += count
+       |            nextIteration
+       |          case RogueFroleyTokenizerOpcode.ADD_CH_INT32
+       |            ch += code[ ip ]
+       |            ++ip
+       |            nextIteration
+       |          case RogueFroleyTokenizerOpcode.ADD_COUNT_INT32
+       |            count += code[ ip ]
+       |            ++ip
+       |            nextIteration
+       |          case RogueFroleyTokenizerOpcode.SUBTRACT_CH_COUNT
+       |            ch -= count
+       |            nextIteration
+       |          case RogueFroleyTokenizerOpcode.WHICH_INPUT
+       |            local cur_node = ip
+       |            local lookahead = 0
+       |            local last_acceptable_node = 0
+       |            local last_acceptable_link_count = 0
+       |            local last_acceptable_lookahead = 0
+       |            loop
+       |              local link_count = code[cur_node+1]
+       |              if (code[cur_node])
+       |                last_acceptable_node = cur_node
+       |                last_acceptable_link_count = link_count
+       |                last_acceptable_lookahead = lookahead
+       |              endIf
+       |              if (not scanner.has_another(lookahead+1)) escapeLoop
+       |              local c = scanner.peek( lookahead )
+       |              ip = cur_node + 2
+       |              contingent
+       |                loop (link_count)
+       |                  if (c == code[ip])
+       |                    cur_node = code[ ip+1 ]
+       |                    sufficient true
+       |                  endIf
+       |                  ip += 2
+       |                endLoop
+       |                escapeLoop
+       |              satisfied
+       |                ++lookahead
+       |              endContingent
+       |            endLoop
+       |            # Either no links match or EOI - jump to code of last acceptable node.
+       |            # The start node is always acceptable and either contains the
+       |            # 'others' case or jumps to the end of the scan table.
+       |            ip = last_acceptable_node + last_acceptable_link_count * 2 + 2
+       |            loop (last_acceptable_lookahead) buffer.print( scanner.read )
+       |            nextIteration
+       |
+       |          case RogueFroleyTokenizerOpcode.WHICH_BUFFER
+       |            local cur_node = ip
+       |            local start_node = cur_node
+       |            local lookahead = 0
+       |            loop
+       |              local link_count = code[cur_node+1]
+       |              if (lookahead == buffer.count) escapeLoop
+       |              local c = buffer[ lookahead ]
+       |              ip = cur_node + 2
+       |              contingent
+       |                loop (link_count)
+       |                  if (c == code[ip])
+       |                    cur_node = code[ ip+1 ]
+       |                    sufficient true
+       |                  endIf
+       |                  ip += 2
+       |                endLoop
+       |                escapeLoop
+       |              satisfied
+       |                ++lookahead
+       |              endContingent
+       |            endLoop
+       |
+       |            # Either no links match or EOI
+       |            if (code[cur_node] == 0 or lookahead < buffer.count)
+       |              # Not a complete match; use the 'others' code in the start node
+       |              cur_node = start_node
+       |            endIf
+       |            ip = cur_node + code[cur_node+1] * 2 + 2
+       |            nextIteration
+       |          others
+       |            throw RogueFroleyError( "[INTERNAL]", "Unhandled tokenizer opcode: " + RogueFroleyTokenizerOpcode(opcode) )
+       |        endWhich
+       |      endLoop
+       |
+       |    method load( data:Byte[] )
+       |      load( DataReader(data) )
+       |
+       |    method load( reader:DataReader )
+       |      local version = reader.read_int32x
+       |      require version >= MIN_VERSION
+       |      local n = reader.read_int32x
+       |      strings.reserve( n )
+       |      loop (n) strings.add( reader.read_string )
+       |
+       |      n = reader.read_int32x
+       |      entry_points.reserve( n )
+       |      loop (n)
+       |        local name = strings[ reader.read_int32x ]
+       |        entry_points.add( EntryPoint(name,reader.read_int32x) )
+       |      endLoop
+       |
+       |      n = reader.read_int32x
+       |      code.reserve( n )
+       |      loop (n) code.add( reader.read_int32x )
+       |
+       |    method tokenize( file:File )->RogueFroleyToken[]
+       |      if (not file.exists) throw RogueFroleyError( "File not found: $." (file.filepath) )
+       |      tokenize( file.filepath, file.load_as_string )
+       |      return tokens
+       |
+       |    method tokenize( filepath, source:String )->RogueFroleyToken[]
+       |      tokens.clear
+       |      scanner = Scanner( source )
+       |      execute
+       |      return tokens
+       |endClass
+       |
+       |class EntryPoint( name:String, ip:Int32 ) [compound]
+       |  METHODS
+       |    method to->String
+       |      return "$ $" (ip.format("04"),name)
+       |endClass
+       |
+endAugment
+

@@ -1,6 +1,4 @@
-$define TRACE 0
-
-class SimpleParserVM
+class SimpleParser
   DEFINITIONS
     VERSION     = 1
     MIN_VERSION = 1
@@ -34,10 +32,6 @@ class SimpleParserVM
     method execute( ip:Int32 )
       loop
         local opcode = code[ ip ]
-        $if TRACE
-          if (methods_by_address.contains(ip)) println methods_by_address[ip]
-          println "  $ $ (next:$)" (ip.format("03"),SimpleParserOpcode(opcode),peek)
-        $endIf
         ++ip
         which (opcode)
           case SimpleParserOpcode.SYNTAX_ERROR

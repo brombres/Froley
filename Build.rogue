@@ -18,7 +18,7 @@ endAugment
 
 routine rogo_default
   rogo_build
-  execute( "cd Demos/Simple && rogo" )
+  execute( "cd Demos/Simple && touch Simple.froley && rogo" )
 endRoutine
 
 routine rogo_clean

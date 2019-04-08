@@ -1,4 +1,4 @@
-class SimpleTokenizerVM
+class SimpleTokenizer
   DEFINITIONS
     VERSION     = 1
     MIN_VERSION = 1
@@ -36,7 +36,7 @@ class SimpleTokenizerVM
       init( base64_code.decode_base64 )
 
     method accept( token_type:Int32 )
-      local t = SimpleToken( filepath, scanner.source, line, column, SimpleTokenType(token_type) )
+      local t = SimpleToken( SimpleTokenType(token_type), filepath, scanner.source, line, column )
       if (buffer.count) t.content = buffer->String
       tokens.add( t )
 

@@ -3,18 +3,18 @@ $include "SimpleCmdFactory.rogue"
 $include "SimpleCode.rogue"
 $include "SimpleError.rogue"
 $include "SimpleParserOpcode.rogue"
-$include "SimpleParserVM.rogue"
+$include "SimpleParser.rogue"
 $include "SimpleToken.rogue"
 $include "SimpleTokenType.rogue"
 $include "SimpleTokenizerOpcode.rogue"
-$include "SimpleTokenizerVM.rogue"
+$include "SimpleTokenizer.rogue"
 
 Simple()
 
 class Simple
   PROPERTIES
-    tokenizer = SimpleTokenizerVM( Code.tokenizer_code )
-    parser    = SimpleParserVM( Code.parser_code )
+    tokenizer = SimpleTokenizer( SimpleCode.tokenizer_code )
+    parser    = SimpleParser( SimpleCode.parser_code )
 
   METHODS
     method init

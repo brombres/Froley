@@ -34,3 +34,4 @@ class SimpleError( filepath:String, source:String, line:Int32, column:Int32, mes
       builder.println( "=" * 79 )
       return builder->String
 endClass
+

@@ -1,0 +1,18 @@
+augment RogueTemplate
+  PROPERTIES
+    token =
+      @|class RogueFroleyToken( type:RogueFroleyTokenType, filepath:String, source:String, line:Int32, column:Int32, content=null:String )
+       |  METHODS
+       |    method cloned->RogueFroleyToken
+       |      return RogueFroleyToken( type, filepath, source, line, column, content )
+       |
+       |    method error( message:String )->RogueFroleyError
+       |      return RogueFroleyError( filepath, source, line, column, message )
+       |
+       |    method to->String
+       |      if (content) return content
+       |      return type->String
+       |endClass
+       |
+endAugment
+

@@ -1,7 +1,7 @@
-class SimpleToken( filepath:String, source:String, line:Int32, column:Int32, type:SimpleTokenType, content=null:String )
+class SimpleToken( type:SimpleTokenType, filepath:String, source:String, line:Int32, column:Int32, content=null:String )
   METHODS
     method cloned->SimpleToken
-      return SimpleToken( filepath, source, line, column, type, content )
+      return SimpleToken( type, filepath, source, line, column, content )
 
     method error( message:String )->SimpleError
       return SimpleError( filepath, source, line, column, message )
@@ -10,3 +10,4 @@ class SimpleToken( filepath:String, source:String, line:Int32, column:Int32, typ
       if (content) return content
       return type->String
 endClass
+

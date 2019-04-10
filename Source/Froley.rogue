@@ -3,6 +3,7 @@ module Froley
 
 $include "Assembler.rogue"
 $include "Cmd.rogue"
+$include "CmdTypeInfo.rogue"
 $include "FroleyError.rogue"
 $include "FroleyParser.rogue"
 $include "FroleyTokenizer.rogue"
@@ -182,8 +183,8 @@ class Froley [singleton]
         tokenizer_opcodes.add( @{ :name, value:TokenizerOpcode(name)->Int32 } )
       endForEach
 
-      local parser_cmd_type_names = @[]
-      parser_cmd_type_names.add( forEach in parser_assembler.cmd_type_names )
+      local cmd_types = @[]
+      cmd_types.add( (forEach in parser_assembler.cmd_type_lookup)->Value )
 
       local parser_opcodes = @[]
       forEach (name in ParserOpcode.names)
@@ -207,7 +208,7 @@ class Froley [singleton]
         :token_types,
         :tokenizer_opcodes,
         tokenizer_code:tokenizer_bytes.to_base64,
-        :parser_cmd_type_names,
+        :cmd_types,
         :parser_opcodes,
         parser_code:parser_bytes.to_base64
       }

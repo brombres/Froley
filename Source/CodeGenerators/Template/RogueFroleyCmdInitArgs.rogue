@@ -1,0 +1,18 @@
+augment RogueTemplate
+  PROPERTIES
+    cmd_init_args =
+      @|class RogueFroleyCmdInitArgs : RogueFroleyCmd[]
+       |  PROPERTIES
+       |    t : RogueFroleyToken
+       |
+       |  METHODS
+       |    method require_count( exact_arg_count:Int32 )
+       |      require (count == exact_arg_count)
+       |
+       |    method require_count( min_arg_count:Int32, max_arg_count:Int32 )
+       |      require (count >= min_arg_count)
+       |      require (count <= max_arg_count)
+       |endClass
+       |
+endAugment
+

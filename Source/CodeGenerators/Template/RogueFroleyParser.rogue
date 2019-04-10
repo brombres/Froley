@@ -17,7 +17,7 @@ augment RogueTemplate
        |    token_stack   = RogueFroleyToken[]
        |
        |    cmd_queue     = RogueFroleyCmd[]
-       |    cmd_args      = RogueFroleyCmd[]
+       |    cmd_args      = RogueFroleyCmdInitArgs()
        |
        |    position        = 0
        |    cur_token       : RogueFroleyToken

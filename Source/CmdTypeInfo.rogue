@@ -1,0 +1,21 @@
+enum CmdTypeInfoType
+  GENERAL
+  PRE_UNARY
+  POST_UNARY
+  BINARY
+  STATEMENTS
+  ARGS
+endEnum
+
+class CmdTypeInfo( name:String, type:CmdTypeInfoType, index:Int32, symbol:String )
+  PROPERTIES
+    min_args : Int32
+    max_args : Int32
+
+  METHODS
+    method to->String
+      return name
+
+    method to->Value
+      return @{ :name, :index, :type, :min_args, :max_args, :symbol }
+endClass

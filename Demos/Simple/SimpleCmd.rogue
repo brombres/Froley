@@ -3,25 +3,14 @@ class SimpleCmd
     t : SimpleToken
 
   METHODS
-    method init( t, args:SimpleCmd[] )
+    method init( t, args:SimpleCmdInitArgs )
       throw UnsupportedOperationError()
-endClass
-
-class SimpleCmdLiteralInt32( t, value:Int32 ) : SimpleCmd
-  METHODS
-    method init( t, args:SimpleCmd[] )
-      assert args.is_empty
-      assert t.content
-      value = t.content->Int32
-
-    method to->String
-      return value->String
 endClass
 
 class SimpleCmdUnary( t, operand:SimpleCmd ) : SimpleCmd
   METHODS
-    method init( t, args:SimpleCmd[] )
-      assert args.count == 1
+    method init( t, args:SimpleCmdInitArgs )
+      args.require_count( 1 )
       operand = args.first
 
     method op->String
@@ -45,8 +34,8 @@ endClass
 
 class SimpleCmdBinary( t, left:SimpleCmd, right:SimpleCmd ) : SimpleCmd
   METHODS
-    method init( t, args:SimpleCmd[] )
-      assert args.count == 2
+    method init( t, args:SimpleCmdInitArgs )
+      args.require_count( 2 )
       left = args.first
       right = args.last
 
@@ -55,6 +44,17 @@ class SimpleCmdBinary( t, left:SimpleCmd, right:SimpleCmd ) : SimpleCmd
 
     method to->String
       return "($ $ $)" (left,op,right)
+endClass
+
+class SimpleCmdLiteralInt32( t, value:Int32 ) : SimpleCmd
+  METHODS
+    method init( t, args:SimpleCmdInitArgs )
+      args.require_count( 0 )
+      require t.content
+      value = t.content->Int32
+
+    method to->String
+      return value->String
 endClass
 
 class SimpleCmdAdd : SimpleCmdBinary
@@ -95,8 +95,8 @@ endClass
 
 class SimpleCmdAccess( t, name:String ) : SimpleCmd
   METHODS
-    method init( t, args:SimpleCmd[] )
-      assert args.is_empty
+    method init( t, args:SimpleCmdInitArgs )
+      args.require_count( 0 )
       name = t->String
 
     method to->String

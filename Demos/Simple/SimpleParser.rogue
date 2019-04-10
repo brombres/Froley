@@ -14,7 +14,7 @@ class SimpleParser
     token_stack   = SimpleToken[]
 
     cmd_queue     = SimpleCmd[]
-    cmd_args      = SimpleCmd[]
+    cmd_args      = SimpleCmdInitArgs()
 
     position        = 0
     cur_token       : SimpleToken

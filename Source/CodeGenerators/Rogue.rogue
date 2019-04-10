@@ -30,8 +30,10 @@ class GenerateRogue : CodeGenerator
           prior.add_option( name, value )
       endWhich
 
-    method output_filepath( filename:String, &do_not_overwrite )->String
+    method output_filepath( filename:String, &do_not_overwrite, &for_reading )->String
       local filepath = select{options//output||""} + language + filename
+      if (for_reading) return filepath
+
       if (File.timestamp(filepath) >= source_timestamp) return null
 
       if (File.exists(filepath))
@@ -60,6 +62,8 @@ class GenerateRogue : CodeGenerator
       source_timestamp = File.timestamp( info//source_filepath )
 
       if (generate_framework)
+        generate_Cmd
+        generate_CmdInitArgs
         generate_Error
         generate_Parser
         generate_Token
@@ -78,6 +82,52 @@ class GenerateRogue : CodeGenerator
       writer.println( content.replacing("RogueFroley",language) )
       writer.close
 
+    method generate_Cmd
+      generate( RogueTemplate.cmd, "Cmd.rogue", &do_not_overwrite )
+
+      # Update Cmd.rogue by adding new class skeletons
+      local filepath = output_filepath( "Cmd.rogue", &for_reading )
+      local content = File.load_as_string( filepath )
+      local builder : StringBuilder
+      forEach (cmd_type in info//cmd_types)
+        local class_name = (cmd_type//name)
+        local class_class_name = "class " + class_name
+        if (not content.contains(class_class_name))
+          if (not builder)
+            println "Updating " + filepath
+            builder = StringBuilder( content.count * 1.5 )
+            builder.println( content )
+          endIf
+          local type = CmdTypeInfoType( cmd_type//type )
+          print( "  " ).println( class_class_name )
+          builder.println.print( class_class_name ).print( " : " ).print( language ).print( "Cmd" )
+          which (type)
+            case CmdTypeInfoType.PRE_UNARY:  builder.println "Unary"
+            case CmdTypeInfoType.POST_UNARY: builder.println "PostUnary"
+            case CmdTypeInfoType.BINARY:     builder.println "Binary"
+            case CmdTypeInfoType.STATEMENTS: builder.println "Statements"
+            case CmdTypeInfoType.ARGS:       builder.println "Args"
+            others:                          builder.println
+          endWhich
+          builder.println "  METHODS"
+          which (type)
+            case CmdTypeInfoType.PRE_UNARY, CmdTypeInfoType.POST_UNARY, CmdTypeInfoType.BINARY
+              builder.println "    method op->String"
+              builder.println '      return "$"' (cmd_type//symbol->String.to_escaped_ascii)
+            others
+              builder.println "    method to->String"
+              builder.print  ("      return \"").print( class_name ).println( "\"" )
+          endWhich
+          builder.println "endClass"
+        endIf
+      endForEach
+      if (builder)
+        File.save( filepath, builder->String )
+      endIf
+
+    method generate_CmdInitArgs
+      generate( RogueTemplate.cmd_init_args, "CmdInitArgs.rogue", &do_not_overwrite )
+
     method generate_Error
       generate( RogueTemplate.error, "Error.rogue", &do_not_overwrite )
 
@@ -94,14 +144,14 @@ class GenerateRogue : CodeGenerator
       local writer = output_writer( "CmdFactory.rogue" )
       if (not writer) return
 
-      writer.print  ( "class ").print( language ).print( "CmdFactory" )
+      writer.print  ( "class ").print( language ).println( "CmdFactory" )
       writer.println( "  GLOBAL METHODS" )
-      writer.print  ( "    method create_cmd( index:Int32, t:" ).print( language ).print( "Token, args:" ).print( language ).print( "Cmd[] )->" ) ...
+      writer.print  ( "    method create_cmd( index:Int32, t:" ).print( language ).print( "Token, args:" ).print( language ).print( "CmdInitArgs )->" ) ...
         .print( language ).println( "Cmd" )
       writer.println("      which (index)")
-      forEach (cmd_type_name at index in info//parser_cmd_type_names)
-        writer.print  ( "        case " ).print( index ).print( ": " )
-        writer.print  ( "return " ).print( cmd_type_name ).println( "( t, args )" )
+      forEach (cmd_type in info//cmd_types)
+        writer.print  ( "        case " ).print( cmd_type//index ).print( ": " )
+        writer.print  ( "return " ).print( cmd_type//name ).println( "( t, args )" )
       endForEach
       writer.println @|        others
       writer.print  ( "          throw " ).print( language ).println( ''Error( "[INTERNAL] CmdFactory.create_cmd() index out of bounds: " + index )'' )

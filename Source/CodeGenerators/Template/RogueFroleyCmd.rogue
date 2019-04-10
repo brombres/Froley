@@ -1,0 +1,59 @@
+augment RogueTemplate
+  PROPERTIES
+    cmd =
+      @|class RogueFroleyCmd
+       |  PROPERTIES
+       |    t : RogueFroleyToken
+       |
+       |  METHODS
+       |    method init( t, args:RogueFroleyCmdInitArgs )
+       |      throw UnsupportedOperationError()
+       |endClass
+       |
+       |class RogueFroleyCmdStatements : RogueFroleyCmd[]
+       |  METHODS
+       |    method init( t, args:RogueFroleyCmdInitArgs )
+       |      add( forEach in args )
+       |endClass
+       |
+       |class RogueFroleyCmdArgs : RogueFroleyCmd[]
+       |  METHODS
+       |    method init( t, args:RogueFroleyCmdInitArgs )
+       |      add( forEach in args )
+       |endClass
+       |
+       |class RogueFroleyCmdUnary( t, operand:RogueFroleyCmd ) : RogueFroleyCmd
+       |  METHODS
+       |    method init( t, args:RogueFroleyCmdInitArgs )
+       |      args.require_count( 1 )
+       |      operand = args.first
+       |
+       |    method op->String
+       |      throw UnsupportedOperationError()
+       |
+       |    method to->String
+       |      return "($$)" (op,operand)
+       |endClass
+       |
+       |class RogueFroleyCmdPostUnary : RogueFroleyCmdUnary
+       |  METHODS
+       |    method to->String
+       |      return "($$)" (operand,op)
+       |endClass
+       |
+       |class RogueFroleyCmdBinary( t, left:RogueFroleyCmd, right:RogueFroleyCmd ) : RogueFroleyCmd
+       |  METHODS
+       |    method init( t, args:RogueFroleyCmdInitArgs )
+       |      args.require_count( 2 )
+       |      left = args.first
+       |      right = args.last
+       |
+       |    method op->String
+       |      throw UnsupportedOperationError()
+       |
+       |    method to->String
+       |      return "($ $ $)" (left,op,right)
+       |endClass
+       |
+endAugment
+

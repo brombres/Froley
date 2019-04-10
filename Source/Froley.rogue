@@ -27,57 +27,32 @@ Launcher( System.command_line_arguments )
 class Launcher
   METHODS
     method init( args:String[] )
-      local options = String[]
-      local targets = String[]
-      forEach (arg in args)
-        if (arg.begins_with("--")) options.add( arg.after_first("--") )
-        else                       targets.add( arg )
-      endForEach
-
-      local first_ends_with = targets.count and targets.first.ends_with( ".froley", &ignore_case )
-      local last_ends_with = targets.count == 2 and targets.last.ends_with( ".froley", &ignore_case )
-
-      which (targets.count)
-        case 0
-          print_usage
-          return
-
-        case 1
-          if (not first_ends_with) throw FroleyError( 'Input file must end with ".froley".' )
-          targets.add( "json" )
-
-        case 2
-          if (first_ends_with)
-            if (last_ends_with) throw FroleyError( "Froley can only compile one .froley file at a time." )
-          elseIf (last_ends_with)
-            targets.add( targets.remove_first )  # swap first and last
-          else
-            throw FroleyError( "No .froley input file specified." )
-          endIf
-      endWhich
-
-      init( options, targets.first, targets.last )
-
-    method init( options:String[], input_filepath:String, host_language:String  )
       try
-        if (not File.exists(input_filepath))
-          throw FroleyError( "Cannot read input file $." (input_filepath) )
-        endIf
-
-        if (not Froley.code_generators.contains(host_language))
-          throw FroleyError( "Host language '$' is not supported." (host_language) )
-        endIf
-
-        local gen = Froley.code_generators[ host_language ]
-        forEach (option in options)
-          gen.add_option( option.before_first('='), option.after_first('=') )
+        local options = String[]
+        local inputs  = String[]
+        forEach (arg in args)
+          if (arg.begins_with("--")) options.add( arg.after_first("--") )
+          else                       inputs.add( arg )
         endForEach
 
-        local info = Froley.parse( File(input_filepath) )
-        local language = select{ gen.options//language || input_filepath.before_last(".froley",&ignore_case) }
-        info//language = language
+        which (inputs.count)
+          case 0
+            print_usage
+            return
 
-        gen.process( info )
+          case 1
+            if (not inputs.first.ends_with(".froley",&ignore_case)) throw FroleyError( 'Input file must end with ".froley".' )
+
+          others
+            forEach (input in inputs)
+              if (not input.ends_with(".froley",&ignore_case))
+                throw FroleyError( "Invalid option or input file '$'." (input) )
+              endIf
+            endForEach
+            throw FroleyError( "Only one .froley input file can be specified." )
+        endWhich
+
+        init( inputs.first, options )
 
       catch (error:Error)
         if (error not instanceOf FroleyError) error = FroleyError( error.message )
@@ -88,27 +63,83 @@ class Launcher
 
       endTry
 
-    method print_usage
-      println @|USAGE
+    method init( input_filepath:String, options:String[] )
+      try
+        if (not File.exists(input_filepath))
+          throw FroleyError( "Cannot read input file $." (input_filepath) )
+        endIf
+
+        local active_generators = CodeGenerator[]
+        local cur_gen : CodeGenerator
+
+        local language = input_filepath.before_last( ".froley", &ignore_case )
+
+        forEach (option in options)
+          local name = option.before_first('=')
+          local value = option.after_first('=')
+          if (name == "language")
+            language = value
+          else
+            local gen = Froley.code_generators[ name ]
+            if (gen)
+              cur_gen = gen
+              active_generators.add( cur_gen )
+            elseIf (cur_gen is null)
+              throw FroleyError( "Invalid option '$'. Note: no output language has been specified."(option) )
+            else
+              cur_gen.add_option( name, value )
+            endIf
+          endIf
+        endForEach
+
+        local info = Froley.parse( File(input_filepath) )
+        forEach (gen in active_generators)
+          info//language = language
+          gen.process( info )
+        endForEach
+
+      catch (error:Error)
+        if (error not instanceOf FroleyError) error = FroleyError( error.message )
+        # Turn other errors into FroleyErrors to get the nice banner-style output
+
+        Console.error.println error
+        System.exit 1
+
+      endTry
+
+    method print_usage( writer=Console:PrintWriter )->PrintWriter
+      writer.println @|USAGE
                |  froley filename.froley [host-language] [options]
                |
                |HOST LANGUAGES
                |  Froley can generate code for the following host languages:
       forEach (key in Froley.code_generators.keys)
-        print  "    - "
-        println key
+        writer.print  "    --"
+        writer.println key
       endForEach
-      println
-
-      println @|OPTIONS
+      writer.println
+      writer.println @|Use '--<host-language>' to include output for that language. Any successive
+                      |options will apply to that language only. Multiple host languages can be
+                      |specified.
+                      |
+                      |GENERAL OPTIONS
+                      |  --language=<name>
+                      |    Specifies the name of the language that the Froley-generated Tokenizer and
+                      |    Parser will parse. For example, to generate Rogue source code that will
+                      |    parse a language called Simple you would write:
+                      |      froley --language=Simple --rogue
+                      |    If no --language is specified then the base name of the '.froley' filename
+                      |    is used as the language name.
+                      |
+                      |OPTIONS
       forEach (key in Froley.code_generators.keys)
-        print  "  "
-        println key
-        println(forEach in Froley.code_generators[ key ].usage_options.sort((a,b)=>a<b)).println
-        println
+        writer.print  "  --"
+        writer.println key
+        writer.println(forEach in Froley.code_generators[ key ].usage_options.sort((a,b)=>a<b)).println
       endForEach
 
-      println
+      writer.println
+      return writer
 endClass
 
 class TokenDef( name:String, type:Int32, symbol=null:String, attributes=0:Int32 )

@@ -7,7 +7,7 @@ augment RogueTemplate
        |
        |  METHODS
        |    method init( t, args:RogueFroleyCmdInitArgs )
-       |      throw UnsupportedOperationError()
+       |      args.require_count( 0 )
        |endClass
        |
        |class RogueFroleyCmdStatements : RogueFroleyCmd[]

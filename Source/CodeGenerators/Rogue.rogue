@@ -3,7 +3,6 @@ module Froley
 Froley.code_generators//rogue = GenerateRogue()
 
 # Simple.rogue
-# SimpleCmd.rogue
 
 class GenerateRogue : CodeGenerator
   PROPERTIES
@@ -90,7 +89,7 @@ class GenerateRogue : CodeGenerator
       local content = File.load_as_string( filepath )
       local builder : StringBuilder
       forEach (cmd_type in info//cmd_types)
-        local class_name = (cmd_type//name)
+        local class_name = (cmd_type//name)->String
         local class_class_name = "class " + class_name
         if (not content.contains(class_class_name))
           if (not builder)
@@ -116,7 +115,7 @@ class GenerateRogue : CodeGenerator
               builder.println '      return "$"' (cmd_type//symbol->String.to_escaped_ascii)
             others
               builder.println "    method to->String"
-              builder.print  ("      return \"").print( class_name ).println( "\"" )
+              builder.print  ("      return \"").print( class_name.after_first("Cmd") ).println( "\"" )
           endWhich
           builder.println "endClass"
         endIf

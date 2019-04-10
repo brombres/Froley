@@ -23,10 +23,6 @@ class CodeGenerator
 
     method usage_options->String[]
       return String[].add(
-        @|    --language=<name>
-         |      Specifies the language name. If not specified, the base name of the
-         |      .froley file is used as the language name.
-      ).add(
         @|    --output=<folder>
          |      Specifies the output folder.
       )

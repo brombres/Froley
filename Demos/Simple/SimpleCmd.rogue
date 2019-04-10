@@ -4,7 +4,7 @@ class SimpleCmd
 
   METHODS
     method init( t, args:SimpleCmdInitArgs )
-      throw UnsupportedOperationError()
+      args.require_count( 0 )
 endClass
 
 class SimpleCmdUnary( t, operand:SimpleCmd ) : SimpleCmd

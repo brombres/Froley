@@ -17,6 +17,10 @@ augment Build
 endAugment
 
 routine rogo_default
+  rogo_help
+endRoutine
+
+routine rogo_simple
   rogo_build
   execute( "cd Demos/Simple && touch Simple.froley && rogo" )
 endRoutine
@@ -28,6 +32,7 @@ endRoutine
 routine rogo_build
   if (Files("Source","*.rogue").add("**/*.rogue").any_newer_than(Build.EXE))
     File.create_folder( "Build" )
+    println "Compiling froley"
     execute "roguec Source/Froley.rogue --output=$ --compile" (Build.EXE)
   endIf
 

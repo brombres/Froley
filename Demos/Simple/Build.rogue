@@ -9,15 +9,26 @@
 # "rogo_default" will run in the absence of any other command line argument.
 
 routine rogo_default
+  println "Compiling Simple.froley with JSON and Rogue outputs"
   execute( "froley Simple.froley --json --rogue --framework --main" )
 
   if (Files(".","*.rogue").any_newer_than("Build/Simple"))
+    println "Compiling .rogue files to create Simple parser (run Build/Simple with no arguments for interactive mode)"
     File.create_folder( "Build" )
-    execute "roguec --execute=Test.simple --debug Simple.rogue --output=Build/Simple"
+    execute "roguec --execute=a=b=3+4+5*-6 --debug Simple.rogue --output=Build/Simple"
   else
-    execute "Build/Simple"
+    println "Executing Simple parser (run Build/Simple with no arguments for interactive mode)"
+    execute "Build/Simple a=b=3+4+5*-6"
   endIf
 
+endRoutine
+
+routine rogo_clean
+  println "Deleting Build/"
+  File.delete( "Build" )
+  println "Deleting generated .rogue files"
+  local files = Files( ".", "*.rogue" ).remove( "Build.rogue" )
+  File.delete( forEach in files )
 endRoutine
 
 routine execute( commands:String, &suppress_error )->Logical
@@ -30,32 +41,6 @@ routine execute( commands:String, &suppress_error )->Logical
   endForEach
   return true
 endRoutine
-
-class Defs
-  PROPERTIES
-    indent       : Int32
-    definitions  = (String,Int32)[]
-    longest_name : Int32
-    most_digits  : Int32
-
-  METHODS
-    method init( indent )
-
-    method add( name:String, value:Int32 )
-      longest_name = longest_name.or_larger( name.count )
-      most_digits = most_digits.or_larger( value.digit_count )
-      definitions.add( (name,value) )
-
-    method print( writer:PrintWriter )
-      forEach ((name,value) in definitions)
-        loop (indent) writer.print ' '
-        writer.print name
-        loop (longest_name - name.count) writer.print ' '
-        writer.print " = "
-        loop (most_digits - value.digit_count) writer.print ' '
-        writer.println value
-      endForEach
-endClass
 
 #------------------------------------------------------------------------------
 # Introspection-based Launcher Framework

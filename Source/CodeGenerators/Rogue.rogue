@@ -237,12 +237,36 @@ class GenerateRogue : CodeGenerator
       local writer = output_writer( "TokenType.rogue" )
       if (not writer) return
 
+      local attributes_by_value = Table<<Int32,String>>()
       local defs = Int32DefsBuilder( &prefix="  " )
-      forEach (token_type in info//token_types)
-        defs.add( '$("$")' (token_type//name,token_type//symbol->String.to_escaped_ascii("\"")), token_type//type )
+      defs.add( "NONE", 0 )
+      forEach (attribute in info//token_attributes)
+        local name = attribute//name->String.to_uppercase
+        defs.add( name, attribute//value )
+        attributes_by_value[ attribute//value ] = name
       endForEach
 
-      writer.print  ( "enum ").print( language ).print( "TokenType( symbol:String )" )
+      writer.print  ( "enum ").print( language ).println( "TokenTypeAttribute" )
+      defs.print( writer )
+      writer.println @|endEnum
+      writer.println.println
+
+      defs = Int32DefsBuilder( &prefix="  " )
+      forEach (token_type in info//token_types)
+        local def = '$("$"' (token_type//name,token_type//symbol->String.to_escaped_ascii("\""))
+        local attributes = token_type//attributes->Int32
+        if (attributes)
+          def += "," + language + "TokenTypeAttribute"
+          local name = attributes_by_value[ attributes ]
+          if (name) def += "." + name
+          else      def += "($)" (attributes)
+        endIf
+        def += ")"
+        defs.add( def, token_type//type )
+      endForEach
+
+      writer.print  ( "enum ").print( language ).print( "TokenType( symbol:String, attributes=" ).print( language ).print( "TokenTypeAttribute.NONE:" )
+      writer.print( language ).println( "TokenTypeAttribute )" )
       defs.print( writer )
       writer.println @|endEnum
       writer.close

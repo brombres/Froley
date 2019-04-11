@@ -40,7 +40,7 @@ augment RogueTemplate
        |
        |    method accept( token_type:Int32 )
        |      local t = RogueFroleyToken( RogueFroleyTokenType(token_type), filepath, scanner.source, line, column )
-       |      if (buffer.count) t.content = buffer->String
+       |      if (t.type.attributes & RogueFroleyTokenTypeAttribute.CONTENT) t.content = buffer->String
        |      tokens.add( t )
        |
        |    method execute

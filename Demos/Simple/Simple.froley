@@ -4,8 +4,8 @@ TAB   '\t'
 EOL   '\n'
 
 [tokens]
-IDENTIFIER identifier
-INTEGER    integer
+IDENTIFIER identifier [content]
+INTEGER    integer    [content]
 
 [keywords]
 

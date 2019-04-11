@@ -37,7 +37,7 @@ class SimpleTokenizer
 
     method accept( token_type:Int32 )
       local t = SimpleToken( SimpleTokenType(token_type), filepath, scanner.source, line, column )
-      if (buffer.count) t.content = buffer->String
+      if (t.type.attributes & SimpleTokenTypeAttribute.CONTENT) t.content = buffer->String
       tokens.add( t )
 
     method execute

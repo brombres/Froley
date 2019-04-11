@@ -146,6 +146,9 @@ class TokenDef( name:String, type:Int32, symbol=null:String, attributes=0:Int32 
   METHODS
     method to->String
       return "$=$ ($) [$]" (name,type,symbol,attributes)
+
+    method to->Value
+      return @{ :name, :type, :attributes, symbol:select{symbol||name} }
 endClass
 
 class Froley [singleton]
@@ -204,10 +207,15 @@ class Froley [singleton]
       endForEach
       }#
 
+      local token_attributes = @[]
+      forEach (name at index in this.token_attributes.keys)
+        local value = this.token_attributes[ index ]
+        token_attributes.add( @{:name,:value} )
+      endForEach
+
       local token_types = @[]
       forEach (def at index in token_defs_by_name)
-        local symbol = select{ def.symbol || def.name }
-        token_types.add( @{ name:def.name, type:def.type, symbol:symbol } )
+        token_types.add( def->Value )
       endForEach
 
       local tokenizer_opcodes = @[]
@@ -237,6 +245,7 @@ class Froley [singleton]
       @{
         language: "TODO",
         source_filepath: filepath,
+        :token_attributes,
         :token_types,
         :tokenizer_opcodes,
         tokenizer_code:tokenizer_bytes.to_base64,
@@ -253,6 +262,10 @@ class Froley [singleton]
       $localDefine PARSING_DEFINITIONS 2
       $localDefine PARSING_TOKENIZER   3
       $localDefine PARSING_PARSER      4
+
+      token_attributes.clear
+      token_attributes[ "content" ] = 1
+
       tokenizer_code.clear
       parser_code.clear
       local cur_section_name = "tokenizer"

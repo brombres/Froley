@@ -2,8 +2,6 @@ module Froley
 
 Froley.code_generators//rogue = GenerateRogue()
 
-# Simple.rogue
-
 class GenerateRogue : CodeGenerator
   PROPERTIES
     source_timestamp          : Real64

@@ -359,7 +359,7 @@ augment RogueTemplate
        |      tokenize( file.filepath, file.load_as_string )
        |      return tokens
        |
-       |    method tokenize( filepath, source:String, start_line=1:Int32, start_column=1:Int32 )->SimpleToken[]
+       |    method tokenize( filepath, source:String, start_line=1:Int32, start_column=1:Int32 )->RogueFroleyToken[]
        |      tokens.clear
        |      scanner = Scanner( source )
        |      scanner.line = start_line

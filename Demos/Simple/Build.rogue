@@ -26,8 +26,8 @@ endRoutine
 routine rogo_clean
   println "Deleting Build/"
   File.delete( "Build" )
-  println "Deleting generated .rogue files"
-  local files = Files( ".", "*.rogue" ).remove( "Build.rogue" )
+  println "Deleting generated .json and .rogue files"
+  local files = Files( ".", "*.rogue" ).add( "*.json" ).remove( "Build.rogue" )
   File.delete( forEach in files )
 endRoutine
 

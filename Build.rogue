@@ -27,6 +27,7 @@ endRoutine
 
 routine rogo_clean
   execute( "rm -rf Build" )
+  execute( "cd Demos/Simple && rogo clean" )
 endRoutine
 
 routine rogo_build

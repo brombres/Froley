@@ -89,8 +89,8 @@ return
   on "-" -> SimpleCmdNegate
 
 + term
-  on IDENTIFIER -> SimpleCmdAccess
-  on INTEGER    -> SimpleCmdLiteralInt32
+  on IDENTIFIER -> SimpleCmdAccess       @name=content->String
+  on INTEGER    -> SimpleCmdLiteralInt32 @value=content->Int32
   on "("
     expression
     mustConsume ")"

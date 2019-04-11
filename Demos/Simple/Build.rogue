@@ -13,7 +13,7 @@ routine rogo_default
 
   if (Files(".","*.rogue").any_newer_than("Build/Simple"))
     File.create_folder( "Build" )
-    execute "roguec --execute --debug Simple.rogue --output=Build/Simple"
+    execute "roguec --execute=Test.simple --debug Simple.rogue --output=Build/Simple"
   else
     execute "Build/Simple"
   endIf

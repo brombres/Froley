@@ -1164,6 +1164,8 @@ class FroleyParser : Parser
     method read_identifier->String
       if (next_is(TokenType.IDENTIFIER))
         local name = read->String
+        local t = peek
+        if (consume(TokenType.TAG)) Froley.id_tags[ name ] = t
         return name
       else
         throw peek.error( "Identifier expected." )

@@ -8,6 +8,7 @@ augment TokenType
   INTEGER( "integer value" )
   STRING( "literal string" )
   LABEL( "label" )
+  TAG( "@tag" )
 
   KEYWORD_ACCEPT          ( "accept",            &is_keyword )
   KEYWORD_ACCEPT_ALL      ( "acceptAll",         &is_keyword, &is_structural )

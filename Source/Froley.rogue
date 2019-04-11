@@ -166,6 +166,7 @@ class Froley [singleton]
     parser_code    = StringBuilder( 2048 )
 
     parser_methods = LookupList<<ParserMethod>>()
+    id_tags        = StringTable<<Token>>()
 
   METHODS
     method parse( file:File )->Value

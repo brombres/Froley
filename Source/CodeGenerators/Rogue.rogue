@@ -109,23 +109,48 @@ class GenerateRogue : CodeGenerator
           endIf
           local type = CmdTypeInfoType( cmd_type//type )
           print( "  " ).println( class_class_name )
-          builder.println.print( class_class_name ).print( " : " ).print( language ).print( "Cmd" )
+          builder.println.print( class_class_name )
+          local tag = Froley.id_tags[ class_name ]
+          local tag_name : String
+          local tag_type : String
+          if (tag)
+            local strings = tag->String.extract_strings( "$=content->$" )
+            if (strings is null) throw tag.error( "Syntax error. Property tag must be e.g. name=content->String or value=content->Int32" )
+            tag_name = strings.first
+            tag_type = strings.last
+            builder.print( "( t, " ).print( tag_name ).print( ":" ).print( tag_type ).print( ")" )
+          endIf
+          builder.print( " : " ).print( language ).print( "Cmd" )
           which (type)
             case CmdTypeInfoType.PRE_UNARY:  builder.println "Unary"
             case CmdTypeInfoType.POST_UNARY: builder.println "PostUnary"
             case CmdTypeInfoType.BINARY:     builder.println "Binary"
             case CmdTypeInfoType.STATEMENTS: builder.println "Statements"
             case CmdTypeInfoType.ARGS:       builder.println "Args"
-            others:                          builder.println
+            others
+              builder.println
           endWhich
           builder.println "  METHODS"
+          if (tag)
+            builder.print(   "    method init( t, args:" ).print( language ).println( "CmdInitArgs )" )
+            builder.println( "      prior.init( t, args )" )
+            builder.print(   "      " ).print( tag_name ).print( " = t.content->" ).println( tag_type )
+            builder.println
+          endIf
           which (type)
             case CmdTypeInfoType.PRE_UNARY, CmdTypeInfoType.POST_UNARY, CmdTypeInfoType.BINARY
               builder.println "    method op->String"
               builder.println '      return "$"' (cmd_type//symbol->String.to_escaped_ascii)
             others
               builder.println "    method to->String"
-              builder.print  ("      return \"").print( class_name.after_first("Cmd") ).println( "\"" )
+              builder.print  ("      return " )
+              if (tag)
+                builder.print( tag_name )
+                if (tag_type != "String") builder.print( "->String" )
+                builder.println
+              else
+                builder.print( '"' ).print( class_name.after_first("Cmd") ).println( '"' )
+              endIf
           endWhich
           builder.println "endClass"
         endIf

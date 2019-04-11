@@ -7,6 +7,18 @@ class SimpleCmd
       args.require_count( 0 )
 endClass
 
+class SimpleCmdStatements : SimpleCmd[]
+  METHODS
+    method init( t, args:SimpleCmdInitArgs )
+      add( forEach in args )
+endClass
+
+class SimpleCmdArgs : SimpleCmd[]
+  METHODS
+    method init( t, args:SimpleCmdInitArgs )
+      add( forEach in args )
+endClass
+
 class SimpleCmdUnary( t, operand:SimpleCmd ) : SimpleCmd
   METHODS
     method init( t, args:SimpleCmdInitArgs )
@@ -26,12 +38,6 @@ class SimpleCmdPostUnary : SimpleCmdUnary
       return "($$)" (operand,op)
 endClass
 
-class SimpleCmdNegate : SimpleCmdUnary
-  METHODS
-    method op->String
-      return "-"
-endClass
-
 class SimpleCmdBinary( t, left:SimpleCmd, right:SimpleCmd ) : SimpleCmd
   METHODS
     method init( t, args:SimpleCmdInitArgs )
@@ -46,15 +52,12 @@ class SimpleCmdBinary( t, left:SimpleCmd, right:SimpleCmd ) : SimpleCmd
       return "($ $ $)" (left,op,right)
 endClass
 
-class SimpleCmdLiteralInt32( t, value:Int32 ) : SimpleCmd
-  METHODS
-    method init( t, args:SimpleCmdInitArgs )
-      args.require_count( 0 )
-      require t.content
-      value = t.content->Int32
 
-    method to->String
-      return value->String
+
+class SimpleCmdAssign : SimpleCmdBinary
+  METHODS
+    method op->String
+      return "="
 endClass
 
 class SimpleCmdAdd : SimpleCmdBinary
@@ -87,19 +90,28 @@ class SimpleCmdPower : SimpleCmdBinary
       return "^"
 endClass
 
-class SimpleCmdAssign : SimpleCmdBinary
+class SimpleCmdNegate : SimpleCmdUnary
   METHODS
     method op->String
-      return "="
+      return "-"
 endClass
 
-class SimpleCmdAccess( t, name:String ) : SimpleCmd
+class SimpleCmdAccess( t, name:String) : SimpleCmd
   METHODS
     method init( t, args:SimpleCmdInitArgs )
-      args.require_count( 0 )
-      name = t->String
+      prior.init( t, args )
+      name = t.content->String
 
     method to->String
       return name
 endClass
 
+class SimpleCmdLiteralInt32( t, value:Int32) : SimpleCmd
+  METHODS
+    method init( t, args:SimpleCmdInitArgs )
+      prior.init( t, args )
+      value = t.content->Int32
+
+    method to->String
+      return value->String
+endClass

@@ -1,33 +1,44 @@
-$include "SimpleCmd.rogue"
-$include "SimpleCmdInitArgs.rogue"
-$include "SimpleCmdFactory.rogue"
-$include "SimpleCode.rogue"
-$include "SimpleError.rogue"
-$include "SimpleParserOpcode.rogue"
 $include "SimpleParser.rogue"
-$include "SimpleToken.rogue"
-$include "SimpleTokenType.rogue"
-$include "SimpleTokenizerOpcode.rogue"
-$include "SimpleTokenizer.rogue"
 
 Simple()
 
 class Simple
-  PROPERTIES
-    tokenizer = SimpleTokenizer( SimpleCode.tokenizer_code )
-    parser    = SimpleParser( SimpleCode.parser_code )
-
   METHODS
     method init
-      try
-        local tokens = tokenizer.tokenize( File("Test.simple") )
-        parser.open( "Test.simple", tokens )
-        while (parser.has_another)
-          local cmd = parser.parse( "expression" )
-          println cmd
-        endWhile
-      catch (err:SimpleError)
-        Console.error.println err
-      endTry
+      # Parse input or file by repeatedly calling first method defined in parser.
+      local parser = SimpleParser()
+      if (System.command_line_arguments.count)
+        try
+          local args = System.command_line_arguments.join( " " )
+          if (File.exists(args))
+            # Parse contents of file
+            parser.open( File(args) )
+          else
+            parser.open( "[Command Line]", args )
+          endIf
+
+          while (parser.has_another)
+            local cmd = parser.parse( parser.methods[0] )
+            println cmd
+          endWhile
+        catch (err:SimpleError)
+          Console.error.println err
+        endTry
+
+      else
+        # Interactive mode
+        loop
+          try
+            local input = Console.input( "Simple> " )
+            parser.open( "[Command Line]", input )
+            while (parser.has_another)
+              local cmd = parser.parse( parser.methods[0] )
+              println cmd
+            endWhile
+          catch (err:SimpleError)
+            Console.error.println err
+          endTry
+        endLoop
+      endIf
 endClass
 

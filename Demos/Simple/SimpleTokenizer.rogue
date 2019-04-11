@@ -356,9 +356,11 @@ class SimpleTokenizer
       tokenize( file.filepath, file.load_as_string )
       return tokens
 
-    method tokenize( filepath, source:String )->SimpleToken[]
+    method tokenize( filepath, source:String, start_line=1:Int32, start_column=1:Int32 )->SimpleToken[]
       tokens.clear
       scanner = Scanner( source )
+      scanner.line = start_line
+      scanner.column = start_column
       execute
       return tokens
 endClass

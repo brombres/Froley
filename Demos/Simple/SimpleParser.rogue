@@ -1,3 +1,14 @@
+$include "SimpleCmd.rogue"
+$include "SimpleCmdInitArgs.rogue"
+$include "SimpleCmdFactory.rogue"
+$include "SimpleCode.rogue"
+$include "SimpleError.rogue"
+$include "SimpleParserOpcode.rogue"
+$include "SimpleToken.rogue"
+$include "SimpleTokenType.rogue"
+$include "SimpleTokenizerOpcode.rogue"
+$include "SimpleTokenizer.rogue"
+
 class SimpleParser
   DEFINITIONS
     VERSION     = 1
@@ -21,13 +32,18 @@ class SimpleParser
     next_token_type : Int32
 
     methods_by_address = Table<<Int32,String>>()
+    tokenizer          : SimpleTokenizer
 
   METHODS
+    method init
+      init( SimpleCode.parser_code, SimpleCode.tokenizer_code )
+
     method init( data:Byte[] )
       load( data )
 
-    method init( base64_code:String )
-      init( base64_code.decode_base64 )
+    method init( parser_base64_code:String, tokenizer_base64_code=null:String )
+      init( parser_base64_code.decode_base64 )
+      if (tokenizer_base64_code) tokenizer = SimpleTokenizer( tokenizer_base64_code )
 
     method execute( ip:Int32 )
       loop
@@ -149,6 +165,14 @@ class SimpleParser
       if (position < tokens.count) next_token_type = tokens[position].type->Int32
       else                         next_token_type = -1
       return tokens[ position-1 ]
+
+    method open( filepath, content:String, start_line=1:Int32, start_column=1:Int32 )
+      require tokenizer
+      open( filepath, tokenizer.tokenize(filepath,content,start_line,start_column) )
+
+    method open( file:File )
+      require tokenizer
+      open( file.filepath, tokenizer.tokenize(file) )
 
     method open( filepath, tokens:SimpleToken[] )
       @tokens.clear

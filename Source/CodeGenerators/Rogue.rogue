@@ -6,8 +6,9 @@ Froley.code_generators//rogue = GenerateRogue()
 
 class GenerateRogue : CodeGenerator
   PROPERTIES
-    source_timestamp   : Real64
-    generate_framework : Logical
+    source_timestamp          : Real64
+    should_generate_framework : Logical
+    should_generate_main      : Logical
 
   METHODS
     method usage_options->String[]
@@ -18,13 +19,21 @@ class GenerateRogue : CodeGenerator
          |        - XYZError.rogue, XYZParser.rogue, XYZToken.rogue, XYZTokenizer.rogue
          |      Updates XYZCmd.rogue with starter class definitions of any command nodes
          |      that are not yet defined. Does not delete any code.
+      ).add(
+        @|    --main
+         |      Creates a main file (if it does not yet exist) to test out the parser
+         |      and tokenizer. Implies '--framework`.
       )
 
     method add_option( name:String, value:String )
       which (name)
         case "framework"
-          generate_framework = true
+          should_generate_framework = true
           if (value != "") throw FroleyError( "The --framework option should not have any arguments." )
+        case "main"
+          should_generate_main = true
+          should_generate_framework = true
+          if (value != "") throw FroleyError( "The --main option should not have any arguments." )
         others
           prior.add_option( name, value )
       endWhich
@@ -60,13 +69,14 @@ class GenerateRogue : CodeGenerator
       language = info//language
       source_timestamp = File.timestamp( info//source_filepath )
 
-      if (generate_framework)
+      if (should_generate_framework)
         generate_Cmd
         generate_CmdInitArgs
         generate_Error
         generate_Parser
         generate_Token
         generate_Tokenizer
+        if (should_generate_main) generate_main
       endIf
 
       regenerate_CmdFactory
@@ -129,6 +139,9 @@ class GenerateRogue : CodeGenerator
 
     method generate_Error
       generate( RogueTemplate.error, "Error.rogue", &do_not_overwrite )
+
+    method generate_main
+      generate( RogueTemplate.main, ".rogue", &do_not_overwrite )
 
     method generate_Parser
       generate( RogueTemplate.parser, "Parser.rogue", &do_not_overwrite )

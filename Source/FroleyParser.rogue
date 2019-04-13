@@ -910,7 +910,7 @@ class FroleyParser : Parser
       throw peek.error( "Syntax error - unexpected '$'." (peek->String) )
     }#
 
-    method parse_cmd_type( token_type_def=null:TokenDef )->CmdTypeInfo
+    method parse_cmd_type( token_type_def=null:TokenDef )->CmdType
       local t = peek
       local name = read_identifier
       local args = parse_cmd_init_args( name )
@@ -919,7 +919,7 @@ class FroleyParser : Parser
         symbol = name.after_any( "Cmd" )
         if (symbol.count) symbol = symbol[0].to_lowercase + symbol.from(1)
       endIf
-      return Froley.cmd_type_info( t, name, parse_rule_type, symbol, args )
+      return Froley.cmd_type( t, name, parse_rule_type, symbol, args )
 
     method parse_cmd_init_args( cmd_name:String )->CmdTypeProperty[]
       if (not consume(TokenType.SYMBOL_OPEN_PAREN)) return null

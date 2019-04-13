@@ -787,7 +787,7 @@ class ParserCmdOnType( t, token_type_def:TokenDef ) : Cmd
       assembler.define( label_if_no_match )
 endClass
 
-class ParserCmdOnTypeProduce( t, token_type_def:TokenDef, cmd_type:CmdTypeInfo ) : Cmd
+class ParserCmdOnTypeProduce( t, token_type_def:TokenDef, cmd_type:CmdType ) : Cmd
   PROPERTIES
     statements = CmdStatements()
 
@@ -802,7 +802,7 @@ class ParserCmdMustConsumeType( t, token_type_name:String ) : Cmd
       assembler.write( ParserOpcode.MUST_CONSUME_TYPE, Froley.token_defs_by_name[token_type_name].type )
 endClass
 
-class ParserCmdProduce( t, cmd_type:CmdTypeInfo ) : Cmd
+class ParserCmdProduce( t, cmd_type:CmdType ) : Cmd
   PROPERTIES
     args = CmdTypeProperty[]
 

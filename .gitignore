@@ -4,3 +4,5 @@ Build
 *.swo
 *.swp
 .DS_Store
+Demos/*/*.json
+Demos/*/*.rogue

@@ -5,9 +5,10 @@ enum ParserOpcode( size=1:Int32 )
   RETURN                # Pop ip and cur_token off call stack
   JUMP(2)               # ip = ADDRESS:ARG1
   CALL(2)               # Push ip and cur_token on call stack; ip = ADDRESS:ARG1
-  ON_TOKEN_TYPE(3)      # Continue if peek.tyep == TYPE:ARG1 or else ip=ADDRESS_IF_NO_MATCH:ARG2
+  ON_TOKEN_TYPE(3)      # Continue if peek.type == TYPE:ARG1 or else ip=ADDRESS_IF_NO_MATCH:ARG2
   CREATE_CMD(3)         # Create command of type TYPE_INDEX:ARG1 using cur_tokena and ARGC:ARG2 commands off stackq
   CONSUME_EOLS          # Automatically called between operator and next operand; implement as desired
   MUST_CONSUME_TYPE(2)  # Throws error if next token.type != TYPE_INDEX:ARG1
+  PRINTLN_STRING(2)     # println string with INDEX:ARG1
 endEnum
 

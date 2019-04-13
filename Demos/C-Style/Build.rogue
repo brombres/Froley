@@ -1,7 +1,5 @@
 # To run this build file, install Rogue from github.com/AbePralle/Rogue and type "rogo" at the command line.
 
-#$ ROGUEC_ARGS = --api
-
 # Rogo is a "build your own build system" facilitator. At its core Rogo just recompiles build files if
 # needed and then runs the build executable while forwarding any command line arguments. This file contains
 # a default framework which uses introspection to turn command line arguments into parameterized routine calls.
@@ -10,99 +8,27 @@
 
 # "rogo_default" will run in the absence of any other command line argument.
 
-augment Build
-  PROPERTIES
-    EXE = select{System.os=="Windows":"Build/froley.exe" || "Build/Froley-"+System.os} : String
-    BINDIR   = "/usr/local/bin"
-endAugment
-
 routine rogo_default
-  if (needs_build)
-    rogo_build
+  println "Compiling CSQ.froley with JSON and Rogue outputs"
+  execute( "froley CSQ.froley --json --rogue --framework --main" )
+
+  if (Files(".","*.rogue").any_newer_than("Build/CSQ"))
+    println "Compiling .rogue files to create CSQ parser (run Build/CSQ with no arguments for interactive mode)"
+    File.create_folder( "Build" )
+    execute "roguec --execute=Test.csq --debug CSQ.rogue --output=Build/CSQ"
   else
-    println "Everything up-to-date ('rogo help' for help)"
+    println "Executing CSQ parser (run Build/CSQ with no arguments for interactive mode)"
+    execute "Build/CSQ Test.csq"
   endIf
-endRoutine
 
-routine needs_build->Logical
-  return (Files("Source","*.rogue").add("**/*.rogue").any_newer_than(Build.EXE))
-endRoutine
-
-routine rogo_csq
-  rogo_build
-  execute( "cd Demos/C-Style && rogo clean && rogo" )
-endRoutine
-
-routine rogo_simple
-  rogo_build
-  execute( "cd Demos/Simple && rogo clean && rogo" )
 endRoutine
 
 routine rogo_clean
-  execute( "cd Demos/Simple && rogo clean" )
-  execute( "cd Demos/C-Style && rogo clean" )
-  execute( "rm -rf Build" )
-  execute( "rm -rf .rogo" )
-endRoutine
-
-routine rogo_build
-  if (needs_build)
-    File.create_folder( "Build" )
-    println "Compiling froley"
-    execute "roguec Source/Froley.rogue --output=$ --compile" (Build.EXE)
-  endIf
-
-  if (System.os != "Windows" and Process.run( "which froley", &inherit_environment ).output_string == "") install_launcher
-endRoutine
-
-routine rogo_execute( arg:String )
-  execute "$ $" (Build.EXE,arg)
-endRoutine
-
-routine rogo_link
-  install_launcher
-endRoutine
-
-routine rogo_unlink
-  if (System.os == "Windows") return
-  local launcher = Process.run( "which froley", &inherit_environment ).output_string
-  if (launcher != "")
-    local cmd = "rm " + launcher
-    if (not execute(cmd,&suppress_error))
-      println "Error deleting $ - retrying with 'sudo'." (launcher)
-      #execute( "sudo " + cmd )
-    endIf
-  endIf
-endRoutine
-
-routine install_launcher
-  if (System.os == "Windows") return
-  println "-------------------------------------------------------------------------------"
-  println "Creating $/froley launcher linked to $" (Build.BINDIR,Build.EXE)
-  println "-------------------------------------------------------------------------------"
-
-  local sudo = ""
-  if (not File.exists(Build.BINDIR))
-    println "$ does not exist. Creating..." (Build.BINDIR)
-    if (not execute( "mkdir -p $" (Build.BINDIR), &suppress_error ))
-      println "Error creating folder, trying again with 'sudo'"
-      sudo = "sudo "
-      execute( "sudo mkdir -p $" (Build.BINDIR) )
-    endIf
-    println "Created."
-  endIf
-
-  local folder = Process.run( "pwd" ).output_string.before_first('\n')
-  local script = "#!/bin/sh\n"
-  script += ''exec "$/$" "$@"\n'' (folder,Build.EXE,'$')
-  File.save( ".rogo/launcher.script", script )
-  if (not execute("$cp .rogo/launcher.script $/froley" (sudo,Build.BINDIR), &suppress_error=(sudo=="")))
-    println "Error copying launcher script - retrying with 'sudo'."
-    sudo = "sudo "
-    execute "sudo cp .rogo/launcher.script $/froley" (Build.BINDIR)
-  endIf
-  execute "$chmod a+x $/froley" (sudo,Build.BINDIR)
-  File.delete( ".rogo/launcher.script" )
+  println "Deleting Build/"
+  File.delete( "Build" )
+  println "Deleting generated .json and .rogue files"
+  local files = Files( ".", "*.rogue" ).add( "*.json" ).remove( "Build.rogue" )
+  File.delete( forEach in files )
 endRoutine
 
 routine execute( commands:String, &suppress_error )->Logical
@@ -153,7 +79,7 @@ class Build [singleton]
   METHODS
     method launch
       rogo_args.add( forEach in System.command_line_arguments )
-      read_local_defs
+      read_defs
       on_launch
       parse_args
       dispatch_command
@@ -224,10 +150,10 @@ class Build [singleton]
         on_command_found
       endBlock
 
-    method read_local_defs
-      read_local_defs( LOCAL_DEFS_FILE )
+    method read_defs
+      read_defs( LOCAL_DEFS_FILE )
 
-    method read_local_defs( defs_filepath:String )
+    method read_defs( defs_filepath:String )
       # Attempt to read defs from Local.mk
       local overrides = String[]
       if (File.exists(defs_filepath))

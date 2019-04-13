@@ -8,6 +8,7 @@ IDENTIFIER identifier [content]
 INTEGER    integer    [content]
 
 [keywords]
+KEYWORD_IF       if
 
 [symbols]
 SYMBOL_ASTERISK             *
@@ -69,6 +70,17 @@ return
 
 
 [parser]
+- statement
+  on "if"
+    mustConsume "("
+    expression
+    mustConsume ")"
+    statement
+    produce CmdIf(condition,true_body)
+  endOn
+  expression
+  return
+
 - expression
 
 + assign : RightAssociativeBinaryParseRule
@@ -89,7 +101,7 @@ return
   on "-" -> CmdNegate
 
 + term
-  on IDENTIFIER -> CmdAccess( name=t.content:String )
+  on IDENTIFIER -> CmdAccess( value=t.content:String )
   on INTEGER    -> CmdLiteralInt32( value=t.content:Int32 )
   on "("
     expression

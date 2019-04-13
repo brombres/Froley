@@ -50,10 +50,10 @@ class MethodTypeParseRule : MethodType [singleton]
 
     method write( m:ParserMethod, cmd:ParserCmdOnTypeProduce, assembler:ParserAssembler )
       local label_no_match = Label()
-      local def = Froley.token_defs_by_name[ cmd.token_type_name ]
+      local def = cmd.token_type_def
       assembler.write( ParserOpcode.ON_TOKEN_TYPE, def.type )
       assembler.write_address( label_no_match )
-      assembler.write( ParserOpcode.CREATE_CMD, assembler.cmd_type_info(cmd.cmd_type_name,CmdTypeInfoType.GENERAL,def.symbol).index )
+      assembler.write( ParserOpcode.CREATE_CMD, cmd.cmd_type.index )
       assembler.write( 0 )  # 0 Cmd args
       assembler.write( ParserOpcode.RETURN )
       assembler.define( label_no_match )
@@ -71,13 +71,13 @@ class MethodTypePreUnaryParseRule : MethodType [singleton]
 
     method write( m:ParserMethod, cmd:ParserCmdOnTypeProduce, assembler:ParserAssembler )
       local label_no_match = Label()
-      local def = Froley.token_defs_by_name[ cmd.token_type_name ]
+      local def = cmd.token_type_def
       assembler.write( ParserOpcode.ON_TOKEN_TYPE, def.type )
       assembler.write_address( label_no_match )
 
       assembler.write( ParserOpcode.CONSUME_EOLS )
       assembler.write( ParserOpcode.CALL, m.start_label )
-      assembler.write( ParserOpcode.CREATE_CMD, assembler.cmd_type_info(cmd.cmd_type_name,CmdTypeInfoType.PRE_UNARY,def.symbol).index )
+      assembler.write( ParserOpcode.CREATE_CMD, cmd.cmd_type.index )
       assembler.write( 1 ) # 1 Cmd arg
       assembler.write( ParserOpcode.RETURN )
 
@@ -98,11 +98,11 @@ class MethodTypePostUnaryParseRule : MethodType [singleton]
 
     method write( m:ParserMethod, cmd:ParserCmdOnTypeProduce, assembler:ParserAssembler )
       local label_no_match = Label()
-      local def = Froley.token_defs_by_name[ cmd.token_type_name ]
+      local def = cmd.token_type_def
       assembler.write( ParserOpcode.ON_TOKEN_TYPE, def.type )
       assembler.write_address( label_no_match )
 
-      assembler.write( ParserOpcode.CREATE_CMD, assembler.cmd_type_info(cmd.cmd_type_name,CmdTypeInfoType.POST_UNARY,def.symbol).index )
+      assembler.write( ParserOpcode.CREATE_CMD, cmd.cmd_type.index )
       assembler.write( 1 ) # 1 Cmd arg
       assembler.write( ParserOpcode.JUMP, m.recurse_label )
 
@@ -123,13 +123,13 @@ class MethodTypeBinaryParseRule : MethodType [singleton]
 
     method write( m:ParserMethod, cmd:ParserCmdOnTypeProduce, assembler:ParserAssembler )
       local label_no_match = Label()
-      local def = Froley.token_defs_by_name[ cmd.token_type_name ]
+      local def = cmd.token_type_def
       assembler.write( ParserOpcode.ON_TOKEN_TYPE, def.type )
       assembler.write_address( label_no_match )
 
       assembler.write( ParserOpcode.CONSUME_EOLS )
       assembler.write( ParserOpcode.CALL, m.nested_method.start_label )
-      assembler.write( ParserOpcode.CREATE_CMD, assembler.cmd_type_info(cmd.cmd_type_name,CmdTypeInfoType.BINARY,def.symbol).index )
+      assembler.write( ParserOpcode.CREATE_CMD, cmd.cmd_type.index )
       assembler.write( 2 ) # 2 Cmd args
       assembler.write( ParserOpcode.JUMP, m.recurse_label )
       assembler.define( label_no_match )
@@ -150,13 +150,13 @@ class MethodTypeRightAssociativeBinaryParseRule : MethodType [singleton]
 
     method write( m:ParserMethod, cmd:ParserCmdOnTypeProduce, assembler:ParserAssembler )
       local label_no_match = Label()
-      local def = Froley.token_defs_by_name[ cmd.token_type_name ]
+      local def = cmd.token_type_def
       assembler.write( ParserOpcode.ON_TOKEN_TYPE, def.type )
       assembler.write_address( label_no_match )
 
       assembler.write( ParserOpcode.CONSUME_EOLS )
       assembler.write( ParserOpcode.CALL, m.start_label )
-      assembler.write( ParserOpcode.CREATE_CMD, assembler.cmd_type_info(cmd.cmd_type_name,CmdTypeInfoType.BINARY,def.symbol).index )
+      assembler.write( ParserOpcode.CREATE_CMD, cmd.cmd_type.index )
       assembler.write( 2 ) # 2 Cmd args
       assembler.write( ParserOpcode.RETURN )
       assembler.define( label_no_match )

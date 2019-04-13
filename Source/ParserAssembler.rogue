@@ -7,7 +7,6 @@ class ParserAssembler : Assembler
 
   PROPERTIES
     this_method     : ParserMethod
-    cmd_type_lookup = LookupList<<CmdTypeInfo>>()
 
   METHODS
     method assemble( methods:LookupList<<ParserMethod>> )->Byte[]
@@ -16,13 +15,6 @@ class ParserAssembler : Assembler
       endForEach
       write( ParserOpcode.SYNTAX_ERROR )
       return this->Byte[]
-
-    method cmd_type_info( name:String, type:CmdTypeInfoType, symbol:String )->CmdTypeInfo
-      local index = cmd_type_lookup.locate( name )
-      if (index.exists) return cmd_type_lookup[ index ]
-      local info = CmdTypeInfo( name, type, cmd_type_lookup.count, symbol )
-      cmd_type_lookup[ name ] = info
-      return info
 
     method to->Byte[]
       if (unresolved_labels.count)

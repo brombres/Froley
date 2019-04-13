@@ -774,20 +774,20 @@ class TokenizerCmdLogicalOr : CmdBinary
 
 endClass
 
-class ParserCmdOnType( t, token_type_name:String ) : Cmd
+class ParserCmdOnType( t, token_type_def:TokenDef ) : Cmd
   PROPERTIES
     statements = CmdStatements()
 
   METHODS
     method write( assembler:ParserAssembler )
       local label_if_no_match = Label()
-      assembler.write( ParserOpcode.ON_TOKEN_TYPE, Froley.token_defs_by_name[token_type_name].type )
+      assembler.write( ParserOpcode.ON_TOKEN_TYPE, token_type_def.type )
       assembler.write_address( label_if_no_match )
       statements.write( assembler )
       assembler.define( label_if_no_match )
 endClass
 
-class ParserCmdOnTypeProduce( t, token_type_name:String, cmd_type_name:String ) : Cmd
+class ParserCmdOnTypeProduce( t, token_type_def:TokenDef, cmd_type:CmdTypeInfo ) : Cmd
   PROPERTIES
     statements = CmdStatements()
 
@@ -800,6 +800,23 @@ class ParserCmdMustConsumeType( t, token_type_name:String ) : Cmd
   METHODS
     method write( assembler:ParserAssembler )
       assembler.write( ParserOpcode.MUST_CONSUME_TYPE, Froley.token_defs_by_name[token_type_name].type )
+endClass
+
+class ParserCmdProduce( t, cmd_type:CmdTypeInfo ) : Cmd
+  PROPERTIES
+    args = CmdTypeProperty[]
+
+  METHODS
+    method write( assembler:ParserAssembler )
+      assembler.write( ParserOpcode.CREATE_CMD, cmd_type.index )
+      assembler.write( cmd_type.subcommand_count )
+      assembler.write( ParserOpcode.RETURN )
+endClass
+
+class ParserCmdPrintln( t, value:String ) : Cmd
+  METHODS
+    method write( assembler:ParserAssembler )
+      assembler.write( ParserOpcode.PRINTLN_STRING, value )
 endClass
 
 class ParserCmdReturn( t, expression:Cmd ) : Cmd

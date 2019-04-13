@@ -1,4 +1,7 @@
-enum CmdTypeInfoType
+module Froley
+  uses ParseKit<<Froley>>
+
+enum ParseRuleType
   GENERAL
   PRE_UNARY
   POST_UNARY
@@ -7,15 +10,49 @@ enum CmdTypeInfoType
   ARGS
 endEnum
 
-class CmdTypeInfo( name:String, type:CmdTypeInfoType, index:Int32, symbol:String )
-  PROPERTIES
-    min_args : Int32
-    max_args : Int32
-
+class CmdTypeProperty( name:String, type:String, value="":String )
   METHODS
+    method to->String
+      return "$=$:$" (name,value,type)
+
+    method to->Value
+      return @{ :name, :type, :value }
+endClass
+
+class CmdTypeInfo( t:Token, name:String, type:ParseRuleType, index:Int32, symbol:String, properties:CmdTypeProperty[] )
+  METHODS
+    method subcommand_count->Int32
+      if (properties is null) return 0
+      local n = 0
+      if ((forEach in properties).value.count) ++n
+      return n
+
     method to->String
       return name
 
     method to->Value
-      return @{ :name, :index, :type, :min_args, :max_args, :symbol }
+      local property_list = @[]
+      if (properties) property_list.add( (forEach in properties)->Value )
+      return @{ :name, :index, :type, :symbol, properties:property_list }
+
+    method verify_args( args:CmdTypeProperty[] )
+      contingent
+        necessary (properties? == args?)
+        if (properties is null) return
+
+        forEach (b at index in args)
+          local a = properties[ index ]
+          necessary (a.name == b.name)
+          necessary (a.type == b.type)
+          necessary (a.value == b.value)
+        endForEach
+
+      unsatisfied
+        local a_sig = select{ properties:"$($)"(name,properties.join(",")) || name+"()" }
+        local b_sig = select{ args:"$($)"(name,args.join(",")) || name+"()" }
+        throw t.error( "Inconsistent initializers used for $ ($ <> $)." (name,a_sig,b_sig) )
+
+      endContingent
+
 endClass
+

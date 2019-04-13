@@ -6,6 +6,7 @@ class FroleyParser : Parser
     parse_tokenizer_expression : ParseRule
     parse_tokenizer_term       : ParseRule
     parse_parser_expression    : ParseRule
+    parse_rule_type            = ParseRuleType.GENERAL : ParseRuleType
 
   METHODS
     method init
@@ -611,12 +612,12 @@ class FroleyParser : Parser
         endIf
       endIf
 
-    method read_token_type_name->String
+    method read_token_type_def->TokenDef
       local token_type_name : String
       if (next_is(TokenType.STRING))
         local symbol = read.text
         if (Froley.token_defs_by_symbol.contains(symbol))
-          token_type_name = Froley.token_defs_by_symbol[ symbol ].name
+          return Froley.token_defs_by_symbol[ symbol ]
         else
           throw peek.error( "No token has symbol '$'." (symbol) )
         endIf
@@ -630,7 +631,7 @@ class FroleyParser : Parser
         throw peek.error( "Invalid token type: '$'." (token_type_name) )
       endIf
 
-      return token_type_name
+      return Froley.token_defs_by_name[ token_type_name ]
 
     method parse_parser_statement( statements:CmdStatements, &allow_control_structures )
       consume_eols
@@ -639,17 +640,22 @@ class FroleyParser : Parser
       if (t.type.is_structural) return
 
       if (consume(TokenType.KEYWORD_ON))
-        local token_type_name = read_token_type_name
+        local token_type_def = read_token_type_def
         local t2 = peek
         if (consume(TokenType.SYMBOL_ARROW))
-          local cmd = ParserCmdOnTypeProduce( t, token_type_name, read_identifier )
+          local cmd = ParserCmdOnTypeProduce( t, token_type_def, parse_cmd_type(token_type_def) )
           statements.add( cmd )
           return
         else
           consume( TokenType.SYMBOL_COLON )
-          local cmd = ParserCmdOnType( t, token_type_name )
+          local cmd = ParserCmdOnType( t, token_type_def )
           statements.add( cmd )
-          parse_multi_line_parser_statements( cmd.statements )
+          if (consume_eols)
+            parse_multi_line_parser_statements( cmd.statements )
+            must_consume( TokenType.KEYWORD_END_ON )
+          else
+            parse_single_line_parser_statements( cmd.statements )
+          endIf
           return
         endIf
 
@@ -658,7 +664,16 @@ class FroleyParser : Parser
         return
 
       elseIf (consume(TokenType.KEYWORD_MUST_CONSUME))
-        statements.add( ParserCmdMustConsumeType(t,read_token_type_name) )
+        statements.add( ParserCmdMustConsumeType(t,read_token_type_def.name) )
+        return
+
+      elseIf (consume(TokenType.KEYWORD_PRINTLN))
+        statements.add( ParserCmdPrintln(t,read_string) )
+        return
+
+      elseIf (consume(TokenType.KEYWORD_PRODUCE))
+        local cmd = ParserCmdProduce( t, parse_cmd_type )
+        statements.add( cmd )
         return
 
       elseIf (consume(TokenType.KEYWORD_RETURN))
@@ -894,6 +909,41 @@ class FroleyParser : Parser
 
       throw peek.error( "Syntax error - unexpected '$'." (peek->String) )
     }#
+
+    method parse_cmd_type( token_type_def=null:TokenDef )->CmdTypeInfo
+      local t = peek
+      local name = read_identifier
+      local args = parse_cmd_init_args( name )
+      local symbol = select{ token_type_def:token_type_def.symbol || null as String }
+      if (symbol is null)
+        symbol = name.after_any( "Cmd" )
+        if (symbol.count) symbol = symbol[0].to_lowercase + symbol.from(1)
+      endIf
+      return Froley.cmd_type_info( t, name, parse_rule_type, symbol, args )
+
+    method parse_cmd_init_args( cmd_name:String )->CmdTypeProperty[]
+      if (not consume(TokenType.SYMBOL_OPEN_PAREN)) return null
+
+      local args = CmdTypeProperty[]
+      local first = true
+      while (first or consume(TokenType.SYMBOL_COMMA))
+        first = false
+        args.add( parse_cmd_init_arg )
+      endWhile
+      must_consume( TokenType.SYMBOL_CLOSE_PAREN )
+      store_optional_tag( cmd_name )
+      return args
+
+    method parse_cmd_init_arg->CmdTypeProperty
+      local name = read_identifier
+      local value = ""
+      local type = "Cmd"
+      if (consume(TokenType.SYMBOL_EQUALS))
+        value = read_identifier
+        if (consume(TokenType.SYMBOL_DOT)) value += '.' + read_identifier
+      endIf
+      if (consume(TokenType.SYMBOL_COLON)) type = read_identifier
+      return CmdTypeProperty( name, type, value )
 
     method must_consume_register_ch
       local t = peek
@@ -1164,11 +1214,21 @@ class FroleyParser : Parser
     method read_identifier->String
       if (next_is(TokenType.IDENTIFIER))
         local name = read->String
-        local t = peek
-        if (consume(TokenType.TAG)) Froley.id_tags[ name ] = t
+        store_optional_tag( name )
         return name
       else
         throw peek.error( "Identifier expected." )
+      endIf
+
+    method store_optional_tag( name:String )
+      #local t = peek
+      #if (consume(TokenType.TAG)) Froley.id_tags[ name ] = t
+
+    method read_string->String
+      if (next_is(TokenType.STRING))
+        return read->String
+      else
+        throw peek.error( "Literal string expected." )
       endIf
 
     method read_integer->Int32
@@ -1213,16 +1273,17 @@ class FroleyParser : Parser
     method parse_parser_method( t:Token )->ParserMethod
       local m = ParserMethod( t, read_identifier )
       Froley.parser_methods[ m.name ] = m
+      parse_rule_type = ParseRuleType.GENERAL
 
       if (consume(TokenType.SYMBOL_COLON))
         t = peek
         local type_name = read_identifier
         which (type_name)
-          case "ParseRule":          m.type = MethodTypeParseRule
-          case "PreUnaryParseRule":  m.type = MethodTypePreUnaryParseRule
-          case "PostUnaryParseRule": m.type = MethodTypePostUnaryParseRule
-          case "BinaryParseRule":    m.type = MethodTypeBinaryParseRule
-          case "RightAssociativeBinaryParseRule": m.type = MethodTypeRightAssociativeBinaryParseRule
+          case "ParseRule":          m.type = MethodTypeParseRule; parse_rule_type = ParseRuleType.GENERAL
+          case "PreUnaryParseRule":  m.type = MethodTypePreUnaryParseRule; parse_rule_type = ParseRuleType.PRE_UNARY
+          case "PostUnaryParseRule": m.type = MethodTypePostUnaryParseRule; parse_rule_type = ParseRuleType.POST_UNARY
+          case "BinaryParseRule":    m.type = MethodTypeBinaryParseRule; parse_rule_type = ParseRuleType.BINARY
+          case "RightAssociativeBinaryParseRule": m.type = MethodTypeRightAssociativeBinaryParseRule; parse_rule_type = ParseRuleType.BINARY
           others
             throw t.error( "No such rule type '$'."(type_name) )
         endWhich

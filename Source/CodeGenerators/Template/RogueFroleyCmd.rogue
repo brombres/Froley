@@ -10,16 +10,35 @@ augment RogueTemplate
        |      args.require_count( 0 )
        |endClass
        |
-       |class RogueFroleyCmdStatements : RogueFroleyCmd[]
+       |class RogueFroleyCmdList : RogueFroleyCmd
+       |  PROPERTIES
+       |    list : RogueFroleyCmd[]
+       |
        |  METHODS
+       |    method init( t )
+       |      list = RogueFroleyCmd[](5)
+       |
        |    method init( t, args:RogueFroleyCmdInitArgs )
-       |      add( forEach in args )
+       |      list = RogueFroleyCmd[]( args.count )
+       |      list.add( forEach in args )
+       |
+       |    method count->Int32
+       |      return list.count
+       |
+       |    method first->RogueFroleyCmd
+       |      return list.first
+       |
+       |    method get( index:Int32 )->RogueFroleyCmd
+       |      return list[ index ]
+       |
+       |    method last->RogueFroleyCmd
+       |      return list.last
        |endClass
        |
-       |class RogueFroleyCmdArgs : RogueFroleyCmd[]
-       |  METHODS
-       |    method init( t, args:RogueFroleyCmdInitArgs )
-       |      add( forEach in args )
+       |class RogueFroleyCmdStatements : RogueFroleyCmdList
+       |endClass
+       |
+       |class RogueFroleyCmdArgs : RogueFroleyCmdList
        |endClass
        |
        |class RogueFroleyCmdUnary( t, operand:RogueFroleyCmd ) : RogueFroleyCmd
@@ -54,6 +73,5 @@ augment RogueTemplate
        |    method to->String
        |      return "($ $ $)" (left,op,right)
        |endClass
-       |
 endAugment
 

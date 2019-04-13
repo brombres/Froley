@@ -50,7 +50,8 @@ augment RogueTemplate
        |
        |    method execute( ip:Int32 )
        |      loop
-       |        local opcode = code[ ip ]
+       |        local opcode = RogueFroleyParserOpcode( code[ip] )
+       |        #trace opcode
        |        ++ip
        |        which (opcode)
        |          case RogueFroleyParserOpcode.SYNTAX_ERROR
@@ -105,9 +106,15 @@ augment RogueTemplate
        |            if (next_token_type == code[ip])
        |              read
        |              ++ip
+       |              nextIteration
        |            else
        |              throw peek.error( "Expected '$', found '$'."(RogueFroleyTokenType(code[ip]).symbol,peek.type.symbol) )
        |            endIf
+       |
+       |          case RogueFroleyParserOpcode.PRINTLN_STRING
+       |            println strings[ code[ip] ]
+       |            ++ip
+       |            nextIteration
        |
        |          others
        |            throw RogueFroleyError( "[INTERNAL]", "Unhandled parser opcode: " + RogueFroleyParserOpcode(opcode) )

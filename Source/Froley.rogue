@@ -169,7 +169,9 @@ class Froley [singleton]
     parser_code    = StringBuilder( 2048 )
 
     parser_methods = LookupList<<ParserMethod>>()
-    id_tags        = StringTable<<Token>>()
+    #id_tags        = StringTable<<Token>>()
+
+    cmd_type_lookup = LookupList<<CmdTypeInfo>>()
 
   METHODS
     method parse( file:File )->Value
@@ -224,7 +226,7 @@ class Froley [singleton]
       endForEach
 
       local cmd_types = @[]
-      cmd_types.add( (forEach in parser_assembler.cmd_type_lookup)->Value )
+      cmd_types.add( (forEach in Froley.cmd_type_lookup)->Value )
 
       local parser_opcodes = @[]
       forEach (name in ParserOpcode.names)
@@ -255,6 +257,16 @@ class Froley [singleton]
       }
 
       return output
+
+    method cmd_type_info( t:Token, name:String, type:ParseRuleType, symbol=null:String, args:CmdTypeProperty[] )->CmdTypeInfo
+      local cmd_type = cmd_type_lookup[ name ]
+      if (cmd_type)
+        cmd_type.verify_args( args )
+        return cmd_type
+      endIf
+      cmd_type = CmdTypeInfo( t, name, type, cmd_type_lookup.count, symbol, args )
+      cmd_type_lookup[ name ] = cmd_type
+      return cmd_type
 
     method collect_definitions_and_extract_code( filepath:String, source:String )
       $localDefine PARSING_CONFIGURE   0
@@ -330,7 +342,7 @@ class Froley [singleton]
         else
           # Token definitions
           tokenizer_code.println  # keep line numbers consistent
-          parser_code.println  # keep line numbers consistent
+          parser_code.println     # keep line numbers consistent
           local scanner = Scanner( line, &spaces_per_tab=2 ).[ line=index+1 ]
           discard_whitespace( scanner )
           if (scanner.has_another)

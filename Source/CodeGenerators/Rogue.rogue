@@ -97,7 +97,8 @@ class GenerateRogue : CodeGenerator
       local content = File.load_as_string( filepath )
       local builder : StringBuilder
       forEach (cmd_type in info//cmd_types)
-        local class_name = (cmd_type//name)->String
+        local base_name = (cmd_type//name)->String
+        local class_name = language + base_name
         local class_class_name = "class " + class_name
         if (not content.contains(class_class_name))
           if (not builder)
@@ -105,49 +106,70 @@ class GenerateRogue : CodeGenerator
             builder = StringBuilder( content.count * 1.5 )
             builder.println( content )
           endIf
-          local type = CmdTypeInfoType( cmd_type//type )
+          local type = ParseRuleType( cmd_type//type )
           print( "  " ).println( class_class_name )
           builder.println.print( class_class_name )
-          local tag = Froley.id_tags[ class_name ]
-          local tag_name : String
-          local tag_type : String
-          if (tag)
-            local strings = tag->String.extract_strings( "$=content->$" )
-            if (strings is null) throw tag.error( "Syntax error. Property tag must be e.g. name=content->String or value=content->Int32" )
-            tag_name = strings.first
-            tag_type = strings.last
-            builder.print( "( t, " ).print( tag_name ).print( ":" ).print( tag_type ).print( ")" )
+
+          local cmd_properties = cmd_type//properties
+          if (cmd_properties.count)
+            builder.print( "( t" )
+            forEach (p in cmd_properties)
+              builder.print( ", " )
+              builder.print( p//name )
+              builder.print( ':' )
+              if (p//value.count)
+                builder.print( p//type )
+              else
+                builder.print( language ).print( p//type )
+              endIf
+            endForEach
+            builder.print( " )" )
           endIf
+
           builder.print( " : " ).print( language ).print( "Cmd" )
           which (type)
-            case CmdTypeInfoType.PRE_UNARY:  builder.println "Unary"
-            case CmdTypeInfoType.POST_UNARY: builder.println "PostUnary"
-            case CmdTypeInfoType.BINARY:     builder.println "Binary"
-            case CmdTypeInfoType.STATEMENTS: builder.println "Statements"
-            case CmdTypeInfoType.ARGS:       builder.println "Args"
+            case ParseRuleType.PRE_UNARY:  builder.println "Unary"
+            case ParseRuleType.POST_UNARY: builder.println "PostUnary"
+            case ParseRuleType.BINARY:     builder.println "Binary"
+            case ParseRuleType.STATEMENTS: builder.println "Statements"
+            case ParseRuleType.ARGS:       builder.println "Args"
             others
               builder.println
           endWhich
           builder.println "  METHODS"
-          if (tag)
+          if (cmd_properties.count)
             builder.print(   "    method init( t, args:" ).print( language ).println( "CmdInitArgs )" )
-            builder.println( "      prior.init( t, args )" )
-            builder.print(   "      " ).print( tag_name ).print( " = t.content->" ).println( tag_type )
+            builder.print(   "      args.require_count( " ).print( cmd_type//properties.count($//value=="") ).println( " )" )
+            local index = 0
+            forEach (p in cmd_properties)
+              builder.print( "      " )
+              builder.print( p//name )
+              builder.print( " = " )
+              if (p//value != "")
+                builder.print( p//value )
+                if (p//type != "String") builder.print( "->" ).print( p//type )
+              else
+                builder.print( "args[ " ).print( index ).print( " ]" )
+                ++index
+              endIf
+              builder.println
+            endForEach
             builder.println
           endIf
           which (type)
-            case CmdTypeInfoType.PRE_UNARY, CmdTypeInfoType.POST_UNARY, CmdTypeInfoType.BINARY
+            case ParseRuleType.PRE_UNARY, ParseRuleType.POST_UNARY, ParseRuleType.BINARY
               builder.println "    method op->String"
-              builder.println '      return "$"' (cmd_type//symbol->String.to_escaped_ascii)
+              builder.println '      return "$"' (cmd_type//symbol->String.to_escaped_ascii("\""))
             others
               builder.println "    method to->String"
               builder.print  ("      return " )
-              if (tag)
-                builder.print( tag_name )
-                if (tag_type != "String") builder.print( "->String" )
+              if (cmd_properties.count == 1)
+                local p = cmd_properties[ 0 ]
+                builder.print( p//name )
+                if (p//type != "String") builder.print( "->String" )
                 builder.println
               else
-                builder.print( '"' ).print( class_name.after_first("Cmd") ).println( '"' )
+                builder.print( '"' ).print( cmd_type//symbol->String.to_escaped_ascii("\"") ).println( '"' )
               endIf
           endWhich
           builder.println "endClass"
@@ -186,7 +208,7 @@ class GenerateRogue : CodeGenerator
       writer.println("      which (index)")
       forEach (cmd_type in info//cmd_types)
         writer.print  ( "        case " ).print( cmd_type//index ).print( ": " )
-        writer.print  ( "return " ).print( cmd_type//name ).println( "( t, args )" )
+        writer.print  ( "return " ).print( language ).print( cmd_type//name ).println( "( t, args )" )
       endForEach
       writer.println @|        others
       writer.print  ( "          throw " ).print( language ).println( ''Error( "[INTERNAL] CmdFactory.create_cmd() index out of bounds: " + index )'' )

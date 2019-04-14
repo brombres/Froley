@@ -89,6 +89,9 @@ augment RogueTemplate
        |              ip = code[ ip+1 ]
        |            endIf
        |            nextIteration
+       |          case RogueFroleyParserOpcode.HAS_ANOTHER
+       |            number_stack.add( next_token_type != -1 )
+       |            nextIteration
        |          case RogueFroleyParserOpcode.BEGIN_LIST
        |            list_start_t.add( peek )
        |            list_start_pos.add( cmd_queue.count )

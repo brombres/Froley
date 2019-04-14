@@ -831,12 +831,14 @@ class ParserCmdProduceStatements( t ) : Cmd
   METHODS
     method write( assembler:ParserAssembler )
       assembler.write( ParserOpcode.CREATE_STATEMENTS )
+      assembler.write( ParserOpcode.RETURN )
 endClass
 
 class ParserCmdProduceArgs( t ) : Cmd
   METHODS
     method write( assembler:ParserAssembler )
       assembler.write( ParserOpcode.CREATE_ARGS )
+      assembler.write( ParserOpcode.RETURN )
 endClass
 
 class ParserCmdPrintln( t, value:String ) : Cmd
@@ -897,5 +899,11 @@ class ParserCmdBeginList( t ) : Cmd
   METHODS
     method write( assembler:ParserAssembler )
       assembler.write( ParserOpcode.BEGIN_LIST )
+endClass
+
+class ParserCmdHasAnother( t ) : Cmd
+  METHODS
+    method write( assembler:ParserAssembler )
+      assembler.write( ParserOpcode.HAS_ANOTHER )
 endClass
 

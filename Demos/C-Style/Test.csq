@@ -1,6 +1,5 @@
-ice, ice, baby
-#if (alpha) beta
-#else if (gamma)
-#delta
-#else epsilon
-#omega
+if (alpha) beta
+else if (gamma)
+delta
+else epsilon
+omega

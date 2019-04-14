@@ -252,7 +252,9 @@ class FroleyParser : Parser
       #{
       rule.on( "ch",            <<TokenizerCmdRegisterCh>> )
       rule.on( "count",         <<TokenizerCmdRegisterCount>> )
-      rule.on( "hasAnother",    <<TokenizerCmdHasAnother>> )
+      }#
+      rule.on( "hasAnother",    <<ParserCmdHasAnother>> )
+      #{
       rule.on( "integer value", <<TokenizerCmdLiteralInt32>> )
       rule.on( "literal string",<<TokenizerCmdLiteralString>> )
       rule.on( "read",          <<TokenizerCmdRead>> )

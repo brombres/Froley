@@ -77,10 +77,8 @@ return
 [parser]
 - statement_list
   beginList
-  statement
-  while (consume(",")) statement
+  while (hasAnother) statement
   produceStatements
-  return
 
 - statement
   on "if"

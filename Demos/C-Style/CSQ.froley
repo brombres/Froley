@@ -14,11 +14,14 @@ KEYWORD_ELSE     else
 [symbols]
 SYMBOL_ASTERISK             *
 SYMBOL_CARET                ^
+SYMBOL_CLOSE_CURLY          }
 SYMBOL_CLOSE_PAREN          )
 SYMBOL_EQUALS               =
 SYMBOL_MINUS                -
+SYMBOL_OPEN_CURLY           {
 SYMBOL_OPEN_PAREN           (
 SYMBOL_PLUS                 +
+SYMBOL_SEMICOLON            ;
 SYMBOL_SLASH                /
 
 [tokenizer]
@@ -71,6 +74,10 @@ return
 
 
 [parser]
+- statement_list
+  statement
+  return
+
 - statement
   on "if"
     mustConsume "("

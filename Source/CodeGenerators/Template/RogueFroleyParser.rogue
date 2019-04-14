@@ -18,17 +18,19 @@ augment RogueTemplate
        |    MIN_VERSION = 1
        |
        |  PROPERTIES
-       |    filepath      : String
-       |    code          = Int32[]
-       |    strings       = String[]
-       |    tokens        = RogueFroleyToken[]
-       |    methods       = LookupList<<Int32>>()
+       |    filepath        : String
+       |    code            = Int32[]
+       |    strings         = String[]
+       |    tokens          = RogueFroleyToken[]
+       |    methods         = LookupList<<Int32>>()
        |
-       |    call_stack    = Int32[]
-       |    token_stack   = RogueFroleyToken[]
+       |    call_stack      = Int32[]
+       |    token_stack     = RogueFroleyToken[]
        |
-       |    cmd_queue     = RogueFroleyCmd[]
-       |    cmd_args      = RogueFroleyCmdInitArgs()
+       |    cmd_queue       = RogueFroleyCmd[]
+       |    cmd_args        = RogueFroleyCmdInitArgs()
+       |    list_start_t    = RogueFroleyToken[]
+       |    list_start_pos  = Int32[]
        |
        |    position        = 0
        |    cur_token       : RogueFroleyToken
@@ -82,6 +84,10 @@ augment RogueTemplate
        |              ip = code[ ip+1 ]
        |            endIf
        |            nextIteration
+       |          case RogueFroleyParserOpcode.BEGIN_LIST
+       |            list_start_t.add( peek )
+       |            list_start_pos.add( cmd_queue.count )
+       |            nextIteration
        |          case RogueFroleyParserOpcode.CREATE_CMD
        |            local cmd_type_index = code[ ip ]
        |            local arg_count = code[ ip+1 ]
@@ -100,6 +106,26 @@ augment RogueTemplate
        |
        |          case RogueFroleyParserOpcode.CREATE_NULL_CMD
        |            cmd_queue.add( null )
+       |            nextIteration
+       |
+       |          case RogueFroleyParserOpcode.CREATE_ARGS
+       |            if (list_start_t.is_empty) throw peek.error( "[INTERNAL] No prior beginList before calling produceArgs." )
+       |            local t  = list_start_t.remove_last
+       |            local i1 = list_start_pos.remove_last
+       |            cmd_args.clear
+       |            cmd_args.add( forEach in cmd_queue from i1 )
+       |            cmd_queue.discard_from( i1 )
+       |            cmd_queue.add( RogueFroleyCmdArgs(t,cmd_args) )
+       |            nextIteration
+       |
+       |          case RogueFroleyParserOpcode.CREATE_STATEMENTS
+       |            if (list_start_t.is_empty) throw peek.error( "[INTERNAL] No prior beginList before calling produceStatements." )
+       |            local t  = list_start_t.remove_last
+       |            local i1 = list_start_pos.remove_last
+       |            cmd_args.clear
+       |            cmd_args.add( forEach in cmd_queue from i1 )
+       |            cmd_queue.discard_from( i1 )
+       |            cmd_queue.add( RogueFroleyCmdStatements(t,cmd_args) )
        |            nextIteration
        |
        |          case RogueFroleyParserOpcode.CONSUME_EOLS

@@ -26,6 +26,7 @@ augment RogueTemplate
        |
        |    call_stack      = Int32[]
        |    token_stack     = RogueFroleyToken[]
+       |    number_stack    = Real64[]
        |
        |    cmd_queue       = RogueFroleyCmd[]
        |    cmd_args        = RogueFroleyCmdInitArgs()
@@ -129,8 +130,19 @@ augment RogueTemplate
        |            nextIteration
        |
        |          case RogueFroleyParserOpcode.CONSUME_EOLS
-       |            #while (next_token_type == RogueFroleyTokenType.EOL) read
+       |            # Called to automatically consume EOL tokens that occur in the
+       |            # midst of parsing a unary or binary operator, like "a+\nb".
+       |            <handle_consume_eols>
        |            nextIteration
+       |
+       |          case RogueFroleyParserOpcode.CONSUME_TYPE
+       |            if (next_token_type == code[ip])
+       |              read
+       |              ++ip
+       |              nextIteration
+       |            else
+       |              throw peek.error( "Expected '$', found '$'."(RogueFroleyTokenType(code[ip]).symbol,peek.type.symbol) )
+       |            endIf
        |
        |          case RogueFroleyParserOpcode.MUST_CONSUME_TYPE
        |            if (next_token_type == code[ip])
@@ -143,6 +155,11 @@ augment RogueTemplate
        |
        |          case RogueFroleyParserOpcode.PRINTLN_STRING
        |            println strings[ code[ip] ]
+       |            ++ip
+       |            nextIteration
+       |
+       |          case RogueFroleyParserOpcode.PUSH_INT32
+       |            number_stack.add( code[ip] )
        |            ++ip
        |            nextIteration
        |

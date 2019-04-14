@@ -83,10 +83,12 @@ class GenerateRogue : CodeGenerator
       regenerate_TokenType
       regenerate_TokeninzerOpcode
 
-    method generate( content:String, filename:String, &do_not_overwrite )
+    method generate( content:String, filename:String, content_filter=null:Function(String)->String, &do_not_overwrite )
       local writer = output_writer( filename, &=do_not_overwrite )
       if (not writer) return
-      writer.println( content.replacing("RogueFroley",language) )
+      if (content_filter) content = content_filter( content )
+      content = content.replacing( "RogueFroley", language )
+      writer.println( content )
       writer.close
 
     method generate_Cmd
@@ -189,7 +191,12 @@ class GenerateRogue : CodeGenerator
       generate( RogueTemplate.main, ".rogue", &do_not_overwrite )
 
     method generate_Parser
-      generate( RogueTemplate.parser, "Parser.rogue", &do_not_overwrite )
+      local fn = function( content:String )->String
+        local def = Froley.token_defs_by_symbol[ "\n" ]
+        if (def) content = content.replacing( "<handle_consume_eols>", "while (RogueFroleyTokenType(next_token_type) == RogueFroleyTokenType.$) read"(def.name) )
+        return content
+      endFunction
+      generate( RogueTemplate.parser, "Parser.rogue", fn, &do_not_overwrite )
 
     method generate_Token
       generate( RogueTemplate.token, "Token.rogue", &do_not_overwrite )

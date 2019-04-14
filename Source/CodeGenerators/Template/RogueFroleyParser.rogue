@@ -69,13 +69,17 @@ augment RogueTemplate
        |            ip = call_stack.remove_last
        |            cur_token = token_stack.remove_last
        |            nextIteration
-       |          case RogueFroleyParserOpcode.JUMP
-       |            ip = code[ ip ]
-       |            nextIteration
        |          case RogueFroleyParserOpcode.CALL
        |            call_stack.add( ip+1 )
        |            token_stack.add( cur_token )
        |            ip = code[ ip ]
+       |            nextIteration
+       |          case RogueFroleyParserOpcode.JUMP
+       |            ip = code[ ip ]
+       |            nextIteration
+       |          case RogueFroleyParserOpcode.JUMP_IF_TRUE
+       |            if (number_stack.count and number_stack.remove_last) ip = code[ ip ]
+       |            else                                                 ++ip
        |            nextIteration
        |          case RogueFroleyParserOpcode.ON_TOKEN_TYPE
        |            if (code[ip] == next_token_type)
@@ -138,11 +142,12 @@ augment RogueTemplate
        |          case RogueFroleyParserOpcode.CONSUME_TYPE
        |            if (next_token_type == code[ip])
        |              read
-       |              ++ip
-       |              nextIteration
+       |              number_stack.add( 1 )
        |            else
-       |              throw peek.error( "Expected '$', found '$'."(RogueFroleyTokenType(code[ip]).symbol,peek.type.symbol) )
+       |              number_stack.add( 0 )
        |            endIf
+       |            ++ip
+       |            nextIteration
        |
        |          case RogueFroleyParserOpcode.MUST_CONSUME_TYPE
        |            if (next_token_type == code[ip])

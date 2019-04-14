@@ -3,8 +3,9 @@ module Froley
 enum ParserOpcode( size=1:Int32 )
   SYNTAX_ERROR          # Throw "Syntax error, unexpected '<token>'
   RETURN                # Pop ip and cur_token off call stack
-  JUMP(2)               # ip = address:ARG1
   CALL(2)               # Push ip and cur_token on call stack; ip = address:ARG1
+  JUMP(2)               # ip = address:ARG1
+  JUMP_IF_TRUE(2)       # if (number_stack.remove_last) ip = address:ARG1
   ON_TOKEN_TYPE(3)      # Continue if peek.type == TYPE:ARG1 or else ip=address_if_no_match:ARG2
   BEGIN_LIST            #
   CREATE_CMD(3)         # Create command of type type_index:ARG1 using cur_token and ARGC:ARG2 commands off stackq

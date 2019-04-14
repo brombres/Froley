@@ -16,6 +16,7 @@ SYMBOL_ASTERISK             *
 SYMBOL_CARET                ^
 SYMBOL_CLOSE_CURLY          }
 SYMBOL_CLOSE_PAREN          )
+SYMBOL_COMMA                ,
 SYMBOL_EQUALS               =
 SYMBOL_MINUS                -
 SYMBOL_OPEN_CURLY           {
@@ -75,7 +76,10 @@ return
 
 [parser]
 - statement_list
+  beginList
   statement
+  while (consume(",")) statement
+  produceStatements
   return
 
 - statement

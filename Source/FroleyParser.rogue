@@ -150,7 +150,7 @@ class FroleyParser : Parser
           if (parser.next_is(TokenType.SYMBOL_OPEN_PAREN))
             local expr = parser.parse_tokenizer_expression()
             t = expr.t
-            if (expr.is_integer)                      return TokenizerCmdConsumeCharacter( t, expr->Int32 )
+            if (expr.is_integer) return TokenizerCmdConsumeCharacter( t, expr->Int32 )
           endIf
           throw t.error( "'Expected 'consume(<character>)'." )
         endFunction
@@ -241,15 +241,15 @@ class FroleyParser : Parser
 
       # parser term
       rule = add_nested( ParseRule("parser_term") )
-      #{
       rule.on( "(",
         function (parser:FroleyParser)->Cmd
           parser.must_consume( TokenType.SYMBOL_OPEN_PAREN )
-          local result = parser.parse_tokenizer_expression()
+          local result = parser.parse_parser_expression()
           parser.must_consume( TokenType.SYMBOL_CLOSE_PAREN )
           return result
         endFunction
       )
+      #{
       rule.on( "ch",            <<TokenizerCmdRegisterCh>> )
       rule.on( "count",         <<TokenizerCmdRegisterCount>> )
       rule.on( "hasAnother",    <<TokenizerCmdHasAnother>> )
@@ -300,18 +300,19 @@ class FroleyParser : Parser
           endIf
         endFunction
       )
+    }#
       rule.on( "consume",
         function(parser:FroleyParser)->Cmd
           local t = parser.read  # 'consume'
-          if (parser.next_is(TokenType.SYMBOL_OPEN_PAREN))
-            local expr = parser.parse_tokenizer_expression()
-            t = expr.t
-            if (expr.is_integer)                      return TokenizerCmdConsumeCharacter( t, expr->Int32 )
+          if (parser.consume(TokenType.SYMBOL_OPEN_PAREN))
+            local result = ParserCmdConsumeTokenType( t, parser.read_token_type_def )
+            parser.must_consume( TokenType.SYMBOL_CLOSE_PAREN )
+            return result
+          else
+            return ParserCmdConsumeTokenType( t, parser.read_token_type_def )
           endIf
-          throw t.error( "'Expected 'consume(<character>)'." )
         endFunction
       )
-    }#
 
     method parse_tokenizer_statements( statements:CmdStatements )->Logical
       if (consume_eols)
@@ -665,8 +666,12 @@ class FroleyParser : Parser
         statements.add( ParserCmdSyntaxError(t) )
         return
 
+      elseIf (consume(TokenType.KEYWORD_BEGIN_LIST))
+        statements.add( ParserCmdBeginList(t) )
+        return
+
       elseIf (consume(TokenType.KEYWORD_MUST_CONSUME))
-        statements.add( ParserCmdMustConsumeType(t,read_token_type_def.name) )
+        statements.add( ParserCmdMustConsumeType(t,read_token_type_def) )
         return
 
       elseIf (consume(TokenType.KEYWORD_PRINTLN))
@@ -681,25 +686,31 @@ class FroleyParser : Parser
         statements.add( ParserCmdProduceNull(t) )
         return
 
+      elseIf (consume(TokenType.KEYWORD_PRODUCE_STATEMENTS))
+        statements.add( ParserCmdProduceStatements(t) )
+        return
+
+      elseIf (consume(TokenType.KEYWORD_PRODUCE_ARGS))
+        statements.add( ParserCmdProduceArgs(t) )
+        return
+
       elseIf (consume(TokenType.KEYWORD_RETURN))
         statements.add( ParserCmdReturn(t,null) )
         return
       endIf
 
-      statements.add( parse_parser_expression() )
-
-      #{
       if (allow_control_structures)
+        #{
         if (consume(TokenType.KEYWORD_IF))
-          local cmd_if = TokenizerCmdIf( t, parse_parser_expression() )
-          if (parse_tokenizer_statements(cmd_if.statements))
+          local cmd_if = ParserCmdIf( t, parse_parser_expression() )
+          if (parse_parser_statements(cmd_if.statements))
             # Multi-line statements
             local outer_if = cmd_if
-            while (next_is_tokenizer_end_if(&multi_line))
+            while (next_is_parser_end_if(&multi_line))
               consume_eols
               local t2 = read
-              local inner_if = TokenizerCmdIf( t2, parse_parser_expression() )
-              parse_multi_line_tokenizer_statements( inner_if.statements )
+              local inner_if = ParserCmdIf( t2, parse_parser_expression() )
+              parse_multi_line_parser_statements( inner_if.statements )
               ensure outer_if.else_statements
               outer_if.else_statements.add( inner_if )
               outer_if = inner_if
@@ -709,18 +720,18 @@ class FroleyParser : Parser
               if (next_is(TokenType.KEYWORD_ELSE) and reader.peek(1).type == TokenType.EOL)
                 read
                 ensure outer_if.else_statements
-                parse_multi_line_tokenizer_statements( outer_if.else_statements )
+                parse_multi_line_parser_statements( outer_if.else_statements )
               endIf
             endIf
             must_consume( TokenType.KEYWORD_END_IF )
           else
             # Single line statements
             local outer_if = cmd_if
-            while (next_is_tokenizer_end_if(&single_line))
+            while (next_is_parser_end_if(&single_line))
               consume_eols
               local t2 = read
-              local inner_if = TokenizerCmdIf( t2, parse_parser_expression() )
-              parse_single_line_tokenizer_statements( inner_if.statements )
+              local inner_if = ParserCmdIf( t2, parse_parser_expression() )
+              parse_single_line_parser_statements( inner_if.statements )
               ensure outer_if.else_statements
               outer_if.else_statements.add( inner_if )
               outer_if = inner_if
@@ -730,16 +741,17 @@ class FroleyParser : Parser
               if (next_is(TokenType.KEYWORD_ELSE) and reader.peek(1).type != TokenType.EOL)
                 read
                 ensure outer_if.else_statements
-                parse_single_line_tokenizer_statements( outer_if.else_statements )
+                parse_single_line_parser_statements( outer_if.else_statements )
               endIf
             endIf
           endIf
           statements.add( cmd_if )
           return
+        }#
 
-        elseIf (consume(TokenType.KEYWORD_WHILE))
-          local cmd_while = TokenizerCmdWhile( t, parse_parser_expression() )
-          if (parse_tokenizer_statements(cmd_while.statements))
+        if (consume(TokenType.KEYWORD_WHILE))
+          local cmd_while = ParserCmdWhile( t, parse_parser_expression() )
+          if (parse_parser_statements(cmd_while.statements))
             # Returns true if multi-line statements were parsed
             must_consume( TokenType.KEYWORD_END_WHILE )
           endIf
@@ -749,6 +761,9 @@ class FroleyParser : Parser
         endIf
       endIf
 
+      statements.add( parse_parser_expression() )
+
+      #{
       if (consume(TokenType.KEYWORD_ACCEPT))
         local name = read_identifier
         statements.add( TokenizerCmdAcceptInt32(t,Froley.token_def(name).type) )

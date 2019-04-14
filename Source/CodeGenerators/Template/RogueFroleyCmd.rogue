@@ -36,9 +36,15 @@ augment RogueTemplate
        |endClass
        |
        |class RogueFroleyCmdStatements : RogueFroleyCmdList
+       |  METHODS
+       |    method to->String
+       |      return list.join( "\n" )
        |endClass
        |
        |class RogueFroleyCmdArgs : RogueFroleyCmdList
+       |  METHODS
+       |    method to->String
+       |      return "($)" (list.join(","))
        |endClass
        |
        |class RogueFroleyCmdUnary( t, operand:RogueFroleyCmd ) : RogueFroleyCmd

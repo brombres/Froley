@@ -672,8 +672,11 @@ class FroleyParser : Parser
         return
 
       elseIf (consume(TokenType.KEYWORD_PRODUCE))
-        local cmd = ParserCmdProduce( t, parse_cmd_type )
-        statements.add( cmd )
+        statements.add( ParserCmdProduce(t,parse_cmd_type) )
+        return
+
+      elseIf (consume(TokenType.KEYWORD_PRODUCE_NULL))
+        statements.add( ParserCmdProduceNull(t) )
         return
 
       elseIf (consume(TokenType.KEYWORD_RETURN))

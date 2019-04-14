@@ -813,6 +813,13 @@ class ParserCmdProduce( t, cmd_type:CmdType ) : Cmd
       assembler.write( ParserOpcode.RETURN )
 endClass
 
+class ParserCmdProduceNull( t ) : Cmd
+  METHODS
+    method write( assembler:ParserAssembler )
+      assembler.write( ParserOpcode.CREATE_NULL_CMD )
+      assembler.write( ParserOpcode.RETURN )
+endClass
+
 class ParserCmdPrintln( t, value:String ) : Cmd
   METHODS
     method write( assembler:ParserAssembler )

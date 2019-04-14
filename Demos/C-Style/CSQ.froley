@@ -9,6 +9,7 @@ INTEGER    integer    [content]
 
 [keywords]
 KEYWORD_IF       if
+KEYWORD_ELSE     else
 
 [symbols]
 SYMBOL_ASTERISK             *
@@ -76,10 +77,15 @@ return
     expression
     mustConsume ")"
     statement
-    produce CmdIf(condition,true_body)
+    parse_else
+    produce CmdIf(condition,body,else_body)
   endOn
   expression
   return
+
+- parse_else
+  on "else" statement; return
+  produceNull
 
 - expression
 

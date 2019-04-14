@@ -98,6 +98,10 @@ augment RogueTemplate
        |            cmd_queue.add( RogueFroleyCmdFactory.create_cmd(cmd_type_index,cur_token,cmd_args) )
        |            nextIteration
        |
+       |          case RogueFroleyParserOpcode.CREATE_NULL_CMD
+       |            cmd_queue.add( null )
+       |            nextIteration
+       |
        |          case RogueFroleyParserOpcode.CONSUME_EOLS
        |            #while (next_token_type == RogueFroleyTokenType.EOL) read
        |            nextIteration

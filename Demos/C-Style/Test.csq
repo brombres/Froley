@@ -1,2 +1,5 @@
 if (alpha) beta
-gamma
+else if (gamma)
+delta
+else epsilon
+omega

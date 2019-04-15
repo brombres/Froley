@@ -11,8 +11,10 @@ IDENTIFIER identifier [content]
 INTEGER    integer    [content]
 
 [keywords]
+KEYWORD_FOR      for
 KEYWORD_IF       if
 KEYWORD_ELSE     else   [structural]
+KEYWORD_WHILE    while
 
 [symbols]
 SYMBOL_ASTERISK             *
@@ -80,9 +82,9 @@ return
 [parser]
 - element
   if (hasAnother and nextHasAttribute(structural)) syntaxError
-  statement_list
+  statements
 
-- statement_list
+- statements
   if (not hasAnother) syntaxError
   if (nextHasAttribute(structural)) return
   beginList
@@ -92,9 +94,8 @@ return
   produceStatements
 
 - statement
-  trace
   on '{'
-    statement_list
+    statements
     mustConsume "}"
     return
   elseOn "if"
@@ -104,11 +105,24 @@ return
     statement
     parse_else
     produce CmdIf(condition,body,else_body)
+#{
+  elseOn "for"
+    mustConsume "("
+    expression
+    mustConsume ")"
+}#
+  elseOn "while"
+    mustConsume "("
+    expression
+    mustConsume ")"
+    statement
+    produce CmdWhile(condition,body)
   else
     command
   endOn
 
 - command
+  on ';' -> CmdEmpty
   expression
   mustConsume ';'
 
@@ -146,4 +160,5 @@ return
     mustConsume ")"
     return
   endOn
+  syntaxError
 

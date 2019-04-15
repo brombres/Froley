@@ -170,13 +170,13 @@ augment RogueTemplate
        |              ++ip
        |              nextIteration
        |            else
-       |              throw peek.error( "Expected '$', found '$'."(RogueFroleyTokenType(code[ip]).symbol,peek) )
+       |              throw peek.error( "Expected '$', found $."(RogueFroleyTokenType(code[ip]).symbol,?:{next_token_type!=-1:"'$'"(peek->String) || "end of input"}) )
        |            endIf
        |
        |          case RogueFroleyParserOpcode.TRACE
        |            print( "Line " ).print( code[ip] ).print( " next:" )
        |            if (next_token_type != -1) print( peek )
-       |            else                       print( "(EOI)" )
+       |            else                       print( "end of input" )
        |            ++ip
        |            print( " opcode:" ).print( RogueFroleyParserOpcode(code[ip]) )
        |            println

@@ -284,7 +284,7 @@ class Froley [singleton]
       local cur_section_defs : TokenDef[]
       local parse_type = PARSING_TOKENIZER
       local buffer = StringBuilder()
-      local next_attribute_value = 1
+      local next_attribute_value = 2   # [content] is 1
       forEach (line at index in LineReader(source))
         if (line.begins_with('['))  # new section
           tokenizer_code.println  # keep line numbers consistent

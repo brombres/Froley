@@ -1,3 +1,6 @@
+[attributes]
+structural
+
 [whitespace]
 SPACE ' '
 TAB   '\t'
@@ -9,13 +12,13 @@ INTEGER    integer    [content]
 
 [keywords]
 KEYWORD_IF       if
-KEYWORD_ELSE     else
+KEYWORD_ELSE     else   [structural]
 
 [symbols]
 SYMBOL_ASTERISK             *
 SYMBOL_CARET                ^
-SYMBOL_CLOSE_CURLY          }
-SYMBOL_CLOSE_PAREN          )
+SYMBOL_CLOSE_CURLY          }  [structural]
+SYMBOL_CLOSE_PAREN          )  [structural]
 SYMBOL_COMMA                ,
 SYMBOL_EQUALS               =
 SYMBOL_MINUS                -
@@ -75,9 +78,17 @@ return
 
 
 [parser]
+- element
+  statement_list
+  return
+
 - statement_list
+  if (not hasAnother) return
+  if (nextHasAttribute(structural)) return
   beginList
-  while (hasAnother) statement
+  while (hasAnother and not nextHasAttribute(structural))
+    statement
+  endWhile
   produceStatements
 
 - statement
@@ -88,6 +99,10 @@ return
     statement
     parse_else
     produce CmdIf(condition,body,else_body)
+  elseOn "{"
+    statement_list
+    mustConsume "}"
+    return
   endOn
   expression
   return

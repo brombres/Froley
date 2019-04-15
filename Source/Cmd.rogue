@@ -841,10 +841,17 @@ class ParserCmdProduceArgs( t ) : Cmd
       assembler.write( ParserOpcode.RETURN )
 endClass
 
-class ParserCmdPrintln( t, value:String ) : Cmd
+class ParserCmdPrintlnString( t, value:String ) : Cmd
   METHODS
     method write( assembler:ParserAssembler )
       assembler.write( ParserOpcode.PRINTLN_STRING, value )
+endClass
+
+class ParserCmdPrintlnCmd( t, value:Cmd ) : Cmd
+  METHODS
+    method write( assembler:ParserAssembler )
+      value.write( assembler )
+      assembler.write( ParserOpcode.PRINTLN_NUMBER )
 endClass
 
 class ParserCmdReturn( t, expression:Cmd ) : Cmd
@@ -905,5 +912,75 @@ class ParserCmdHasAnother( t ) : Cmd
   METHODS
     method write( assembler:ParserAssembler )
       assembler.write( ParserOpcode.HAS_ANOTHER )
+endClass
+
+class ParserCmdNextHasAttribute( t, name:String ) : Cmd
+  METHODS
+    method write( assembler:ParserAssembler )
+      assembler.write( ParserOpcode.NEXT_HAS_ATTRIBUTE, Froley.token_attributes[name] )
+endClass
+
+class ParserCmdLogicalAnd : CmdBinary
+  METHODS
+    method write( assembler:ParserAssembler )
+      local label_false = Label()
+      local label_done  = Label()
+      left.write( assembler )
+      assembler.write( ParserOpcode.JUMP_IF_FALSE, label_false )
+      right.write( assembler )
+      assembler.write( ParserOpcode.JUMP_IF_FALSE, label_false )
+      assembler.write( ParserOpcode.PUSH_INT32, 1 )  # true
+      assembler.write( ParserOpcode.JUMP, label_done )
+      assembler.define( label_false )
+      assembler.write( ParserOpcode.PUSH_INT32, 0 )  # false
+      assembler.define( label_done )
+endClass
+
+class ParserCmdLogicalOr : CmdBinary
+  METHODS
+    method write( assembler:ParserAssembler )
+      local label_true = Label()
+      local label_done = Label()
+      left.write( assembler )
+      assembler.write( ParserOpcode.JUMP_IF_TRUE, label_true )
+      right.write( assembler )
+      assembler.write( ParserOpcode.JUMP_IF_TRUE, label_true )
+      assembler.write( ParserOpcode.PUSH_INT32, 0 )  # false
+      assembler.write( ParserOpcode.JUMP, label_done )
+      assembler.define( label_true )
+      assembler.write( ParserOpcode.PUSH_INT32, 1 )  # true
+      assembler.define( label_done )
+endClass
+
+class ParserCmdLogicalNot : CmdUnary
+  METHODS
+    method write( assembler:ParserAssembler )
+      operand.write( assembler )
+      assembler.write( ParserOpcode.LOGICAL_NOT )
+endClass
+
+class ParserCmdIf( t, condition:Cmd ) : Cmd
+  PROPERTIES
+    statements      = CmdStatements()
+    else_statements : CmdStatements
+
+  METHODS
+    method resolved->Cmd
+      condition = condition.resolved
+      statements.resolve
+      if (else_statements) else_statements.resolve
+      return this
+
+    method write( assembler:ParserAssembler )
+      local label_body   = Label()
+      local label_else   = Label()
+      local label_end_if = Label()
+      condition.write( assembler )
+      assembler.write( ParserOpcode.JUMP_IF_FALSE, label_else )
+      statements.write( assembler )
+      assembler.write( ParserOpcode.JUMP, label_end_if )
+      assembler.define( label_else )
+      if (else_statements) else_statements.write( assembler )
+      assembler.define( label_end_if )
 endClass
 

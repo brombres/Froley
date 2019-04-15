@@ -62,7 +62,7 @@ augment RogueTemplate
        |              throw peek.error( "Syntax error - unexpected end of input." )
        |            else
        |              local t = tokens[ position ]
-       |              throw t.error( "Syntax error - unexpected '$'." (t) )
+       |              throw t.error( "Syntax error - unexpected '$'." (t.type.symbol) )
        |            endIf
        |          case RogueFroleyParserOpcode.RETURN
        |            if (call_stack.is_empty) return
@@ -81,6 +81,10 @@ augment RogueTemplate
        |            if (number_stack.count and number_stack.remove_last) ip = code[ ip ]
        |            else                                                 ++ip
        |            nextIteration
+       |          case RogueFroleyParserOpcode.JUMP_IF_FALSE
+       |            if (number_stack.count and 0 == number_stack.remove_last) ip = code[ ip ]
+       |            else                                                      ++ip
+       |            nextIteration
        |          case RogueFroleyParserOpcode.ON_TOKEN_TYPE
        |            if (code[ip] == next_token_type)
        |              ip += 2
@@ -91,6 +95,10 @@ augment RogueTemplate
        |            nextIteration
        |          case RogueFroleyParserOpcode.HAS_ANOTHER
        |            number_stack.add( next_token_type != -1 )
+       |            nextIteration
+       |          case RogueFroleyParserOpcode.NEXT_HAS_ATTRIBUTE
+       |            number_stack.add( next_token_type != -1 and (RogueFroleyTokenType(next_token_type).attributes & code[ip]) )
+       |            ++ip
        |            nextIteration
        |          case RogueFroleyParserOpcode.BEGIN_LIST
        |            list_start_t.add( peek )
@@ -166,9 +174,19 @@ augment RogueTemplate
        |            ++ip
        |            nextIteration
        |
+       |          case RogueFroleyParserOpcode.PRINTLN_NUMBER
+       |            local value = number_stack.remove_last
+       |            if (value == value.floor) println value->Int32
+       |            else                      println value.format(".4")
+       |            nextIteration
+       |
        |          case RogueFroleyParserOpcode.PUSH_INT32
        |            number_stack.add( code[ip] )
        |            ++ip
+       |            nextIteration
+       |
+       |          case RogueFroleyParserOpcode.LOGICAL_NOT
+       |            number_stack.last = not number_stack.last
        |            nextIteration
        |
        |          others

@@ -49,7 +49,7 @@ routine rogo_build
   if (needs_build)
     File.create_folder( "Build" )
     println "Compiling froley"
-    execute "roguec Source/Froley.rogue --output=$ --compile" (Build.EXE)
+    execute "roguec --debug Source/Froley.rogue --output=$ --compile" (Build.EXE)
   endIf
 
   if (System.os != "Windows" and Process.run( "which froley", &inherit_environment ).output_string == "") install_launcher

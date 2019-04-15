@@ -1,7 +1,7 @@
 module Froley
   uses ParseKit<<Froley>>
 
-  # TODO: data stack, consume, if, while, return values, call args
+  # TODO: if, return values, call args
 
 class FroleyParser : Parser
   PROPERTIES
@@ -163,27 +163,30 @@ class FroleyParser : Parser
       # parser assignment
       rule = add_nested( RightAssociativeBinaryParseRule("assignment") )
       rule.on( "=", <<TokenizerCmdAssign>> )
+      }#
 
       # parser logical or
-      rule = add_nested( BinaryParseRule("logical_or") )
-      rule.on( "or", <<TokenizerCmdLogicalOr>> )
+      rule = add_nested( BinaryParseRule("parser_logical_or") )
+      rule.on( "or", <<ParserCmdLogicalOr>> )
 
       # parser logical and
-      rule = add_nested( BinaryParseRule("logical_and") )
-      rule.on( "and", <<TokenizerCmdLogicalAnd>> )
+      rule = add_nested( BinaryParseRule("parser_logical_and") )
+      rule.on( "and", <<ParserCmdLogicalAnd>> )
 
       # parser comparison
-      rule = add_nested( BinaryParseRule("comparison") )
-      rule.on( "==", <<TokenizerCmdCompareEQ>> )
-      rule.on( "!=", <<TokenizerCmdCompareNE>> )
-      rule.on( "<",  <<TokenizerCmdCompareLT>> )
-      rule.on( "<=", <<TokenizerCmdCompareLE>> )
-      rule.on( ">",  <<TokenizerCmdCompareGT>> )
-      rule.on( ">=", <<TokenizerCmdCompareGE>> )
+      #rule = add_nested( BinaryParseRule("parser_comparison") )
+      #rule.on( "==", <<TokenizerCmdCompareEQ>> )
+      #rule.on( "!=", <<TokenizerCmdCompareNE>> )
+      #rule.on( "<",  <<TokenizerCmdCompareLT>> )
+      #rule.on( "<=", <<TokenizerCmdCompareLE>> )
+      #rule.on( ">",  <<TokenizerCmdCompareGT>> )
+      #rule.on( ">=", <<TokenizerCmdCompareGE>> )
+      #rule.on( "is", <<ParserCmdTokenType>> )
 
-      rule = add_nested( PreUnaryParseRule("pre_unary") )
-      rule.on( "not", <<TokenizerCmdNot>> )
+      rule = add_nested( PreUnaryParseRule("parser_pre_unary") )
+      rule.on( "not", <<ParserCmdLogicalNot>> )
 
+      #{
       # parser is digit, is letter
       rule = add_nested(
         PostUnaryParseRule( "is_digit_is_letter",
@@ -249,6 +252,24 @@ class FroleyParser : Parser
           return result
         endFunction
       )
+      rule.on( "nextHasAttribute",
+        function (parser:FroleyParser)->Cmd
+          local t = parser.read  # 'nextHasAttribute'
+          local name : String
+          if (parser.consume(TokenType.SYMBOL_OPEN_PAREN))
+            name = parser.read_identifier
+            parser.must_consume( TokenType.SYMBOL_CLOSE_PAREN )
+          else
+            name = parser.read_identifier
+          endIf
+          if (Froley.token_attributes.contains(name))
+            return ParserCmdNextHasAttribute( t, name )
+          else
+            throw t.error( "No such token attribute '$' (attributes are be defined in an [attributes] section of the .froley file)." (name) )
+          endIf
+        endFunction
+      )
+
       #{
       rule.on( "ch",            <<TokenizerCmdRegisterCh>> )
       rule.on( "count",         <<TokenizerCmdRegisterCount>> )
@@ -646,7 +667,6 @@ class FroleyParser : Parser
 
       if (consume(TokenType.KEYWORD_ON))
         local token_type_def = read_token_type_def
-        local t2 = peek
         if (consume(TokenType.SYMBOL_ARROW))
           local cmd = ParserCmdOnTypeProduce( t, token_type_def, parse_cmd_type(token_type_def) )
           statements.add( cmd )
@@ -657,6 +677,13 @@ class FroleyParser : Parser
           statements.add( cmd )
           if (consume_eols)
             parse_multi_line_parser_statements( cmd.statements )
+            t = peek
+            while (consume(TokenType.KEYWORD_ELSE_ON))
+              cmd = ParserCmdOnType( t, read_token_type_def )
+              statements.add( cmd )
+              parse_multi_line_parser_statements( cmd.statements )
+              t = peek
+            endWhile
             must_consume( TokenType.KEYWORD_END_ON )
           else
             parse_single_line_parser_statements( cmd.statements )
@@ -677,7 +704,11 @@ class FroleyParser : Parser
         return
 
       elseIf (consume(TokenType.KEYWORD_PRINTLN))
-        statements.add( ParserCmdPrintln(t,read_string) )
+        if (next_is(TokenType.STRING))
+          statements.add( ParserCmdPrintlnString(t,read_string) )
+        else
+          statements.add( ParserCmdPrintlnCmd(t,parse_parser_expression()) )
+        endIf
         return
 
       elseIf (consume(TokenType.KEYWORD_PRODUCE))
@@ -702,7 +733,6 @@ class FroleyParser : Parser
       endIf
 
       if (allow_control_structures)
-        #{
         if (consume(TokenType.KEYWORD_IF))
           local cmd_if = ParserCmdIf( t, parse_parser_expression() )
           if (parse_parser_statements(cmd_if.statements))
@@ -749,9 +779,8 @@ class FroleyParser : Parser
           endIf
           statements.add( cmd_if )
           return
-        }#
 
-        if (consume(TokenType.KEYWORD_WHILE))
+        elseIf (consume(TokenType.KEYWORD_WHILE))
           local cmd_while = ParserCmdWhile( t, parse_parser_expression() )
           if (parse_parser_statements(cmd_while.statements))
             # Returns true if multi-line statements were parsed
@@ -988,6 +1017,28 @@ class FroleyParser : Parser
       # Scan to just after the elseIf() conditional
       read  # elseIf
       parse_tokenizer_expression()
+
+      if (single_line)
+        local result = not next_is( TokenType.EOL )
+        reader.position = original_pos
+        return result
+      else
+        local result = next_is( TokenType.EOL )
+        reader.position = original_pos
+        return result
+      endIf
+
+    method next_is_parser_end_if( &single_line, &multi_line )->Logical
+      local original_pos = reader.position
+      consume_eols
+      if (not next_is(TokenType.KEYWORD_ELSE_IF))
+        reader.position = original_pos
+        return false
+      endIf
+
+      # Scan to just after the elseIf() conditional
+      read  # elseIf
+      parse_parser_expression()
 
       if (single_line)
         local result = not next_is( TokenType.EOL )

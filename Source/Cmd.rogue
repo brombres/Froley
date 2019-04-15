@@ -777,14 +777,24 @@ endClass
 class ParserCmdOnType( t, token_type_def:TokenDef ) : Cmd
   PROPERTIES
     statements = CmdStatements()
+    else_on    : ParserCmdOnType
 
   METHODS
     method write( assembler:ParserAssembler )
-      local label_if_no_match = Label()
-      assembler.write( ParserOpcode.ON_TOKEN_TYPE, token_type_def.type )
-      assembler.write_address( label_if_no_match )
-      statements.write( assembler )
-      assembler.define( label_if_no_match )
+      if (token_type_def)
+        local label_else = Label()
+        local label_done = Label()
+        assembler.write( ParserOpcode.ON_TOKEN_TYPE, token_type_def.type )
+        assembler.write_address( label_else )
+        statements.write( assembler )
+        assembler.write( ParserOpcode.JUMP, label_done )
+        assembler.define( label_else )
+        if (else_on) else_on.write( assembler )
+        assembler.define( label_done )
+      else
+        # just an 'else'
+        statements.write( assembler )
+      endIf
 endClass
 
 class ParserCmdOnTypeProduce( t, token_type_def:TokenDef, cmd_type:CmdType ) : Cmd
@@ -987,3 +997,8 @@ class ParserCmdIf( t, condition:Cmd ) : Cmd
       assembler.define( label_end_if )
 endClass
 
+class ParserCmdTrace : Cmd
+  METHODS
+    method write( assembler:ParserAssembler )
+      assembler.write( ParserOpcode.TRACE, t.line )
+endClass

@@ -158,21 +158,39 @@ class GenerateRogue : CodeGenerator
             endForEach
             builder.println
           endIf
+
+          local escaped_symbol = cmd_type//symbol->String.to_escaped_ascii("\"")
           which (type)
             case ParseRuleType.PRE_UNARY, ParseRuleType.POST_UNARY, ParseRuleType.BINARY
               builder.println "    method op->String"
-              builder.println '      return "$"' (cmd_type//symbol->String.to_escaped_ascii("\""))
+              builder.println '      return "$"' (escaped_symbol)
             others
               builder.println "    method to->String"
               builder.print  ("      return " )
-              if (cmd_properties.count == 1)
-                local p = cmd_properties[ 0 ]
-                builder.print( p//name )
-                if (p//type != "String") builder.print( "->String" )
-                builder.println
-              else
-                builder.print( '"' ).print( cmd_type//symbol->String.to_escaped_ascii("\"") ).println( '"' )
-              endIf
+              which (cmd_properties.count)
+                case 0
+                  builder.print( '"' ).print( escaped_symbol ).println( '"' )
+                case 1
+                  local p = cmd_properties[ 0 ]
+                  builder.print( p//name )
+                  if (p//type != "String") builder.print( "->String" )
+                  builder.println
+                others
+                  builder.print( '"' )
+                  builder.print( escaped_symbol ).print( '(' )
+                  forEach (p at index in cmd_properties)
+                    if (index > 0) builder.print( ',' )
+                    builder.print( '$' )
+                  endForEach
+                  builder.print( ')' )
+                  builder.print( '"' )
+                  builder.print( '(' )
+                  forEach (p at index in cmd_properties)
+                    if (index > 0) builder.print( ',' )
+                    builder.print( p//name )
+                  endForEach
+                  builder.println( ')' )
+              endWhich
           endWhich
           builder.println "endClass"
         endIf

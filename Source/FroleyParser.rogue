@@ -647,6 +647,13 @@ class FroleyParser : Parser
         else
           throw peek.error( "No token has symbol '$'." (symbol) )
         endIf
+      elseIf (next_is(TokenType.INTEGER))
+        local symbol = read->Int32->Character->String
+        if (Froley.token_defs_by_symbol.contains(symbol))
+          return Froley.token_defs_by_symbol[ symbol ]
+        else
+          throw peek.error( "No token has symbol '$'." (symbol) )
+        endIf
       elseIf (next_is(TokenType.IDENTIFIER))
         token_type_name = read_identifier
       else
@@ -679,11 +686,19 @@ class FroleyParser : Parser
             parse_multi_line_parser_statements( cmd.statements )
             t = peek
             while (consume(TokenType.KEYWORD_ELSE_ON))
-              cmd = ParserCmdOnType( t, read_token_type_def )
+              cmd.else_on = ParserCmdOnType( t, read_token_type_def )
+              cmd = cmd.else_on
               statements.add( cmd )
               parse_multi_line_parser_statements( cmd.statements )
               t = peek
             endWhile
+            if (consume(TokenType.KEYWORD_ELSE))
+              cmd.else_on = ParserCmdOnType( t, null )
+              cmd = cmd.else_on
+              statements.add( cmd )
+              parse_multi_line_parser_statements( cmd.statements )
+              t = peek
+            endIf
             must_consume( TokenType.KEYWORD_END_ON )
           else
             parse_single_line_parser_statements( cmd.statements )
@@ -729,6 +744,10 @@ class FroleyParser : Parser
 
       elseIf (consume(TokenType.KEYWORD_RETURN))
         statements.add( ParserCmdReturn(t,null) )
+        return
+
+      elseIf (consume(TokenType.KEYWORD_TRACE))
+        statements.add( ParserCmdTrace(t) )
         return
       endIf
 

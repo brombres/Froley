@@ -11,7 +11,7 @@ augment RogueTemplate
        |
        |    method to->String
        |      if (content) return content
-       |      return type->String
+       |      return type.symbol.to_escaped_ascii
        |endClass
        |
 endAugment

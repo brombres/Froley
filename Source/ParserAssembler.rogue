@@ -13,7 +13,7 @@ class ParserAssembler : Assembler
       forEach (m in methods)
         m.write( this )
       endForEach
-      write( ParserOpcode.SYNTAX_ERROR )
+      write( ParserOpcode.RETURN )
       return this->Byte[]
 
     method to->Byte[]

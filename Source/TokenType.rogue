@@ -61,10 +61,11 @@ augment TokenType
   KEYWORD_PUSH              ( "push",              &is_keyword )
   KEYWORD_READ              ( "read",              &is_keyword )
   KEYWORD_RESTART           ( "restart",           &is_keyword )
+  KEYWORD_RETURN            ( "return",            &is_keyword )
   KEYWORD_SCAN_DIGITS       ( "scanDigits",        &is_keyword )
   KEYWORD_SCAN_IDENTIFIER   ( "scanIdentifier",    &is_keyword )
   KEYWORD_SYNTAX_ERROR      ( "syntaxError",       &is_keyword )
-  KEYWORD_RETURN            ( "return",            &is_keyword )
+  KEYWORD_TRACE             ( "trace",             &is_keyword )
   KEYWORD_WHICH             ( "which",             &is_keyword )
   KEYWORD_WHILE             ( "while",             &is_keyword )
 

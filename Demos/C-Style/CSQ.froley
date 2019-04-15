@@ -80,6 +80,9 @@ return
 [parser]
 - element
   statement_list
+  if (nextHasAttribute(structural))
+    syntaxError
+  endIf
   return
 
 - statement_list

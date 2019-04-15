@@ -877,6 +877,9 @@ class ParserCmdAccess( t, name:String ) : Cmd
 endClass
 
 class ParserCmdSyntaxError : Cmd
+  METHODS
+    method write( assembler:ParserAssembler )
+      assembler.write( ParserOpcode.SYNTAX_ERROR )
 endClass
 
 class ParserCmdWhile( t, condition:Cmd ) : Cmd

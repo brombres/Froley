@@ -1,1 +1,5 @@
-while (alpha) beta; gamma;
+for (a; b; c)
+{
+  d;
+  e;
+}

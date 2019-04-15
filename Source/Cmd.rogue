@@ -812,6 +812,11 @@ class ParserCmdConsumeTokenType( t, token_type_def:TokenDef ) : Cmd
       assembler.write( ParserOpcode.CONSUME_TYPE, token_type_def.type )
 endClass
 
+class ParserCmdNextIsTokenType( t, token_type_def:TokenDef ) : Cmd
+  METHODS
+    method write( assembler:ParserAssembler )
+      assembler.write( ParserOpcode.NEXT_IS_TYPE, token_type_def.type )
+endClass
 
 class ParserCmdMustConsumeType( t, token_type_def:TokenDef ) : Cmd
   METHODS

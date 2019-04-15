@@ -105,12 +105,14 @@ return
     statement
     parse_else
     produce CmdIf(condition,body,else_body)
-#{
   elseOn "for"
     mustConsume "("
-    expression
+    command
+    command
+    expression_or_empty
     mustConsume ")"
-}#
+    statement
+    produce CmdFor(initializer,condition,termination_test,body)
   elseOn "while"
     mustConsume "("
     expression
@@ -132,6 +134,10 @@ return
   else
     produceNull
   endOn
+
+- expression_or_empty
+  if (nextIs(')')) produce CmdEmpty
+  expression
 
 - expression
 

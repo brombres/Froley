@@ -269,6 +269,18 @@ class FroleyParser : Parser
           endIf
         endFunction
       )
+      rule.on( "nextIs",
+        function(parser:FroleyParser)->Cmd
+          local t = parser.read  # 'nextIs'
+          if (parser.consume(TokenType.SYMBOL_OPEN_PAREN))
+            local result = ParserCmdNextIsTokenType( t, parser.read_token_type_def )
+            parser.must_consume( TokenType.SYMBOL_CLOSE_PAREN )
+            return result
+          else
+            return ParserCmdNextIsTokenType( t, parser.read_token_type_def )
+          endIf
+        endFunction
+      )
 
       #{
       rule.on( "ch",            <<TokenizerCmdRegisterCh>> )

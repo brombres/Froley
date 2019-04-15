@@ -104,6 +104,10 @@ augment RogueTemplate
        |            number_stack.add( next_token_type != -1 and (RogueFroleyTokenType(next_token_type).attributes & code[ip]) )
        |            ++ip
        |            nextIteration
+       |          case RogueFroleyParserOpcode.NEXT_IS_TYPE
+       |            number_stack.add( next_token_type == code[ip] )
+       |            ++ip
+       |            nextIteration
        |          case RogueFroleyParserOpcode.BEGIN_LIST
        |            list_start_t.add( peek )
        |            list_start_pos.add( cmd_queue.count )

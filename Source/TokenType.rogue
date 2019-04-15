@@ -45,6 +45,7 @@ augment TokenType
   KEYWORD_MODE              ( "mode",              &is_keyword )
   KEYWORD_MUST_CONSUME      ( "mustConsume",       &is_keyword )
   KEYWORD_NEXT_HAS_ATTRIBUTE( "nextHasAttribute",  &is_keyword )
+  KEYWORD_NEXT_IS           ( "nextIs",            &is_keyword )
   KEYWORD_NOT               ( "not",               &is_keyword )
   #KEYWORD_NULL              ( "null",              &is_keyword )
   KEYWORD_OTHERS            ( "others",            &is_keyword, &is_structural )

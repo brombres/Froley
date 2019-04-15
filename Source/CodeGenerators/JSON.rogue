@@ -3,6 +3,9 @@ module Froley
 Froley.code_generators//json = GenerateJSON()
 
 class GenerateJSON : CodeGenerator
+  PROPERTIES
+    source_timestamp : Real64
+
   METHODS
     method add_option( name:String, value:String )
       which (name)
@@ -15,6 +18,8 @@ class GenerateJSON : CodeGenerator
       endWhich
 
     method process( info:Value )
+      source_timestamp = File.timestamp( info//source_filepath )
+
       local output = select{options//output||""}
       if (output == "" or File.is_folder(output))
         local filename = info//language + ".json"
@@ -22,6 +27,8 @@ class GenerateJSON : CodeGenerator
         else output = File.ensure_ends_with_separator(output) + filename
       endIf
 
-      println "Writing " + output
-      File.save( output, info.to_json )
+      if (File.is_newer_than(source_timestamp,output))
+        println "Writing " + output
+        File.save( output, info.to_json )
+      endIf
 endClass

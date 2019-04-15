@@ -79,14 +79,11 @@ return
 
 [parser]
 - element
+  if (hasAnother and nextHasAttribute(structural)) syntaxError
   statement_list
-  if (nextHasAttribute(structural))
-    syntaxError
-  endIf
-  return
 
 - statement_list
-  if (not hasAnother) return
+  if (not hasAnother) syntaxError
   if (nextHasAttribute(structural)) return
   beginList
   while (hasAnother and not nextHasAttribute(structural))
@@ -95,24 +92,32 @@ return
   produceStatements
 
 - statement
-  on "if"
+  trace
+  on '{'
+    statement_list
+    mustConsume "}"
+    return
+  elseOn "if"
     mustConsume "("
     expression
     mustConsume ")"
     statement
     parse_else
     produce CmdIf(condition,body,else_body)
-  elseOn "{"
-    statement_list
-    mustConsume "}"
-    return
+  else
+    command
   endOn
+
+- command
   expression
-  return
+  mustConsume ';'
 
 - parse_else
-  on "else" statement; return
-  produceNull
+  on "else"
+    statement
+  else
+    produceNull
+  endOn
 
 - expression
 

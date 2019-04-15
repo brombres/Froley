@@ -25,6 +25,7 @@ augment RogueTemplate
        |    methods         = LookupList<<Int32>>()
        |
        |    call_stack      = Int32[]
+       |    method_stack    = Int32[]
        |    token_stack     = RogueFroleyToken[]
        |    number_stack    = Real64[]
        |
@@ -52,6 +53,7 @@ augment RogueTemplate
        |      if (tokenizer_base64_code) tokenizer = RogueFroleyTokenizer( tokenizer_base64_code )
        |
        |    method execute( ip:Int32 )
+       |      method_stack.add( ip )
        |      loop
        |        local opcode = RogueFroleyParserOpcode( code[ip] )
        |        #trace opcode
@@ -67,12 +69,14 @@ augment RogueTemplate
        |          case RogueFroleyParserOpcode.RETURN
        |            if (call_stack.is_empty) return
        |            ip = call_stack.remove_last
+       |            method_stack.remove_last
        |            cur_token = token_stack.remove_last
        |            nextIteration
        |          case RogueFroleyParserOpcode.CALL
        |            call_stack.add( ip+1 )
        |            token_stack.add( cur_token )
        |            ip = code[ ip ]
+       |            method_stack.add( ip )
        |            nextIteration
        |          case RogueFroleyParserOpcode.JUMP
        |            ip = code[ ip ]
@@ -173,8 +177,15 @@ augment RogueTemplate
        |            print( "Line " ).print( code[ip] ).print( " next:" )
        |            if (next_token_type != -1) print( peek )
        |            else                       print( "(EOI)" )
-       |            println
        |            ++ip
+       |            print( " opcode:" ).print( RogueFroleyParserOpcode(code[ip]) )
+       |            println
+       |            print "  "
+       |            forEach (m_ip at index in method_stack)
+       |              if (index > 0) print " > "
+       |              print methods_by_address[ m_ip ]
+       |            endForEach
+       |            println
        |            nextIteration
        |
        |          case RogueFroleyParserOpcode.PRINTLN_STRING

@@ -45,7 +45,7 @@ class MethodTypeParseRule : MethodType [singleton]
       if (m.nested_method)
         assembler.write( ParserOpcode.JUMP, m.nested_method.start_label )
       else
-        assembler.write( ParserOpcode.SYNTAX_ERROR )
+        assembler.write( ParserOpcode.RETURN )
       endIf
 
     method write( m:ParserMethod, cmd:ParserCmdOnTypeProduce, assembler:ParserAssembler )

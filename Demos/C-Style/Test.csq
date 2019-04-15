@@ -1,11 +1,6 @@
-a
-{ b c }
-#if (alpha) beta
-#else if (gamma)
-#delta
-#else epsilon
-#omega
-#{
-#  apple
-#  banana
-#}
+if (alpha)
+  beta;
+else if (gamma)
+{
+  delta; epsilon;
+}

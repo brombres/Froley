@@ -688,14 +688,12 @@ class FroleyParser : Parser
             while (consume(TokenType.KEYWORD_ELSE_ON))
               cmd.else_on = ParserCmdOnType( t, read_token_type_def )
               cmd = cmd.else_on
-              statements.add( cmd )
               parse_multi_line_parser_statements( cmd.statements )
               t = peek
             endWhile
             if (consume(TokenType.KEYWORD_ELSE))
               cmd.else_on = ParserCmdOnType( t, null )
               cmd = cmd.else_on
-              statements.add( cmd )
               parse_multi_line_parser_statements( cmd.statements )
               t = peek
             endIf

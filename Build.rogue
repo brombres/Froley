@@ -30,7 +30,7 @@ endRoutine
 
 routine rogo_csq
   rogo_build
-  execute( "cd Demos/C-Style && rogo clean && rogo" )
+  execute( "cd Demos/C-esque && rogo clean && rogo" )
 endRoutine
 
 routine rogo_simple
@@ -40,7 +40,7 @@ endRoutine
 
 routine rogo_clean
   execute( "cd Demos/Simple && rogo clean" )
-  execute( "cd Demos/C-Style && rogo clean" )
+  execute( "cd Demos/C-esque && rogo clean" )
   execute( "rm -rf Build" )
   execute( "rm -rf .rogo" )
 endRoutine

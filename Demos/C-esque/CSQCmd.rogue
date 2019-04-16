@@ -1,0 +1,359 @@
+class CSQCmd
+  PROPERTIES
+    t : CSQToken
+
+  METHODS
+    method init( t, args:CSQCmdInitArgs )
+      args.require_count( 0 )
+
+    method ends_with_semicolon->Logical
+      return true
+
+    method write( builder:StringBuilder )
+      builder.print( this->String )
+endClass
+
+class CSQCmdList : CSQCmd
+  PROPERTIES
+    list : CSQCmd[]
+
+  METHODS
+    method init( t )
+      list = CSQCmd[](5)
+
+    method init( t, args:CSQCmdInitArgs )
+      list = CSQCmd[]( args.count )
+      list.add( forEach in args )
+
+    method count->Int32
+      return list.count
+
+    method first->CSQCmd
+      return list.first
+
+    method get( index:Int32 )->CSQCmd
+      return list[ index ]
+
+    method last->CSQCmd
+      return list.last
+endClass
+
+class CSQCmdStatements : CSQCmdList
+  METHODS
+    method to->String
+      return list.join( "\n" )
+
+    method write( builder:StringBuilder )
+      forEach (item at index in this)
+        if (index > 0) builder.println
+        item.write( builder )
+        if (item.ends_with_semicolon) builder.print( ";" )
+      endForEach
+endClass
+
+class CSQCmdArgs : CSQCmdList
+  METHODS
+    method to->String
+      return "($)" (list.join(","))
+
+    method write( builder:StringBuilder )
+      forEach (item at index in this)
+        if (index > 0) builder.print( ',' )
+        item.write( builder )
+      endForEach
+endClass
+
+class CSQCmdUnary( t, operand:CSQCmd ) : CSQCmd
+  METHODS
+    method init( t, args:CSQCmdInitArgs )
+      args.require_count( 1 )
+      operand = args.first
+
+    method op->String
+      throw UnsupportedOperationError()
+
+    method to->String
+      return "($$)" (op,operand)
+endClass
+
+class CSQCmdPostUnary : CSQCmdUnary
+  METHODS
+    method to->String
+      return "($$)" (operand,op)
+endClass
+
+class CSQCmdBinary( t, left:CSQCmd, right:CSQCmd ) : CSQCmd
+  METHODS
+    method init( t, args:CSQCmdInitArgs )
+      args.require_count( 2 )
+      left = args.first
+      right = args.last
+
+    method op->String
+      throw UnsupportedOperationError()
+
+    method to->String
+      return "($ $ $)" (left,op,right)
+endClass
+
+
+class CSQCmdIf( t, condition:CSQCmd, body:CSQCmd, else_body:CSQCmd ) : CSQCmd
+  METHODS
+    method init( t, args:CSQCmdInitArgs )
+      args.require_count( 3 )
+      condition = args[ 0 ]
+      body = args[ 1 ]
+      else_body = args[ 2 ]
+
+    method ends_with_semicolon->Logical
+      return false
+
+    method to->String
+      return "if($,$,$)"(condition,body,else_body)
+
+    method write( builder:StringBuilder )
+      builder.print( "if (" )
+      condition.write( builder )
+      builder.println( ")" )
+      builder.println( "{" )
+      builder.indent += 2
+      body.write( builder )
+      builder.println
+      builder.indent -= 2
+      builder.println( "}" )
+      if (else_body)
+        builder.println( "else" )
+        builder.println( "{" )
+        builder.indent += 2
+        else_body.write( builder )
+        builder.println
+        builder.indent -= 2
+        builder.println( "}" )
+      endIf
+endClass
+
+class CSQCmdFor( t, initializer:CSQCmd, condition:CSQCmd, modifier:CSQCmd, body:CSQCmd ) : CSQCmd
+  METHODS
+    method init( t, args:CSQCmdInitArgs )
+      args.require_count( 4 )
+      initializer = args[ 0 ]
+      condition = args[ 1 ]
+      modifier = args[ 2 ]
+      body = args[ 3 ]
+
+    method ends_with_semicolon->Logical
+      return false
+
+    method to->String
+      return "for($,$,$,$)"(initializer,condition,modifier,body)
+
+    method write( builder:StringBuilder )
+      builder.print( "for (" )
+      initializer.write( builder )
+      builder.print( ";" )
+      condition.write( builder )
+      builder.print( ";" )
+      modifier.write( builder )
+      builder.println( ")" )
+      builder.println( "{" )
+      builder.indent += 2
+      body.write( builder )
+      builder.println
+      builder.indent -= 2
+      builder.println( "}" )
+endClass
+
+class CSQCmdWhile( t, condition:CSQCmd, body:CSQCmd ) : CSQCmd
+  METHODS
+    method init( t, args:CSQCmdInitArgs )
+      args.require_count( 2 )
+      condition = args[ 0 ]
+      body = args[ 1 ]
+
+    method to->String
+      return "while($,$)"(condition,body)
+endClass
+
+class CSQCmdName( t, value:String ) : CSQCmd
+  METHODS
+    method init( t, args:CSQCmdInitArgs )
+      args.require_count( 0 )
+      value = t.content
+
+    method to->String
+      return value
+endClass
+
+class CSQCmdLocalDeclaration( t, type:CSQCmd, name:CSQCmd, initial_value:CSQCmd ) : CSQCmd
+  METHODS
+    method init( t, args:CSQCmdInitArgs )
+      args.require_count( 3 )
+      type = args[ 0 ]
+      name = args[ 1 ]
+      initial_value = args[ 2 ]
+
+    method to->String
+      return "localDeclaration($,$,$)"(type,name,initial_value)
+
+    method write( builder:StringBuilder )
+      builder.print( type ).print( " " ).print( name )
+      if (initial_value) builder.print( " = " ).print( initial_value )
+endClass
+
+class CSQCmdAssign : CSQCmdBinary
+  METHODS
+    method op->String
+      return "="
+endClass
+
+class CSQCmdAddAndAssign : CSQCmdBinary
+  METHODS
+    method op->String
+      return "+="
+endClass
+
+class CSQCmdSubtractAndAssign : CSQCmdBinary
+  METHODS
+    method op->String
+      return "-="
+endClass
+
+class CSQCmdMultiplyAndAssign : CSQCmdBinary
+  METHODS
+    method op->String
+      return "*="
+endClass
+
+class CSQCmdDivideAndAssign : CSQCmdBinary
+  METHODS
+    method op->String
+      return "/="
+endClass
+
+class CSQCmdModAndAssign : CSQCmdBinary
+  METHODS
+    method op->String
+      return "%="
+endClass
+
+class CSQCmdAndAndAssign : CSQCmdBinary
+  METHODS
+    method op->String
+      return "&="
+endClass
+
+class CSQCmdOrAndAssign : CSQCmdBinary
+  METHODS
+    method op->String
+      return "|="
+endClass
+
+class CSQCmdCompareEQ : CSQCmdBinary
+  METHODS
+    method op->String
+      return "=="
+endClass
+
+class CSQCmdCompareNE : CSQCmdBinary
+  METHODS
+    method op->String
+      return "!="
+endClass
+
+class CSQCmdCompareLT : CSQCmdBinary
+  METHODS
+    method op->String
+      return "<"
+endClass
+
+class CSQCmdCompareGT : CSQCmdBinary
+  METHODS
+    method op->String
+      return ">"
+endClass
+
+class CSQCmdCompareLE : CSQCmdBinary
+  METHODS
+    method op->String
+      return "<="
+endClass
+
+class CSQCmdCompareGE : CSQCmdBinary
+  METHODS
+    method op->String
+      return ">="
+endClass
+
+class CSQCmdAdd : CSQCmdBinary
+  METHODS
+    method op->String
+      return "+"
+endClass
+
+class CSQCmdSubtract : CSQCmdBinary
+  METHODS
+    method op->String
+      return "-"
+endClass
+
+class CSQCmdMultiply : CSQCmdBinary
+  METHODS
+    method op->String
+      return "*"
+endClass
+
+class CSQCmdDivide : CSQCmdBinary
+  METHODS
+    method op->String
+      return "/"
+endClass
+
+class CSQCmdNegate : CSQCmdUnary
+  METHODS
+    method op->String
+      return "-"
+endClass
+
+class CSQCmdPreIncrement : CSQCmdUnary
+  METHODS
+    method op->String
+      return "++"
+endClass
+
+class CSQCmdPreDecrement : CSQCmdUnary
+  METHODS
+    method op->String
+      return "--"
+endClass
+
+class CSQCmdPostIncrement : CSQCmdPostUnary
+  METHODS
+    method op->String
+      return "++"
+endClass
+
+class CSQCmdPostDecrement : CSQCmdPostUnary
+  METHODS
+    method op->String
+      return "--"
+endClass
+
+class CSQCmdAccess( t, value:String ) : CSQCmd
+  METHODS
+    method init( t, args:CSQCmdInitArgs )
+      args.require_count( 0 )
+      value = t.content
+
+    method to->String
+      return value
+endClass
+
+class CSQCmdLiteralInt32( t, value:Int32 ) : CSQCmd
+  METHODS
+    method init( t, args:CSQCmdInitArgs )
+      args.require_count( 0 )
+      value = t.content->Int32
+
+    method to->String
+      return value->String
+endClass

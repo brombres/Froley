@@ -1,0 +1,48 @@
+$include "CSQParser.rogue"
+
+CSQ()
+
+class CSQ
+  METHODS
+    method init
+      # Parse input or file by repeatedly calling first method defined in parser.
+      local parser = CSQParser()
+      if (System.command_line_arguments.count)
+        try
+          local args = System.command_line_arguments.join( " " )
+          if (File.exists(args))
+            # Parse contents of file
+            parser.open( File(args) )
+          else
+            parser.open( "[Command Line]", args )
+          endIf
+
+          while (parser.has_another)
+            local cmd = parser.parse( parser.methods[0] )
+            local builder = StringBuilder()
+            cmd.write( builder )
+            println builder
+          endWhile
+        catch (err:CSQError)
+          Console.error.println err
+        endTry
+
+      else
+        # Interactive mode
+        loop
+          try
+            local input = Console.input( "CSQ> " )
+            parser.open( "[Command Line]", input )
+            while (parser.has_another)
+              local cmd = parser.parse( parser.methods[0] )
+              local builder = StringBuilder()
+              cmd.write( builder )
+              println builder
+            endWhile
+          catch (err:CSQError)
+            Console.error.println err
+          endTry
+        endLoop
+      endIf
+endClass
+

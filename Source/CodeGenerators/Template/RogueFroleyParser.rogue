@@ -195,6 +195,12 @@ augment RogueTemplate
        |              print methods_by_address[ m_ip ]
        |            endForEach
        |            println
+       |            print "  ["
+       |            forEach (cmd at index in cmd_queue)
+       |              if (index > 0) print ","
+       |              print select{ cmd:cmd.type_name || "null" }
+       |            endForEach
+       |            println "]"
        |            nextIteration
        |
        |          case RogueFroleyParserOpcode.PRINTLN_STRING

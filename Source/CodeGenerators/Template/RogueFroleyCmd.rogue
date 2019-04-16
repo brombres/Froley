@@ -8,6 +8,9 @@ augment RogueTemplate
        |  METHODS
        |    method init( t, args:RogueFroleyCmdInitArgs )
        |      args.require_count( 0 )
+       |
+       |    method write( builder:StringBuilder )
+       |      builder.print( this->String )
        |endClass
        |
        |class RogueFroleyCmdList : RogueFroleyCmd

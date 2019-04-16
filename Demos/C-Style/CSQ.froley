@@ -23,12 +23,28 @@ SYMBOL_CLOSE_CURLY          }  [structural]
 SYMBOL_CLOSE_PAREN          )  [structural]
 SYMBOL_COMMA                ,
 SYMBOL_EQUALS               =
+SYMBOL_EQ                   ==
+SYMBOL_GE                   >=
+SYMBOL_GT                   >
+SYMBOL_LE                   <=
+SYMBOL_LT                   <
 SYMBOL_MINUS                -
+SYMBOL_MINUS_MINUS          --
+SYMBOL_NE                   !=
 SYMBOL_OPEN_CURLY           {
 SYMBOL_OPEN_PAREN           (
 SYMBOL_PLUS                 +
+SYMBOL_PLUS_PLUS            ++
 SYMBOL_SEMICOLON            ;
 SYMBOL_SLASH                /
+
+SYMBOL_PLUS_EQUALS          +=
+SYMBOL_MINUS_EQUALS         -=
+SYMBOL_TIMES_EQUALS         *=
+SYMBOL_DIVIDE_EQUALS        /=
+SYMBOL_MOD_EQUALS           %=
+SYMBOL_AND_EQUALS           &=
+SYMBOL_OR_EQUALS            |=
 
 [tokenizer]
 <<tokenize>>
@@ -91,7 +107,30 @@ return
   while (hasAnother and not nextHasAttribute(structural))
     statement
   endWhile
-  produceStatements
+  createStatements
+  return
+
+- args
+  beginList
+  if (not nextHasAttribute(structural))
+    var first = true
+    while (first or consume(','))
+      first = false
+      expression
+    endWhile
+  endIf
+  createStatements
+
+- for_args
+  beginList
+  if (not nextHasAttribute(structural))
+    expression
+    if (nextIs("identifier")) var_declaration
+    while (consume(','))
+      expression
+    endWhile
+  endIf
+  createStatements
 
 - statement
   on '{'
@@ -104,45 +143,90 @@ return
     mustConsume ")"
     statement
     parse_else
-    produce CmdIf(condition,body,else_body)
+    create CmdIf(condition,body,else_body)
+    return
   elseOn "for"
     mustConsume "("
-    command
-    command
-    expression_or_empty
+    for_args
+    mustConsume ";"
+    args
+    mustConsume ";"
+    args
     mustConsume ")"
     statement
-    produce CmdFor(initializer,condition,termination_test,body)
+    create CmdFor(initializer,condition,termination_test,body)
+    return
   elseOn "while"
     mustConsume "("
     expression
     mustConsume ")"
     statement
-    produce CmdWhile(condition,body)
+    create CmdWhile(condition,body)
+    return
   else
     command
   endOn
 
 - command
-  on ';' -> CmdEmpty
+  on ';' createNull; return
   expression
+  on ';' return
+  if (nextIs("identifier")) var_declaration
   mustConsume ';'
+
+- var_declaration
+  on "identifier"
+    create CmdName(value=t.content:String)
+    if (consume('=')) expression
+    else              createNull
+    create CmdLocalDeclaration(type,name,initial_value)
+  endOn
 
 - parse_else
   on "else"
     statement
   else
-    produceNull
+    createNull
+    return
   endOn
 
 - expression_or_empty
-  if (nextIs(')')) produce CmdEmpty
+  if (nextIs(')')) createNull; return
   expression
 
 - expression
 
 + assign : RightAssociativeBinaryParseRule
-  on "=" -> CmdAssign
+  on "="  -> CmdAssign
+  on "+=" -> CmdAddAndAssign
+  on "-=" -> CmdSubtractAndAssign
+  on "*=" -> CmdMultiplyAndAssign
+  on "/=" -> CmdDivideAndAssign
+  on "%=" -> CmdModAndAssign
+  on "&=" -> CmdAndAndAssign
+  on "|=" -> CmdOrAndAssign
+
++ logical_xor  : BinaryParseRule
+
++ logical_or   : BinaryParseRule
+
++ logical_and  : BinaryParseRule
+
++ comparison : BinaryParseRule
+  on "==" -> CmdCompareEQ
+  on "!=" -> CmdCompareNE
+  on "<"  -> CmdCompareLT
+  on ">"  -> CmdCompareGT
+  on "<=" -> CmdCompareLE
+  on ">=" -> CmdCompareGE
+
++ bitwise_xor : BinaryParseRule
+
++ bitwise_or  : BinaryParseRule
+
++ bitwise_and : BinaryParseRule
+
++ bitwise_shift : BinaryParseRule
 
 + add_subtract : BinaryParseRule
   on "+" -> CmdAdd
@@ -152,11 +236,16 @@ return
   on "*" -> CmdMultiply
   on "/" -> CmdDivide
 
-+ power : BinaryParseRule
-  on "^" -> CmdPower
-
 + pre_unary : PreUnaryParseRule
-  on "-" -> CmdNegate
+  on "-"  -> CmdNegate
+  on "++" -> CmdPreIncrement
+  on "--" -> CmdPreDecrement
+
++ post_unary : PostUnaryParseRule
+  on "++" -> CmdPostIncrement
+  on "--" -> CmdPostDecrement
+
++ access : BinaryParseRule
 
 + term
   on IDENTIFIER -> CmdAccess( value=t.content:String )

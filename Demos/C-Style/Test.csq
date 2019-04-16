@@ -1,5 +1,6 @@
-for (a; b; c)
+for (int a=5; b<10; c++, a+=2)
 {
   d;
   e;
 }
+

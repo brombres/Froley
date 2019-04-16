@@ -252,6 +252,8 @@ class FroleyParser : Parser
           return result
         endFunction
       )
+      rule.on( "true",  <<ParserCmdLiteralTrue>> )
+      rule.on( "false", <<ParserCmdLiteralFalse>> )
       rule.on( "nextHasAttribute",
         function (parser:FroleyParser)->Cmd
           local t = parser.read  # 'nextHasAttribute'
@@ -736,20 +738,20 @@ class FroleyParser : Parser
         endIf
         return
 
-      elseIf (consume(TokenType.KEYWORD_PRODUCE))
-        statements.add( ParserCmdProduce(t,parse_cmd_type) )
+      elseIf (consume(TokenType.KEYWORD_CREATE))
+        statements.add( ParserCmdCreate(t,parse_cmd_type) )
         return
 
-      elseIf (consume(TokenType.KEYWORD_PRODUCE_NULL))
-        statements.add( ParserCmdProduceNull(t) )
+      elseIf (consume(TokenType.KEYWORD_CREATE_NULL))
+        statements.add( ParserCmdCreateNull(t) )
         return
 
-      elseIf (consume(TokenType.KEYWORD_PRODUCE_STATEMENTS))
-        statements.add( ParserCmdProduceStatements(t) )
+      elseIf (consume(TokenType.KEYWORD_CREATE_STATEMENTS))
+        statements.add( ParserCmdCreateStatements(t) )
         return
 
-      elseIf (consume(TokenType.KEYWORD_PRODUCE_ARGS))
-        statements.add( ParserCmdProduceArgs(t) )
+      elseIf (consume(TokenType.KEYWORD_CREATE_ARGS))
+        statements.add( ParserCmdCreateArgs(t) )
         return
 
       elseIf (consume(TokenType.KEYWORD_RETURN))
@@ -758,6 +760,13 @@ class FroleyParser : Parser
 
       elseIf (consume(TokenType.KEYWORD_TRACE))
         statements.add( ParserCmdTrace(t) )
+        return
+
+      elseIf (consume(TokenType.KEYWORD_VAR))
+        local name  = read_identifier
+        must_consume( TokenType.SYMBOL_EQUALS )
+        local value = parse_parser_expression()
+        statements.add( ParserCmdWriteVar(t,name,value) )
         return
       endIf
 
@@ -821,7 +830,12 @@ class FroleyParser : Parser
         endIf
       endIf
 
-      statements.add( parse_parser_expression() )
+      local expr = parse_parser_expression() : Cmd
+      t = peek
+      if (consume(TokenType.SYMBOL_EQUALS))
+        expr = ParserCmdAssign( t, expr, parse_parser_expression() )
+      endIf
+      statements.add( expr )
 
       #{
       if (consume(TokenType.KEYWORD_ACCEPT))

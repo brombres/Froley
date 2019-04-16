@@ -28,6 +28,8 @@ augment RogueTemplate
        |    method_stack    = Int32[]
        |    token_stack     = RogueFroleyToken[]
        |    number_stack    = Real64[]
+       |    vars_stack      = StringTable<<Real64>>[]
+       |    vars            : StringTable<<Real64>>
        |
        |    cmd_queue       = RogueFroleyCmd[]
        |    cmd_args        = RogueFroleyCmdInitArgs()
@@ -71,12 +73,15 @@ augment RogueTemplate
        |            ip = call_stack.remove_last
        |            method_stack.remove_last
        |            cur_token = token_stack.remove_last
+       |            vars = vars_stack.remove_last
        |            nextIteration
        |          case RogueFroleyParserOpcode.CALL
        |            call_stack.add( ip+1 )
        |            token_stack.add( cur_token )
        |            ip = code[ ip ]
        |            method_stack.add( ip )
+       |            vars_stack.add( vars )
+       |            vars = null
        |            nextIteration
        |          case RogueFroleyParserOpcode.JUMP
        |            ip = code[ ip ]
@@ -208,6 +213,29 @@ augment RogueTemplate
        |            ++ip
        |            nextIteration
        |
+       |          case RogueFroleyParserOpcode.WRITE_VAR
+       |            ensure vars
+       |            vars[ strings[code[ip]] ] = number_stack.remove_last
+       |            ++ip
+       |            nextIteration
+       |
+       |          case RogueFroleyParserOpcode.READ_VAR
+       |            local name = strings[ code[ip] ]
+       |            ++ip
+       |            if (vars and vars.contains(name))
+       |              number_stack.add( vars[name] )
+       |              nextIteration
+       |            else
+       |              forEach (v in vars_stack step -1)
+       |                if (v and v.contains(name))
+       |                  number_stack.add( v[name] )
+       |                  nextIteration
+       |                endIf
+       |              endForEach
+       |              number_stack.add( 0 )
+       |              nextIteration
+       |            endIf
+       |
        |          case RogueFroleyParserOpcode.LOGICAL_NOT
        |            number_stack.last = not number_stack.last
        |            nextIteration
@@ -290,6 +318,10 @@ augment RogueTemplate
        |      endIf
        |      position = 0
        |      cur_token = null
+       |
+       |endClass
+       |
+       |class RogueFroleyMethodVars( previous=null:RogueFroleyMethodVars )
        |
        |endClass
        |

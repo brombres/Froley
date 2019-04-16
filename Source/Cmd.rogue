@@ -67,6 +67,9 @@ augment Cmd
 
     method error( message:String )->Error
       return t.error( message )
+
+    method write_assignment( assembler:ParserAssembler, new_value:Cmd )
+      throw t.error( "Invalid assignment target: " + this )
 endAugment
 
 augment CmdStatements
@@ -824,7 +827,7 @@ class ParserCmdMustConsumeType( t, token_type_def:TokenDef ) : Cmd
       assembler.write( ParserOpcode.MUST_CONSUME_TYPE, token_type_def.type )
 endClass
 
-class ParserCmdProduce( t, cmd_type:CmdType ) : Cmd
+class ParserCmdCreate( t, cmd_type:CmdType ) : Cmd
   PROPERTIES
     args = CmdTypeProperty[]
 
@@ -832,28 +835,24 @@ class ParserCmdProduce( t, cmd_type:CmdType ) : Cmd
     method write( assembler:ParserAssembler )
       assembler.write( ParserOpcode.CREATE_CMD, cmd_type.index )
       assembler.write( cmd_type.subcommand_count )
-      assembler.write( ParserOpcode.RETURN )
 endClass
 
-class ParserCmdProduceNull( t ) : Cmd
+class ParserCmdCreateNull( t ) : Cmd
   METHODS
     method write( assembler:ParserAssembler )
       assembler.write( ParserOpcode.CREATE_NULL_CMD )
-      assembler.write( ParserOpcode.RETURN )
 endClass
 
-class ParserCmdProduceStatements( t ) : Cmd
+class ParserCmdCreateStatements( t ) : Cmd
   METHODS
     method write( assembler:ParserAssembler )
       assembler.write( ParserOpcode.CREATE_STATEMENTS )
-      assembler.write( ParserOpcode.RETURN )
 endClass
 
-class ParserCmdProduceArgs( t ) : Cmd
+class ParserCmdCreateArgs( t ) : Cmd
   METHODS
     method write( assembler:ParserAssembler )
       assembler.write( ParserOpcode.CREATE_ARGS )
-      assembler.write( ParserOpcode.RETURN )
 endClass
 
 class ParserCmdPrintlnString( t, value:String ) : Cmd
@@ -887,8 +886,11 @@ class ParserCmdAccess( t, name:String ) : Cmd
       if (m)
         assembler.write( ParserOpcode.CALL, m.start_label )
       else
-        throw t.error( "No such rule or method '$'." (name) )
+        assembler.write( ParserOpcode.READ_VAR, name )
       endIf
+
+    method write_assignment( assembler:ParserAssembler, new_value:Cmd )
+      ParserCmdWriteVar( t, name, new_value ).write( assembler )
 endClass
 
 class ParserCmdSyntaxError : Cmd
@@ -1007,3 +1009,29 @@ class ParserCmdTrace : Cmd
     method write( assembler:ParserAssembler )
       assembler.write( ParserOpcode.TRACE, t.line )
 endClass
+
+class ParserCmdWriteVar( t, name:String, value:Cmd ) : Cmd
+  METHODS
+    method write( assembler:ParserAssembler )
+      value.write( assembler )
+      assembler.write( ParserOpcode.WRITE_VAR, name )
+endClass
+
+class ParserCmdLiteralTrue : Cmd
+  METHODS
+    method write( assembler:ParserAssembler )
+      assembler.write( ParserOpcode.PUSH_INT32, 1 )
+endClass
+
+class ParserCmdLiteralFalse : Cmd
+  METHODS
+    method write( assembler:ParserAssembler )
+      assembler.write( ParserOpcode.PUSH_INT32, 0 )
+endClass
+
+class ParserCmdAssign( t, target:Cmd, new_value:Cmd ) : Cmd
+  METHODS
+    method write( assembler:ParserAssembler )
+      target.write_assignment( assembler, new_value )
+endClass
+

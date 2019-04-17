@@ -22,6 +22,7 @@ enum ParserOpcode( size=1:Int32 )
   TRACE
   PRINTLN_STRING(2)     # println string with INDEX:ARG1
   PRINTLN_NUMBER
+  POP_DISCARD
   PUSH_INT32(2)         # number_stack.add(value:ARG1)
   WRITE_VAR(2)
   READ_VAR(2)

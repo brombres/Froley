@@ -214,6 +214,10 @@ augment RogueTemplate
        |            else                      println value.format(".4")
        |            nextIteration
        |
+       |          case RogueFroleyParserOpcode.POP_DISCARD
+       |            number_stack.remove_last
+       |            nextIteration
+       |
        |          case RogueFroleyParserOpcode.PUSH_INT32
        |            number_stack.add( code[ip] )
        |            ++ip

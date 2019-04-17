@@ -1,6 +1,12 @@
 module Froley
   uses ParseKit<<Froley>>
 
+enum ValueType
+  VARIANT
+  INT32
+  LOGICAL
+endEnum
+
 augment Cmd
   METHODS
     method is_ch->Logical
@@ -45,6 +51,9 @@ augment Cmd
     method to_is_letter->Cmd
       throw t.error( "Syntax error; expected 'ch is letter'." )
 
+    method type->ValueType?
+      return null
+
     method write( assembler:TokenizerAssembler )
       throw UnsupportedOperationError()
 
@@ -80,7 +89,13 @@ augment CmdStatements
       endForEach
 
     method write( assembler:ParserAssembler )
-      (forEach in this).write( assembler )
+      forEach (statement in this)
+        statement.write( assembler )
+        if (statement.type.exists)
+          # Statement leaves a value on the stack that we need to remove
+          assembler.write( ParserOpcode.POP_DISCARD )
+        endIf
+      endForEach
 
     method write( assembler:TokenizerAssembler )
       (forEach in this).write( assembler )
@@ -354,6 +369,9 @@ class TokenizerCmdHasAnother( t ) : Cmd
 
     method to->String
       return "hasAnother"
+
+    method type->ValueType?
+      return ValueType.LOGICAL
 
     method write( assembler:TokenizerAssembler )
       assembler.write( TokenizerOpcode.HAS_ANOTHER )
@@ -752,6 +770,9 @@ class TokenizerCmdLogicalAnd : CmdBinary
       right = right.resolved
       return this
 
+    method type->ValueType?
+      return ValueType.LOGICAL
+
     method write( assembler:TokenizerAssembler )
       throw t.error( "Condition too complex - only simple 'a or b or ...', 'a and b and...' conditions are allowed." )
 
@@ -767,6 +788,9 @@ class TokenizerCmdLogicalOr : CmdBinary
       left  = left.resolved
       right = right.resolved
       return this
+
+    method type->ValueType?
+      return ValueType.LOGICAL
 
     method write( assembler:TokenizerAssembler )
       throw t.error( "Condition too complex - only simple 'a or b or ...', 'a and b and...' conditions are allowed." )
@@ -811,12 +835,18 @@ endClass
 
 class ParserCmdConsumeTokenType( t, token_type_def:TokenDef ) : Cmd
   METHODS
+    method type->ValueType?
+      return ValueType.LOGICAL
+
     method write( assembler:ParserAssembler )
       assembler.write( ParserOpcode.CONSUME_TYPE, token_type_def.type )
 endClass
 
 class ParserCmdNextIsTokenType( t, token_type_def:TokenDef ) : Cmd
   METHODS
+    method type->ValueType?
+      return ValueType.LOGICAL
+
     method write( assembler:ParserAssembler )
       assembler.write( ParserOpcode.NEXT_IS_TYPE, token_type_def.type )
 endClass
@@ -881,8 +911,12 @@ class ParserCmdAccess( t, name:String ) : Cmd
     method init( t )
       name = t->String
 
+    method type->ValueType?
+      if (Froley.parser_methods[name]) return null
+      else                             return ValueType.VARIANT
+
     method write( assembler:ParserAssembler )
-      local m = Froley.parser_methods[ t ]
+      local m = Froley.parser_methods[ name ]
       if (m)
         assembler.write( ParserOpcode.CALL, m.start_label )
       else
@@ -936,6 +970,9 @@ endClass
 
 class ParserCmdNextHasAttribute( t, name:String ) : Cmd
   METHODS
+    method type->ValueType?
+      return ValueType.LOGICAL
+
     method write( assembler:ParserAssembler )
       assembler.write( ParserOpcode.NEXT_HAS_ATTRIBUTE, Froley.token_attributes[name] )
 endClass
@@ -974,6 +1011,9 @@ endClass
 
 class ParserCmdLogicalNot : CmdUnary
   METHODS
+    method type->ValueType?
+      return ValueType.LOGICAL
+
     method write( assembler:ParserAssembler )
       operand.write( assembler )
       assembler.write( ParserOpcode.LOGICAL_NOT )
@@ -1019,12 +1059,18 @@ endClass
 
 class ParserCmdLiteralTrue : Cmd
   METHODS
+    method type->ValueType?
+      return ValueType.INT32
+
     method write( assembler:ParserAssembler )
       assembler.write( ParserOpcode.PUSH_INT32, 1 )
 endClass
 
 class ParserCmdLiteralFalse : Cmd
   METHODS
+    method type->ValueType?
+      return ValueType.INT32
+
     method write( assembler:ParserAssembler )
       assembler.write( ParserOpcode.PUSH_INT32, 0 )
 endClass

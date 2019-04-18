@@ -766,7 +766,7 @@ class FroleyParser : Parser
         local name  = read_identifier
         must_consume( TokenType.SYMBOL_EQUALS )
         local value = parse_parser_expression()
-        statements.add( ParserCmdWriteVar(t,name,value) )
+        statements.add( ParserCmdDeclareVar(t,name,value) )
         return
       endIf
 

@@ -28,9 +28,9 @@ augment RogueTemplate
        |    method_stack    = Int32[]
        |    token_stack     = RogueFroleyToken[]
        |    number_stack    = Real64[]
-       |    vars_stack      = StringTable<<Real64>>[]
-       |    vars            : StringTable<<Real64>>
        |
+       |    vars            = RogueFroleyVariable[]
+       |    var_frames      = Int32[].[ add(0) ]
        |    cmd_queue       = RogueFroleyCmd[]
        |    cmd_args        = RogueFroleyCmdInitArgs()
        |    list_start_t    = RogueFroleyToken[]
@@ -73,15 +73,14 @@ augment RogueTemplate
        |            ip = call_stack.remove_last
        |            method_stack.remove_last
        |            cur_token = token_stack.remove_last
-       |            vars = vars_stack.remove_last
+       |            vars.discard_from( var_frames.remove_last )
        |            nextIteration
        |          case RogueFroleyParserOpcode.CALL
        |            call_stack.add( ip+1 )
        |            token_stack.add( cur_token )
        |            ip = code[ ip ]
        |            method_stack.add( ip )
-       |            vars_stack.add( vars )
-       |            vars = null
+       |            var_frames.add( vars.count )
        |            nextIteration
        |          case RogueFroleyParserOpcode.JUMP
        |            ip = code[ ip ]
@@ -223,28 +222,30 @@ augment RogueTemplate
        |            ++ip
        |            nextIteration
        |
-       |          case RogueFroleyParserOpcode.WRITE_VAR
-       |            ensure vars
-       |            vars[ strings[code[ip]] ] = number_stack.remove_last
+       |          case RogueFroleyParserOpcode.DECLARE_VAR
+       |            local name = strings[ code[ip] ]
        |            ++ip
+       |            local index = locate_var( name, var_frames.last )
+       |            if (index.exists)
+       |              throw RogueFroleyError( "A variable named '$' has already been declared in the current method."(name) )
+       |            else
+       |              vars.add( RogueFroleyVariable(name,number_stack.remove_last) )
+       |            endIf
+       |            nextIteration
+       |
+       |          case RogueFroleyParserOpcode.WRITE_VAR
+       |            local name = strings[ code[ip] ]
+       |            ++ip
+       |            local index = locate_var( name, 0, &must_locate ).value
+       |            vars[ index ] = RogueFroleyVariable( name, number_stack.remove_last )
        |            nextIteration
        |
        |          case RogueFroleyParserOpcode.READ_VAR
        |            local name = strings[ code[ip] ]
        |            ++ip
-       |            if (vars and vars.contains(name))
-       |              number_stack.add( vars[name] )
-       |              nextIteration
-       |            else
-       |              forEach (v in vars_stack step -1)
-       |                if (v and v.contains(name))
-       |                  number_stack.add( v[name] )
-       |                  nextIteration
-       |                endIf
-       |              endForEach
-       |              number_stack.add( 0 )
-       |              nextIteration
-       |            endIf
+       |            local index = locate_var( name, 0, &must_locate ).value
+       |            number_stack.add( vars[index].value )
+       |            nextIteration
        |
        |          case RogueFroleyParserOpcode.LOGICAL_NOT
        |            number_stack.last = not number_stack.last
@@ -281,6 +282,13 @@ augment RogueTemplate
        |      n = reader.read_int32x
        |      code.reserve( n )
        |      loop (n) code.add( reader.read_int32x )
+       |
+       |    method locate_var( name:String, lowest_index:Int32, &must_locate )->Int32?
+       |      forEach (index in vars.count-1 downTo lowest_index)
+       |        if (vars[index].name == name) return index
+       |      endForEach
+       |      if (must_locate) throw RogueFroleyError( "No variable named '$' has been declared."(name) )
+       |      return null
        |
        |    method parse( rule_name:String )->RogueFroleyCmd
        |      local index = methods.locate( rule_name )
@@ -329,9 +337,10 @@ augment RogueTemplate
        |      position = 0
        |      cur_token = null
        |
+       |
        |endClass
        |
-       |class RogueFroleyMethodVars( previous=null:RogueFroleyMethodVars )
+       |class RogueFroleyVariable( name:String, value:Real64 ) [compound]
        |
        |endClass
        |

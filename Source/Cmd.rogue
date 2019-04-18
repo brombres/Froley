@@ -1050,6 +1050,13 @@ class ParserCmdTrace : Cmd
       assembler.write( ParserOpcode.TRACE, t.line )
 endClass
 
+class ParserCmdDeclareVar( t, name:String, value:Cmd ) : Cmd
+  METHODS
+    method write( assembler:ParserAssembler )
+      value.write( assembler )
+      assembler.write( ParserOpcode.DECLARE_VAR, name )
+endClass
+
 class ParserCmdWriteVar( t, name:String, value:Cmd ) : Cmd
   METHODS
     method write( assembler:ParserAssembler )

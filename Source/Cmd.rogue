@@ -1088,3 +1088,21 @@ class ParserCmdAssign( t, target:Cmd, new_value:Cmd ) : Cmd
       target.write_assignment( assembler, new_value )
 endClass
 
+class ParserCmdSavePosition( t ) : Cmd
+  METHODS
+    method write( assembler:ParserAssembler )
+      assembler.write( ParserOpcode.SAVE_POSITION )
+endClass
+
+class ParserCmdRestorePosition( t ) : Cmd
+  METHODS
+    method write( assembler:ParserAssembler )
+      assembler.write( ParserOpcode.RESTORE_POSITION )
+endClass
+
+class ParserCmdDiscardSavedPosition( t ) : Cmd
+  METHODS
+    method write( assembler:ParserAssembler )
+      assembler.write( ParserOpcode.DISCARD_SAVED_POSITION )
+endClass
+

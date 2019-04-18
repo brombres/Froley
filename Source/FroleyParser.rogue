@@ -758,6 +758,18 @@ class FroleyParser : Parser
         statements.add( ParserCmdReturn(t,null) )
         return
 
+      elseIf (consume(TokenType.KEYWORD_SAVE_POSITION))
+        statements.add( ParserCmdSavePosition(t) )
+        return
+
+      elseIf (consume(TokenType.KEYWORD_RESTORE_POSITION))
+        statements.add( ParserCmdRestorePosition(t) )
+        return
+
+      elseIf (consume(TokenType.KEYWORD_DISCARD_SAVED_POS))
+        statements.add( ParserCmdDiscardSavedPosition(t) )
+        return
+
       elseIf (consume(TokenType.KEYWORD_TRACE))
         statements.add( ParserCmdTrace(t) )
         return

@@ -16,6 +16,7 @@ augment TokenType
   KEYWORD_BASE              ( "base",                 &is_keyword )
   KEYWORD_BEGIN_LIST        ( "beginList",            &is_keyword )
   KEYWORD_BUFFER            ( "buffer",               &is_keyword )
+  KEYWORD_BUFFER_TO_LC      ( "bufferToLowercase",    &is_keyword )
   KEYWORD_CASE              ( "case",                 &is_keyword, &is_structural )
   KEYWORD_CH                ( "ch",                   &is_keyword )
   KEYWORD_CLEAR             ( "clear",                &is_keyword )

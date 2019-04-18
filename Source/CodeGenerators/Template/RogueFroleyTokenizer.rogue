@@ -15,6 +15,7 @@ augment RogueTemplate
        |    count        : Int32
        |    result       : Int32
        |    buffer       = StringBuilder()
+       |    work_buffer  = StringBuilder()  # used for bufferToLowercase
        |    tokens       = RogueFroleyToken[](1024)
        |
        |    filepath : String
@@ -167,6 +168,11 @@ augment RogueTemplate
        |          case RogueFroleyTokenizerOpcode.COLLECT_STRING
        |            buffer.print( strings[code[ip]] )
        |            ++ip
+       |            nextIteration
+       |          case RogueFroleyTokenizerOpcode.BUFFER_TO_LOWERCASE
+       |            work_buffer.clear
+       |            work_buffer.print( (forEach in buffer).to_lowercase )
+       |            buffer.clear.print( work_buffer )
        |            nextIteration
        |          case RogueFroleyTokenizerOpcode.PRINT_BUFFER
        |            print (forEach in buffer)

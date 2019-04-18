@@ -27,6 +27,7 @@ enum TokenizerOpcode( size=1:Int32 )
   COLLECT_CH            # BUFFER.print(ch)
   COLLECT_CHARACTER(2)  # BUFFER.print(character:ARG1)
   COLLECT_STRING(2)     # BUFFER.print(strings[index:ARG1])
+  BUFFER_TO_LOWERCASE
   PRINT_BUFFER          # println buffer
   PRINT_CH              # println ch->Character
   PRINT_COUNT           # println count->Int32

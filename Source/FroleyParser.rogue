@@ -462,6 +462,10 @@ class FroleyParser : Parser
           throw peek.error( "Expected 'buffer'." )
         endIf
 
+      elseIf (consume(TokenType.KEYWORD_BUFFER_TO_LC))
+        statements.add( CmdStatement(t,"bufferToLowercase",TokenizerOpcode.BUFFER_TO_LOWERCASE) )
+        return
+
       elseIf (consume(TokenType.KEYWORD_COLLECT))
         if (next_is(TokenType.KEYWORD_CH))
           must_consume_register_ch

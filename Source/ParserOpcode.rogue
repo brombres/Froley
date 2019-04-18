@@ -19,6 +19,9 @@ enum ParserOpcode( size=1:Int32 )
   CONSUME_EOLS          # Automatically called between operator and next operand; implement as desired
   CONSUME_TYPE(2)       # number_stack.add( type == type_index:ARG1 )
   MUST_CONSUME_TYPE(2)  # Throws error if next token.type != type_index:ARG1
+  SAVE_POSITION
+  RESTORE_POSITION
+  DISCARD_SAVED_POSITION
   TRACE
   PRINTLN_STRING(2)     # println string with INDEX:ARG1
   PRINTLN_NUMBER

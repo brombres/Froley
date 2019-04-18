@@ -31,6 +31,9 @@ augment RogueTemplate
        |
        |    vars            = RogueFroleyVariable[]
        |    var_frames      = Int32[].[ add(0) ]
+       |
+       |    saved_positions = RogueFroleyParsePosition[]
+       |
        |    cmd_queue       = RogueFroleyCmd[]
        |    cmd_args        = RogueFroleyCmdInitArgs()
        |    list_start_t    = RogueFroleyToken[]
@@ -180,6 +183,24 @@ augment RogueTemplate
        |            else
        |              throw peek.error( "Expected '$', found $."(RogueFroleyTokenType(code[ip]).symbol,?:{next_token_type!=-1:"'$'"(peek->String) || "end of input"}) )
        |            endIf
+       |
+       |          case RogueFroleyParserOpcode.SAVE_POSITION
+       |            saved_positions.add( RogueFroleyParsePosition(position,cmd_queue.count,cur_token) )
+       |            nextIteration
+       |
+       |          case RogueFroleyParserOpcode.RESTORE_POSITION
+       |            if (saved_positions.is_empty) throw peek.error( "[INTERNAL] No savePosition to restore." )
+       |            local pos = saved_positions.remove_last
+       |            position = pos.position
+       |            cmd_queue.discard_from( pos.cmd_count )
+       |            cur_token = pos.cur_token
+       |            if (position < tokens.count) next_token_type = tokens[position].type->Int32
+       |            else                         next_token_type = -1
+       |            nextIteration
+       |
+       |          case RogueFroleyParserOpcode.DISCARD_SAVED_POSITION
+       |            if (saved_positions.count) saved_positions.remove_last
+       |            nextIteration
        |
        |          case RogueFroleyParserOpcode.TRACE
        |            print( "Line " ).print( code[ip] ).print( " next:" )
@@ -341,7 +362,9 @@ augment RogueTemplate
        |endClass
        |
        |class RogueFroleyVariable( name:String, value:Real64 ) [compound]
+       |endClass
        |
+       |class RogueFroleyParsePosition( position:Int32, cmd_count:Int32, cur_token:RogueFroleyToken ) [compound]
        |endClass
        |
 endAugment

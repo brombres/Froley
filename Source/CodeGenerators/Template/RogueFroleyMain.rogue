@@ -20,12 +20,12 @@ augment RogueTemplate
        |            parser.open( "[Command Line]", args )
        |          endIf
        |
-       |          while (parser.has_another)
-       |            local cmd = parser.parse( parser.methods[0] )
-       |            local builder = StringBuilder()
-       |            cmd.write( builder )
-       |            println builder
-       |          endWhile
+       |          if (not parser.methods.is_empty)
+       |            while (parser.has_another)
+       |              local cmd = parser.parse( parser.methods[0] )
+       |              println cmd
+       |            endWhile
+       |          endIf
        |        catch (err:RogueFroleyError)
        |          Console.error.println err
        |        endTry
@@ -36,12 +36,12 @@ augment RogueTemplate
        |          try
        |            local input = Console.input( "RogueFroley> " )
        |            parser.open( "[Command Line]", input )
-       |            while (parser.has_another)
-       |              local cmd = parser.parse( parser.methods[0] )
-       |              local builder = StringBuilder()
-       |              cmd.write( builder )
-       |              println builder
-       |            endWhile
+       |            if (not parser.methods.is_empty)
+       |              while (parser.has_another)
+       |                local cmd = parser.parse( parser.methods[0] )
+       |                println cmd
+       |              endWhile
+       |            endIf
        |          catch (err:RogueFroleyError)
        |            Console.error.println err
        |          endTry

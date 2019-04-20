@@ -449,9 +449,15 @@ class FroleyParser : Parser
         endIf
       endIf
 
-      if (consume(TokenType.KEYWORD_ACCEPT))
+      if (consume(TokenType.KEYWORD_CREATE))
         local name = read_identifier
-        statements.add( TokenizerCmdAcceptInt32(t,Froley.token_def(name).type) )
+        statements.add( TokenizerCmdCreateInt32(t,Froley.token_def(name).type) )
+        return
+
+      elseIf (consume(TokenType.KEYWORD_PRODUCE))
+        local name = read_identifier
+        statements.add( TokenizerCmdCreateInt32(t,Froley.token_def(name).type) )
+        statements.add( CmdStatement(t,"restart",TokenizerOpcode.RESTART) )
         return
 
       elseIf (consume(TokenType.KEYWORD_CLEAR))
@@ -853,173 +859,6 @@ class FroleyParser : Parser
       endIf
       statements.add( expr )
 
-      #{
-      if (consume(TokenType.KEYWORD_ACCEPT))
-        local name = read_identifier
-        statements.add( TokenizerCmdAcceptInt32(t,Froley.token_def(name).type) )
-        return
-
-      elseIf (consume(TokenType.KEYWORD_CLEAR))
-        if (consume(TokenType.KEYWORD_BUFFER))
-          statements.add( CmdStatement(t,"clear buffer",TokenizerOpcode.CLEAR_BUFFER) )
-          return
-        else
-          throw peek.error( "Expected 'buffer'." )
-        endIf
-
-      elseIf (consume(TokenType.KEYWORD_COLLECT))
-        if (next_is(TokenType.KEYWORD_CH))
-          must_consume_register_ch
-          statements.add( CmdStatement(t,"collect ch",TokenizerOpcode.COLLECT_CH) )
-          return
-        elseIf (next_is(TokenType.STRING))
-          statements.add( TokenizerCmdCollectString(t,read.text) )
-          return
-        elseIf (next_is(TokenType.INTEGER))
-          statements.add( TokenizerCmdCollectCharacter(t,read_integer) )
-          return
-        else
-          throw t.error( "Syntax error - expected 'ch' or a literal string.")
-        endIf
-        return
-
-      elseIf (consume(TokenType.KEYWORD_DISCARD))
-        statements.add( CmdStatement(t,"restart",TokenizerOpcode.RESTART) )
-        return
-
-      elseIf (consume(TokenType.KEYWORD_ERROR))
-        if (consume(TokenType.KEYWORD_BUFFER))
-          statements.add( CmdStatement(t,"error buffer",TokenizerOpcode.ERROR) )
-        elseIf (next_is(TokenType.STRING))
-          statements.add( CmdStatement(t,"clear buffer",TokenizerOpcode.CLEAR_BUFFER) )
-          statements.add( TokenizerCmdCollectString(t,read.text) )
-          statements.add( CmdStatement(t,"error <message>",TokenizerOpcode.ERROR) )
-        else
-          throw peek.error( "Expected 'buffer'." )
-        endIf
-        return
-
-      elseIf (consume(TokenType.KEYWORD_GOTO))
-        statements.add( TokenizerCmdGoto(t,read_identifier) )
-        return
-
-      elseIf (consume(TokenType.KEYWORD_HALT))
-        statements.add( CmdStatement(t,"halt",TokenizerOpcode.HALT) )
-        return
-
-      elseIf (consume(TokenType.KEYWORD_MARK_SRC_POS))
-        statements.add( CmdStatement(t,"markSourcePosition",TokenizerOpcode.MARK_SOURCE_POS) )
-        return
-
-      elseIf (consume(TokenType.KEYWORD_MODE))
-        local label_name = read_label_name
-        statements.add( TokenizerCmdMode(t,label_name) )
-        return
-
-      elseIf (consume(TokenType.KEYWORD_PRINT))
-        if (consume(TokenType.KEYWORD_BUFFER))
-          statements.add( CmdStatement(t,"print buffer",TokenizerOpcode.PRINT_BUFFER) )
-          return
-        elseIf (next_is(TokenType.STRING))
-          statements.add( TokenizerCmdPrintString(t,read.text) )
-          return
-        else
-          if (not (next_is(TokenType.EOL) or next_is(TokenType.SYMBOL_SEMICOLON)))
-            local expr = parse_parser_expression()
-            if (expr.is_ch)
-              statements.add( CmdStatement(t,"print ch",TokenizerOpcode.PRINT_CH) )
-              return
-            elseIf (expr.is_count)
-              statements.add( CmdStatement(t,"print count",TokenizerOpcode.PRINT_COUNT) )
-              return
-            elseIf (expr.is_integer)
-              statements.add( TokenizerCmdPrintCharacter(t,expr->Int32) )
-              return
-            endIf
-          endIf
-          throw t.error( "Syntax error - valid 'print' arguments are  'ch', 'count', and '<string>'." )
-        endIf
-
-      elseIf (consume(TokenType.KEYWORD_RESTART))
-        statements.add( CmdStatement(t,"restart",TokenizerOpcode.RESTART) )
-        return
-
-      elseIf (consume(TokenType.KEYWORD_RETURN))
-        statements.add( CmdStatement(t,"return",TokenizerOpcode.RETURN) )
-        return
-
-      elseIf (consume(TokenType.KEYWORD_SCAN_DIGITS))
-        throw t.error( "Syntax error. Expected 'ch = scanDigits <min-digits>[..<max-digits>] [base <number-base>]'." )
-
-      elseIf (consume(TokenType.KEYWORD_WHICH))
-        local has_parens = consume( TokenType.SYMBOL_OPEN_PAREN )
-        local uses_input = consume( TokenType.KEYWORD_INPUT )
-        if (not uses_input and not consume(TokenType.KEYWORD_BUFFER))
-          throw t.error( "Expected 'which (input)' or 'which (buffer)'." )
-        endIf
-        if (has_parens) must_consume( TokenType.SYMBOL_CLOSE_PAREN )
-
-        if (uses_input)
-          local cmd_which_input = TokenizerCmdWhichInput( t )
-          statements.add( cmd_which_input )
-          parse_which_input( cmd_which_input )
-        else
-          # Uses buffer
-          local cmd_which = TokenizerCmdWhichBuffer( t )
-          statements.add( cmd_which )
-          parse_which_buffer( cmd_which )
-        endIf
-        must_consume( TokenType.KEYWORD_END_WHICH )
-        return
-
-      elseIf (next_is(TokenType.SYMBOL_LT))
-        local name = read_label_name
-        must_consume( TokenType.EOL )
-        statements.add( TokenizerCmdLabel(t,name) )
-        return
-
-      elseIf (consume(TokenType.SYMBOL_MINUS_MINUS))
-        local target = parse_register
-        statements.add( TokenizerCmdSubtract(t,target,TokenizerCmdLiteralInt32(t,1)) )
-        return
-
-      elseIf (consume(TokenType.SYMBOL_PLUS_PLUS))
-        local target = parse_register
-        statements.add( TokenizerCmdAdd(t,target,TokenizerCmdLiteralInt32(t,1)) )
-        return
-
-      elseIf (consume(TokenType.KEYWORD_PUSH))
-        if (consume(TokenType.KEYWORD_CH))
-          statements.add( CmdStatement(t,"push ch",TokenizerOpcode.PUSH_CH) )
-        elseIf (consume(TokenType.KEYWORD_COUNT))
-          statements.add( CmdStatement(t,"push count",TokenizerOpcode.PUSH_COUNT) )
-        else
-          throw peek.error( "Expected 'ch' or 'count'." )
-        endIf
-        return
-
-      else
-        local expr = parse_parser_expression()
-
-        local t2 = peek
-        if (consume(TokenType.SYMBOL_PLUS_PLUS))
-          statements.add( TokenizerCmdAdd(t,expr,TokenizerCmdLiteralInt32(t2,1)) )
-        elseIf (consume(TokenType.SYMBOL_MINUS_MINUS))
-          statements.add( TokenizerCmdSubtract(t,expr,TokenizerCmdLiteralInt32(t2,1)) )
-        elseIf (consume(TokenType.SYMBOL_PLUS_EQUALS))
-          statements.add( TokenizerCmdAdd(t,expr,parse_parser_expression()) )
-        elseIf (consume(TokenType.SYMBOL_MINUS_EQUALS))
-          statements.add( TokenizerCmdSubtract(t,expr,parse_parser_expression()) )
-        else
-          statements.add( expr )
-        endIf
-        return
-
-      endIf
-
-      throw peek.error( "Syntax error - unexpected '$'." (peek->String) )
-    }#
-
     method parse_cmd_type( token_type_def=null:TokenDef )->CmdType
       local t = peek
       local name = read_identifier
@@ -1164,7 +1003,7 @@ class FroleyParser : Parser
           parse_tokenizer_statements( node.statements )
           #endIf
 
-        elseIf (consume(TokenType.KEYWORD_ACCEPT_ALL))
+        elseIf (consume(TokenType.KEYWORD_PRODUCE_ANY))
           local t    = peek
           must_consume( TokenType.SYMBOL_OPEN_BRACKET )
           local name = read_identifier
@@ -1174,13 +1013,14 @@ class FroleyParser : Parser
               if (def.symbol)
                 local node = cmd_which_input.start
                 node = node.link( forEach in def.symbol )
-                node.statements.add( TokenizerCmdAcceptInt32(t,def.type) )
+                node.statements.add( TokenizerCmdCreateInt32(t,def.type) )
+                node.statements.add( CmdStatement(t,"restart",TokenizerOpcode.RESTART) )
               endIf
             endForEach
           else
             throw t.error( "No token definitions for [$] exist." (name) )
           endIf
-        elseIf (consume(TokenType.KEYWORD_DISCARD_ALL))
+        elseIf (consume(TokenType.KEYWORD_DISCARD_ANY))
           local t    = peek
           must_consume( TokenType.SYMBOL_OPEN_BRACKET )
           local name = read_identifier
@@ -1200,7 +1040,7 @@ class FroleyParser : Parser
           consume( TokenType.SYMBOL_COLON )
           parse_tokenizer_statements( cmd_which_input.start.statements )
         else
-          throw peek.error( "Syntax error - expected one of: 'case', 'acceptIdentifier <TOKEN-TYPE>', 'acceptAll [<section-name>]', 'discardAll [<section-name>]', 'others', 'endWhich'." )
+          throw peek.error( "Syntax error - expected one of: 'produceAny [<section-name>]', 'discardAny [<section-name>]', 'case', 'others', 'endWhich'." )
         endIf
         consume_eols
       endWhile
@@ -1216,15 +1056,6 @@ class FroleyParser : Parser
       consume_eols
       while (has_another and not next_is(TokenType.KEYWORD_END_WHICH))
         if (consume(TokenType.KEYWORD_CASE))
-          #{
-          if (next_is(TokenType.SYMBOL_OPEN_CURLY))
-            local pattern = parse_pattern
-            local state = ScanState()
-            consume( TokenType.SYMBOL_COLON )
-            parse_tokenizer_statements( state.statements )
-            patterns.add( (pattern,state) )
-          else
-          }#
           local expr = parse_tokenizer_expression()
           local node = cmd_which.start
           if (expr.is_integer)
@@ -1237,9 +1068,8 @@ class FroleyParser : Parser
           endIf
           consume( TokenType.SYMBOL_COLON )
           parse_tokenizer_statements( node.statements )
-          #endIf
 
-        elseIf (consume(TokenType.KEYWORD_ACCEPT_ALL))
+        elseIf (consume(TokenType.KEYWORD_PRODUCE_ANY))
           local t    = peek
           must_consume( TokenType.SYMBOL_OPEN_BRACKET )
           local name = read_identifier
@@ -1249,13 +1079,14 @@ class FroleyParser : Parser
               if (def.symbol)
                 local node = cmd_which.start
                 node = node.link( forEach in def.symbol )
-                node.statements.add( TokenizerCmdAcceptInt32(t,def.type) )
+                node.statements.add( TokenizerCmdCreateInt32(t,def.type) )
+                node.statements.add( CmdStatement(t,"restart",TokenizerOpcode.RESTART) )
               endIf
             endForEach
           else
             throw t.error( "No token definitions for [$] exist." (name) )
           endIf
-        elseIf (consume(TokenType.KEYWORD_DISCARD_ALL))
+        elseIf (consume(TokenType.KEYWORD_DISCARD_ANY))
           local t    = peek
           must_consume( TokenType.SYMBOL_OPEN_BRACKET )
           local name = read_identifier
@@ -1275,7 +1106,7 @@ class FroleyParser : Parser
           consume( TokenType.SYMBOL_COLON )
           parse_tokenizer_statements( cmd_which.start.statements )
         else
-          throw peek.error( "Syntax error - expected one of: 'case', 'acceptIdentifier <TOKEN-TYPE>', 'acceptAll [<section-name>]', 'discardAll [<section-name>]', 'others', 'endWhich'." )
+          throw peek.error( "Syntax error - expected one of: 'produceAny [<section-name>]', 'discardAny [<section-name>]', 'case', 'others', 'endWhich'." )
         endIf
         consume_eols
       endWhile

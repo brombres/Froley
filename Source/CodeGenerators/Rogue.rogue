@@ -165,8 +165,8 @@ class GenerateRogue : CodeGenerator
               builder.println "    method op->String"
               builder.println '      return "$"' (escaped_symbol)
             others
-              builder.println "    method to->String"
-              builder.print  ("      return " )
+              builder.println "    method write( builder:StringBuilder )"
+              builder.print  ("      builder.print " )
               which (cmd_properties.count)
                 case 0
                   builder.print( '"' ).print( escaped_symbol ).println( '"' )

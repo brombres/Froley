@@ -622,13 +622,13 @@ class TokenizerCmdCollectString( t, value:String ) : Cmd
       assembler.write( TokenizerOpcode.COLLECT_STRING, value )
 endClass
 
-class TokenizerCmdAcceptInt32( t, token_type:Int32 ) : Cmd
+class TokenizerCmdCreateInt32( t, token_type:Int32 ) : Cmd
   METHODS
     method to->String
       return Froley.token_def( token_type ).name
 
     method write( assembler:TokenizerAssembler )
-      assembler.write( TokenizerOpcode.ACCEPT_INT32, token_type )
+      assembler.write( TokenizerOpcode.CREATE_INT32, token_type )
 endClass
 
 class TokenizerCmdPeek( t ) : Cmd

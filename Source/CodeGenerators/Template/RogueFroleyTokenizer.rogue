@@ -39,7 +39,7 @@ augment RogueTemplate
        |    method init( base64_code:String )
        |      init( base64_code.decode_base64 )
        |
-       |    method accept( token_type:Int32 )
+       |    method add( token_type:Int32 )
        |      local t = RogueFroleyToken( RogueFroleyTokenType(token_type), filepath, scanner.source, line, column )
        |      if (t.type.attributes & RogueFroleyTokenTypeAttribute.CONTENT) t.content = buffer->String
        |      tokens.add( t )
@@ -47,8 +47,8 @@ augment RogueTemplate
        |    method execute
        |      local ip = start_ip
        |      loop
-       |        local opcode = code[ ip ]
-       |        #println "$ $" (ip.format("03"),RogueFroleyTokenizerOpcode(opcode))
+       |        local opcode = RogueFroleyTokenizerOpcode( code[ip] )
+       |        #println "$ $" (ip.format("04"),opcode)
        |        ++ip
        |        which (opcode)
        |          case RogueFroleyTokenizerOpcode.HALT
@@ -67,10 +67,10 @@ augment RogueTemplate
        |            line   = scanner.line
        |            column = scanner.column
        |            nextIteration
-       |          case RogueFroleyTokenizerOpcode.ACCEPT_INT32
+       |          case RogueFroleyTokenizerOpcode.CREATE_INT32
        |            local token_type = code[ ip ]
-       |            ip = start_ip
-       |            accept( token_type )
+       |            ++ip
+       |            add( token_type )
        |            buffer.clear
        |            nextIteration
        |          case RogueFroleyTokenizerOpcode.JUMP

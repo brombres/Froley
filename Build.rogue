@@ -38,6 +38,11 @@ routine rogo_simple
   execute( "cd Demos/Simple && rogo clean && rogo" )
 endRoutine
 
+routine rogo_asm
+  rogo_build
+  execute( "cd Demos/ASM && rogo clean && rogo" )
+endRoutine
+
 routine rogo_clean
   execute( "cd Demos/Simple && rogo clean" )
   execute( "cd Demos/C-esque && rogo clean" )

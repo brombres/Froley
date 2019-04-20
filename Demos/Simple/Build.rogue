@@ -15,7 +15,7 @@ routine rogo_default
   if (Files(".","*.rogue").any_newer_than("Build/Simple"))
     println "Compiling .rogue files to create Simple parser (run Build/Simple with no arguments for interactive mode)"
     File.create_folder( "Build" )
-    execute "roguec --execute=a=b=3+4+5*-6 --debug Simple.rogue --output=Build/Simple"
+    execute "roguec --debug --execute=a=b=3+4+5*-6 --debug Simple.rogue --output=Build/Simple"
   else
     println "Executing Simple parser (run Build/Simple with no arguments for interactive mode)"
     execute "Build/Simple a=b=3+4+5*-6"

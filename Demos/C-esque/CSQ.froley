@@ -49,7 +49,7 @@ SYMBOL_OR_EQUALS            |=
 [tokenizer]
 <<tokenize>>
 which (input)
-  discardAll [whitespace]
+  discardAny [whitespace]
 endWhich
 
 <whitespace_consumed>
@@ -58,13 +58,13 @@ if (not hasAnother) halt
 
 if (scanIdentifier)
   which (buffer)
-    acceptAll [keywords]
-    others: accept IDENTIFIER
+    produceAny [keywords]
+    others: produce IDENTIFIER
   endWhich
 endIf
 
 which (input)
-  acceptAll [symbols]
+  produceAny [symbols]
   case '#'
     # Single-line comment
     ch = read
@@ -74,7 +74,7 @@ which (input)
     ch = peek
     if (ch is digit)
       scan_integer
-      accept INTEGER
+      produce INTEGER
     endIf
 endWhich
 

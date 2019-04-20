@@ -9,8 +9,13 @@ augment RogueTemplate
        |    method init( t, args:RogueFroleyCmdInitArgs )
        |      args.require_count( 0 )
        |
+       |    method to->String
+       |      local result = StringBuilder()
+       |      write( result )
+       |      return result->String
+       |
        |    method write( builder:StringBuilder )
-       |      builder.print( this->String )
+       |      builder.print( type_name.after_any("Cmd") )
        |endClass
        |
        |class RogueFroleyCmdList : RogueFroleyCmd
@@ -40,14 +45,17 @@ augment RogueTemplate
        |
        |class RogueFroleyCmdStatements : RogueFroleyCmdList
        |  METHODS
-       |    method to->String
-       |      return list.join( "\n" )
+       |    method write( builder:StringBuilder )
+       |      builder.println( forEach in list )
        |endClass
        |
        |class RogueFroleyCmdArgs : RogueFroleyCmdList
        |  METHODS
-       |    method to->String
-       |      return "($)" (list.join(","))
+       |    method write( builder:StringBuilder )
+       |      forEach (arg at index in list)
+       |        if (index > 0) builder.print( ',' )
+       |        builder.print( arg )
+       |      endForEach
        |endClass
        |
        |class RogueFroleyCmdUnary( t, operand:RogueFroleyCmd ) : RogueFroleyCmd
@@ -59,14 +67,14 @@ augment RogueTemplate
        |    method op->String
        |      throw UnsupportedOperationError()
        |
-       |    method to->String
-       |      return "($$)" (op,operand)
+       |    method write( builder:StringBuilder )
+       |      builder.print( '(' ).print( op ).print( operand ).print( ')' )
        |endClass
        |
        |class RogueFroleyCmdPostUnary : RogueFroleyCmdUnary
        |  METHODS
-       |    method to->String
-       |      return "($$)" (operand,op)
+       |    method write( builder:StringBuilder )
+       |      builder.print( '(' ).print( operand ).print( op ).print( ')' )
        |endClass
        |
        |class RogueFroleyCmdBinary( t, left:RogueFroleyCmd, right:RogueFroleyCmd ) : RogueFroleyCmd
@@ -79,8 +87,8 @@ augment RogueTemplate
        |    method op->String
        |      throw UnsupportedOperationError()
        |
-       |    method to->String
-       |      return "($ $ $)" (left,op,right)
+       |    method write( builder:StringBuilder )
+       |      builder.print( '(' ).print( left ).print( ' ' ).print( op ).print( ' ' ).print( right ).print( ')' )
        |endClass
 endAugment
 

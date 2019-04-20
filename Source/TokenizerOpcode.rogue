@@ -6,7 +6,7 @@ enum TokenizerOpcode( size=1:Int32 )
   MODE_INT32            # START_IP = ARG1
   ERROR                 # Throws error using current line, column, and message in BUFFER
   MARK_SOURCE_POS       # Implementation-dependent; usually records scanner line and column for later token creation
-  ACCEPT_INT32(2)       # Invokes VM callback accept(token_type:ARG1) then clears BUFFER & jumps to START_IP
+  CREATE_INT32(2)       # Invokes VM callback add(token_type:ARG1) then clears BUFFER & jumps to START_IP
   JUMP(2)               # IP = ARG1
   JUMP_EQ(2)            # if (RESULT == 0) IP = ARG1
   JUMP_NE(2)            # if (RESULT != 0) IP = ARG1

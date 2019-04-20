@@ -61,7 +61,7 @@ augment RogueTemplate
        |      method_stack.add( ip )
        |      loop
        |        local opcode = RogueFroleyParserOpcode( code[ip] )
-       |        #trace opcode
+       |        #println "$ $" (ip.format("04"),opcode)
        |        ++ip
        |        which (opcode)
        |          case RogueFroleyParserOpcode.SYNTAX_ERROR
@@ -69,7 +69,7 @@ augment RogueTemplate
        |              throw peek.error( "Syntax error - unexpected end of input." )
        |            else
        |              local t = tokens[ position ]
-       |              throw t.error( "Syntax error - unexpected '$'." (t.type.symbol) )
+       |              throw t.error( "Syntax error - unexpected '$'." (t.type.symbol.to_escaped_ascii) )
        |            endIf
        |          case RogueFroleyParserOpcode.RETURN
        |            if (call_stack.is_empty) return

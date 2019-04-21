@@ -15,6 +15,7 @@ The `Demos/` folder contains a number of examples that can be adapted to your ow
 
 * `rogo simple`
 * `rogo csq`
+* `rogo json`
 * `rogo asm`
 
 ## Documentation

@@ -637,6 +637,9 @@ class FroleyParser : Parser
         statements.add( ParserCmdMustConsumeType(t,read_token_type_def) )
         return
 
+      elseIf (consume(TokenType.KEYWORD_NO_ACTION))
+        return
+
       elseIf (consume(TokenType.KEYWORD_PRINTLN))
         if (next_is(TokenType.STRING))
           statements.add( ParserCmdPrintlnString(t,read_string) )

@@ -229,7 +229,13 @@ class GenerateRogue : CodeGenerator
       generate( RogueTemplate.token, "Token.rogue", &do_not_overwrite )
 
     method generate_Tokenizer
-      generate( RogueTemplate.tokenizer, "Tokenizer.rogue", &do_not_overwrite )
+      local fn = function( content:String )->String with (info)
+        local def = Froley.token_defs_by_symbol[ "\n" ]
+        content = content.replacing( "<id_start>", info//id_characters//start->String.to_escaped_ascii("\"") )
+        content = content.replacing( "<id_continue>", info//id_characters//continue->String.to_escaped_ascii("\"") )
+        return content
+      endFunction
+      generate( RogueTemplate.tokenizer, "Tokenizer.rogue", fn, &do_not_overwrite )
 
     method regenerate_CmdFactory
       local writer = output_writer( "CmdFactory.rogue" )

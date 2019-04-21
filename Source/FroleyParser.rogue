@@ -1,8 +1,6 @@
 module Froley
   uses ParseKit<<Froley>>
 
-  # TODO: if, return values, call args
-
 class FroleyParser : Parser
   PROPERTIES
     parse_tokenizer_expression : ParseRule

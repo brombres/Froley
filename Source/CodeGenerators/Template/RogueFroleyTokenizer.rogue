@@ -26,14 +26,14 @@ augment RogueTemplate
        |
        |    start_ip = 0
        |
+       |    id_start      = "<id_start>"
+       |    id_continue   = "<id_continue>"
        |    id_characters = Array<<Int32>>(128)
        |
        |  METHODS
        |    method init( data:Byte[] )
-       |      forEach (ch in 'a'..'z') id_characters[ch->Int32] = 1
-       |      forEach (ch in 'A'..'Z') id_characters[ch->Int32] = 1
-       |      forEach (ch in '0'..'9') id_characters[ch->Int32] = 2
-       |      id_characters['_'->Int32] = 1
+       |      forEach (ch in id_continue) id_characters[ch->Int32] = 2
+       |      forEach (ch in id_start)    id_characters[ch->Int32] = 1
        |      load( data )
        |
        |    method init( base64_code:String )

@@ -153,6 +153,10 @@ endClass
 
 class Froley [singleton]
   PROPERTIES
+    filepath              : String
+    source                : String
+    scanner               : Scanner
+
     code_generators       = StringTable<<CodeGenerator>>()
 
     token_defs_by_name    = LookupList<<TokenDef>>()
@@ -173,13 +177,16 @@ class Froley [singleton]
 
     cmd_type_lookup = LookupList<<CmdType>>()
 
+    id_start    = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_"
+    id_continue = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_0123456789"
+
   METHODS
     method parse( file:File )->Value
       local source = file.load_as_string
       return parse( file.filepath, source )
 
-    method parse( filepath:String, source:String )->Value
-      collect_definitions_and_extract_code( filepath, source )
+    method parse( filepath, source)->Value
+      collect_definitions_and_extract_code
 
       local tokenizer_statements = CmdStatements()
       local parser = FroleyParser()
@@ -247,6 +254,7 @@ class Froley [singleton]
       @{
         language: "TODO",
         source_filepath: filepath,
+        id_characters: {start:id_start,continue:id_continue},
         :token_attributes,
         :token_types,
         :tokenizer_opcodes,
@@ -268,8 +276,8 @@ class Froley [singleton]
       cmd_type_lookup[ name ] = cmd_type
       return cmd_type
 
-    method collect_definitions_and_extract_code( filepath:String, source:String )
-      $localDefine PARSING_CONFIGURE   0
+    method collect_definitions_and_extract_code
+      $localDefine PARSING_SETTINGS    0
       $localDefine PARSING_ATTRIBUTES  1
       $localDefine PARSING_DEFINITIONS 2
       $localDefine PARSING_TOKENIZER   3
@@ -291,8 +299,8 @@ class Froley [singleton]
           parser_code.println  # keep line numbers consistent
           cur_section_name = line.extract_string( "[$]*" )
           which (cur_section_name)
-            case "configure"
-              parse_type = PARSING_CONFIGURE
+            case "settings"
+              parse_type = PARSING_SETTINGS
             case "attributes"
               parse_type = PARSING_ATTRIBUTES
             case "tokenizer"
@@ -305,6 +313,16 @@ class Froley [singleton]
 
           if (parse_type == PARSING_DEFINITIONS)
             cur_section_defs = section_defs( cur_section_name )
+          endIf
+
+        elseIf (parse_type == PARSING_SETTINGS)
+          tokenizer_code.println  # keep line numbers consistent
+          parser_code.println     # keep line numbers consistent
+          scanner = Scanner( line, &spaces_per_tab=2 ).[ line=index+1 ]
+          if (scanner.consume("id_start"))
+            id_start = scan_id_characters
+          elseIf (scanner.consume("id_continue"))
+            id_continue = scan_id_characters
           endIf
 
         elseIf (parse_type == PARSING_TOKENIZER)
@@ -402,6 +420,35 @@ class Froley [singleton]
           endIf
         endIf
       endForEach
+
+    method scan_id_characters->String
+      local characters = Array<<Logical>>(128)
+      loop
+        while (scanner.consume(' ')) noAction
+        if (not scanner.has_another) escapeLoop
+        if (scanner.consume("alpha"))
+          characters[ Int32(forEach in 'a'..'z')&127 ] = true
+          characters[ Int32(forEach in 'A'..'Z')&127 ] = true
+          nextIteration
+        elseIf (scanner.consume("numeric"))
+          characters[ Int32(forEach in '0'..'9')&127 ] = true
+          nextIteration
+        else
+          local chars = scanner.scan_string
+          if (chars)
+            characters[ Int32(forEach in chars)&127 ] = true
+            nextIteration
+          else
+            throw FroleyError( filepath, source, scanner.line, scanner.column, "Expected 'alpha', 'numeric', a character, or a string." )
+          endIf
+        endIf
+      endLoop
+      use result = StringBuilder.pool
+        forEach (is_used at i in characters)
+          if (is_used) result.print( Character(i) )
+        endForEach
+        return result
+      endUse
 
     method discard_whitespace( scanner:Scanner )
       while (scanner.consume(' ')) noAction

@@ -1,3 +1,7 @@
+[settings]
+id_start    alpha '_'
+id_continue alpha numeric '_'
+
 [attributes]
 structural
 

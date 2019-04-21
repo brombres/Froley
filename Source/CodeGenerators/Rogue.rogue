@@ -172,8 +172,17 @@ class GenerateRogue : CodeGenerator
                   builder.print( '"' ).print( escaped_symbol ).println( '"' )
                 case 1
                   local p = cmd_properties[ 0 ]
-                  builder.print( p//name )
-                  if (p//type != "String") builder.print( "->String" )
+                  if (p//value != "")
+                    builder.print( p//name )
+                    if (p//type != "String") builder.print( "->String" )
+                  else
+                    builder.print( '"' )
+                    builder.print( escaped_symbol ).print( "($)" )
+                    builder.print( '"' )
+                    builder.print( '(' )
+                    builder.print( p//name )
+                    builder.print( ')' )
+                  endIf
                   builder.println
                 others
                   builder.print( '"' )

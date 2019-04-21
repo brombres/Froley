@@ -1,0 +1,232 @@
+[whitespace]
+SPACE ' '
+TAB   '\t'
+
+[tokens]
+EOL        "end of line"
+IDENTIFIER identifier  [content]
+INTEGER    integer     [content]
+STRING     string      [content]
+
+[attributes]
+idArg
+intArg
+stringArg
+
+[keywords]
+HALT       "halt"
+JMP        "jmp"          [idArg]
+JEQ        "jeq"          [idArg]
+JNE        "jne"          [idArg]
+JGT        "jgt"          [idArg]
+JGE        "jge"          [idArg]
+JLT        "jlt"          [idArg]
+JLE        "jle"          [idArg]
+LITERAL_A  "literal_a"    [intArg]
+LITERAL_B  "literal_b"    [intArg]
+INPUT_A    "input_a"
+INPUT_B    "input_b"
+NEWLINE    "newline"
+PRINT_A    "print_a"
+PRINT_B    "print_b"
+PRINT_TEXT "print_text"   [stringArg]
+READ_A     "read_a"       [idArg]
+READ_B     "read_b"       [idArg]
+WRITE_A    "write_a"      [idArg]
+WRITE_B    "write_b"      [idArg]
+ADD        "add"
+SUB        "sub"
+MUL        "mul"
+DIV        "div"
+MOD        "mod"
+CMP        "cmp"
+SQRT       "sqrt"
+
+[symbols]
+COLON      ':'
+
+[tokenizer]
+<<tokenize>>
+which (input)
+  discardAny [whitespace]
+endWhich
+
+<whitespace_consumed>
+markSourcePosition
+if (not hasAnother)
+  create EOL
+  halt
+endIf
+
+if (scanIdentifier)
+  bufferToLowercase
+  which (buffer)
+    produceAny [keywords]
+    others: produce IDENTIFIER
+  endWhich
+endIf
+
+which (input)
+  produceAny [symbols]
+  case '\n': produce EOL
+  case '#'
+    # Single-line comment
+    ch = read
+    while (ch != '\n') ch = read
+    discard
+  case '"'
+    # String
+    scan_string
+    produce STRING
+  others
+    ch = peek
+    if (ch is digit)
+      scan_integer
+      produce INTEGER
+    endIf
+endWhich
+
+clear buffer
+collect "Syntax error - unexpected '"
+ch = peek
+collect ch
+collect "'."
+error buffer
+
+<scan_integer>
+while (ch is digit or ch == '_')
+  ch = read
+  if (ch != '_') collect ch
+  if (not hasAnother) return
+  ch = peek
+endWhile
+return
+
+<scan_string>
+clear buffer
+ch = peek
+while (hasAnother and ch != '"' and ch != '\n')
+  ch = read
+  collect ch
+  ch = peek
+endWhile
+if (not consume('"')) error "Closing \" expected."
+return
+
+[parser]
+- statements
+  beginList
+    while (consume(EOL)) noAction
+    while (hasAnother)
+      statement
+      while (consume(EOL)) noAction
+    endWhile
+  createStatements
+
+- statement
+  if (nextHasAttribute(idArg))
+    cmd_with_id_arg
+    mustConsume EOL
+  elseIf (nextHasAttribute(intArg))
+    cmd_with_int_arg
+    mustConsume EOL
+  elseIf (nextHasAttribute(stringArg))
+    cmd_with_string_arg
+    mustConsume EOL
+  else
+    cmd_with_no_arg_or_label
+    mustConsume EOL
+  endIf
+
+- cmd_with_id_arg
+  on "jmp"
+    identifier
+    create CmdJMP(label)
+  elseOn "jeq"
+    identifier
+    create CmdJEQ(label)
+  elseOn "jne"
+    identifier
+    create CmdJNE(label)
+  elseOn "jgt"
+    identifier
+    create CmdJGT(label)
+  elseOn "jge"
+    identifier
+    create CmdJGE(label)
+  elseOn "jlt"
+    identifier
+    create CmdJLT(label)
+  elseOn "jle"
+    identifier
+    create CmdJLE(label)
+  elseOn "read_a"
+    identifier
+    create CmdReadA(name)
+  elseOn "read_b"
+    identifier
+    create CmdReadB(name)
+  elseOn "write_a"
+    identifier
+    create CmdWriteA(name)
+  elseOn "write_b"
+    identifier
+    create CmdWriteB(name)
+  else
+    syntaxError
+  endOn
+
+- cmd_with_int_arg
+  on "literal_a"
+    integer
+    create CmdLiteralA(name)
+  elseOn "literal_b"
+    integer
+    create CmdLiteralB(name)
+  else
+    syntaxError
+  endOn
+  return
+
+- cmd_with_string_arg
+  on "print_text"
+    string
+    create CmdPrintText(value)
+  else
+    syntaxError
+  endOn
+  return
+
+- cmd_with_no_arg_or_label
+  on "halt"    -> CmdHalt
+  on "input_a" -> CmdInputA
+  on "input_b" -> CmdInputB
+  on "newline" -> CmdNewline
+  on "print_a" -> CmdPrintA
+  on "print_b" -> CmdPrintB
+  on "add"     -> CmdAdd
+  on "sub"     -> CmdSub
+  on "mul"     -> CmdMul
+  on "div"     -> CmdDiv
+  on "mod"     -> CmdMod
+  on "cmp"     -> CmdCmp
+  on "sqrt"    -> CmdSqrt
+  on "identifier"
+    mustConsume ':'
+    create CmdLabel(name=t.content:String)
+    return
+  endOn
+  syntaxError
+
+- identifier
+  on "identifier" -> CmdIdentifier
+  syntaxError
+
+- string
+  on "string" -> CmdString( value=t.content:String )
+  syntaxError
+
+- integer
+  on "integer" -> CmdInteger( value=t.content:Int32 )
+  syntaxError
+

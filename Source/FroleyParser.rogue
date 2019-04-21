@@ -766,7 +766,6 @@ class FroleyParser : Parser
       local symbol = select{ token_type_def:token_type_def.symbol || null as String }
       if (symbol is null)
         symbol = name.after_any( "Cmd" )
-        if (symbol.count) symbol = symbol[0].to_lowercase + symbol.from(1)
       endIf
       return Froley.cmd_type( t, name, parse_rule_type, symbol, args )
 

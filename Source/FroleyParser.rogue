@@ -7,6 +7,7 @@ class FroleyParser : Parser
     parse_tokenizer_term       : ParseRule
     parse_parser_expression    : ParseRule
     parse_rule_type            = ParseRuleType.GENERAL : ParseRuleType
+    this_method                : ParserMethod
 
   METHODS
     method init
@@ -145,8 +146,9 @@ class FroleyParser : Parser
       rule.on( "consume",
         function(parser:FroleyParser)->Cmd
           local t = parser.read  # 'consume'
-          if (parser.next_is(TokenType.SYMBOL_OPEN_PAREN))
+          if (parser.consume(TokenType.SYMBOL_OPEN_PAREN))
             local expr = parser.parse_tokenizer_expression()
+            parser.must_consume( TokenType.SYMBOL_CLOSE_PAREN )
             t = expr.t
             if (expr.is_integer) return TokenizerCmdConsumeCharacter( t, expr->Int32 )
           endIf
@@ -187,6 +189,7 @@ class FroleyParser : Parser
           return result
         endFunction
       )
+      rule.on( "integer value",  <<ParserCmdLiteralInt32>> )
       rule.on( "true",  <<ParserCmdLiteralTrue>> )
       rule.on( "false", <<ParserCmdLiteralFalse>> )
       rule.on( "nextHasAttribute",
@@ -416,6 +419,9 @@ class FroleyParser : Parser
         statements.add( TokenizerCmdMode(t,label_name) )
         return
 
+      elseIf (consume(TokenType.KEYWORD_NO_ACTION))
+        return
+
       elseIf (consume(TokenType.KEYWORD_PRINT))
         if (consume(TokenType.KEYWORD_BUFFER))
           statements.add( CmdStatement(t,"print buffer",TokenizerOpcode.PRINT_BUFFER) )
@@ -598,14 +604,29 @@ class FroleyParser : Parser
           statements.add( cmd )
           return
         else
+          local on_commands = parse_on_commands
           consume( TokenType.SYMBOL_COLON )
           local cmd = ParserCmdOnType( t, token_type_def )
           statements.add( cmd )
-          if (consume_eols)
+
+          if (on_commands)
+            cmd.statements.add( on_commands )
+
+            t = peek
+            if (consume(TokenType.SYMBOL_ARROW))
+              cmd.statements.add( ParserCmdCreate(t,parse_cmd_type) )
+              cmd.statements.add( ParserCmdReturn(t,null) )
+              return
+            endIf
+          endIf
+
+          if ((not on_commands or on_commands.is_empty) and consume_eols)
             parse_multi_line_parser_statements( cmd.statements )
             t = peek
             while (consume(TokenType.KEYWORD_ELSE_ON))
               cmd.else_on = ParserCmdOnType( t, read_token_type_def )
+              on_commands = parse_on_commands
+              if (on_commands) cmd.statements.add( on_commands )
               cmd = cmd.else_on
               parse_multi_line_parser_statements( cmd.statements )
               t = peek
@@ -660,6 +681,26 @@ class FroleyParser : Parser
 
       elseIf (consume(TokenType.KEYWORD_CREATE_ARGS))
         statements.add( ParserCmdCreateArgs(t) )
+        return
+
+      elseIf (consume(TokenType.KEYWORD_PRODUCE))
+        statements.add( ParserCmdCreate(t,parse_cmd_type) )
+        statements.add( ParserCmdReturn(t,null) )
+        return
+
+      elseIf (consume(TokenType.KEYWORD_PRODUCE_NULL))
+        statements.add( ParserCmdCreateNull(t) )
+        statements.add( ParserCmdReturn(t,null) )
+        return
+
+      elseIf (consume(TokenType.KEYWORD_PRODUCE_STATEMENTS))
+        statements.add( ParserCmdCreateStatements(t) )
+        statements.add( ParserCmdReturn(t,null) )
+        return
+
+      elseIf (consume(TokenType.KEYWORD_PRODUCE_ARGS))
+        statements.add( ParserCmdCreateArgs(t) )
+        statements.add( ParserCmdReturn(t,null) )
         return
 
       elseIf (consume(TokenType.KEYWORD_RETURN))
@@ -756,6 +797,37 @@ class FroleyParser : Parser
         expr = ParserCmdAssign( t, expr, parse_parser_expression() )
       endIf
       statements.add( expr )
+
+    method parse_on_commands->CmdStatements
+      local commands : CmdStatements
+
+      while (consume(TokenType.SYMBOL_COMMA))
+        ensure commands
+        if (next_is(TokenType.STRING))
+          local t = peek
+          local symbol = read_string
+          local def = Froley.token_defs_by_symbol[ symbol ]
+          if (def) commands.add( ParserCmdMustConsumeType(t,def) )
+          else     throw t.error( "No token has symbol '$'." (symbol) )
+        else
+          local cmd = parse_parser_expression()
+          if (cmd instanceOf ParserCmdLiteralInt32)
+            local symbol = (cmd as ParserCmdLiteralInt32).value->Character->String
+            local def = Froley.token_defs_by_symbol[ symbol ]
+            if (def) commands.add( ParserCmdMustConsumeType(cmd.t,def) )
+            else     throw cmd.t.error( "No token has symbol '$'." (symbol) )
+          elseIf (cmd instanceOf ParserCmdAccess)
+            local name = (cmd as ParserCmdAccess).name
+            local def = Froley.token_defs_by_name[ name ]
+            if (def) commands.add( ParserCmdMustConsumeType(cmd.t,def) )
+            else     commands.add( cmd )
+          else
+            commands.add( cmd )
+          endIf
+        endIf
+      endWhile
+
+      return commands
 
     method parse_cmd_type( token_type_def=null:TokenDef )->CmdType
       local t = peek
@@ -1150,6 +1222,7 @@ class FroleyParser : Parser
       endIf
       must_consume( TokenType.EOL )
 
+      this_method = m
       parse_multi_line_parser_statements( m.statements )
 
       return m

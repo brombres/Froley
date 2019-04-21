@@ -260,23 +260,28 @@ class GenerateRogue : CodeGenerator
       local writer = output_writer( "Code.rogue" )
       if (not writer) return
 
-      writer.print  ( "class " ).print( language ).println( "Code" )
-      writer.println @|  GLOBAL PROPERTIES
-                      |    tokenizer_code =
+      writer.print  ( "class " ).print( language ).println( "Code [singleton]" )
+      writer.println @|  PROPERTIES
+                      |    tokenizer_code_base64 =
       writer.print    "      \""
       writer.print   info//tokenizer_code->String.word_wrap(64).join( "\" ...\n      \"" )
       writer.println "\""
       writer.println
-      writer.println
 
-      writer.println "    parser_code ="
+      writer.println "    parser_code_base64 ="
       writer.print   "      \""
       writer.print   info//parser_code->String.word_wrap(64).join( "\" ...\n      \"" )
       writer.println "\""
       writer.println
-      writer.println
 
-      writer.println "endClass"
+      writer.println @|  METHODS
+                      |    method parser_code->Byte[]
+                      |      return parser_code_base64.decode_base64
+                      |
+                      |    method tokenizer_code->Byte[]
+                      |      return tokenizer_code_base64.decode_base64
+                      |
+                      |endClass
       writer.close
 
     method regenerate_ParserOpcode

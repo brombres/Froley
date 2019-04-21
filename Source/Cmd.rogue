@@ -770,6 +770,9 @@ class TokenizerCmdLogicalAnd : CmdBinary
       right = right.resolved
       return this
 
+    method to->String
+      return "($ and $)" (left,right)
+
     method type->ValueType?
       return ValueType.LOGICAL
 
@@ -791,6 +794,9 @@ class TokenizerCmdLogicalOr : CmdBinary
 
     method type->ValueType?
       return ValueType.LOGICAL
+
+    method to->String
+      return "($ or $)" (left,right)
 
     method write( assembler:TokenizerAssembler )
       throw t.error( "Condition too complex - only simple 'a or b or ...', 'a and b and...' conditions are allowed." )
@@ -1062,6 +1068,18 @@ class ParserCmdWriteVar( t, name:String, value:Cmd ) : Cmd
     method write( assembler:ParserAssembler )
       value.write( assembler )
       assembler.write( ParserOpcode.WRITE_VAR, name )
+endClass
+
+class ParserCmdLiteralInt32( t, value:Int32 ) : Cmd
+  METHODS
+    method init( t )
+      value = t->Int32
+
+    method type->ValueType?
+      return ValueType.INT32
+
+    method write( assembler:ParserAssembler )
+      assembler.write( ParserOpcode.PUSH_INT32, value )
 endClass
 
 class ParserCmdLiteralTrue : Cmd

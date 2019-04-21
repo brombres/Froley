@@ -38,6 +38,11 @@ routine rogo_simple
   execute( "cd Demos/Simple && rogo clean && rogo" )
 endRoutine
 
+routine rogo_json
+  rogo_build
+  execute( "cd Demos/JSON && rogo clean && rogo" )
+endRoutine
+
 routine rogo_asm
   rogo_build
   execute( "cd Demos/ASM && rogo clean && rogo" )
@@ -46,6 +51,8 @@ endRoutine
 routine rogo_clean
   execute( "cd Demos/Simple && rogo clean" )
   execute( "cd Demos/C-esque && rogo clean" )
+  execute( "cd Demos/JSON && rogo clean" )
+  execute( "cd Demos/ASM && rogo clean" )
   execute( "rm -rf Build" )
   execute( "rm -rf .rogo" )
 endRoutine

@@ -5,6 +5,7 @@ id_continue alpha numeric '_'
 [whitespace]
 SPACE ' '
 TAB   '\t'
+CR    '\r'
 
 [tokens]
 EOL        "end of line"
@@ -143,42 +144,18 @@ return
   endIf
 
 - cmd_with_id_arg
-  on "jmp"
-    identifier
-    create CmdJMP(label)
-  elseOn "jeq"
-    identifier
-    create CmdJEQ(label)
-  elseOn "jne"
-    identifier
-    create CmdJNE(label)
-  elseOn "jgt"
-    identifier
-    create CmdJGT(label)
-  elseOn "jge"
-    identifier
-    create CmdJGE(label)
-  elseOn "jlt"
-    identifier
-    create CmdJLT(label)
-  elseOn "jle"
-    identifier
-    create CmdJLE(label)
-  elseOn "read_a"
-    identifier
-    create CmdReadA(name)
-  elseOn "read_b"
-    identifier
-    create CmdReadB(name)
-  elseOn "write_a"
-    identifier
-    create CmdWriteA(name)
-  elseOn "write_b"
-    identifier
-    create CmdWriteB(name)
-  else
-    syntaxError
-  endOn
+  on "jmp",     identifier -> CmdJMP(label)
+  on "jeq",     identifier -> CmdJEQ(label)
+  on "jne",     identifier -> CmdJNE(label)
+  on "jgt",     identifier -> CmdJGT(label)
+  on "jge",     identifier -> CmdJGE(label)
+  on "jlt",     identifier -> CmdJLT(label)
+  on "jle",     identifier -> CmdJLE(label)
+  on "read_a",  identifier -> CmdReadA(label)
+  on "read_b",  identifier -> CmdReadB(label)
+  on "write_a", identifier -> CmdWriteA(label)
+  on "write_b", identifier -> CmdWriteB(label)
+  syntaxError
 
 - cmd_with_int_arg
   on "literal_a"
@@ -193,13 +170,8 @@ return
   return
 
 - cmd_with_string_arg
-  on "print_text"
-    string
-    create CmdPrintText(value)
-  else
-    syntaxError
-  endOn
-  return
+  on "print_text", string -> CmdPrintText(value)
+  syntaxError
 
 - cmd_with_no_arg_or_label
   on "halt"    -> CmdHalt

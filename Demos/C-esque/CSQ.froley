@@ -9,6 +9,7 @@ structural
 SPACE ' '
 TAB   '\t'
 EOL   '\n'
+CR    '\r'
 
 [tokens]
 IDENTIFIER identifier [content]
@@ -249,10 +250,6 @@ return
 + term
   on IDENTIFIER -> CmdAccess( value=t.content:String )
   on INTEGER    -> CmdLiteralInt32( value=t.content:Int32 )
-  on "("
-    expression
-    mustConsume ")"
-    return
-  endOn
+  on '(', expression, ')': return
   syntaxError
 

@@ -44,18 +44,11 @@ augment RogueTemplate
        |    next_token_type : Int32
        |
        |    methods_by_address = Table<<Int32,String>>()
-       |    tokenizer          : RogueFroleyTokenizer
+       |    tokenizer          = RogueFroleyTokenizer()
        |
        |  METHODS
        |    method init
-       |      init( RogueFroleyCode.parser_code, RogueFroleyCode.tokenizer_code )
-       |
-       |    method init( data:Byte[] )
-       |      load( data )
-       |
-       |    method init( parser_base64_code:String, tokenizer_base64_code=null:String )
-       |      init( parser_base64_code.decode_base64 )
-       |      if (tokenizer_base64_code) tokenizer = RogueFroleyTokenizer( tokenizer_base64_code )
+       |      load( RogueFroleyCode.parser_code )
        |
        |    method execute( ip:Int32 )
        |      method_stack.add( ip )

@@ -73,12 +73,13 @@ class Launcher
         local cur_gen : CodeGenerator
 
         local language = input_filepath.before_last( ".froley", &ignore_case )
+        local language_option : String
 
         forEach (option in options)
           local name = option.before_first('=')
           local value = option.after_first('=')
           if (name == "language")
-            language = value
+            language_option = value
           else
             local gen = Froley.code_generators[ name ]
             if (gen)
@@ -93,6 +94,8 @@ class Launcher
         endForEach
 
         local info = Froley.parse( File(input_filepath) )
+        if (info//language) language = info//language->String  # 'language XYZ' setting can override default language name
+        if (language_option) language = language_option        # '--language=XYZ' option can override setting & default
         forEach (gen in active_generators)
           info//language = language
           gen.process( info )
@@ -179,6 +182,7 @@ class Froley [singleton]
 
     id_start    = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_"
     id_continue = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_0123456789"
+    language    : String
 
   METHODS
     method parse( file:File )->Value
@@ -252,7 +256,7 @@ class Froley [singleton]
 
       local output =
       @{
-        language: "TODO",
+        :language,
         source_filepath: filepath,
         id_characters: {start:id_start,continue:id_continue},
         :token_attributes,
@@ -323,6 +327,12 @@ class Froley [singleton]
             id_start = scan_id_characters
           elseIf (scanner.consume("id_continue"))
             id_continue = scan_id_characters
+          elseIf (scanner.consume("language"))
+            while (scanner.consume(' ')) noAction
+            language = scanner.scan_identifier
+            if (not language)
+              throw FroleyError( filepath, source, scanner.line, scanner.column, "Language name expected." )
+            endIf
           endIf
 
         elseIf (parse_type == PARSING_TOKENIZER)

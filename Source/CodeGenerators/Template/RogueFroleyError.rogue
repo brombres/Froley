@@ -25,13 +25,15 @@ augment RogueTemplate
        |
        |      if (line and column and source)
        |        builder.println.println
+       |        local skip = select{ column<=70:0 || column-70 }
        |        forEach (line at index in LineReader(source))
        |          if (index+1 == this.line)
-       |            builder.println( line )
+       |            if (skip) line = line.from( skip )
+       |            builder.println( line.leftmost(79) )
        |            escapeForEach
        |          endIf
        |        endForEach
-       |        builder.print( " " * (column-1) ).println( '^' )
+       |        builder.print( " " * (column-(skip+1)) ).println( '^' )
        |      endIf
        |
        |      builder.println( "=" * 79 )

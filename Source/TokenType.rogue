@@ -63,6 +63,9 @@ augment TokenType
   KEYWORD_POP               ( "pop",                  &is_keyword )
   KEYWORD_PRODUCE           ( "produce",              &is_keyword )
   KEYWORD_PRODUCE_ANY       ( "produceAny",           &is_keyword, &is_structural )
+  KEYWORD_PRODUCE_ARGS      ( "produceArgs",          &is_keyword )
+  KEYWORD_PRODUCE_NULL      ( "produceNull",          &is_keyword )
+  KEYWORD_PRODUCE_STATEMENTS( "produceStatements",    &is_keyword )
   KEYWORD_PUSH              ( "push",                 &is_keyword )
   KEYWORD_READ              ( "read",                 &is_keyword )
   KEYWORD_RESTART           ( "restart",              &is_keyword )
@@ -77,6 +80,7 @@ augment TokenType
   KEYWORD_VAR               ( "var",                  &is_keyword )
   KEYWORD_WHICH             ( "which",                &is_keyword )
   KEYWORD_WHILE             ( "while",                &is_keyword )
+  KEYWORD_WITH              ( "with",                 &is_keyword )
 
   SYMBOL_ARROW              ( "->",  &is_symbol )
   SYMBOL_ASTERISK           ( "*",   &is_symbol )

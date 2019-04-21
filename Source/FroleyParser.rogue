@@ -159,12 +159,6 @@ class FroleyParser : Parser
       # parser expression
       rule = add( ParseRule("parser_expression") )
 
-      #{
-      # parser assignment
-      rule = add_nested( RightAssociativeBinaryParseRule("assignment") )
-      rule.on( "=", <<TokenizerCmdAssign>> )
-      }#
-
       # parser logical or
       rule = add_nested( BinaryParseRule("parser_logical_or") )
       rule.on( "or", <<ParserCmdLogicalOr>> )
@@ -174,73 +168,16 @@ class FroleyParser : Parser
       rule.on( "and", <<ParserCmdLogicalAnd>> )
 
       # parser comparison
-      #rule = add_nested( BinaryParseRule("parser_comparison") )
-      #rule.on( "==", <<TokenizerCmdCompareEQ>> )
-      #rule.on( "!=", <<TokenizerCmdCompareNE>> )
-      #rule.on( "<",  <<TokenizerCmdCompareLT>> )
-      #rule.on( "<=", <<TokenizerCmdCompareLE>> )
-      #rule.on( ">",  <<TokenizerCmdCompareGT>> )
-      #rule.on( ">=", <<TokenizerCmdCompareGE>> )
-      #rule.on( "is", <<ParserCmdTokenType>> )
+      rule = add_nested( BinaryParseRule("parser_comparison") )
+      rule.on( "==", <<ParserCmdCompareEQ>> )
+      rule.on( "!=", <<ParserCmdCompareNE>> )
+      rule.on( "<",  <<ParserCmdCompareLT>> )
+      rule.on( "<=", <<ParserCmdCompareLE>> )
+      rule.on( ">",  <<ParserCmdCompareGT>> )
+      rule.on( ">=", <<ParserCmdCompareGE>> )
 
       rule = add_nested( PreUnaryParseRule("parser_pre_unary") )
       rule.on( "not", <<ParserCmdLogicalNot>> )
-
-      #{
-      # parser is digit, is letter
-      rule = add_nested(
-        PostUnaryParseRule( "is_digit_is_letter",
-          function (rule:ParseRule)->Cmd
-            local t = rule.parser.peek
-            local term = rule.parser.parse_tokenizer_term()
-            local parser = rule.parser
-            if (parser.consume(TokenType.KEYWORD_IS))
-              if (parser.consume(TokenType.KEYWORD_NOT))
-                if (parser.consume(TokenType.KEYWORD_DIGIT))
-                  local base = 10
-                  if (parser.consume(TokenType.SYMBOL_OPEN_PAREN))
-                    if (parser.consume(TokenType.KEYWORD_COUNT))
-                      parser.must_consume( TokenType.SYMBOL_CLOSE_PAREN )
-                      return TokenizerCmdNot( t, term.to_is_digit_count )
-                    elseIf (not parser.next_is(TokenType.INTEGER))
-                      throw parser.peek.error( "Base '2'..'16' or 'count' expected." )
-                    endIf
-                    base = parser.read->Int32
-                    parser.must_consume( TokenType.SYMBOL_CLOSE_PAREN )
-                  endIf
-                  return TokenizerCmdNot( t, term.to_is_digit(base) )
-                elseIf (parser.consume(TokenType.KEYWORD_LETTER))
-                  return TokenizerCmdNot( t, term.to_is_letter )
-                else
-                  throw parser.peek.error( "'is not digit' or 'is not letter' expected." )
-                endIf
-              else
-                if (parser.consume(TokenType.KEYWORD_DIGIT))
-                  local base = 10
-                  if (parser.consume(TokenType.SYMBOL_OPEN_PAREN))
-                    if (parser.consume(TokenType.KEYWORD_COUNT))
-                      parser.must_consume( TokenType.SYMBOL_CLOSE_PAREN )
-                      return term.to_is_digit_count
-                    elseIf (not parser.next_is(TokenType.INTEGER))
-                      throw parser.peek.error( "Base '2'..'16' or 'count' expected." )
-                    endIf
-                    base = parser.read->Int32
-                    parser.must_consume( TokenType.SYMBOL_CLOSE_PAREN )
-                  endIf
-                  return term.to_is_digit( base )
-                elseIf (parser.consume(TokenType.KEYWORD_LETTER))
-                  return term.to_is_letter
-                else
-                  throw parser.peek.error( "'is digit' or 'is letter' expected." )
-                endIf
-              endIf
-            else
-              return term
-            endIf
-          endFunction
-        )
-      )
-      }#
 
       # parser term
       rule = add_nested( ParseRule("parser_term") )
@@ -283,18 +220,7 @@ class FroleyParser : Parser
           endIf
         endFunction
       )
-
-      #{
-      rule.on( "ch",            <<TokenizerCmdRegisterCh>> )
-      rule.on( "count",         <<TokenizerCmdRegisterCount>> )
-      }#
       rule.on( "hasAnother",    <<ParserCmdHasAnother>> )
-      #{
-      rule.on( "integer value", <<TokenizerCmdLiteralInt32>> )
-      rule.on( "literal string",<<TokenizerCmdLiteralString>> )
-      rule.on( "read",          <<TokenizerCmdRead>> )
-      rule.on( "pop",           <<TokenizerCmdPop>> )
-      }#
       rule.on( "identifier",
         function(parser:FroleyParser)->Cmd
           local t = parser.read  # (identifier)
@@ -309,35 +235,6 @@ class FroleyParser : Parser
           }#
         endFunction
       )
-      #{
-      rule.on( "scanDigits",
-        function(parser:FroleyParser)->Cmd
-          local t = parser.read  # 'scanDigits'
-          local min_digits = parser.read_integer
-          local max_digits = min_digits
-          if (parser.consume(TokenType.SYMBOL_DOT_DOT)) max_digits = parser.read_integer
-          local base = 10
-          if (parser.consume(TokenType.KEYWORD_BASE))
-            base = parser.read_integer
-          endIf
-          return TokenizerCmdScanDigits(t,min_digits,max_digits,base)
-        endFunction
-      )
-      rule.on( "scanIdentifier", <<TokenizerCmdScanIdentfier>> )
-      rule.on( "peek",
-        function(parser:FroleyParser)->Cmd
-          local t = parser.read  # 'peek'
-          if (parser.next_is(TokenType.SYMBOL_OPEN_PAREN))
-            local expr = parser.parse_tokenizer_expression()
-            if (expr.is_integer) return TokenizerCmdPeekInt32( t, expr->Int32 )
-            if (expr.is_count)   return TokenizerCmdPeekCount( t )
-            throw expr.t.error( "'Expected 'peek', 'peek(<integer>)', or 'peek(count)'." )
-          else
-            return TokenizerCmdPeek( t )
-          endIf
-        endFunction
-      )
-    }#
       rule.on( "consume",
         function(parser:FroleyParser)->Cmd
           local t = parser.read  # 'consume'

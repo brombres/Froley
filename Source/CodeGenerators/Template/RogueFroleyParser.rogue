@@ -272,6 +272,36 @@ augment RogueTemplate
        |            number_stack.last = not number_stack.last
        |            nextIteration
        |
+       |          case RogueFroleyParserOpcode.COMPARE_EQ
+       |            local b = number_stack.remove_last
+       |            number_stack.add( number_stack.remove_last == b )
+       |            nextIteration
+       |
+       |          case RogueFroleyParserOpcode.COMPARE_NE
+       |            local b = number_stack.remove_last
+       |            number_stack.add( number_stack.remove_last != b )
+       |            nextIteration
+       |
+       |          case RogueFroleyParserOpcode.COMPARE_LT
+       |            local b = number_stack.remove_last
+       |            number_stack.add( number_stack.remove_last < b )
+       |            nextIteration
+       |
+       |          case RogueFroleyParserOpcode.COMPARE_LE
+       |            local b = number_stack.remove_last
+       |            number_stack.add( number_stack.remove_last <= b )
+       |            nextIteration
+       |
+       |          case RogueFroleyParserOpcode.COMPARE_GT
+       |            local b = number_stack.remove_last
+       |            number_stack.add( number_stack.remove_last > b )
+       |            nextIteration
+       |
+       |          case RogueFroleyParserOpcode.COMPARE_GE
+       |            local b = number_stack.remove_last
+       |            number_stack.add( number_stack.remove_last >= b )
+       |            nextIteration
+       |
        |          others
        |            throw RogueFroleyError( "[INTERNAL]", "Unhandled parser opcode: " + RogueFroleyParserOpcode(opcode) )
        |        endWhich

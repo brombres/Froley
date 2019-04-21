@@ -31,5 +31,12 @@ enum ParserOpcode( size=1:Int32 )
   WRITE_VAR(2)
   READ_VAR(2)
   LOGICAL_NOT
+  COMPARE_EQ
+  COMPARE_NE
+  COMPARE_LT
+  COMPARE_LE
+  COMPARE_GT
+  COMPARE_GE
+
 endEnum
 

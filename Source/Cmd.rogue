@@ -1106,3 +1106,30 @@ class ParserCmdDiscardSavedPosition( t ) : Cmd
       assembler.write( ParserOpcode.DISCARD_SAVED_POSITION )
 endClass
 
+class ParserCmdCompare<<$OPCODE>> : CmdBinary
+  METHODS
+    method to->String
+      local symbol = "<>"
+      which (ParserOpcode.$OPCODE)
+        case ParserOpcode.COMPARE_EQ: symbol = "=="
+        case ParserOpcode.COMPARE_NE: symbol = "!="
+        case ParserOpcode.COMPARE_LT: symbol = "<"
+        case ParserOpcode.COMPARE_LE: symbol = "<="
+        case ParserOpcode.COMPARE_GT: symbol = ">"
+        case ParserOpcode.COMPARE_GE: symbol = ">="
+      endWhich
+      return "$ $ $" (left,symbol,right)
+
+    method write( assembler:ParserAssembler )
+      left.write( assembler )
+      right.write( assembler )
+      assembler.write( ParserOpcode.$OPCODE )
+endClass
+
+class ParserCmdCompareEQ : ParserCmdCompare<<COMPARE_EQ>>;
+class ParserCmdCompareNE : ParserCmdCompare<<COMPARE_NE>>;
+class ParserCmdCompareLT : ParserCmdCompare<<COMPARE_LT>>;
+class ParserCmdCompareLE : ParserCmdCompare<<COMPARE_LE>>;
+class ParserCmdCompareGT : ParserCmdCompare<<COMPARE_GT>>;
+class ParserCmdCompareGE : ParserCmdCompare<<COMPARE_GE>>;
+

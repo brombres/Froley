@@ -1,7 +1,9 @@
 augment RogueTemplate
   PROPERTIES
     main =
-      @|$include "RogueFroleyParser.rogue"
+      @|module RogueFroley
+       |
+       |$include "Parser.rogue"
        |
        |RogueFroley()
        |
@@ -9,7 +11,7 @@ augment RogueTemplate
        |  METHODS
        |    method init
        |      # Parse input or file by repeatedly calling first method defined in parser.
-       |      local parser = RogueFroleyParser()
+       |      local parser = Parser()
        |      if (System.command_line_arguments.count)
        |        try
        |          local args = System.command_line_arguments.join( " " )
@@ -26,7 +28,7 @@ augment RogueTemplate
        |              println cmd
        |            endWhile
        |          endIf
-       |        catch (err:RogueFroleyError)
+       |        catch (err:Error)
        |          Console.error.println err
        |        endTry
        |
@@ -34,7 +36,7 @@ augment RogueTemplate
        |        # Interactive mode
        |        loop
        |          try
-       |            local input = Console.input( "RogueFroley> " )
+       |            local input = Console.input( "> " )
        |            parser.open( "[Command Line]", input )
        |            if (not parser.methods.is_empty)
        |              while (parser.has_another)
@@ -42,7 +44,7 @@ augment RogueTemplate
        |                println cmd
        |              endWhile
        |            endIf
-       |          catch (err:RogueFroleyError)
+       |          catch (err:Error)
        |            Console.error.println err
        |          endTry
        |        endLoop

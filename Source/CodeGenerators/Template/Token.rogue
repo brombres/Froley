@@ -1,0 +1,20 @@
+augment RogueTemplate
+  PROPERTIES
+    token =
+      @|module RogueFroley
+       |
+       |class Token( type:TokenType, filepath:String, source:String, line:Int32, column:Int32, content=null:String )
+       |  METHODS
+       |    method cloned->Token
+       |      return Token( type, filepath, source, line, column, content )
+       |
+       |    method error( message:String )->Error
+       |      return Error( filepath, source, line, column, message )
+       |
+       |    method to->String
+       |      if (content) return content
+       |      return type.symbol.to_escaped_ascii
+       |endClass
+       |
+endAugment
+

@@ -1,4 +1,6 @@
-$include "CSQParser.rogue"
+module CSQ
+
+$include "Parser.rogue"
 
 CSQ()
 
@@ -6,7 +8,7 @@ class CSQ
   METHODS
     method init
       # Parse input or file by repeatedly calling first method defined in parser.
-      local parser = CSQParser()
+      local parser = Parser()
       if (System.command_line_arguments.count)
         try
           local args = System.command_line_arguments.join( " " )
@@ -23,7 +25,7 @@ class CSQ
             cmd.write( builder )
             println builder
           endWhile
-        catch (err:CSQError)
+        catch (err:Error)
           Console.error.println err
         endTry
 
@@ -39,7 +41,7 @@ class CSQ
               cmd.write( builder )
               println builder
             endWhile
-          catch (err:CSQError)
+          catch (err:Error)
             Console.error.println err
           endTry
         endLoop

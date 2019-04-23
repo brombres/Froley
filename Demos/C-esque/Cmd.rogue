@@ -1,9 +1,11 @@
-class CSQCmd
+module CSQ
+
+class Cmd
   PROPERTIES
-    t : CSQToken
+    t : Token
 
   METHODS
-    method init( t, args:CSQCmdInitArgs )
+    method init( t, args:CmdInitArgs )
       args.require_count( 0 )
 
     method ends_with_semicolon->Logical
@@ -13,32 +15,32 @@ class CSQCmd
       builder.print( this->String )
 endClass
 
-class CSQCmdList : CSQCmd
+class CmdList : Cmd
   PROPERTIES
-    list : CSQCmd[]
+    list : Cmd[]
 
   METHODS
     method init( t )
-      list = CSQCmd[](5)
+      list = Cmd[](5)
 
-    method init( t, args:CSQCmdInitArgs )
-      list = CSQCmd[]( args.count )
+    method init( t, args:CmdInitArgs )
+      list = Cmd[]( args.count )
       list.add( forEach in args )
 
     method count->Int32
       return list.count
 
-    method first->CSQCmd
+    method first->Cmd
       return list.first
 
-    method get( index:Int32 )->CSQCmd
+    method get( index:Int32 )->Cmd
       return list[ index ]
 
-    method last->CSQCmd
+    method last->Cmd
       return list.last
 endClass
 
-class CSQCmdStatements : CSQCmdList
+class CmdStatements : CmdList
   METHODS
     method to->String
       return list.join( "\n" )
@@ -51,7 +53,7 @@ class CSQCmdStatements : CSQCmdList
       endForEach
 endClass
 
-class CSQCmdArgs : CSQCmdList
+class CmdArgs : CmdList
   METHODS
     method to->String
       return "($)" (list.join(","))
@@ -63,9 +65,9 @@ class CSQCmdArgs : CSQCmdList
       endForEach
 endClass
 
-class CSQCmdUnary( t, operand:CSQCmd ) : CSQCmd
+class CmdUnary( t, operand:Cmd ) : Cmd
   METHODS
-    method init( t, args:CSQCmdInitArgs )
+    method init( t, args:CmdInitArgs )
       args.require_count( 1 )
       operand = args.first
 
@@ -76,15 +78,15 @@ class CSQCmdUnary( t, operand:CSQCmd ) : CSQCmd
       return "($$)" (op,operand)
 endClass
 
-class CSQCmdPostUnary : CSQCmdUnary
+class CmdPostUnary : CmdUnary
   METHODS
     method to->String
       return "($$)" (operand,op)
 endClass
 
-class CSQCmdBinary( t, left:CSQCmd, right:CSQCmd ) : CSQCmd
+class CmdBinary( t, left:Cmd, right:Cmd ) : Cmd
   METHODS
-    method init( t, args:CSQCmdInitArgs )
+    method init( t, args:CmdInitArgs )
       args.require_count( 2 )
       left = args.first
       right = args.last
@@ -97,9 +99,9 @@ class CSQCmdBinary( t, left:CSQCmd, right:CSQCmd ) : CSQCmd
 endClass
 
 
-class CSQCmdIf( t, condition:CSQCmd, body:CSQCmd, else_body:CSQCmd ) : CSQCmd
+class CmdIf( t, condition:Cmd, body:Cmd, else_body:Cmd ) : Cmd
   METHODS
-    method init( t, args:CSQCmdInitArgs )
+    method init( t, args:CmdInitArgs )
       args.require_count( 3 )
       condition = args[ 0 ]
       body = args[ 1 ]
@@ -132,9 +134,9 @@ class CSQCmdIf( t, condition:CSQCmd, body:CSQCmd, else_body:CSQCmd ) : CSQCmd
       endIf
 endClass
 
-class CSQCmdFor( t, initializer:CSQCmd, condition:CSQCmd, modifier:CSQCmd, body:CSQCmd ) : CSQCmd
+class CmdFor( t, initializer:Cmd, condition:Cmd, modifier:Cmd, body:Cmd ) : Cmd
   METHODS
-    method init( t, args:CSQCmdInitArgs )
+    method init( t, args:CmdInitArgs )
       args.require_count( 4 )
       initializer = args[ 0 ]
       condition = args[ 1 ]
@@ -163,9 +165,9 @@ class CSQCmdFor( t, initializer:CSQCmd, condition:CSQCmd, modifier:CSQCmd, body:
       builder.println( "}" )
 endClass
 
-class CSQCmdWhile( t, condition:CSQCmd, body:CSQCmd ) : CSQCmd
+class CmdWhile( t, condition:Cmd, body:Cmd ) : Cmd
   METHODS
-    method init( t, args:CSQCmdInitArgs )
+    method init( t, args:CmdInitArgs )
       args.require_count( 2 )
       condition = args[ 0 ]
       body = args[ 1 ]
@@ -174,9 +176,9 @@ class CSQCmdWhile( t, condition:CSQCmd, body:CSQCmd ) : CSQCmd
       return "while($,$)"(condition,body)
 endClass
 
-class CSQCmdName( t, value:String ) : CSQCmd
+class CmdName( t, value:String ) : Cmd
   METHODS
-    method init( t, args:CSQCmdInitArgs )
+    method init( t, args:CmdInitArgs )
       args.require_count( 0 )
       value = t.content
 
@@ -184,9 +186,9 @@ class CSQCmdName( t, value:String ) : CSQCmd
       return value
 endClass
 
-class CSQCmdLocalDeclaration( t, type:CSQCmd, name:CSQCmd, initial_value:CSQCmd ) : CSQCmd
+class CmdLocalDeclaration( t, type:Cmd, name:Cmd, initial_value:Cmd ) : Cmd
   METHODS
-    method init( t, args:CSQCmdInitArgs )
+    method init( t, args:CmdInitArgs )
       args.require_count( 3 )
       type = args[ 0 ]
       name = args[ 1 ]
@@ -200,147 +202,147 @@ class CSQCmdLocalDeclaration( t, type:CSQCmd, name:CSQCmd, initial_value:CSQCmd 
       if (initial_value) builder.print( " = " ).print( initial_value )
 endClass
 
-class CSQCmdAssign : CSQCmdBinary
+class CmdAssign : CmdBinary
   METHODS
     method op->String
       return "="
 endClass
 
-class CSQCmdAddAndAssign : CSQCmdBinary
+class CmdAddAndAssign : CmdBinary
   METHODS
     method op->String
       return "+="
 endClass
 
-class CSQCmdSubtractAndAssign : CSQCmdBinary
+class CmdSubtractAndAssign : CmdBinary
   METHODS
     method op->String
       return "-="
 endClass
 
-class CSQCmdMultiplyAndAssign : CSQCmdBinary
+class CmdMultiplyAndAssign : CmdBinary
   METHODS
     method op->String
       return "*="
 endClass
 
-class CSQCmdDivideAndAssign : CSQCmdBinary
+class CmdDivideAndAssign : CmdBinary
   METHODS
     method op->String
       return "/="
 endClass
 
-class CSQCmdModAndAssign : CSQCmdBinary
+class CmdModAndAssign : CmdBinary
   METHODS
     method op->String
       return "%="
 endClass
 
-class CSQCmdAndAndAssign : CSQCmdBinary
+class CmdAndAndAssign : CmdBinary
   METHODS
     method op->String
       return "&="
 endClass
 
-class CSQCmdOrAndAssign : CSQCmdBinary
+class CmdOrAndAssign : CmdBinary
   METHODS
     method op->String
       return "|="
 endClass
 
-class CSQCmdCompareEQ : CSQCmdBinary
+class CmdCompareEQ : CmdBinary
   METHODS
     method op->String
       return "=="
 endClass
 
-class CSQCmdCompareNE : CSQCmdBinary
+class CmdCompareNE : CmdBinary
   METHODS
     method op->String
       return "!="
 endClass
 
-class CSQCmdCompareLT : CSQCmdBinary
+class CmdCompareLT : CmdBinary
   METHODS
     method op->String
       return "<"
 endClass
 
-class CSQCmdCompareGT : CSQCmdBinary
+class CmdCompareGT : CmdBinary
   METHODS
     method op->String
       return ">"
 endClass
 
-class CSQCmdCompareLE : CSQCmdBinary
+class CmdCompareLE : CmdBinary
   METHODS
     method op->String
       return "<="
 endClass
 
-class CSQCmdCompareGE : CSQCmdBinary
+class CmdCompareGE : CmdBinary
   METHODS
     method op->String
       return ">="
 endClass
 
-class CSQCmdAdd : CSQCmdBinary
+class CmdAdd : CmdBinary
   METHODS
     method op->String
       return "+"
 endClass
 
-class CSQCmdSubtract : CSQCmdBinary
+class CmdSubtract : CmdBinary
   METHODS
     method op->String
       return "-"
 endClass
 
-class CSQCmdMultiply : CSQCmdBinary
+class CmdMultiply : CmdBinary
   METHODS
     method op->String
       return "*"
 endClass
 
-class CSQCmdDivide : CSQCmdBinary
+class CmdDivide : CmdBinary
   METHODS
     method op->String
       return "/"
 endClass
 
-class CSQCmdNegate : CSQCmdUnary
+class CmdNegate : CmdUnary
   METHODS
     method op->String
       return "-"
 endClass
 
-class CSQCmdPreIncrement : CSQCmdUnary
+class CmdPreIncrement : CmdUnary
   METHODS
     method op->String
       return "++"
 endClass
 
-class CSQCmdPreDecrement : CSQCmdUnary
+class CmdPreDecrement : CmdUnary
   METHODS
     method op->String
       return "--"
 endClass
 
-class CSQCmdPostIncrement : CSQCmdPostUnary
+class CmdPostIncrement : CmdPostUnary
   METHODS
     method op->String
       return "++"
 endClass
 
-class CSQCmdPostDecrement : CSQCmdPostUnary
+class CmdPostDecrement : CmdPostUnary
   METHODS
     method op->String
       return "--"
 endClass
 
-class CSQCmdAccess( t, value:String ) : CSQCmd
+class CmdAccess( t, value:String ) : Cmd
   METHODS
-    method init( t, args:CSQCmdInitArgs )
+    method init( t, args:CmdInitArgs )
       args.require_count( 0 )
       value = t.content
 
@@ -348,9 +350,9 @@ class CSQCmdAccess( t, value:String ) : CSQCmd
       return value
 endClass
 
-class CSQCmdLiteralInt32( t, value:Int32 ) : CSQCmd
+class CmdLiteralInt32( t, value:Int32 ) : Cmd
   METHODS
-    method init( t, args:CSQCmdInitArgs )
+    method init( t, args:CmdInitArgs )
       args.require_count( 0 )
       value = t.content->Int32
 

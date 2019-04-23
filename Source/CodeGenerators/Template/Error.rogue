@@ -1,7 +1,9 @@
 augment RogueTemplate
   PROPERTIES
     error =
-      @|class RogueFroleyError( filepath:String, source:String, line:Int32, column:Int32, message:String ) : Error
+      @|module RogueFroley
+       |
+       |class Error( filepath:String, source:String, line:Int32, column:Int32, message:String ) : ::Error
        |  METHODS
        |    method init( filepath, message )
        |

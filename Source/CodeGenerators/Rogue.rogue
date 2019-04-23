@@ -37,7 +37,7 @@ class GenerateRogue : CodeGenerator
       endWhich
 
     method output_filepath( filename:String, &do_not_overwrite, &for_reading )->String
-      local filepath = select{options//output||""} + language + filename
+      local filepath = select{options//output||""} + filename
       if (for_reading) return filepath
 
       if (File.timestamp(filepath) >= source_timestamp) return null
@@ -100,7 +100,7 @@ class GenerateRogue : CodeGenerator
       local builder : StringBuilder
       forEach (cmd_type in info//cmd_types)
         local base_name = (cmd_type//name)->String
-        local class_name = language + base_name
+        local class_name = base_name
         local class_class_name = "class " + class_name
         if (not content.contains(class_class_name))
           if (not builder)
@@ -122,13 +122,13 @@ class GenerateRogue : CodeGenerator
               if (p//value.count)
                 builder.print( p//type )
               else
-                builder.print( language ).print( p//type )
+                builder.print( p//type )
               endIf
             endForEach
             builder.print( " )" )
           endIf
 
-          builder.print( " : " ).print( language ).print( "Cmd" )
+          builder.print( " : Cmd" )
           which (type)
             case ParseRuleType.PRE_UNARY:  builder.println "Unary"
             case ParseRuleType.POST_UNARY: builder.println "PostUnary"
@@ -140,7 +140,7 @@ class GenerateRogue : CodeGenerator
           endWhich
           builder.println "  METHODS"
           if (cmd_properties.count)
-            builder.print(   "    method init( t, args:" ).print( language ).println( "CmdInitArgs )" )
+            builder.print(   "    method init( t, args:CmdInitArgs )" )
             builder.print(   "      args.require_count( " ).print( cmd_type//properties.count($//value=="") ).println( " )" )
             local index = 0
             forEach (p in cmd_properties)
@@ -215,12 +215,12 @@ class GenerateRogue : CodeGenerator
       generate( RogueTemplate.error, "Error.rogue", &do_not_overwrite )
 
     method generate_main
-      generate( RogueTemplate.main, ".rogue", &do_not_overwrite )
+      generate( RogueTemplate.main, language+".rogue", &do_not_overwrite )
 
     method generate_Parser
       local fn = function( content:String )->String
         local def = Froley.token_defs_by_symbol[ "\n" ]
-        if (def) content = content.replacing( "<handle_consume_eols>", "while (RogueFroleyTokenType(next_token_type) == RogueFroleyTokenType.$) read"(def.name) )
+        if (def) content = content.replacing( "<handle_consume_eols>", "while (TokenType(next_token_type) == TokenType.$) read"(def.name) )
         return content
       endFunction
       generate( RogueTemplate.parser, "Parser.rogue", fn, &do_not_overwrite )
@@ -241,17 +241,18 @@ class GenerateRogue : CodeGenerator
       local writer = output_writer( "CmdFactory.rogue" )
       if (not writer) return
 
-      writer.print  ( "class ").print( language ).println( "CmdFactory" )
+      writer.print  ("module ").println( language )
+      writer.println
+      writer.print  ( "class CmdFactory" )
       writer.println( "  GLOBAL METHODS" )
-      writer.print  ( "    method create_cmd( index:Int32, t:" ).print( language ).print( "Token, args:" ).print( language ).print( "CmdInitArgs )->" ) ...
-        .print( language ).println( "Cmd" )
+      writer.println( "    method create_cmd( index:Int32, t:Token, args:CmdInitArgs )->Cmd" )
       writer.println("      which (index)")
       forEach (cmd_type in info//cmd_types)
         writer.print  ( "        case " ).print( cmd_type//index ).print( ": " )
-        writer.print  ( "return " ).print( language ).print( cmd_type//name ).println( "( t, args )" )
+        writer.print  ( "return " ).print( cmd_type//name ).println( "( t, args )" )
       endForEach
       writer.println @|        others
-      writer.print  ( "          throw " ).print( language ).println( ''Error( "[INTERNAL] CmdFactory.create_cmd() index out of bounds: " + index )'' )
+      writer.println(''          throw Error( "[INTERNAL] CmdFactory.create_cmd() index out of bounds: " + index )'' )
       writer.println @|      endWhich
                       |endClass
       writer.close
@@ -260,7 +261,9 @@ class GenerateRogue : CodeGenerator
       local writer = output_writer( "Code.rogue" )
       if (not writer) return
 
-      writer.print  ( "class " ).print( language ).println( "Code [singleton]" )
+      writer.print  ("module ").println( language )
+      writer.println
+      writer.print  ( "class Code [singleton]" )
       writer.println @|  PROPERTIES
                       |    tokenizer_code_base64 =
       writer.print    "      \""
@@ -293,7 +296,7 @@ class GenerateRogue : CodeGenerator
         defs.add( parser_opcode//name, parser_opcode//value )
       endForEach
 
-      writer.print  ( "enum ").print( language ).print( "ParserOpcode" )
+      writer.print  ( "enum ParserOpcode" )
       defs.print( writer )
       writer.println @|endEnum
       writer.close
@@ -311,7 +314,7 @@ class GenerateRogue : CodeGenerator
         attributes_by_value[ attribute//value ] = name
       endForEach
 
-      writer.print  ( "enum ").print( language ).println( "TokenTypeAttribute" )
+      writer.print  ( "enum TokenTypeAttribute" )
       defs.print( writer )
       writer.println @|endEnum
       writer.println.println
@@ -321,7 +324,7 @@ class GenerateRogue : CodeGenerator
         local def = '$("$"' (token_type//name,token_type//symbol->String.to_escaped_ascii("\""))
         local attributes = token_type//attributes->Int32
         if (attributes)
-          def += "," + language + "TokenTypeAttribute"
+          def += ",TokenTypeAttribute"
           local name = attributes_by_value[ attributes ]
           if (name) def += "." + name
           else      def += "($)" (attributes)
@@ -330,8 +333,7 @@ class GenerateRogue : CodeGenerator
         defs.add( def, token_type//type )
       endForEach
 
-      writer.print  ( "enum ").print( language ).print( "TokenType( symbol:String, attributes=" ).print( language ).print( "TokenTypeAttribute.NONE:" )
-      writer.print( language ).println( "TokenTypeAttribute )" )
+      writer.println( "enum TokenType( symbol:String, attributes=TokenTypeAttribute.NONE:TokenTypeAttribute )" )
       defs.print( writer )
       writer.println @|endEnum
       writer.close
@@ -345,7 +347,7 @@ class GenerateRogue : CodeGenerator
         defs.add( tokenizer_opcode//name, tokenizer_opcode//value )
       endForEach
 
-      writer.print  ( "enum ").print( language ).print( "TokenizerOpcode" )
+      writer.print  ( "enum TokenizerOpcode" )
       defs.print( writer )
       writer.println @|endEnum
       writer.close

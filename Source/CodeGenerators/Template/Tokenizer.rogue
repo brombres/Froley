@@ -1,7 +1,9 @@
 augment RogueTemplate
   PROPERTIES
     tokenizer =
-      @|class RogueFroleyTokenizer
+      @|module RogueFroley
+       |
+       |class Tokenizer
        |  DEFINITIONS
        |    VERSION     = 1
        |    MIN_VERSION = 1
@@ -16,7 +18,7 @@ augment RogueTemplate
        |    result       : Int32
        |    buffer       = StringBuilder()
        |    work_buffer  = StringBuilder()  # used for bufferToLowercase
-       |    tokens       = RogueFroleyToken[](1024)
+       |    tokens       = Token[](1024)
        |
        |    filepath : String
        |    scanner  : Scanner
@@ -34,96 +36,96 @@ augment RogueTemplate
        |    method init
        |      forEach (ch in id_continue) id_characters[ch->Int32] = 2
        |      forEach (ch in id_start)    id_characters[ch->Int32] = 1
-       |      load( RogueFroleyCode.tokenizer_code )
+       |      load( Code.tokenizer_code )
        |
        |    method add( token_type:Int32 )
-       |      local t = RogueFroleyToken( RogueFroleyTokenType(token_type), filepath, scanner.source, line, column )
-       |      if (t.type.attributes & RogueFroleyTokenTypeAttribute.CONTENT) t.content = buffer->String
+       |      local t = Token( TokenType(token_type), filepath, scanner.source, line, column )
+       |      if (t.type.attributes & TokenTypeAttribute.CONTENT) t.content = buffer->String
        |      tokens.add( t )
        |
        |    method execute
        |      local ip = start_ip
        |      loop
-       |        local opcode = RogueFroleyTokenizerOpcode( code[ip] )
+       |        local opcode = TokenizerOpcode( code[ip] )
        |        #println "$ $" (ip.format("04"),opcode)
        |        ++ip
        |        which (opcode)
-       |          case RogueFroleyTokenizerOpcode.HALT
+       |          case TokenizerOpcode.HALT
        |            return
-       |          case RogueFroleyTokenizerOpcode.RESTART
+       |          case TokenizerOpcode.RESTART
        |            buffer.clear
        |            ip = start_ip
        |            nextIteration
-       |          case RogueFroleyTokenizerOpcode.MODE_INT32
+       |          case TokenizerOpcode.MODE_INT32
        |            start_ip = code[ ip ]
        |            ++ip
        |            nextIteration
-       |          case RogueFroleyTokenizerOpcode.ERROR
-       |            throw RogueFroleyError( filepath, scanner.source, scanner.line, scanner.column, buffer->String )
-       |          case RogueFroleyTokenizerOpcode.MARK_SOURCE_POS
+       |          case TokenizerOpcode.ERROR
+       |            throw Error( filepath, scanner.source, scanner.line, scanner.column, buffer->String )
+       |          case TokenizerOpcode.MARK_SOURCE_POS
        |            line   = scanner.line
        |            column = scanner.column
        |            nextIteration
-       |          case RogueFroleyTokenizerOpcode.CREATE_INT32
+       |          case TokenizerOpcode.CREATE_INT32
        |            local token_type = code[ ip ]
        |            ++ip
        |            add( token_type )
        |            buffer.clear
        |            nextIteration
-       |          case RogueFroleyTokenizerOpcode.JUMP
+       |          case TokenizerOpcode.JUMP
        |            ip = code[ ip ]
        |            nextIteration
-       |          case RogueFroleyTokenizerOpcode.JUMP_EQ
+       |          case TokenizerOpcode.JUMP_EQ
        |            if (result == 0) ip = code[ ip ]
        |            else             ++ip
        |            nextIteration
-       |          case RogueFroleyTokenizerOpcode.JUMP_NE
+       |          case TokenizerOpcode.JUMP_NE
        |            if (result != 0) ip = code[ ip ]
        |            else             ++ip
        |            nextIteration
-       |          case RogueFroleyTokenizerOpcode.JUMP_LT
+       |          case TokenizerOpcode.JUMP_LT
        |            if (result < 0) ip = code[ ip ]
        |            else            ++ip
        |            nextIteration
-       |          case RogueFroleyTokenizerOpcode.JUMP_LE
+       |          case TokenizerOpcode.JUMP_LE
        |            if (result <= 0) ip = code[ ip ]
        |            else             ++ip
        |            nextIteration
-       |          case RogueFroleyTokenizerOpcode.JUMP_GT
+       |          case TokenizerOpcode.JUMP_GT
        |            if (result > 0) ip = code[ ip ]
        |            else            ++ip
        |            nextIteration
-       |          case RogueFroleyTokenizerOpcode.JUMP_GE
+       |          case TokenizerOpcode.JUMP_GE
        |            if (result >= 0) ip = code[ ip ]
        |            else             ++ip
        |            nextIteration
-       |          case RogueFroleyTokenizerOpcode.CALL
+       |          case TokenizerOpcode.CALL
        |            stack.add( ip+1 )
        |            ip = code[ ip ]
        |            nextIteration
-       |          case RogueFroleyTokenizerOpcode.RETURN
-       |            if (stack.is_empty) throw RogueFroleyError( "[Compiled Code]", "'return' on empty stack." )
+       |          case TokenizerOpcode.RETURN
+       |            if (stack.is_empty) throw Error( "[Compiled Code]", "'return' on empty stack." )
        |            ip = stack.remove_last
        |            nextIteration
-       |          case RogueFroleyTokenizerOpcode.HAS_ANOTHER
+       |          case TokenizerOpcode.HAS_ANOTHER
        |            result = select{ scanner.has_another:1 || 0 }
        |            nextIteration
-       |          case RogueFroleyTokenizerOpcode.PEEK_CH_INT32
+       |          case TokenizerOpcode.PEEK_CH_INT32
        |            ch = scanner.peek( code[ip] )
        |            ++ip
        |            nextIteration
-       |          case RogueFroleyTokenizerOpcode.PEEK_CH_COUNT
+       |          case TokenizerOpcode.PEEK_CH_COUNT
        |            ch = scanner.peek( count )
        |            nextIteration
-       |          case RogueFroleyTokenizerOpcode.READ_CH
+       |          case TokenizerOpcode.READ_CH
        |            ch = scanner.read
        |            nextIteration
-       |          case RogueFroleyTokenizerOpcode.CONSUME_CHARACTER
+       |          case TokenizerOpcode.CONSUME_CHARACTER
        |            local value = code[ip]->Character
        |            result = select{ scanner.consume(value):1 || 0 }
        |            ++ip
        |            nextIteration
-       |          case RogueFroleyTokenizerOpcode.SCAN_DIGITS
+       |          case TokenizerOpcode.SCAN_DIGITS
        |            local min_digits = code[ ip ]
        |            local max_digits = code[ ip+1 ]
        |            local base = code[ ip+2 ]
@@ -140,7 +142,7 @@ augment RogueTemplate
        |            endLoop
        |            result = n - min_digits
        |            nextIteration
-       |          case RogueFroleyTokenizerOpcode.SCAN_IDENTIFIER
+       |          case TokenizerOpcode.SCAN_IDENTIFIER
        |            if (scanner.has_another and id_characters[scanner.peek&0x7F] == 1)
        |              buffer.clear
        |              buffer.print( scanner.read )
@@ -152,120 +154,120 @@ augment RogueTemplate
        |              result = 0
        |            endIf
        |            nextIteration
-       |          case RogueFroleyTokenizerOpcode.CLEAR_BUFFER
+       |          case TokenizerOpcode.CLEAR_BUFFER
        |            buffer.clear
        |            nextIteration
-       |          case RogueFroleyTokenizerOpcode.COLLECT_CH
+       |          case TokenizerOpcode.COLLECT_CH
        |            buffer.print( ch->Character )
        |            nextIteration
-       |          case RogueFroleyTokenizerOpcode.COLLECT_CHARACTER
+       |          case TokenizerOpcode.COLLECT_CHARACTER
        |            buffer.print( code[ip]->Character )
        |            ++ip
        |            nextIteration
-       |          case RogueFroleyTokenizerOpcode.COLLECT_STRING
+       |          case TokenizerOpcode.COLLECT_STRING
        |            buffer.print( strings[code[ip]] )
        |            ++ip
        |            nextIteration
-       |          case RogueFroleyTokenizerOpcode.BUFFER_TO_LOWERCASE
+       |          case TokenizerOpcode.BUFFER_TO_LOWERCASE
        |            work_buffer.clear
        |            work_buffer.print( (forEach in buffer).to_lowercase )
        |            buffer.clear.print( work_buffer )
        |            nextIteration
-       |          case RogueFroleyTokenizerOpcode.PRINT_BUFFER
+       |          case TokenizerOpcode.PRINT_BUFFER
        |            print (forEach in buffer)
        |            nextIteration
-       |          case RogueFroleyTokenizerOpcode.PRINT_CH
+       |          case TokenizerOpcode.PRINT_CH
        |            print ch->Character
        |            nextIteration
-       |          case RogueFroleyTokenizerOpcode.PRINT_COUNT
+       |          case TokenizerOpcode.PRINT_COUNT
        |            print count
        |            nextIteration
-       |          case RogueFroleyTokenizerOpcode.PRINT_CHARACTER
+       |          case TokenizerOpcode.PRINT_CHARACTER
        |            print code[ip]->Character
        |            ++ip
        |            nextIteration
-       |          case RogueFroleyTokenizerOpcode.PRINT_STRING
+       |          case TokenizerOpcode.PRINT_STRING
        |            print strings[ code[ip] ]
        |            ++ip
        |            nextIteration
-       |          case RogueFroleyTokenizerOpcode.COMPARE_CH_INT32
+       |          case TokenizerOpcode.COMPARE_CH_INT32
        |            result = ch - code[ip]
        |            ++ip
        |            nextIteration
-       |          case RogueFroleyTokenizerOpcode.COMPARE_COUNT_INT32
+       |          case TokenizerOpcode.COMPARE_COUNT_INT32
        |            result = count - code[ip]
        |            ++ip
        |            nextIteration
-       |          case RogueFroleyTokenizerOpcode.CH_IS_DIGIT_INT32
+       |          case TokenizerOpcode.CH_IS_DIGIT_INT32
        |            local base = code[ip]
        |            ++ip
        |            local n = (ch->Character).to_number( base )
        |            result = select{ (n>=0 and n<base):1 || 0 }
        |            nextIteration
-       |          case RogueFroleyTokenizerOpcode.CH_IS_DIGIT_COUNT
+       |          case TokenizerOpcode.CH_IS_DIGIT_COUNT
        |            local n = (ch->Character).to_number( count )
        |            result = select{ (n>=0 and n<count):1 || 0 }
        |            nextIteration
-       |          case RogueFroleyTokenizerOpcode.CH_IS_LETTER
+       |          case TokenizerOpcode.CH_IS_LETTER
        |            result = select{ ((ch>='a' and ch<='z') or (ch>='A' and ch<='Z')):1 || 0 }
        |            nextIteration
-       |          case RogueFroleyTokenizerOpcode.PUSH_CH
+       |          case TokenizerOpcode.PUSH_CH
        |            stack.add( ch )
        |            nextIteration
-       |          case RogueFroleyTokenizerOpcode.PUSH_COUNT
+       |          case TokenizerOpcode.PUSH_COUNT
        |            stack.add( count )
        |            nextIteration
-       |          case RogueFroleyTokenizerOpcode.POP_CH
-       |            if (stack.is_empty) throw RogueFroleyError( "[Compiled Code]", "'pop ch' on empty stack." )
+       |          case TokenizerOpcode.POP_CH
+       |            if (stack.is_empty) throw Error( "[Compiled Code]", "'pop ch' on empty stack." )
        |            ch = stack.remove_last
        |            nextIteration
-       |          case RogueFroleyTokenizerOpcode.POP_COUNT
-       |            if (stack.is_empty) throw RogueFroleyError( "[Compiled Code]", "'pop count' on empty stack." )
+       |          case TokenizerOpcode.POP_COUNT
+       |            if (stack.is_empty) throw Error( "[Compiled Code]", "'pop count' on empty stack." )
        |            count = stack.remove_last
        |            nextIteration
-       |          case RogueFroleyTokenizerOpcode.SET_CH_TO_INT32
+       |          case TokenizerOpcode.SET_CH_TO_INT32
        |            ch = code[ ip ]
        |            result = ch
        |            ++ip
        |            nextIteration
-       |          case RogueFroleyTokenizerOpcode.SET_CH_TO_COUNT
+       |          case TokenizerOpcode.SET_CH_TO_COUNT
        |            ch = count
        |            result = ch
        |            nextIteration
-       |          case RogueFroleyTokenizerOpcode.SET_COUNT_TO_INT32
+       |          case TokenizerOpcode.SET_COUNT_TO_INT32
        |            count = code[ ip ]
        |            result = count
        |            ++ip
        |            nextIteration
-       |          case RogueFroleyTokenizerOpcode.SET_COUNT_TO_CH
+       |          case TokenizerOpcode.SET_COUNT_TO_CH
        |            count = ch
        |            result = count
        |            nextIteration
-       |          case RogueFroleyTokenizerOpcode.SET_RESULT_TO_CH
+       |          case TokenizerOpcode.SET_RESULT_TO_CH
        |            result = ch
        |            nextIteration
-       |          case RogueFroleyTokenizerOpcode.SET_RESULT_TO_COUNT
+       |          case TokenizerOpcode.SET_RESULT_TO_COUNT
        |            result = count
        |            nextIteration
-       |          case RogueFroleyTokenizerOpcode.SET_RESULT_TO_INT32
+       |          case TokenizerOpcode.SET_RESULT_TO_INT32
        |            result = code[ ip ]
        |            ++ip
        |            nextIteration
-       |          case RogueFroleyTokenizerOpcode.ADD_CH_COUNT
+       |          case TokenizerOpcode.ADD_CH_COUNT
        |            ch += count
        |            nextIteration
-       |          case RogueFroleyTokenizerOpcode.ADD_CH_INT32
+       |          case TokenizerOpcode.ADD_CH_INT32
        |            ch += code[ ip ]
        |            ++ip
        |            nextIteration
-       |          case RogueFroleyTokenizerOpcode.ADD_COUNT_INT32
+       |          case TokenizerOpcode.ADD_COUNT_INT32
        |            count += code[ ip ]
        |            ++ip
        |            nextIteration
-       |          case RogueFroleyTokenizerOpcode.SUBTRACT_CH_COUNT
+       |          case TokenizerOpcode.SUBTRACT_CH_COUNT
        |            ch -= count
        |            nextIteration
-       |          case RogueFroleyTokenizerOpcode.WHICH_INPUT
+       |          case TokenizerOpcode.WHICH_INPUT
        |            local cur_node = ip
        |            local lookahead = 0
        |            local last_acceptable_node = 0
@@ -301,7 +303,7 @@ augment RogueTemplate
        |            loop (last_acceptable_lookahead) buffer.print( scanner.read )
        |            nextIteration
        |
-       |          case RogueFroleyTokenizerOpcode.WHICH_BUFFER
+       |          case TokenizerOpcode.WHICH_BUFFER
        |            local cur_node = ip
        |            local start_node = cur_node
        |            local lookahead = 0
@@ -332,7 +334,7 @@ augment RogueTemplate
        |            ip = cur_node + code[cur_node+1] * 2 + 2
        |            nextIteration
        |          others
-       |            throw RogueFroleyError( "[INTERNAL]", "Unhandled tokenizer opcode: " + RogueFroleyTokenizerOpcode(opcode) )
+       |            throw Error( "[INTERNAL]", "Unhandled tokenizer opcode: " + TokenizerOpcode(opcode) )
        |        endWhich
        |      endLoop
        |
@@ -357,12 +359,12 @@ augment RogueTemplate
        |      code.reserve( n )
        |      loop (n) code.add( reader.read_int32x )
        |
-       |    method tokenize( file:File )->RogueFroleyToken[]
-       |      if (not file.exists) throw RogueFroleyError( "File not found: $." (file.filepath) )
+       |    method tokenize( file:File )->Token[]
+       |      if (not file.exists) throw Error( "File not found: $." (file.filepath) )
        |      tokenize( file.filepath, file.load_as_string )
        |      return tokens
        |
-       |    method tokenize( filepath, source:String, start_line=1:Int32, start_column=1:Int32 )->RogueFroleyToken[]
+       |    method tokenize( filepath, source:String, start_line=1:Int32, start_column=1:Int32 )->Token[]
        |      tokens.clear
        |      scanner = Scanner( source )
        |      scanner.line = start_line

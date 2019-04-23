@@ -1,12 +1,14 @@
 augment RogueTemplate
   PROPERTIES
     cmd =
-      @|class RogueFroleyCmd
+      @|module RogueFroley
+       |
+       |class Cmd
        |  PROPERTIES
-       |    t : RogueFroleyToken
+       |    t : Token
        |
        |  METHODS
-       |    method init( t, args:RogueFroleyCmdInitArgs )
+       |    method init( t, args:CmdInitArgs )
        |      args.require_count( 0 )
        |
        |    method to->String
@@ -18,38 +20,38 @@ augment RogueTemplate
        |      builder.print( type_name.after_any("Cmd") )
        |endClass
        |
-       |class RogueFroleyCmdList : RogueFroleyCmd
+       |class CmdList : Cmd
        |  PROPERTIES
-       |    list : RogueFroleyCmd[]
+       |    list : Cmd[]
        |
        |  METHODS
        |    method init( t )
-       |      list = RogueFroleyCmd[](5)
+       |      list = Cmd[](5)
        |
-       |    method init( t, args:RogueFroleyCmdInitArgs )
-       |      list = RogueFroleyCmd[]( args.count )
+       |    method init( t, args:CmdInitArgs )
+       |      list = Cmd[]( args.count )
        |      list.add( forEach in args )
        |
        |    method count->Int32
        |      return list.count
        |
-       |    method first->RogueFroleyCmd
+       |    method first->Cmd
        |      return list.first
        |
-       |    method get( index:Int32 )->RogueFroleyCmd
+       |    method get( index:Int32 )->Cmd
        |      return list[ index ]
        |
-       |    method last->RogueFroleyCmd
+       |    method last->Cmd
        |      return list.last
        |endClass
        |
-       |class RogueFroleyCmdStatements : RogueFroleyCmdList
+       |class CmdStatements : CmdList
        |  METHODS
        |    method write( builder:StringBuilder )
        |      builder.println( forEach in list )
        |endClass
        |
-       |class RogueFroleyCmdArgs : RogueFroleyCmdList
+       |class CmdArgs : CmdList
        |  METHODS
        |    method write( builder:StringBuilder )
        |      forEach (arg at index in list)
@@ -58,9 +60,9 @@ augment RogueTemplate
        |      endForEach
        |endClass
        |
-       |class RogueFroleyCmdUnary( t, operand:RogueFroleyCmd ) : RogueFroleyCmd
+       |class CmdUnary( t, operand:Cmd ) : Cmd
        |  METHODS
-       |    method init( t, args:RogueFroleyCmdInitArgs )
+       |    method init( t, args:CmdInitArgs )
        |      args.require_count( 1 )
        |      operand = args.first
        |
@@ -71,15 +73,15 @@ augment RogueTemplate
        |      builder.print( '(' ).print( op ).print( operand ).print( ')' )
        |endClass
        |
-       |class RogueFroleyCmdPostUnary : RogueFroleyCmdUnary
+       |class CmdPostUnary : CmdUnary
        |  METHODS
        |    method write( builder:StringBuilder )
        |      builder.print( '(' ).print( operand ).print( op ).print( ')' )
        |endClass
        |
-       |class RogueFroleyCmdBinary( t, left:RogueFroleyCmd, right:RogueFroleyCmd ) : RogueFroleyCmd
+       |class CmdBinary( t, left:Cmd, right:Cmd ) : Cmd
        |  METHODS
-       |    method init( t, args:RogueFroleyCmdInitArgs )
+       |    method init( t, args:CmdInitArgs )
        |      args.require_count( 2 )
        |      left = args.first
        |      right = args.last

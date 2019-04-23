@@ -1,14 +1,16 @@
 augment RogueTemplate
   PROPERTIES
     cmd_init_args =
-      @|class RogueFroleyCmdInitArgs : RogueFroleyCmd[]
+      @|module RogueFroley
+       |
+       |class CmdInitArgs : Cmd[]
        |  PROPERTIES
-       |    t : RogueFroleyToken
+       |    t : Token
        |
        |  METHODS
        |    method require_count( required_count:Int32 )
        |      if (count != required_count)
-       |        throw RogueFroleyError( "[RogueFroley]", "init(t,args) got $, expected $." ("# arg".pluralized(count),required_count) )
+       |        throw Error( "[]", "init(t,args) got $, expected $." ("# arg".pluralized(count),required_count) )
        |      endIf
        |endClass
        |

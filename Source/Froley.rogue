@@ -72,32 +72,33 @@ class Launcher
         local active_generators = CodeGenerator[]
         local cur_gen : CodeGenerator
 
-        local language = input_filepath.before_last( ".froley", &ignore_case )
-        local language_option : String
+        local default_language = input_filepath.before_last( ".froley", &ignore_case )
+        local language_override : String
 
         forEach (option in options)
           local name = option.before_first('=')
           local value = option.after_first('=')
-          if (name == "language")
-            language_option = value
-          else
-            local gen = Froley.code_generators[ name ]
-            if (gen)
-              cur_gen = gen
-              active_generators.add( cur_gen )
-            elseIf (cur_gen is null)
-              throw FroleyError( "Invalid option '$'. Note: no output language has been specified."(option) )
+          local gen = Froley.code_generators[ name ]
+          if (gen)
+            # Switching host language
+            cur_gen = gen
+            active_generators.add( cur_gen )
+            if (language_override) cur_gen.language = language_override
+          elseIf (cur_gen is null)
+            if (name == "language")
+              language_override = value  # leading '--language' overrides .froley-level 'language' for every output
             else
-              cur_gen.add_option( name, value )
+              throw FroleyError( "Invalid option '$'. Note: no output language has been specified."(option) )
             endIf
+          else
+            cur_gen.add_option( name, value )
           endIf
         endForEach
 
         local info = Froley.parse( File(input_filepath) )
-        if (info//language) language = info//language->String  # 'language XYZ' setting can override default language name
-        if (language_option) language = language_option        # '--language=XYZ' option can override setting & default
+        if (not info//language) info//language = default_language
         forEach (gen in active_generators)
-          info//language = language
+          if (gen.language) info//language = gen.language
           gen.process( info )
         endForEach
 

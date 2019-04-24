@@ -4,7 +4,7 @@ class CodeGenerator
   PROPERTIES
     info     : Value
     options  = StringTable<<String>>()
-    language = "undefined"
+    language : String
     output   = "./"
 
   METHODS

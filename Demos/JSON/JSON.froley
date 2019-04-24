@@ -1,7 +1,7 @@
 [settings]
 id_start    alpha '_'
 id_continue alpha numeric '_'
-language    FJSON
+language    JSON
 
 [whitespace]
 SPACE ' '

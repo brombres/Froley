@@ -64,7 +64,7 @@ class GenerateRogue : CodeGenerator
       return writer
 
     method process( info )
-      language = info//language
+      if (not language) language = info//language
       source_timestamp = File.timestamp( info//source_filepath )
 
       if (should_generate_framework)
@@ -243,7 +243,7 @@ class GenerateRogue : CodeGenerator
 
       writer.print  ("module ").println( language )
       writer.println
-      writer.print  ( "class CmdFactory" )
+      writer.println( "class CmdFactory" )
       writer.println( "  GLOBAL METHODS" )
       writer.println( "    method create_cmd( index:Int32, t:Token, args:CmdInitArgs )->Cmd" )
       writer.println("      which (index)")
@@ -263,7 +263,7 @@ class GenerateRogue : CodeGenerator
 
       writer.print  ("module ").println( language )
       writer.println
-      writer.print  ( "class Code [singleton]" )
+      writer.println( "class Code [singleton]" )
       writer.println @|  PROPERTIES
                       |    tokenizer_code_base64 =
       writer.print    "      \""
@@ -296,7 +296,7 @@ class GenerateRogue : CodeGenerator
         defs.add( parser_opcode//name, parser_opcode//value )
       endForEach
 
-      writer.print  ( "enum ParserOpcode" )
+      writer.println( "enum ParserOpcode" )
       defs.print( writer )
       writer.println @|endEnum
       writer.close
@@ -314,7 +314,7 @@ class GenerateRogue : CodeGenerator
         attributes_by_value[ attribute//value ] = name
       endForEach
 
-      writer.print  ( "enum TokenTypeAttribute" )
+      writer.println( "enum TokenTypeAttribute" )
       defs.print( writer )
       writer.println @|endEnum
       writer.println.println
@@ -347,7 +347,7 @@ class GenerateRogue : CodeGenerator
         defs.add( tokenizer_opcode//name, tokenizer_opcode//value )
       endForEach
 
-      writer.print  ( "enum TokenizerOpcode" )
+      writer.println( "enum TokenizerOpcode" )
       defs.print( writer )
       writer.println @|endEnum
       writer.close

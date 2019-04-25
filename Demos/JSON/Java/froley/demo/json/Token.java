@@ -42,15 +42,20 @@ public class Token
 
   public Token cloned()
   {
-    return new Token(
-    method cloned->Token
-      return Token( type, filepath, source, line, column, content )
+    return new Token( type, content, filepath, source, line, column );
+  }
 
-    method error( message:String )->Error
-      return Error( filepath, source, line, column, message )
+  public Error error( String message )
+  {
+    return new Error( filepath, source, line, column, message )
+  }
 
-    method to->String
-      if (content) return content
-      return type.symbol.to_escaped_ascii
+  public String toString()
+  {
+    if (content != null) return content;
+    return StringUtility.toEscapedASCII( type.symbol );
+    return type.symbol.to_escaped_ascii
+      // TODO
+  }
 }
 

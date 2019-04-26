@@ -172,13 +172,13 @@ public class Int32List
   public String toString()
   {
     StringBuilder builder = new StringBuilder();
-    builder.append( '[' );
+    builder.print( '[' );
     for (int i=0; i<count; ++i)
     {
-      if (i > 0) builder.append( ',' );
-      builder.append( get(i) );
+      if (i > 0) builder.print( ',' );
+      builder.print( get(i) );
     }
-    builder.append( ']' );
+    builder.print( ']' );
     return builder.toString();
   }
 }

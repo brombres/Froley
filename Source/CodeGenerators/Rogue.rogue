@@ -152,6 +152,7 @@ class GenerateRogue : CodeGenerator
                 if (p//type != "String") builder.print( "->" ).print( p//type )
               else
                 builder.print( "args[ " ).print( index ).print( " ]" )
+                if (p//type != "Cmd") builder.print( " as " ).print( p//type )
                 ++index
               endIf
               builder.println

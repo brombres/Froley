@@ -134,8 +134,8 @@ produce STRING
 
 [parser]
 - value
-  on '{', definitions, '}' -> CmdObject(definitions)
-  on '[', array, ']'       -> CmdArray(array)
+  on '{', definitions, '}' -> CmdObject(definitions:CmdList)
+  on '[', array, ']'       -> CmdArray(array:CmdList)
   on STRING                -> CmdString( value=t.content:String )
   on NUMBER                -> CmdNumber( value=t.content:Real64 )
   on "true"                -> CmdTrue
@@ -151,7 +151,7 @@ produce STRING
         definition
       endWhile
     endIf
-  createArgs
+  createList
 
 - definition
   on STRING, ':', value -> CmdMapping(name=t.content:String,value)
@@ -165,5 +165,5 @@ produce STRING
         value
       endWhile
     endIf
-  createArgs
+  createList
 

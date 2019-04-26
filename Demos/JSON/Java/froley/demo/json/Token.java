@@ -40,22 +40,21 @@ public class Token
     this.column   = column;
   }
 
-  public Token cloned()
+  public Token cloned( int newType )
   {
+    if (newType == 0) newType = TokenType.EOI;
     return new Token( type, content, filepath, source, line, column );
   }
 
   public Error error( String message )
   {
-    return new Error( filepath, source, line, column, message )
+    return new Error( filepath, source, line, column, message );
   }
 
   public String toString()
   {
     if (content != null) return content;
-    return StringUtility.toEscapedASCII( type.symbol );
-    return type.symbol.to_escaped_ascii
-      // TODO
+    return TokenType._symbols[ type ];
   }
 }
 

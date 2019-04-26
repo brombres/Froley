@@ -1,54 +1,83 @@
 package froley.demo.json;
 
-/*
-class Cmd
+import java.util.ArrayList;
+
+public class Cmd
 {
-  PROPERTIES
-    t : Token
+  // PROPERTIES
+  public Token t;
 
-  METHODS
-    method init( t, args:CmdInitArgs )
-      args.require_count( 0 )
+  // METHODS
+  public Cmd init( Token t, CmdInitArgs args )
+  {
+    this.t = t;
+    args.require_count( 0 );
+  }
 
-    method to->String
-      local result = StringBuilder()
-      write( result )
-      return result->String
+  public String toString()
+  {
+    StringBuilder result = StringBuilder();
+    write( result );
+    return result.toString();
+  }
 
-    method write( builder:StringBuilder )
-      builder.print( type_name.after_any("Cmd") )
+  public void write( StringBuilder builder )
+  {
+    String typeName = getClass().name();
+    int i = typeName.indexOf( "Cmd" );
+    builder.print( (i==-1) ? typeName : typeName.substring(index+3) );
+  }
 }
 
-class CmdList : Cmd
-  PROPERTIES
-    list : Cmd[]
+public class CmdList extends Cmd
+{
+  //PROPERTIES
+  public ArrayList<Cmd> list;
 
-  METHODS
-    method init( t )
-      list = Cmd[](5)
+  //METHODS
+  public CmdList( Token t, CmdInitArgs args )
+  {
+    this.t = t;
+    list = new ArrayList<Cmd>( args.size() );
+    for (int i=0; i<args.size(); ++i)
+    {
+      list.add( args.get(i) );
+    }
+  }
 
-    method init( t, args:CmdInitArgs )
-      list = Cmd[]( args.count )
-      list.add( forEach in args )
+  public int count()
+  {
+    return list.size();
+  }
 
-    method count->Int32
-      return list.count
+  public Cmd first()
+  {
+    return list.get( 0 );
+  }
 
-    method first->Cmd
-      return list.first
+  public Cmd get( int index )
+  {
+    return list.get( index );
+  }
 
-    method get( index:Int32 )->Cmd
-      return list[ index ]
+  public Cmd last()
+  {
+    return list.get( list.size()-1 );
+  }
+}
 
-    method last->Cmd
-      return list.last
-endClass
-
-class CmdStatements : CmdList
-  METHODS
-    method write( builder:StringBuilder )
-      builder.println( forEach in list )
-endClass
+public class CmdStatements extends CmdList
+{
+  static public void write( StringBuilder builder )
+  {
+    for (int i=0; i<list.size(); ++i)
+    {
+      Cmd statement = list.get( i );
+      statement.write( builder );
+      builder.print( '\n' );
+    }
+  }
+}
 
 class CmdArgs : CmdList
   METHODS
@@ -156,4 +185,3 @@ class CmdMapping( t, name:String, value:Cmd ) : Cmd
     method write( builder:StringBuilder )
       builder.print "Mapping($,$)"(name,value)
 endClass
-*/

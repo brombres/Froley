@@ -134,18 +134,18 @@ augment RogueTemplate
        |            cmd_queue.add( null )
        |            nextIteration
        |
-       |          case ParserOpcode.CREATE_ARGS
-       |            if (list_start_t.is_empty) throw peek.error( "[INTERNAL] No prior beginList before calling produceArgs." )
+       |          case ParserOpcode.CREATE_LIST
+       |            if (list_start_t.is_empty) throw peek.error( "[INTERNAL] No prior beginList before calling createList/produceList." )
        |            local t  = list_start_t.remove_last
        |            local i1 = list_start_pos.remove_last
        |            cmd_args.clear
        |            cmd_args.add( forEach in cmd_queue from i1 )
        |            cmd_queue.discard_from( i1 )
-       |            cmd_queue.add( CmdArgs(t,cmd_args) )
+       |            cmd_queue.add( CmdList(t,cmd_args) )
        |            nextIteration
        |
        |          case ParserOpcode.CREATE_STATEMENTS
-       |            if (list_start_t.is_empty) throw peek.error( "[INTERNAL] No prior beginList before calling produceStatements." )
+       |            if (list_start_t.is_empty) throw peek.error( "[INTERNAL] No prior beginList before calling createStatements/produceStatements." )
        |            local t  = list_start_t.remove_last
        |            local i1 = list_start_pos.remove_last
        |            cmd_args.clear
@@ -351,7 +351,7 @@ augment RogueTemplate
        |    method peek->Token
        |      if (position == tokens.count)
        |        if (tokens.is_empty) return Token( filepath, "", 0, 0, TokenType(0) )
-       |        local t = tokens.last.cloned
+       |        local t = tokens.last.cloned( TokenType.EOI )
        |        ++t.column
        |        return t
        |      else

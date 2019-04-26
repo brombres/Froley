@@ -679,8 +679,8 @@ class FroleyParser : Parser
         statements.add( ParserCmdCreateStatements(t) )
         return
 
-      elseIf (consume(TokenType.KEYWORD_CREATE_ARGS))
-        statements.add( ParserCmdCreateArgs(t) )
+      elseIf (consume(TokenType.KEYWORD_CREATE_LIST))
+        statements.add( ParserCmdCreateList(t) )
         return
 
       elseIf (consume(TokenType.KEYWORD_PRODUCE))
@@ -698,8 +698,8 @@ class FroleyParser : Parser
         statements.add( ParserCmdReturn(t,null) )
         return
 
-      elseIf (consume(TokenType.KEYWORD_PRODUCE_ARGS))
-        statements.add( ParserCmdCreateArgs(t) )
+      elseIf (consume(TokenType.KEYWORD_PRODUCE_LIST))
+        statements.add( ParserCmdCreateList(t) )
         statements.add( ParserCmdReturn(t,null) )
         return
 

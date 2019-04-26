@@ -43,21 +43,18 @@ augment RogueTemplate
        |
        |    method last->Cmd
        |      return list.last
+       |
+       |    method write( builder:StringBuilder )
+       |      forEach (arg at index in list)
+       |        if (index > 0) builder.print( ',' )
+       |        builder.print( arg )
+       |      endForEach
        |endClass
        |
        |class CmdStatements : CmdList
        |  METHODS
        |    method write( builder:StringBuilder )
        |      builder.println( forEach in list )
-       |endClass
-       |
-       |class CmdArgs : CmdList
-       |  METHODS
-       |    method write( builder:StringBuilder )
-       |      forEach (arg at index in list)
-       |        if (index > 0) builder.print( ',' )
-       |        builder.print( arg )
-       |      endForEach
        |endClass
        |
        |class CmdUnary( t, operand:Cmd ) : Cmd

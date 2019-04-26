@@ -186,6 +186,9 @@ class Froley [singleton]
     language    : String
 
   METHODS
+    method init
+      token_def( "EOI" ).symbol = "end of input"
+
     method parse( file:File )->Value
       local source = file.load_as_string
       return parse( file.filepath, source )
@@ -211,15 +214,6 @@ class Froley [singleton]
       parser.parse_parser_methods
       local parser_assembler = ParserAssembler()
       local parser_bytes = parser_assembler.assemble( parser_methods )
-
-      #{
-      local max_count  = 0
-      local max_digits = 0
-      forEach (def in token_defs_by_name)
-        max_count = max_count.or_larger( def.name.count )
-        max_digits = max_digits.or_larger( def.type.digit_count )
-      endForEach
-      }#
 
       local token_attributes = @[]
       forEach (name at index in this.token_attributes.keys)

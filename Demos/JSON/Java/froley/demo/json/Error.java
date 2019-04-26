@@ -1,6 +1,6 @@
 package froley.demo.json;
 
-public class Error extends Exception
+public class Error extends RuntimeException
 {
   static public void main( String[] args )
   {

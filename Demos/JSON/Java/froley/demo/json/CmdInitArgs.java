@@ -1,5 +1,7 @@
 package froley.demo.json;
 
+import java.util.ArrayList;
+
 public class CmdInitArgs extends ArrayList<Cmd>
 {
   // PROPERTIES
@@ -8,12 +10,12 @@ public class CmdInitArgs extends ArrayList<Cmd>
   //METHODS
   public void requireCount( int requiredCount )
   {
-    if (count != requiredCount)
+    if (size() != requiredCount)
     {
-      String message = "init(t,args) got " + count + " arg";
-      if (count != 1) message += "s";
+      String message = "[INTERNAL] init(t,args) got " + size() + " arg";
+      if (size() != 1) message += "s";
       message += ", expected " + requiredCount + ".";
-      throw t.error( "[RogueFroley]", message );
+      throw t.error( message );
     }
   }
 }

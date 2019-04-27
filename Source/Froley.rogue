@@ -20,7 +20,6 @@ $include "TokenizerOpcode.rogue"
 $include "TokenizerVM.rogue"
 
 $includeFolder "CodeGenerators"
-$includeFolder "CodeGenerators/Template"
 
 Launcher( System.command_line_arguments )
 

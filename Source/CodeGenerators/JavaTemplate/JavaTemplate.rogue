@@ -1,0 +1,3 @@
+class JavaTemplate [singleton]
+  # Other files augment this with various global properties
+endClass

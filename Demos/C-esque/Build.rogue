@@ -10,7 +10,7 @@
 
 routine rogo_default
   println "Compiling CSQ.froley with JSON and Rogue outputs"
-  execute( "froley CSQ.froley --json --rogue --framework --main" )
+  execute( "froley CSQ.froley --json --rogue --main" )
 
   if (Files(".","*.rogue").any_newer_than("Build/CSQ"))
     println "Compiling .rogue files to create CSQ parser (run Build/CSQ with no arguments for interactive mode)"

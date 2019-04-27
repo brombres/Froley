@@ -15,9 +15,9 @@ class CodeGenerator
           language = value
         case "output"
           if (value == "") throw FroleyError( "Output folder expected (--output=<folder>)." )
-          output = File.ensure_ends_with_separator( value )
+          output = File.ensure_ends_with_separator( File.expand_filepath(value) )
         others
-          throw FroleyError( "Unrecognized option: " + name )
+          throw FroleyError( "Unrecognized option: --" + name )
       endWhich
       options[ name ] = value
 

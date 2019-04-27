@@ -7,7 +7,7 @@ enum ParseRuleType
   POST_UNARY
   BINARY
   STATEMENTS
-  ARGS
+  LIST
 endEnum
 
 class CmdTypeProperty( name:String, type:String, value="":String )

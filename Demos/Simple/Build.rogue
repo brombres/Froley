@@ -9,8 +9,9 @@
 # "rogo_default" will run in the absence of any other command line argument.
 
 routine rogo_default
-  println "Compiling Simple.froley with JSON and Rogue outputs"
-  execute( "froley Simple.froley --json --rogue --framework --main" )
+  println "Compiling Simple.froley with JSON, Rogue, and Java outputs"
+  #execute( "froley Simple.froley --json --rogue --main --java --main --output=Java --package=froley.demo.simple" )
+  execute( "froley Simple.froley --json --java --main --output=Java --package=froley.demo.simple" )
 
   if (Files(".","*.rogue").any_newer_than("Build/Simple"))
     println "Compiling .rogue files to create Simple parser (run Build/Simple with no arguments for interactive mode)"

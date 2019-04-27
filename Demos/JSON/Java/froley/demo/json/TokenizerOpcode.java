@@ -1,0 +1,60 @@
+package froley.demo.json;
+
+public class TokenizerOpcode
+{
+  static public int HALT                =  0;
+  static public int RESTART             =  1;
+  static public int MODE_INT32          =  2;
+  static public int ERROR               =  3;
+  static public int MARK_SOURCE_POS     =  4;
+  static public int CREATE_INT32        =  5;
+  static public int JUMP                =  6;
+  static public int JUMP_EQ             =  7;
+  static public int JUMP_NE             =  8;
+  static public int JUMP_LT             =  9;
+  static public int JUMP_LE             = 10;
+  static public int JUMP_GT             = 11;
+  static public int JUMP_GE             = 12;
+  static public int CALL                = 13;
+  static public int RETURN              = 14;
+  static public int HAS_ANOTHER         = 15;
+  static public int PEEK_CH_INT32       = 16;
+  static public int PEEK_CH_COUNT       = 17;
+  static public int READ_CH             = 18;
+  static public int CONSUME_CHARACTER   = 19;
+  static public int SCAN_DIGITS         = 20;
+  static public int SCAN_IDENTIFIER     = 21;
+  static public int CLEAR_BUFFER        = 22;
+  static public int COLLECT_CH          = 23;
+  static public int COLLECT_CHARACTER   = 24;
+  static public int COLLECT_STRING      = 25;
+  static public int BUFFER_TO_LOWERCASE = 26;
+  static public int PRINT_BUFFER        = 27;
+  static public int PRINT_CH            = 28;
+  static public int PRINT_COUNT         = 29;
+  static public int PRINT_CHARACTER     = 30;
+  static public int PRINT_STRING        = 31;
+  static public int COMPARE_CH_INT32    = 32;
+  static public int COMPARE_COUNT_INT32 = 33;
+  static public int CH_IS_DIGIT_INT32   = 34;
+  static public int CH_IS_DIGIT_COUNT   = 35;
+  static public int CH_IS_LETTER        = 36;
+  static public int PUSH_CH             = 37;
+  static public int PUSH_COUNT          = 38;
+  static public int POP_CH              = 39;
+  static public int POP_COUNT           = 40;
+  static public int SET_CH_TO_INT32     = 41;
+  static public int SET_CH_TO_COUNT     = 42;
+  static public int SET_COUNT_TO_INT32  = 43;
+  static public int SET_COUNT_TO_CH     = 44;
+  static public int SET_RESULT_TO_CH    = 45;
+  static public int SET_RESULT_TO_COUNT = 46;
+  static public int SET_RESULT_TO_INT32 = 47;
+  static public int ADD_CH_COUNT        = 48;
+  static public int ADD_CH_INT32        = 49;
+  static public int ADD_COUNT_INT32     = 50;
+  static public int SUBTRACT_CH_COUNT   = 51;
+  static public int WHICH_INPUT         = 52;
+  static public int WHICH_BUFFER        = 53;
+}
+

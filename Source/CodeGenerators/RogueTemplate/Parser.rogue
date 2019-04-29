@@ -48,6 +48,7 @@ augment RogueTemplate
        |      load( Code.parser_code )
        |
        |    method execute( ip:Int32 )
+       |      cur_token = peek
        |      method_stack.add( ip )
        |      loop
        |        local opcode = ParserOpcode( code[ip] )
@@ -71,6 +72,7 @@ augment RogueTemplate
        |          case ParserOpcode.CALL
        |            call_stack.add( ip+1 )
        |            token_stack.add( cur_token )
+       |            cur_token = peek
        |            ip = code[ ip ]
        |            method_stack.add( ip )
        |            var_frames.add( vars.count )
@@ -376,7 +378,6 @@ augment RogueTemplate
        |        next_token_type = -1
        |      endIf
        |      position = 0
-       |      cur_token = null
        |
        |
        |endClass

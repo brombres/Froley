@@ -21,6 +21,7 @@ enum TokenizerOpcode( size=1:Int32 )
   PEEK_CH_COUNT         # CH = peek(lookahead=COUNT)
   READ_CH               # CH = read
   CONSUME_CHARACTER(2)  # if consume(character:ARG1) then RESULT=1 else RESULT=0
+  NEXT_IS_CHARACTER(2)
   SCAN_DIGITS(4)        # min..max:ARG1..ARG2, base:ARG3; RESULT = n_read - min_digits
   SCAN_IDENTIFIER
   CLEAR_BUFFER          # BUFFER.clear

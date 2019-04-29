@@ -131,6 +131,11 @@ augment RogueTemplate
        |            result = select{ scanner.consume(value):1 || 0 }
        |            ++ip
        |            nextIteration
+       |          case TokenizerOpcode.NEXT_IS_CHARACTER
+       |            local value = code[ip]->Character
+       |            result = (scanner.has_another and scanner.peek == value)
+       |            ++ip
+       |            nextIteration
        |          case TokenizerOpcode.SCAN_DIGITS
        |            local min_digits = code[ ip ]
        |            local max_digits = code[ ip+1 ]

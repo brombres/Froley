@@ -6,7 +6,6 @@ Froley.code_generators//rogue = GenerateRogue()
 
 class GenerateRogue : CodeGenerator
   PROPERTIES
-    source_timestamp     : Real64
     should_generate_main : Logical
 
   METHODS
@@ -54,24 +53,28 @@ class GenerateRogue : CodeGenerator
       return writer
 
     method process( info )
-      if (not language) language = info//language
-      source_timestamp = File.timestamp( info//source_filepath )
+      configure
       output = File.ensure_ends_with_separator( File.absolute_filepath( output ) )
       File.create_folder( output )
 
-      generate_Cmd
-      generate_CmdInitArgs
       generate_Error
-      generate_Parser
       generate_Token
       generate_Tokenizer
-      if (should_generate_main) generate_main
 
-      regenerate_CmdFactory
       regenerate_Code
-      regenerate_ParserOpcode
       regenerate_TokenType
       regenerate_TokeninzerOpcode
+
+      if (has_parser)
+        generate_Cmd
+        generate_CmdInitArgs
+        generate_Parser
+
+        regenerate_CmdFactory
+        regenerate_ParserOpcode
+      endIf
+
+      if (should_generate_main) generate_main
 
     method generate( content:String, filename:String, content_filter=null:Function(String)->String, &do_not_overwrite )
       local writer = output_writer( filename, &=do_not_overwrite )
@@ -206,7 +209,11 @@ class GenerateRogue : CodeGenerator
       generate( RogueTemplate.error, "Error.rogue", &do_not_overwrite )
 
     method generate_main
-      generate( RogueTemplate.main, language+".rogue", &do_not_overwrite )
+      if (has_parser)
+        generate( RogueTemplate.main_with_tokenizer_and_parser, language+".rogue", &do_not_overwrite )
+      else
+        generate( RogueTemplate.main_with_tokenizer_only, language+".rogue", &do_not_overwrite )
+      endIf
 
     method generate_Parser
       local fn = function( content:String )->String
@@ -262,20 +269,26 @@ class GenerateRogue : CodeGenerator
       writer.println "\""
       writer.println
 
-      writer.println "    parser_code_base64 ="
-      writer.print   "      \""
-      writer.print   info//parser_code->String.word_wrap(64).join( "\" ...\n      \"" )
-      writer.println "\""
-      writer.println
+      if (info//parser_code.count)
+        writer.println "    parser_code_base64 ="
+        writer.print   "      \""
+        writer.print   info//parser_code->String.word_wrap(64).join( "\" ...\n      \"" )
+        writer.println "\""
+        writer.println
+      endIf
 
       writer.println @|  METHODS
-                      |    method parser_code->Byte[]
-                      |      return parser_code_base64.decode_base64
-                      |
                       |    method tokenizer_code->Byte[]
                       |      return tokenizer_code_base64.decode_base64
                       |
-                      |endClass
+
+      if (has_parser)
+        writer.println @|    method parser_code->Byte[]
+                        |      return parser_code_base64.decode_base64
+                        |
+      endIf
+
+      writer.println @|endClass
       writer.close
 
     method regenerate_ParserOpcode

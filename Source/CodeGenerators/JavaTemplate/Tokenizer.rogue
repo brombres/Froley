@@ -1,0 +1,7 @@
+augment JavaTemplate
+  PROPERTIES
+    tokenizer =
+      @|<rogue.froley.package>
+       |
+
+endAugment

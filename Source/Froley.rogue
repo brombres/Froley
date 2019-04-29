@@ -213,6 +213,7 @@ class Froley [singleton]
       parser.parse_parser_methods
       local parser_assembler = ParserAssembler()
       local parser_bytes = parser_assembler.assemble( parser_methods )
+      if (parser_methods.is_empty) parser_bytes = Byte[]
 
       local token_attributes = @[]
       forEach (name at index in this.token_attributes.keys)
@@ -291,7 +292,17 @@ class Froley [singleton]
       local parse_type = PARSING_TOKENIZER
       local buffer = StringBuilder()
       local next_attribute_value = 2   # [content] is 1
+      local comment_level = 0
       forEach (line at index in LineReader(source))
+        local trimmed = line.trimmed
+        if (trimmed == "#{")
+          ++comment_level
+          nextIteration
+        elseIf (comment_level)
+          if (trimmed == "}#") --comment_level
+          nextIteration
+        endIf
+
         if (line.begins_with('['))  # new section
           tokenizer_code.println  # keep line numbers consistent
           parser_code.println  # keep line numbers consistent

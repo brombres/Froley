@@ -1,6 +1,6 @@
 augment RogueTemplate
   PROPERTIES
-    main =
+    main_with_tokenizer_and_parser =
       @|module RogueFroley
        |
        |$include "Parser.rogue"
@@ -49,6 +49,47 @@ augment RogueTemplate
        |          endTry
        |        endLoop
        |      endIf
+       |endClass
+       |
+
+    main_with_tokenizer_only =
+      @|module RogueFroley
+       |
+       |$include "Tokenizer.rogue"
+       |
+       |RogueFroley()
+       |
+       |class RogueFroley
+       |  METHODS
+       |    method init
+       |      # Parse input or file
+       |      local tokenizer = Tokenizer()
+       |      if (System.command_line_arguments.count)
+       |        try
+       |          local args = System.command_line_arguments.join( " " )
+       |          if (File.exists(args))
+       |            display( tokenizer.tokenize(File(args)) )
+       |          else
+       |            display( tokenizer.tokenize("[Command Line]", args) )
+       |          endIf
+       |        catch (err:Error)
+       |          Console.error.println err
+       |        endTry
+       |
+       |      else
+       |        # Interactive mode
+       |        loop
+       |          try
+       |            local input = Console.input( "> " )
+       |            display( tokenizer.tokenize("[Command Line]", input) )
+       |          catch (err:Error)
+       |            Console.error.println err
+       |          endTry
+       |        endLoop
+       |      endIf
+       |
+       |    method display( tokens:Token[] )
+       |      println (forEach in tokens)
        |endClass
        |
 endAugment

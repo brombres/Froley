@@ -3,6 +3,12 @@ augment RogueTemplate
     tokenizer =
       @|module RogueFroley
        |
+       |$include "Code.rogue"
+       |$include "Error.rogue"
+       |$include "Token.rogue"
+       |$include "TokenType.rogue"
+       |$include "TokenizerOpcode.rogue"
+       |
        |class Tokenizer
        |  DEFINITIONS
        |    VERSION     = 1

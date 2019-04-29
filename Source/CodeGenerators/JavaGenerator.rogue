@@ -7,7 +7,6 @@ Froley.code_generators//java = GenerateJava()
 class GenerateJava : CodeGenerator
   PROPERTIES
     package_name         : String
-    source_timestamp     : Real64
     should_generate_main : Logical
 
   METHODS
@@ -62,19 +61,17 @@ class GenerateJava : CodeGenerator
       return writer
 
     method process( info )
-      if (not language) language = info//language
-      source_timestamp = File.timestamp( info//source_filepath )
-
+      configure
       if (package_name) output += File.ensure_ends_with_separator( package_name.split('.').join("/") )
       output = File.ensure_ends_with_separator( File.absolute_filepath( output ) )
       File.create_folder( output )
 
       generate_Cmd
-      #{
       generate_CmdInitArgs
       generate_Error
-      generate_Parser
+      #generate_Parser
       generate_Token
+      #{
       generate_Tokenizer
       if (should_generate_main) generate_main
 
@@ -209,12 +206,12 @@ class GenerateJava : CodeGenerator
               builder.print  ("    builder.print( " )
               which (cmd_properties.count)
                 case 0
-                  builder.print( '"' ).print( escaped_symbol ).println( '"' )
+                  builder.print( '"' ).print( escaped_symbol ).println( "\" );" )
                 case 1
                   local p = cmd_properties[ 0 ]
                   if (p//value != "")
                     if (p//type != "String") builder.print( '""+' )
-                    builder.print( p//name )
+                    builder.print( p//name ).print( " )" )
                   else
                     builder.print( '"' )
                     builder.print( escaped_symbol )
@@ -241,13 +238,13 @@ class GenerateJava : CodeGenerator
         File.save( filepath, builder->String )
       endIf
 
-      #{
     method generate_CmdInitArgs
       generate( JavaTemplate.cmd_init_args, "CmdInitArgs.java", &do_not_overwrite )
 
     method generate_Error
       generate( JavaTemplate.error, "Error.java", &do_not_overwrite )
 
+      #{
     method generate_main
       generate( JavaTemplate.main, language+".java", &do_not_overwrite )
 
@@ -258,10 +255,12 @@ class GenerateJava : CodeGenerator
         return content
       endFunction
       generate( JavaTemplate.parser, "Parser.java", fn, &do_not_overwrite )
+      }#
 
     method generate_Token
       generate( JavaTemplate.token, "Token.java", &do_not_overwrite )
 
+      #{
     method generate_Tokenizer
       local fn = function( content:String )->String with (info)
         local def = Froley.token_defs_by_symbol[ "\n" ]

@@ -6,12 +6,7 @@ augment RogueTemplate
        |$include "Cmd.rogue"
        |$include "CmdInitArgs.rogue"
        |$include "CmdFactory.rogue"
-       |$include "Code.rogue"
-       |$include "Error.rogue"
        |$include "ParserOpcode.rogue"
-       |$include "Token.rogue"
-       |$include "TokenType.rogue"
-       |$include "TokenizerOpcode.rogue"
        |$include "Tokenizer.rogue"
        |
        |class Parser

@@ -1,0 +1,7 @@
+augment JavaTemplate
+  PROPERTIES
+    parser =
+      @|<rogue.froley.package>
+       |
+
+endAugment

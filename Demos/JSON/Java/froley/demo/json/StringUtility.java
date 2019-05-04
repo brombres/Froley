@@ -2,6 +2,25 @@ package froley.demo.json;
 
 public class StringUtility
 {
+  static public int characterToNumber( int ch, int base )
+  {
+    int value;
+    if (ch >= '0' && ch <= '9')      value = ch - '0';
+    else if (ch >= 'a' && ch <= 'z') value = ch - ('a' - 10);
+    else if (ch >= 'A' && ch <= 'Z') value = ch - ('A' - 10);
+    else                             return -1;
+
+    if (value < base) return value;
+    else              return -1;
+  }
+
+  static public String format( int n, int digits, char fill )
+  {
+    String result = "" + n;
+    while (result.length() < digits) result = fill + result;
+    return result;
+  }
+
   static public void wordWrap( String text, int width, StringBuilder builder, String allowBreakAfter )
   {
     // Prints a word-wrapped version of 'text' to the given

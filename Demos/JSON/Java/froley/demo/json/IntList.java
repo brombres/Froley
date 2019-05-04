@@ -1,15 +1,15 @@
 package froley.demo.json;
 
-public class Int32List
+public class IntList
 {
   public int[] data;
   public int   count;
 
-  public Int32List()
+  public IntList()
   {
   }
 
-  public Int32List( int initialCapacity )
+  public IntList( int initialCapacity )
   {
     data = new int[ initialCapacity ];
   }

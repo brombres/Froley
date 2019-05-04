@@ -66,21 +66,24 @@ class GenerateJava : CodeGenerator
       output = File.ensure_ends_with_separator( File.absolute_filepath( output ) )
       File.create_folder( output )
 
-      generate_Cmd
-      generate_CmdInitArgs
       generate_Error
-      #generate_Parser
       generate_Token
-      #{
-      generate_Tokenizer
-      if (should_generate_main) generate_main
+      #generate_Tokenizer
 
-      regenerate_CmdFactory
-      regenerate_Code
-      regenerate_ParserOpcode
-      regenerate_TokenType
-      regenerate_TokeninzerOpcode
-      }#
+      #regenerate_Code
+      #regenerate_TokenType
+      #regenerate_TokeninzerOpcode
+
+      if (has_parser)
+        generate_Cmd
+        generate_CmdInitArgs
+        #generate_Parser
+
+        #regenerate_CmdFactory
+        #regenerate_ParserOpcode
+      endIf
+
+      #if (should_generate_main) generate_main
 
     method generate( content:String, filename:String, content_filter=null:Function(String)->String, &do_not_overwrite )
       local writer = output_writer( filename, &=do_not_overwrite )

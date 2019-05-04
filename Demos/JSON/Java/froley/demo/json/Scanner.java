@@ -8,11 +8,11 @@ public class Scanner
 
   public String filepath;
   public String source;
-  public int count;
-  public int position;
-  public int line;
-  public int column;
-  public int curColumnsPerTab = Scanner.columnsPerTab;
+  public int    count;
+  public int    position;
+  public int    line;
+  public int    column;
+  public int    curColumnsPerTab = Scanner.columnsPerTab;
 
   public Scanner( String filepath, String source )
   {

@@ -21,6 +21,39 @@ public class StringUtility
     return result;
   }
 
+  static public String load( File file )
+  {
+    String filepath = file.getPath();
+    if (!file.exists) throw new FroleyError( "RogueFroley", "File not found: " + filepath );
+
+    try
+    {
+      int count = (int) file.length();
+      StringBuilder builder = new StringBuilder( count );
+      BufferedReader reader = new BufferedReader( new InputStreamReader( new FileInputStream(file.getPath()) ), 1024 );
+
+      int firstCh = reader.read();
+      if (firstCh != -1 && firstCh != 0xFEFF)
+      {
+        // Only keep first character if it's not the Byte Order Mark (BOM)
+        builder.append( (char) firstCh );
+      }
+
+      // Read remaining characters
+      for (int ch=reader.read(); ch!=-1; ch=reader.read())
+      {
+        builder.append( (char) ch );
+      }
+
+      reader.close();
+      return builder.toString();
+    }
+    catch (Exception err)
+    {
+      throw new FroleyError( "RogueFroley", "Error reading file: " + filepath );
+    }
+  }
+
   static public void wordWrap( String text, int width, StringBuilder builder, String allowBreakAfter )
   {
     // Prints a word-wrapped version of 'text' to the given

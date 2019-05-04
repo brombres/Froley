@@ -5,8 +5,8 @@ import java.util.ArrayList;
 public class Tokenizer
 {
   // DEFINITIONS
-  VERSION     = 1
-  MIN_VERSION = 1
+  final static public int VERSION     = 1;
+  final static public int MIN_VERSION = 1;
 
   // PROPERTIES
   public int[]        code;
@@ -114,7 +114,7 @@ public class Tokenizer
           ip = code[ ip ];
           continue;
         case TokenizerOpcode.RETURN:
-          if (stack.count == 0) throw Error( "[Compiled Code]", "'return' on empty stack." )
+          if (stack.count == 0) throw Error( "[Compiled Code]", "'return' on empty stack." );
           ip = stack.removeLast();
           continue;
         case TokenizerOpcode.HAS_ANOTHER:
@@ -152,7 +152,7 @@ public class Tokenizer
             if (value == -1) break;
             scanner.read();
             ch = ch * base + value;
-            ++n
+            ++n;
           }
           result = n - minDigits;
           continue;
@@ -235,11 +235,11 @@ public class Tokenizer
           stack.add( count );
           continue;
         case TokenizerOpcode.POP_CH:
-          if (stack.count == 0) throw Error( "[Compiled Code]", "'pop ch' on empty stack." )
+          if (stack.count == 0) throw Error( "[Compiled Code]", "'pop ch' on empty stack." );
           ch = stack.removeLast();
           continue;
         case TokenizerOpcode.POP_COUNT:
-          if (stack.count == 0) throw Error( "[Compiled Code]", "'pop count' on empty stack." )
+          if (stack.count == 0) throw Error( "[Compiled Code]", "'pop count' on empty stack." );
           count = stack.removeLast();
           continue;
         case TokenizerOpcode.SET_CH_TO_INT32:
@@ -290,9 +290,9 @@ public class Tokenizer
             int linkCount = code[curNode+1];
             if (code[curNode] != 0)
             {
-              lastAcceptableNode = curNode
-              lastAcceptableLinkCount = linkCount
-              lastAcceptableLookahead = lookahead
+              lastAcceptableNode = curNode;
+              lastAcceptableLinkCount = linkCount;
+              lastAcceptableLookahead = lookahead;
             }
             if ( !scanner.hasAnother(lookahead+1) ) break;
             int c = scanner.peek( lookahead );
@@ -332,7 +332,7 @@ public class Tokenizer
             {
               if (c == code[ip])
               {
-                curNode = code[ ip+1 ]
+                curNode = code[ ip+1 ];
                 foundLink = true;
                 break;
               }
@@ -357,44 +357,54 @@ public class Tokenizer
 
   public void load( Byte[] data )
   {
-    load( DataReader(data) );
+    load( new Base64IntXReader(data) );
   }
 
-  public void load( DataReader reader )
+  public void load( Base64IntXReader reader )
   {
-    int version = reader.read_int32x
-    require version >= MIN_VERSION
-    int n = reader.read_int32x
-    strings.reserve( n )
-    loop (n) strings.add( reader.read_string )
+    int version = reader.readInt32X();
+    if (version >= MIN_VERSION) throw new FroleyError( "[INTERNAL]", "Unsupported tokenizer version: " + version );
+    int n = reader.readInt32X();
+    strings = new String[ n ];
+    for (int i=0; i<n; ++i) strings[i] = reader.readString();
 
-    n = reader.read_int32x
-    entry_points.reserve( n )
-    loop (n)
-      String name = strings[ reader.read_int32x ]
-      entry_points.add( EntryPoint(name,reader.read_int32x) )
-    endLoop
+    n = reader.readInt32X();
+    entryPoints = new EntryPoint[ n ];
+    for (int i=0; i<n; ++i)
+    {
+      String name = strings[ reader.readInt32X() ];
+      entryPoints[ i ] = new EntryPoint( name, reader.readInt32X() );
+    }
 
-    n = reader.read_int32x
-    code.reserve( n )
-    loop (n) code.add( reader.read_int32x )
+    n = reader.readInt32X();
+    code = new int[ n ];
+    for (int i=0; i<n; ++i)
+    {
+      code[i] = reader.readInt32X();
+    }
   }
 
-  public Token[] tokenize( File file )->Token[]
+  public Token[] tokenize( File file )
   {
-    if (!file.exists) throw Error( "File not found: $." (file.filepath) )
-    tokenize( file.filepath, file.load_as_string )
-    return tokens
+    if (!file.exists) throw new FroleyError( "RogueFroley", "File not found: " + file );
+    tokenize( file.toString(), StringUtility.load(file) );
+    return tokens;
   }
 
-  public Token[] tokenize( filepath, String source, int start_line=1, int start_column=1 )
+  public Token[] tokenize( String filepath, String source )
   {
+    return tokenize( filepath, source, 1, 1 );
+  }
+
+  public Token[] tokenize( String filepath, String source, int start_line, int start_column )
+  {
+    this.filepath = filepath;
     tokens.clear();
-    scanner = Scanner( source )
-    scanner.line = start_line
-    scanner.column = start_column
-    execute
-    return tokens
+    scanner = new Scanner( source );
+    scanner.line = start_line;
+    scanner.column = start_column;
+    execute();
+    return tokens.toArray( new Token[ tokens.size() ] );
   }
 
   static public class EntryPoint

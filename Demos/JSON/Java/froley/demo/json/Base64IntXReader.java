@@ -2,13 +2,13 @@ package froley.demo.json;
 
 class Base64IntXReader
 {
-  String            data;
-  BossStringBuilder builder = new BossStringBuilder();
-  int               remainingBase64;
-  int               position;
-  int               available;
-  int               nextByte;
-  int               nextNextByte;
+  public String        data;
+  public StringBuilder builder = new StringBuilder();
+  public int           remainingBase64;
+  public int           position;
+  public int           available;
+  public int           nextByte;
+  public int           nextNextByte;
 
   public Base64IntXReader( String encoded )
   {
@@ -62,7 +62,7 @@ class Base64IntXReader
     return builder.toString();
   }
 
-  protected int readBase64()
+  public int readBase64()
   {
     if (remainingBase64 == 0) return 0;
     --remainingBase64;
@@ -87,7 +87,7 @@ class Base64IntXReader
     return result;
   }
 
-  protected base64ToValue( int pos )
+  public int base64ToValue( int pos )
   {
     int base64 = data.charAt( pos );
     if (base64 >= 'A' && base64 <= 'Z') return (base64 - 'A');

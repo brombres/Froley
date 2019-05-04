@@ -77,17 +77,22 @@ class Launcher
         forEach (option in options)
           local name = option.before_first('=')
           local value = option.after_first('=')
-          local gen = Froley.code_generators[ name ]
-          if (gen)
-            # Switching host language
-            cur_gen = gen
-            active_generators.add( cur_gen )
-            if (language_override) cur_gen.language = language_override
+          if (name == "target")
+            local gen = Froley.code_generators[ value ]
+            if (gen)
+              # Switching host language
+              cur_gen = gen
+              active_generators.add( cur_gen )
+              if (language_override) cur_gen.language = language_override
+            else
+              local valid_names = Froley.code_generators.keys
+              throw FroleyError( "Invalid target '$'. Valid targets: $." (value,valid_names.join(", ")) )
+            endIf
           elseIf (cur_gen is null)
             if (name == "language")
               language_override = value  # leading '--language' overrides .froley-level 'language' for every output
             else
-              throw FroleyError( "Invalid option '$'. Note: no output language has been specified."(option) )
+              throw FroleyError( "Invalid option '$'. Note: no --target has been specified."(option) )
             endIf
           else
             cur_gen.add_option( name, value )
@@ -112,18 +117,14 @@ class Launcher
 
     method print_usage( writer=Console:PrintWriter )->PrintWriter
       writer.println @|USAGE
-               |  froley filename.froley [host-language] [options]
+                      |  froley filename.froley [--target=<target-language>] [options]
                |
-               |HOST LANGUAGES
-               |  Froley can generate code for the following host languages:
-      forEach (key in Froley.code_generators.keys)
-        writer.print  "    --"
-        writer.println key
-      endForEach
+               |TARGET LANGUAGES
+               |  Froley can generate code for the following target languages:
+      writer.print( "    " ).println( forEach in Froley.code_generators.keys )
       writer.println
-      writer.println @|Use '--<host-language>' to include output for that language. Any successive
-                      |options will apply to that language only. Multiple host languages can be
-                      |specified.
+      writer.println @|Use '--target=<language>' to include output for that language. Any successive
+                      |options will apply only to that language until another `--target` is specified.
                       |
                       |GENERAL OPTIONS
                       |  --language=<name>
@@ -136,7 +137,7 @@ class Launcher
                       |
                       |OPTIONS
       forEach (key in Froley.code_generators.keys)
-        writer.print  "  --"
+        writer.print  "  --target="
         writer.println key
         writer.println(forEach in Froley.code_generators[ key ].usage_options.sort((a,b)=>a<b)).println
       endForEach

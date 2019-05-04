@@ -19,5 +19,5 @@ The `Demos/` folder contains a number of examples that can be adapted to your ow
 * `rogo asm`
 
 ## Documentation
-Refer to the [https://github.com/AbePralle/Froley/wiki](Wiki).
+Refer to the [Wiki](https://github.com/AbePralle/Froley/wiki).
 

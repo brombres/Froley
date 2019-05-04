@@ -34,13 +34,13 @@ augment JavaTemplate
        |    builder.print( (i==-1) ? typeName : typeName.substring(i+3) );
        |  }
        |
-       |  static public class List extends Cmd
+       |  static public class CmdList extends Cmd
        |  {
        |    //PROPERTIES
        |    public ArrayList<Cmd> list;
        |
        |    //METHODS
-       |    public List( Token t, CmdInitArgs args )
+       |    public CmdList( Token t, CmdInitArgs args )
        |    {
        |      this.t = t;
        |      list = new ArrayList<Cmd>( args.size() );
@@ -71,9 +71,9 @@ augment JavaTemplate
        |    }
        |  }
        |
-       |  static public class Statements extends List
+       |  static public class CmdStatements extends CmdList
        |  {
-       |    public Statements( Token t, CmdInitArgs args )
+       |    public CmdStatements( Token t, CmdInitArgs args )
        |    {
        |      super( t, args );
        |    }
@@ -89,7 +89,7 @@ augment JavaTemplate
        |    }
        |  }
        |
-       |  static public class Unary extends Cmd
+       |  static public class CmdUnary extends Cmd
        |  {
        |    // PROPERTIES
        |    public Cmd operand;
@@ -115,7 +115,7 @@ augment JavaTemplate
        |    }
        |  }
        |
-       |  static public class PostUnary extends Unary
+       |  static public class CmdPostUnary extends CmdUnary
        |  {
        |    //METHODS
        |    public void write( StringBuilder builder )
@@ -126,7 +126,7 @@ augment JavaTemplate
        |    }
        |  }
        |
-       |  static public class Binary extends Cmd
+       |  static public class CmdBinary extends Cmd
        |  {
        |    // PROPERTIES
        |    public Cmd left;

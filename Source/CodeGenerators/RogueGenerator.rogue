@@ -63,7 +63,7 @@ class GenerateRogue : CodeGenerator
 
       regenerate_Code
       regenerate_TokenType
-      regenerate_TokeninzerOpcode
+      regenerate_TokenizerOpcode
 
       if (has_parser)
         generate_Cmd
@@ -246,8 +246,7 @@ class GenerateRogue : CodeGenerator
       writer.println( "    method create_cmd( index:Int32, t:Token, args:CmdInitArgs )->Cmd" )
       writer.println("      which (index)")
       forEach (cmd_type in info//cmd_types)
-        writer.print  ( "        case " ).print( cmd_type//index ).print( ": " )
-        writer.print  ( "return " ).print( cmd_type//name ).println( "( t, args )" )
+        writer.print "        case $ : return $( t, args )" (cmd_type//index,cmd_type//name)
       endForEach
       writer.println @|        others
       writer.println(''          throw Error( "[INTERNAL] CmdFactory.create_cmd() index out of bounds: " + index )'' )
@@ -342,7 +341,7 @@ class GenerateRogue : CodeGenerator
       writer.println @|endEnum
       writer.close
 
-    method regenerate_TokeninzerOpcode
+    method regenerate_TokenizerOpcode
       local writer = output_writer( "TokenizerOpcode.rogue" )
       if (not writer) return
 

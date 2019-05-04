@@ -131,7 +131,7 @@ class Launcher
                       |    Specifies the name of the language that the Froley-generated Tokenizer and
                       |    Parser will parse. For example, to generate Rogue source code that will
                       |    parse a language called Simple you would write:
-                      |      froley --language=Simple --rogue
+                      |      froley --language=Simple --target=rogue
                       |    If no --language is specified then the base name of the '.froley' filename
                       |    is used as the language name.
                       |

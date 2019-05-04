@@ -1,5 +1,7 @@
 package froley.demo.json;
 
+import java.io.*;
+
 public class StringUtility
 {
   static public int characterToNumber( int ch, int base )
@@ -24,7 +26,7 @@ public class StringUtility
   static public String load( File file )
   {
     String filepath = file.getPath();
-    if (!file.exists) throw new FroleyError( "RogueFroley", "File not found: " + filepath );
+    if (!file.exists()) throw new Error( "RogueFroley", "File not found: " + filepath );
 
     try
     {
@@ -36,13 +38,13 @@ public class StringUtility
       if (firstCh != -1 && firstCh != 0xFEFF)
       {
         // Only keep first character if it's not the Byte Order Mark (BOM)
-        builder.append( (char) firstCh );
+        builder.print( (char) firstCh );
       }
 
       // Read remaining characters
       for (int ch=reader.read(); ch!=-1; ch=reader.read())
       {
-        builder.append( (char) ch );
+        builder.print( (char) ch );
       }
 
       reader.close();
@@ -50,8 +52,62 @@ public class StringUtility
     }
     catch (Exception err)
     {
-      throw new FroleyError( "RogueFroley", "Error reading file: " + filepath );
+      throw new Error( "RogueFroley", "Error reading file: " + filepath );
     }
+  }
+
+  static public boolean stringToLogical( String value )
+  {
+    if (value == null) return false;
+    if (value.equalsIgnoreCase("true")) return true;
+    return stringToInt32(value) != 0;
+  }
+
+  static public double stringToReal64( String value )
+  {
+    if (value == null) return 0.0;
+    try
+    {
+      return Double.parseDouble( value );
+    }
+    catch (NumberFormatException error)
+    {
+      return 0.0;
+    }
+  }
+
+  static public float stringToReal32( String value )
+  {
+    return (float) stringToReal64( value );
+  }
+
+  static public long stringToInt64( String value )
+  {
+    if (value == null) return 0;
+    try
+    {
+      return Long.parseLong( value );
+    }
+    catch (NumberFormatException error)
+    {
+      return 0;
+    }
+  }
+
+  static public int stringToInt32( String value )
+  {
+    return (int) stringToInt64( value );
+  }
+
+  static public char stringToCharacter( String value )
+  {
+    if (value == null || value.length() == 0) return (char) 0;
+    return value.charAt( 0 );
+  }
+
+  static public byte stringToByte( String value )
+  {
+    return (byte) stringToInt64( value );
   }
 
   static public void wordWrap( String text, int width, StringBuilder builder, String allowBreakAfter )

@@ -1,5 +1,6 @@
 package froley.demo.json;
 
+import java.io.*;
 import java.util.ArrayList;
 
 public class Tokenizer
@@ -21,15 +22,15 @@ public class Tokenizer
   public StringBuilder buffer    = new StringBuilder();
   public ArrayList<Token> tokens = new ArrayList<Token>( 1024 );
 
-  public String filepath;
-  public String scanner;
-  public int    line;
-  public int    column;
+  public String  filepath;
+  public Scanner scanner;
+  public int     line;
+  public int     column;
 
   public int    startIP;
 
-  public String idStart    = "<id_start>";
-  public String idContinue = "<id_continue>";
+  public String idStart    = "ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz";
+  public String idContinue = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz";
   public int[]  idCharacters = new int[ 128 ];
 
   // METHODS
@@ -48,7 +49,7 @@ public class Tokenizer
 
   public void add( int tokenType )
   {
-    Token t = new Token( tokenType, filepath, scanner.source, line, column );
+    Token t = new Token( tokenType, null, filepath, scanner.source, line, column );
     if (0 != (TokenType._attributes[tokenType] & TokenTypeAttribute.CONTENT)) t.content = buffer.toString();
     tokens.add( t );
   }
@@ -78,10 +79,12 @@ public class Tokenizer
           column = scanner.column;
           continue;
         case TokenizerOpcode.CREATE_INT32:
-          int tokenType = code[ ip++ ];
-          add( tokenType );
-          buffer.clear();
-          continue;
+          {
+            int tokenType = code[ ip++ ];
+            add( tokenType );
+            buffer.clear();
+            continue;
+          }
         case TokenizerOpcode.JUMP:
           ip = code[ ip ];
           continue;
@@ -114,7 +117,7 @@ public class Tokenizer
           ip = code[ ip ];
           continue;
         case TokenizerOpcode.RETURN:
-          if (stack.count == 0) throw Error( "[Compiled Code]", "'return' on empty stack." );
+          if (stack.count == 0) throw new Error( "[Compiled Code]", "'return' on empty stack." );
           ip = stack.removeLast();
           continue;
         case TokenizerOpcode.HAS_ANOTHER:
@@ -130,40 +133,46 @@ public class Tokenizer
           ch = scanner.read();
           continue;
         case TokenizerOpcode.CONSUME_CHARACTER:
-          int value = code[ip++];
-          result = (scanner.consume((char)value) ? 1 : 0);
-          continue;
-        case TokenizerOpcode.NEXT_IS_CHARACTER:
-          int value = code[ip++];
-          result = (scanner.hasAnother() && scanner.peek(0) == value);
-          continue;
-        case TokenizerOpcode.SCAN_DIGITS:
-          int minDigits = code[ ip ];
-          int maxDigits = code[ ip+1 ];
-          int base = code[ ip+2 ];
-          int n = 0;
-          ip += 3;
-          ch = 0;
-          for (int i=maxDigits; --i>=0; )
           {
-            if ( !scanner.hasAnother() ) break;
-
-            int value = StringUtility.characterToNumber( scanner.peek(0), base );
-            if (value == -1) break;
-            scanner.read();
-            ch = ch * base + value;
-            ++n;
+            int value = code[ip++];
+            result = (scanner.consume((char)value) ? 1 : 0);
+            continue;
           }
-          result = n - minDigits;
-          continue;
+        case TokenizerOpcode.NEXT_IS_CHARACTER:
+          {
+            int value = code[ip++];
+            result = (scanner.hasAnother() && scanner.peek(0) == value) ? 1 : 0;
+            continue;
+          }
+        case TokenizerOpcode.SCAN_DIGITS:
+          {
+            int minDigits = code[ ip ];
+            int maxDigits = code[ ip+1 ];
+            int base = code[ ip+2 ];
+            int n = 0;
+            ip += 3;
+            ch = 0;
+            for (int i=maxDigits; --i>=0; )
+            {
+              if ( !scanner.hasAnother() ) break;
+
+              int value = StringUtility.characterToNumber( scanner.peek(0), base );
+              if (value == -1) break;
+              scanner.read();
+              ch = ch * base + value;
+              ++n;
+            }
+            result = n - minDigits;
+            continue;
+          }
         case TokenizerOpcode.SCAN_IDENTIFIER:
-          if (scanner.hasAnother() && id_characters[scanner.peek&0x7F] == 1)
+          if (scanner.hasAnother() && idCharacters[scanner.peek(0)&0x7F] == 1)
           {
             buffer.clear();
-            buffer.print( scanner.read );
-            while (scanner.hasAnother() && id_characters[scanner.peek&0x7f])
+            buffer.print( scanner.read() );
+            while (scanner.hasAnother() && idCharacters[scanner.peek(0)&0x7f] != 0)
             {
-              buffer.print( scanner.read );
+              buffer.print( scanner.read() );
             }
             result = 1;
           }
@@ -216,15 +225,19 @@ public class Tokenizer
           result = count - code[ip++];
           continue;
         case TokenizerOpcode.CH_IS_DIGIT_INT32:
-          int base = code[ip++];
-          int n = StringUtility.characterToNumber( ch, base );
-          result = (n != -1) ? 1 : 0;
-          continue;
+          {
+            int base = code[ip++];
+            int n = StringUtility.characterToNumber( ch, base );
+            result = (n != -1) ? 1 : 0;
+            continue;
+          }
         case TokenizerOpcode.CH_IS_DIGIT_COUNT:
-          int base = code[ip++];
-          int n = StringUtility.characterToNumber( ch, count );
-          result = (n != -1) ? 1 : 0;
-          continue;
+          {
+            int base = code[ip++];
+            int n = StringUtility.characterToNumber( ch, count );
+            result = (n != -1) ? 1 : 0;
+            continue;
+          }
         case TokenizerOpcode.CH_IS_LETTER:
           result = ((ch>='a' && ch<='z') || (ch>='A' && ch<='Z')) ? 1 : 0;
           continue;
@@ -235,11 +248,11 @@ public class Tokenizer
           stack.add( count );
           continue;
         case TokenizerOpcode.POP_CH:
-          if (stack.count == 0) throw Error( "[Compiled Code]", "'pop ch' on empty stack." );
+          if (stack.count == 0) throw new Error( "[Compiled Code]", "'pop ch' on empty stack." );
           ch = stack.removeLast();
           continue;
         case TokenizerOpcode.POP_COUNT:
-          if (stack.count == 0) throw Error( "[Compiled Code]", "'pop count' on empty stack." );
+          if (stack.count == 0) throw new Error( "[Compiled Code]", "'pop count' on empty stack." );
           count = stack.removeLast();
           continue;
         case TokenizerOpcode.SET_CH_TO_INT32:
@@ -280,42 +293,44 @@ public class Tokenizer
           ch -= count;
           continue;
         case TokenizerOpcode.WHICH_INPUT:
-          int curNode = ip;
-          int lookahead = 0;
-          int lastAcceptableNode      = 0;
-          int lastAcceptableLinkCount = 0;
-          int lastAcceptableLookahead = 0;
-          for (;;)
           {
-            int linkCount = code[curNode+1];
-            if (code[curNode] != 0)
+            int curNode = ip;
+            int lookahead = 0;
+            int lastAcceptableNode      = 0;
+            int lastAcceptableLinkCount = 0;
+            int lastAcceptableLookahead = 0;
+            for (;;)
             {
-              lastAcceptableNode = curNode;
-              lastAcceptableLinkCount = linkCount;
-              lastAcceptableLookahead = lookahead;
-            }
-            if ( !scanner.hasAnother(lookahead+1) ) break;
-            int c = scanner.peek( lookahead );
-            ip = curNode + 2;
-            boolean foundLink = false;
-            for (int i=linkCount; --i>=0; )
-            {
-              if (c == code[ip])
+              int linkCount = code[curNode+1];
+              if (code[curNode] != 0)
               {
-                curNode = code[ ip+1 ];
-                foundLink = true;
-                break;
+                lastAcceptableNode = curNode;
+                lastAcceptableLinkCount = linkCount;
+                lastAcceptableLookahead = lookahead;
               }
-              ip += 2;
+              if ( !scanner.hasAnother(lookahead+1) ) break;
+              int c = scanner.peek( lookahead );
+              ip = curNode + 2;
+              boolean foundLink = false;
+              for (int i=linkCount; --i>=0; )
+              {
+                if (c == code[ip])
+                {
+                  curNode = code[ ip+1 ];
+                  foundLink = true;
+                  break;
+                }
+                ip += 2;
+              }
+              if (foundLink) ++lookahead;
             }
-            if (foundLink) ++lookahead;
+            // Either no links match or EOI - jump to code of last acceptable node.
+            // The start node is always acceptable and either contains the
+            // 'others' case or jumps to the end of the scan table.
+            ip = lastAcceptableNode + lastAcceptableLinkCount * 2 + 2;
+            for (int i=lastAcceptableLookahead; --i>=0; ) buffer.print( scanner.read() );
+            continue;
           }
-          // Either no links match or EOI - jump to code of last acceptable node.
-          // The start node is always acceptable and either contains the
-          // 'others' case or jumps to the end of the scan table.
-          ip = lastAcceptableNode + lastAcceptableLinkCount * 2 + 2;
-          for (int i=lastAcceptableLookahead; --i>=0; ) buffer.print( scanner.read() );
-          continue;
 
         case TokenizerOpcode.WHICH_BUFFER:
           int curNode   = ip;
@@ -325,7 +340,7 @@ public class Tokenizer
           {
             int linkCount = code[curNode+1];
             if (lookahead == buffer.count) break;
-            int c = buffer[ lookahead ];
+            int c = buffer.characters[ lookahead ];
             ip = curNode + 2;
             boolean foundLink = false;
             for (int i=linkCount; --i>=0; )
@@ -355,15 +370,15 @@ public class Tokenizer
     }
   }
 
-  public void load( Byte[] data )
+  public void load( String base64IntXCode )
   {
-    load( new Base64IntXReader(data) );
+    load( new Base64IntXReader(base64IntXCode) );
   }
 
   public void load( Base64IntXReader reader )
   {
     int version = reader.readInt32X();
-    if (version >= MIN_VERSION) throw new FroleyError( "[INTERNAL]", "Unsupported tokenizer version: " + version );
+    if (version >= MIN_VERSION) throw new Error( "[INTERNAL]", "Unsupported tokenizer version: " + version );
     int n = reader.readInt32X();
     strings = new String[ n ];
     for (int i=0; i<n; ++i) strings[i] = reader.readString();
@@ -386,9 +401,8 @@ public class Tokenizer
 
   public Token[] tokenize( File file )
   {
-    if (!file.exists) throw new FroleyError( "RogueFroley", "File not found: " + file );
-    tokenize( file.toString(), StringUtility.load(file) );
-    return tokens;
+    if (!file.exists()) throw new Error( "JSON", "File not found: " + file );
+    return tokenize( file.toString(), StringUtility.load(file) );
   }
 
   public Token[] tokenize( String filepath, String source )
@@ -400,7 +414,7 @@ public class Tokenizer
   {
     this.filepath = filepath;
     tokens.clear();
-    scanner = new Scanner( source );
+    scanner = new Scanner( filepath, source );
     scanner.line = start_line;
     scanner.column = start_column;
     execute();
@@ -414,7 +428,7 @@ public class Tokenizer
     public int    ip;
 
     // METHODS
-    public EntryPoint( String name, String ip )
+    public EntryPoint( String name, int ip )
     {
       this.name = name;
       this.ip = ip;

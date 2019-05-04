@@ -68,7 +68,7 @@ class GenerateJava : CodeGenerator
       generate_Token
       generate_Tokenizer
 
-      #regenerate_Code
+      regenerate_Code
       #regenerate_TokenType
       regenerate_TokenizerOpcode
 
@@ -78,7 +78,7 @@ class GenerateJava : CodeGenerator
         #generate_Parser
 
         regenerate_CmdFactory
-        #regenerate_ParserOpcode
+        regenerate_ParserOpcode
       endIf
 
       #if (should_generate_main) generate_main
@@ -300,51 +300,55 @@ class GenerateJava : CodeGenerator
                        |}
       writer.close
 
-      #{
     method regenerate_Code
       local writer = output_writer( "Code.java" )
       if (not writer) return
 
-      writer.print  ("module ").println( language )
-      writer.println
-      writer.println( "class Code [singleton]" )
-      writer.println @|  PROPERTIES
-                      |    tokenizer_code_base64 =
-      writer.print    "      \""
-      writer.print   info//tokenizer_code->String.word_wrap(64).join( "\" ...\n      \"" )
-      writer.println "\""
-      writer.println
+      if (package_name)
+        writer.println( "package $;"(package_name) );
+        writer.println
+      endIf
 
-      writer.println "    parser_code_base64 ="
-      writer.print   "      \""
-      writer.print   info//parser_code->String.word_wrap(64).join( "\" ...\n      \"" )
-      writer.println "\""
-      writer.println
+      writer.println @|public class Code
+                      |{
+                      |  // PROPERTIES
 
-      writer.println @|  METHODS
-                      |    method parser_code->Byte[]
-                      |      return parser_code_base64.decode_base64
-                      |
-                      |    method tokenizer_code->Byte[]
-                      |      return tokenizer_code_base64.decode_base64
-                      |
-                      |endClass
+      writer.println  "  static public String tokenizerCode =";
+      writer.print    "    \""
+      writer.print   info//tokenizer_code->String.word_wrap(64).join( "\" +\n    \"" )
+      writer.println "\";"
+
+      if (info//parser_code.count)
+        writer.println
+        writer.println "  static public String parserCode ="
+        writer.print   "    \""
+        writer.print   info//parser_code->String.word_wrap(64).join( "\" +\n    \"" )
+        writer.println "\";"
+      endIf
+
+      writer.println "}"
       writer.close
 
     method regenerate_ParserOpcode
       local writer = output_writer( "ParserOpcode.java" )
       if (not writer) return
 
-      local defs = Int32DefsBuilder( &prefix="  " )
+      local defs = Int32DefsBuilder( &prefix="  final static public int ", &suffix=";" )
       forEach (parser_opcode in info//parser_opcodes)
         defs.add( parser_opcode//name, parser_opcode//value )
       endForEach
 
-      writer.println( "enum ParserOpcode" )
+      if (package_name)
+        writer.println( "package $;"(package_name) );
+        writer.println
+      endIf
+      writer.println( "public class ParserOpcode" )
+      writer.println( "{" )
       defs.print( writer )
-      writer.println @|endEnum
+      writer.println( "}" )
       writer.close
 
+      #{
     method regenerate_TokenType
       local writer = output_writer( "TokenType.java" )
       if (not writer) return

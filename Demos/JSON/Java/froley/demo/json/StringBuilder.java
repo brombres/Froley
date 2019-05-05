@@ -144,14 +144,11 @@ class StringBuilder implements CharSequence, Comparable<String>
   public StringBuilder subSequence( int i1, int limit )
   {
     StringBuilder result = new StringBuilder( limit - i1 );
-    int code = 0;
     for (int i=limit; --i>=i1; )
     {
-      char ch = characters[i];
-      result.characters[i-i1] = ch;
-      code = ((code << 3) - code) + ch;
+      result.characters[i-i1] = characters[i];
     }
-    result.hash = code;
+    result.updateHashCode();
     return result;
   }
 
@@ -168,6 +165,19 @@ class StringBuilder implements CharSequence, Comparable<String>
   public String toString()
   {
     return new String( characters, 0, count );
+  }
+
+  public void updateHashCode()
+  {
+    // Recompute hash code
+    int code = 0;
+    int count = this.count;
+    char[] characters = this.characters;
+    for (int i=0; i<count; ++i)
+    {
+      code = ((code << 3) - code) + characters[i];
+    }
+    hash = code;
   }
 
   public void writeUTF8Byte( int value )

@@ -50,6 +50,17 @@ augment JavaTemplate
        |    load( Code.tokenizerCode );
        |  }
        |
+       |  public void reset()
+       |  {
+       |    stack.clear();
+       |    ch = 0;
+       |    count = 0;
+       |    result = 0;
+       |    buffer.clear();
+       |    startIP = 0;
+       |    tokens.clear();
+       |  }
+       |
        |  public void add( int tokenType )
        |  {
        |    Token t = new Token( tokenType, null, filepath, scanner.source, line, column );
@@ -63,7 +74,7 @@ augment JavaTemplate
        |    for (;;)
        |    {
        |      int opcode = code[ ip++ ];
-       |      // System.out.println( StringUtility.format(ip,4,'0') + " " + opcode );
+       |      // System.out.println( StringUtility.format(ip,'0',4) + " " + opcode );
        |      switch (opcode)
        |      {
        |        case TokenizerOpcode.HALT:
@@ -201,6 +212,7 @@ augment JavaTemplate
        |          {
        |            char ch = buffer.characters[ i ];
        |            if (ch >= 'A' && ch <= 'Z') buffer.characters[i] += ('a' - 'A');
+       |            buffer.updateHashCode();
        |          }
        |          continue;
        |        case TokenizerOpcode.PRINT_BUFFER:
@@ -416,7 +428,7 @@ augment JavaTemplate
        |  public Token[] tokenize( String filepath, String source, int start_line, int start_column )
        |  {
        |    this.filepath = filepath;
-       |    tokens.clear();
+       |    reset();
        |    scanner = new Scanner( filepath, source );
        |    scanner.line = start_line;
        |    scanner.column = start_column;
@@ -439,7 +451,7 @@ augment JavaTemplate
        |
        |    public String toString()
        |    {
-       |      return StringUtility.format( ip, 4, '0' ) + " " + name;
+       |      return StringUtility.format( ip, '0', 4 ) + " " + name;
        |    }
        |  }
        |}

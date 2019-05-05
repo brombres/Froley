@@ -44,6 +44,15 @@ augment RogueTemplate
        |      forEach (ch in id_start)    id_characters[ch->Int32] = 1
        |      load( Code.tokenizer_code )
        |
+       |    method reset
+       |      stack.clear
+       |      ch = 0
+       |      count = 0
+       |      result = 0
+       |      buffer.clear
+       |      start_ip = 0
+       |      tokens.clear
+       |
        |    method add( token_type:Int32 )
        |      local t = Token( TokenType(token_type), filepath, scanner.source, line, column )
        |      if (t.type.attributes & TokenTypeAttribute.CONTENT) t.content = buffer->String
@@ -376,7 +385,7 @@ augment RogueTemplate
        |      return tokens
        |
        |    method tokenize( filepath, source:String, start_line=1:Int32, start_column=1:Int32 )->Token[]
-       |      tokens.clear
+       |      reset
        |      scanner = Scanner( source )
        |      scanner.line = start_line
        |      scanner.column = start_column

@@ -16,7 +16,7 @@ public class StringUtility
     else              return -1;
   }
 
-  static public String format( int n, int digits, char fill )
+  static public String format( int n, char fill, int digits )
   {
     String result = "" + n;
     while (result.length() < digits) result = fill + result;
@@ -54,6 +54,27 @@ public class StringUtility
     {
       throw new Error( "RogueFroley", "Error reading file: " + filepath );
     }
+  }
+
+  static public char numberToCharacter( int n )
+  {
+    if (n >= 0)
+    {
+      if (n <= 9)  return (char)(n + '0');
+      if (n <= 36) return (char)((n-10) + 'A');
+    }
+    return '?';
+  }
+
+  static public String quoted( String value )
+  {
+    if (value == null) return "'null'";
+    switch (value.length())
+    {
+      case 0: return "\"\"";    // ""
+      case 1: if (value.charAt(0) == '\'') return "\"'\"";   // "'"
+    }
+    return "'" + stringToPrintableString(value,null) + "'";
   }
 
   static public boolean stringToLogical( String value )
@@ -108,6 +129,51 @@ public class StringUtility
   static public byte stringToByte( String value )
   {
     return (byte) stringToInt64( value );
+  }
+
+  static public String stringToPrintableString( String text, String additionalCharactersToEscape )
+  {
+    boolean needsEscaping = false;
+    int     count = text.length();
+    for (int i=count; --i>=0; )
+    {
+      char ch = text.charAt( i );
+      if (ch < 32 || ch == 127 || (additionalCharactersToEscape != null && additionalCharactersToEscape.indexOf(ch) != -1))
+      {
+        needsEscaping = true;
+        break;
+      }
+    }
+    if ( !needsEscaping ) return text;
+
+    StringBuilder result = new StringBuilder( count+5 );
+    for (int i=0; i<count; ++i)
+    {
+      char ch = text.charAt( i );
+      if (ch < 32 || ch == 127)
+      {
+        switch (ch)
+        {
+          case '\n': result.print( "\\n" ); break;
+          case '\r': result.print( "\\r" ); break;
+          case '\t': result.print( "\\t" ); break;
+          default:
+            result.print( "\\x" );
+            result.print( numberToCharacter((ch>>4)&15) );
+            result.print( numberToCharacter(ch & 15) );
+        }
+      }
+      else if (additionalCharactersToEscape != null && additionalCharactersToEscape.indexOf(ch) != -1)
+      {
+        result.print( '\\' );
+        result.print( ch );
+      }
+      else
+      {
+        result.print( ch );
+      }
+    }
+    return result.toString();
   }
 
   static public void wordWrap( String text, int width, StringBuilder builder, String allowBreakAfter )

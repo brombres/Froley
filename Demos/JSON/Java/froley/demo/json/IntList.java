@@ -14,10 +14,11 @@ public class IntList
     data = new int[ initialCapacity ];
   }
 
-  public void add( int value )
+  public IntList add( int value )
   {
     reserve( 1 );
     data[ count++ ] = value;
+    return this;
   }
 
   public int capacity()
@@ -25,9 +26,10 @@ public class IntList
     return (data == null) ? 0 : data.length;
   }
 
-  public void clear()
+  public IntList clear()
   {
     count = 0;
+    return this;
   }
 
   public boolean contains( int value )
@@ -35,17 +37,17 @@ public class IntList
     return -1 != locate( value );
   }
 
-  public void ensureCapacity( int minimumCapacity )
+  public IntList ensureCapacity( int minimumCapacity )
   {
-    reserve( minimumCapacity - count );
+    return reserve( minimumCapacity - count );
   }
 
-  public void expand( int additionalElementCount )
+  public IntList expand( int additionalElementCount )
   {
-    expandToCount( count + additionalElementCount );
+    return expandToCount( count + additionalElementCount );
   }
 
-  public void expandToCount( int minimumCount )
+  public IntList expandToCount( int minimumCount )
   {
     if (minimumCount > count)
     {
@@ -58,6 +60,7 @@ public class IntList
       }
       this.count = minimumCount;
     }
+    return this;
   }
 
   public int first()
@@ -70,7 +73,7 @@ public class IntList
     return data[ index ];
   }
 
-  public void insert( int value, int atIndex )
+  public IntList insert( int value, int atIndex )
   {
     reserve( 1 );
     int[] data = this.data;
@@ -80,6 +83,7 @@ public class IntList
     }
     data[ atIndex ] = value;
     ++count;
+    return this;
   }
 
   public int last()
@@ -127,9 +131,9 @@ public class IntList
     return removeAt( count-1 );
   }
 
-  public void reserve( int additionalElementCount )
+  public IntList reserve( int additionalElementCount )
   {
-    if (additionalElementCount <= 0) return;
+    if (additionalElementCount <= 0) return this;
     if (data == null)
     {
       if (additionalElementCount < 10) additionalElementCount = 10;
@@ -152,11 +156,13 @@ public class IntList
         this.data = newData;
       }
     }
+    return this;
   }
 
-  public void set( int index, int value )
+  public IntList set( int index, int value )
   {
     data[ index ] = value;
+    return this;
   }
 
   public int[] toArray()

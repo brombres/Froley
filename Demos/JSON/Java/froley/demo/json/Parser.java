@@ -242,33 +242,38 @@ public class Parser
         }
 
         case ParserOpcode.TRACE:
-          print( "Line " ).print( code[ip++] ).print( " next:" )
-          if (nextTokenType != -1) print( peek() )
-          else                       print( "end of input" )
-          print( " opcode:" ).print( ParserOpcode(code[ip]) )
-          println
-          print "  "
-          forEach (mIp at index in methodStack)
+          System.out.print( "Line " );
+          System.out.print( code[ip++] );
+          System.out.print( " next:" );
+
+          if (nextTokenType != -1) System.out.print( peek() );
+          else                     System.out.print( "end of input" );
+          System.out.print( " opcode:" );
+          System.out.print( code[ip] );
+          System.out.println();
+          System.out.print( "  " );
+          for (int index=0; index<methodStack.count; ++index)
+          {
             if (index > 0) print " > "
-            print methodsByAddress[ mIp ]
-          endForEach
-          println
-          print "  ["
-          forEach (cmd at index in cmdQueue)
-            if (index > 0) print ","
-            print select{ cmd:cmd.typeName || "null" }
-          endForEach
-          println "]"
+            System.out.print( methodsByAddress[ methodStack.get(index) ] );
+          }
+          System.out.println();
+          System.out.print( "  [" );
+          for (int index=0; i<cmdQueue.size(); ++i)
+          {
+            Cmd cmd = cmdQueue.get( index );
+            if (index > 0) System.out.print( "," );
+            System.out.print( (cmd!=null) ? cmd.getClass().getName() : "null" );
+          }
+          System.out.println( "]" );
           continue;
 
         case ParserOpcode.PRINTLN_STRING:
-          println strings[ code[ip++] ]
+          System.out.println( strings[ code[ip++] ] );
           continue;
 
         case ParserOpcode.PRINTLN_NUMBER:
           System.out.println( numberStack.removeLast() );
-          if (value == value.floor) println value->Int32
-          else                      println value.format(".4")
           continue;
 
         case ParserOpcode.POP_DISCARD:
@@ -276,171 +281,208 @@ public class Parser
           continue;
 
         case ParserOpcode.PUSH_INT32:
-          numberStack.add( code[ip++] )
+          numberStack.add( code[ip++] );
           continue;
 
         case ParserOpcode.DECLARE_VAR:
-          local name = strings[ code[ip++] ]
-          local index = locateVar( name, varFrames.last )
-          if (index.exists)
-            throw Error( "A variable named '$' has already been declared in the current method."(name) )
+        {
+          String name = strings[ code[ip++] ];
+          int index = locateVar( name, varFrames.last(), false );
+          if (index != -1)
+          {
+            throw new Error( "A variable named '" + name + "' has already been declared in the current method." );
+          }
           else
-            vars.add( Variable(name,numberStack.removeLast()) )
-          endIf
+          {
+            varNames.add( name );
+            varValues.add( numberStack.removeLast() );
+          }
           continue;
+        }
 
         case ParserOpcode.WRITE_VAR:
-          local name = strings[ code[ip+] ]
-          local index = locateVar( name, 0, &mustLocate ).value
-          vars[ index ] = Variable( name, numberStack.removeLast() )
+        {
+          String name = strings[ code[ip++] ];
+          int index = locateVar( name, 0, true );
+          varValues[ index ] = Variable( name, numberStack.removeLast() );
           continue;
+        }
 
         case ParserOpcode.READ_VAR:
-          local name = strings[ code[ip++] ]
-          local index = locateVar( name, 0, &mustLocate ).value
-          numberStack.add( vars[index].value )
+        {
+          String name = strings[ code[ip++] ];
+          int index = locateVar( name, 0, true );
+          numberStack.add( varValues.get(index) );
           continue;
+        }
 
         case ParserOpcode.LOGICAL_NOT:
-          numberStack.last = not numberStack.last
+          numberStack.add( (numberStack.removeLast()==0) : 1 : 0 );
           continue;
 
         case ParserOpcode.COMPARE_EQ:
-          local b = numberStack.removeLast();
-          numberStack.add( numberStack.removeLast() == b )
+        {
+          int b = numberStack.removeLast();
+          numberStack.add( (numberStack.removeLast()==b) ? 1 : 0 );
           continue;
+        }
 
         case ParserOpcode.COMPARE_NE:
-          local b = numberStack.removeLast();
-          numberStack.add( numberStack.removeLast() != b )
+        {
+          int b = numberStack.removeLast();
+          numberStack.add( (numberStack.removeLast()!=b) ? 1 : 0 );
           continue;
+        }
 
         case ParserOpcode.COMPARE_LT:
-          local b = numberStack.removeLast();
-          numberStack.add( numberStack.removeLast() < b )
+        {
+          int b = numberStack.removeLast();
+          numberStack.add( (numberStack.removeLast()<b) ? 1 : 0 );
           continue;
+        }
 
         case ParserOpcode.COMPARE_LE:
-          local b = numberStack.removeLast();
-          numberStack.add( numberStack.removeLast() <= b )
+        {
+          int b = numberStack.removeLast();
+          numberStack.add( (numberStack.removeLast()<=b) ? 1 : 0 );
           continue;
+        }
 
         case ParserOpcode.COMPARE_GT:
-          local b = numberStack.removeLast();
-          numberStack.add( numberStack.removeLast() > b )
+        {
+          int b = numberStack.removeLast();
+          numberStack.add( (numberStack.removeLast()>b) ? 1 : 0 );
           continue;
+        }
 
         case ParserOpcode.COMPARE_GE:
-          local b = numberStack.removeLast();
-          numberStack.add( numberStack.removeLast() >= b )
+        {
+          int b = numberStack.removeLast();
+          numberStack.add( (numberStack.removeLast()>=b) ? 1 : 0 );
           continue;
+        }
 
-        others
-          throw Error( "[INTERNAL]", "Unhandled parser opcode: " + ParserOpcode(opcode) )
+        default:
+          throw new Error( "[INTERNAL] Unhandled parser opcode: " + ParserOpcode(opcode) );
       }
     }
   }
 
   public boolean hasAnother()
   {
-    return (position < tokens.count)
+    return (position < tokens.count);
   }
 
-  public void load( data:Byte[] )
+  public void load( String data )
   {
-    load( DataReader(data) )
+    load( new Base64IntXDecoder(data) );
   }
 
-  public void load( reader:DataReader )
+  public void load( Base64IntXDecoder reader )
   {
-    local version = reader.readInt32x
-    require version >= MIN_VERSION
-    local n = reader.readInt32x
+    int version = reader.readInt32X();
+    if (version < MIN_VERSION) throw new Error( "[INTERNAL] Unsupported version of Tokenizer." );
 
-    strings.reserve( n )
-    loop (n) strings.add( reader.readString )
+    int n = reader.readInt32X();
+    strings = new String[ n ];
+    for (int i=0; i<n; ++i)
+    {
+      strings[i] = reader.readString();
+    }
 
     // Method names & addresses
-    n = reader.readInt32x
-    methods.reserve( n )
-    loop (n)
-      local name = strings[ reader.readInt32x ]
-      methods[ name ] = reader.readInt32x
-      methodsByAddress[ methods[name] ] = name
-    endLoop
+    n = reader.readInt32X();
+    for (int i=n; --i>=0; )
+    {
+      String name = strings[ reader.readInt32X() ];
+      int mIP = reader.readInt32X();
+      methods.put( name, mIP );
+      methodsByAddress.put( mIP, name );
+    }
 
-    n = reader.readInt32x
-    code.reserve( n )
-    loop (n) code.add( reader.readInt32x )
+    n = reader.readInt32X();
+    code = new int[ n ];
+    for (int i=0; i<n; ++i)
+    {
+      code[i] = reader.readInt32X();
+    }
   }
 
-  public int locateVar( name:String, lowestIndex:Int32, &mustLocate )
+  public int locateVar( String name, int lowestIndex, boolean mustLocate )
   {
-    forEach (index in vars.count-1 downTo lowestIndex)
-      if (vars[index].name == name) return index
-    endForEach
-    if (mustLocate) throw Error( "No variable named '$' has been declared."(name) )
+    for (int index=varValues.count; --index>=lowestIndex; )
+    {
+      if (varsNames.get(index).equals(name)) return index;
+    }
+    if (mustLocate) throw new Error( "[INTERNAL] No variable named '" + name + "' has been declared." );
     return null
   }
 
-  public Cmd parse( ruleName:String )
+  public Cmd parse( String ruleName )
   {
-    local index = methods.locate( ruleName )
-    if (not index.exists) throw Error( "[INTERNAL]", "No parse rule '$' exists."(ruleName) )
-    return parse( methods[index.value] )
+    Integer mIP = methods.get( ruleName );
+    if (mIP == null) throw Error( "[INTERNAL] No parse rule '" + ruleName + "' exists." );
+    return parse( mIP );
   }
 
-  public Cmd parse( address:Int32 )
+  public Cmd parse( int address )
   {
-    callStack.clear
-    cmdQueue.clear
-    execute( address )
-    if (cmdQueue.size()) return cmdQueue.removeLast();
-    else                 return null
+    reset();
+    execute( address );
+    if (cmdQueue.size() == 0) return null;
+    return cmdQueue.remove( cmdQueue.size() - 1 );
   }
 
   public Token peek()
   {
-    if (position == tokens.count)
-      if (tokens.count == 0) return Token( filepath, "", 0, 0, TokenType(0) )
-      local t = tokens.last.cloned( TokenType.EOI )
-      ++t.column
-      return t
+    if (position == tokens.length)
+    {
+      if (tokens.length == 0) return new Token( 0, null, filepath, "", 0, 0, 0 );
+      Token t = tokens.last.cloned( TokenType.EOI );
+      ++t.column;
+      return t;
+    }
     else
-      return tokens[ position ]
-    endIf
+    {
+      return tokens[ position ];
+    }
   }
 
   public Token read()
   {
-    ++position
-    if (position < tokens.count) nextTokenType = tokens[position].type->Int32
-    else                         nextTokenType = -1
-    return tokens[ position-1 ]
+    if (++position < tokens.count) nextTokenType = tokens[position].type;
+    else                           nextTokenType = -1;
+    return tokens[ position-1 ];
   }
 
-  public void open( filepath, content:String, startLine=1:Int32, startColumn=1:Int32 )
+  public void open( String filepath, String content )
   {
-    require tokenizer
-    open( filepath, tokenizer.tokenize(filepath,content,startLine,startColumn) )
+    open( filepath, content, 1, 1 );
   }
 
-  public void open( file:File )
+  public void open( String filepath, String content, int startLine, int startColumn )
   {
-    require tokenizer
-    open( file.filepath, tokenizer.tokenize(file) )
+    open( filepath, tokenizer.tokenize(filepath,content,startLine,startColumn) );
   }
 
-  public void open( filepath, tokens:Token[] )
+  public void open( File file )
   {
-    @tokens.clear
-    @tokens.add( tokens )
-    if (tokens.count)
-      nextTokenType = tokens.first.type->Int32
+    open( file.getPath(), tokenizer.tokenize(file) );
+  }
+
+  public void open( String filepath, Token[] tokens )
+  {
+    this.filepath = filepath;
+    this.tokens = tokens;
+    if (tokens.length)
+    {
+      nextTokenType = tokens[0].type;
+    }
     else
-      nextTokenType = -1
-    endIf
-    position = 0
+    {
+      nextTokenType = -1;
+    }
+    position = 0;
   }
 
   static public class ParsePosition
@@ -457,3 +499,4 @@ public class Parser
     }
   }
 }
+

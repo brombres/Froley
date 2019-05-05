@@ -343,7 +343,7 @@ augment RogueTemplate
        |      forEach (index in vars.count-1 downTo lowest_index)
        |        if (vars[index].name == name) return index
        |      endForEach
-       |      if (must_locate) throw Error( "No variable named '$' has been declared."(name) )
+       |      if (must_locate) throw Error( "[INTERNAL] No variable named '$' has been declared."(name) )
        |      return null
        |
        |    method parse( rule_name:String )->Cmd
@@ -352,15 +352,14 @@ augment RogueTemplate
        |      return parse( methods[index.value] )
        |
        |    method parse( address:Int32 )->Cmd
-       |      call_stack.clear
-       |      cmd_queue.clear
+       |      reset
        |      execute( address )
        |      if (cmd_queue.count) return cmd_queue.remove_last
        |      else                 return null
        |
        |    method peek->Token
        |      if (position == tokens.count)
-       |        if (tokens.is_empty) return Token( filepath, "", 0, 0, TokenType(0) )
+       |        if (tokens.is_empty) return Token( TokenType(0), filepath, "", 0, 0 )
        |        local t = tokens.last.cloned( TokenType.EOI )
        |        ++t.column
        |        return t

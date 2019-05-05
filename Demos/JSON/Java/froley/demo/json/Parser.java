@@ -1,5 +1,8 @@
 package froley.demo.json;
 
+import java.io.*;
+import java.util.*;
+
 public class Parser
 {
   // DEFINITIONS
@@ -72,7 +75,7 @@ public class Parser
       switch (opcode)
       {
         case ParserOpcode.SYNTAX_ERROR:
-          if (position == tokens.count)
+          if (position == tokens.length)
           {
             throw peek().error( "Syntax error - unexpected end of input." );
           }
@@ -87,7 +90,7 @@ public class Parser
             if (callStack.count == 0) return;
             ip = callStack.removeLast();
             methodStack.removeLast();
-            curToken = tokenStack.removeLast();
+            curToken = tokenStack.remove( tokenStack.size() - 1 );
             int varCount = varFrames.removeLast();
             while (varNames.size() > varCount) varNames.remove( varNames.size()-1 );
             varValues.count = varCount;
@@ -124,7 +127,7 @@ public class Parser
           }
           continue;
         case ParserOpcode.HAS_ANOTHER:
-          numberStack.add( (nextTokenType!=-1)?1:0 )
+          numberStack.add( (nextTokenType!=-1)?1:0 );
           continue;
         case ParserOpcode.NEXT_HAS_ATTRIBUTE:
           numberStack.add( (nextTokenType != -1 && (TokenType.attributes[nextTokenType] & code[ip]) != 0) ? 1 : 0 );
@@ -138,8 +141,9 @@ public class Parser
           listStartPos.add( cmdQueue.size() );
           continue;
         case ParserOpcode.CREATE_CMD:
+        {
           int cmdTypeIndex = code[ ip++ ];
-          int argCount = code[ ip+++ ];
+          int argCount = code[ ip++ ];
           cmdArgs.clear();
           if (argCount > 0)
           {
@@ -153,14 +157,16 @@ public class Parser
           }
           cmdQueue.add( CmdFactory.createCmd(cmdTypeIndex,curToken,cmdArgs) );
           continue;
+        }
 
         case ParserOpcode.CREATE_NULL_CMD:
           cmdQueue.add( null );
           continue;
 
         case ParserOpcode.CREATE_LIST:
-          if (listStartT.size() == 0) throw peek().error( "[INTERNAL] No prior beginList before calling createList/produceList." )
-          Token t  = listStartT.removeLast();
+        {
+          if (listStartT.size() == 0) throw peek().error( "[INTERNAL] No prior beginList before calling createList/produceList." );
+          Token t  = listStartT.remove( listStartT.size() - 1 );
           int   i1 = listStartPos.removeLast();
           cmdArgs.clear();
           for (int i=i1; i<cmdQueue.size(); ++i)
@@ -168,12 +174,14 @@ public class Parser
             cmdArgs.add( cmdQueue.get(i) );
           }
           while (cmdQueue.size() > i1) cmdQueue.remove( cmdQueue.size() - 1 );
-          cmdQueue.add( new CmdList(curToken,cmdArgs) );
+          cmdQueue.add( new Cmd.CmdList(curToken,cmdArgs) );
           continue;
+        }
 
         case ParserOpcode.CREATE_STATEMENTS:
-          if (listStartT.size() == 0) throw peek().error( "[INTERNAL] No prior beginList before calling createStatements/produceStatements." )
-          Token t  = listStartT.removeLast();
+        {
+          if (listStartT.size() == 0) throw peek().error( "[INTERNAL] No prior beginList before calling createStatements/produceStatements." );
+          Token t  = listStartT.remove( listStartT.size() - 1 );
           int   i1 = listStartPos.removeLast();
           cmdArgs.clear();
           for (int i=i1; i<cmdQueue.size(); ++i)
@@ -181,8 +189,9 @@ public class Parser
             cmdArgs.add( cmdQueue.get(i) );
           }
           while (cmdQueue.size() > i1) cmdQueue.remove( cmdQueue.size() - 1 );
-          cmdQueue.add( new CmdStatements(curToken,cmdArgs) );
+          cmdQueue.add( new Cmd.CmdStatements(curToken,cmdArgs) );
           continue;
+        }
 
         case ParserOpcode.CONSUME_EOLS:
           // Called to automatically consume EOL tokens that occur in the
@@ -223,19 +232,18 @@ public class Parser
         {
           int count = savedPositions.size();
           if (count == 0) throw peek().error( "[INTERNAL] No savePosition to restore." );
-          int savedPosition = savedPositions.remove( count - 1 );
+          ParsePosition savedPosition = savedPositions.remove( count - 1 );
           position = savedPosition.position;
           int discardFrom = savedPosition.cmdCount;
           while (cmdQueue.size() > discardFrom) cmdQueue.remove( cmdQueue.size() - 1 );
           curToken = savedPosition.curToken;
-          if (position < tokens.count) nextTokenType = tokens[position].type;
-          else                         nextTokenType = -1;
+          if (position < tokens.length) nextTokenType = tokens[position].type;
+          else                          nextTokenType = -1;
           continue;
         }
 
         case ParserOpcode.DISCARD_SAVED_POSITION:
         {
-          if (savedPositions.count) savedPositions.remove();
           int count = savedPositions.size();
           if (count > 0) savedPositions.remove( count - 1 );
           continue;
@@ -254,12 +262,12 @@ public class Parser
           System.out.print( "  " );
           for (int index=0; index<methodStack.count; ++index)
           {
-            if (index > 0) print " > "
-            System.out.print( methodsByAddress[ methodStack.get(index) ] );
+            if (index > 0) System.out.print( " > " );
+            System.out.print( methodsByAddress.get( methodStack.get(index) ) );
           }
           System.out.println();
           System.out.print( "  [" );
-          for (int index=0; i<cmdQueue.size(); ++i)
+          for (int index=0; index<cmdQueue.size(); ++index)
           {
             Cmd cmd = cmdQueue.get( index );
             if (index > 0) System.out.print( "," );
@@ -304,7 +312,7 @@ public class Parser
         {
           String name = strings[ code[ip++] ];
           int index = locateVar( name, 0, true );
-          varValues[ index ] = Variable( name, numberStack.removeLast() );
+          varValues.set( index, numberStack.removeLast() );
           continue;
         }
 
@@ -317,7 +325,7 @@ public class Parser
         }
 
         case ParserOpcode.LOGICAL_NOT:
-          numberStack.add( (numberStack.removeLast()==0) : 1 : 0 );
+          numberStack.add( (numberStack.removeLast()==0) ? 1 : 0 );
           continue;
 
         case ParserOpcode.COMPARE_EQ:
@@ -363,22 +371,22 @@ public class Parser
         }
 
         default:
-          throw new Error( "[INTERNAL] Unhandled parser opcode: " + ParserOpcode(opcode) );
+          throw new Error( "[INTERNAL] Unhandled parser opcode: " + opcode );
       }
     }
   }
 
   public boolean hasAnother()
   {
-    return (position < tokens.count);
+    return (position < tokens.length);
   }
 
   public void load( String data )
   {
-    load( new Base64IntXDecoder(data) );
+    load( new Base64IntXReader(data) );
   }
 
-  public void load( Base64IntXDecoder reader )
+  public void load( Base64IntXReader reader )
   {
     int version = reader.readInt32X();
     if (version < MIN_VERSION) throw new Error( "[INTERNAL] Unsupported version of Tokenizer." );
@@ -412,16 +420,16 @@ public class Parser
   {
     for (int index=varValues.count; --index>=lowestIndex; )
     {
-      if (varsNames.get(index).equals(name)) return index;
+      if (varNames.get(index).equals(name)) return index;
     }
     if (mustLocate) throw new Error( "[INTERNAL] No variable named '" + name + "' has been declared." );
-    return null
+    return -1;
   }
 
   public Cmd parse( String ruleName )
   {
     Integer mIP = methods.get( ruleName );
-    if (mIP == null) throw Error( "[INTERNAL] No parse rule '" + ruleName + "' exists." );
+    if (mIP == null) throw new Error( "[INTERNAL] No parse rule '" + ruleName + "' exists." );
     return parse( mIP );
   }
 
@@ -437,8 +445,8 @@ public class Parser
   {
     if (position == tokens.length)
     {
-      if (tokens.length == 0) return new Token( 0, null, filepath, "", 0, 0, 0 );
-      Token t = tokens.last.cloned( TokenType.EOI );
+      if (tokens.length == 0) return new Token( 0, null, filepath, "", 0, 0 );
+      Token t = tokens[ tokens.length-1 ].cloned( TokenType.EOI );
       ++t.column;
       return t;
     }
@@ -450,7 +458,7 @@ public class Parser
 
   public Token read()
   {
-    if (++position < tokens.count) nextTokenType = tokens[position].type;
+    if (++position < tokens.length) nextTokenType = tokens[position].type;
     else                           nextTokenType = -1;
     return tokens[ position-1 ];
   }
@@ -474,7 +482,7 @@ public class Parser
   {
     this.filepath = filepath;
     this.tokens = tokens;
-    if (tokens.length)
+    if (tokens.length > 0)
     {
       nextTokenType = tokens[0].type;
     }

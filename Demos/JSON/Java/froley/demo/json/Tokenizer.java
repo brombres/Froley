@@ -50,7 +50,7 @@ public class Tokenizer
   public void add( int tokenType )
   {
     Token t = new Token( tokenType, null, filepath, scanner.source, line, column );
-    if (0 != (TokenType._attributes[tokenType] & TokenTypeAttribute.CONTENT)) t.content = buffer.toString();
+    if (0 != (TokenType.attributes[tokenType] & TokenTypeAttribute.CONTENT)) t.content = buffer.toString();
     tokens.add( t );
   }
 

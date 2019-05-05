@@ -69,7 +69,8 @@ class GenerateJava : CodeGenerator
       generate_Tokenizer
 
       regenerate_Code
-      #regenerate_TokenType
+      regenerate_TokenTypeAttribute
+      regenerate_TokenType
       regenerate_TokenizerOpcode
 
       if (has_parser)
@@ -348,44 +349,57 @@ class GenerateJava : CodeGenerator
       writer.println( "}" )
       writer.close
 
-      #{
-    method regenerate_TokenType
-      local writer = output_writer( "TokenType.java" )
+    method regenerate_TokenTypeAttribute
+      local writer = output_writer( "TokenTypeAttribute.java" )
       if (not writer) return
 
-      local attributes_by_value = Table<<Int32,String>>()
-      local defs = Int32DefsBuilder( &prefix="  " )
+      local defs = Int32DefsBuilder( &prefix="  final static public int ", &suffix=";" )
       defs.add( "NONE", 0 )
       forEach (attribute in info//token_attributes)
         local name = attribute//name->String.to_uppercase
         defs.add( name, attribute//value )
-        attributes_by_value[ attribute//value ] = name
       endForEach
 
-      writer.println( "enum TokenTypeAttribute" )
+      if (package_name)
+        writer.println( "package $;"(package_name) );
+        writer.println
+      endIf
+      writer.println @|public class TokenTypeAttribute
+                      |{
       defs.print( writer )
-      writer.println @|endEnum
-      writer.println.println
+      writer.println @|}
+      writer.println
 
-      defs = Int32DefsBuilder( &prefix="  " )
+    method regenerate_TokenType
+      local writer = output_writer( "TokenType.java" )
+      if (not writer) return
+
+      local attributes = ListSourceBuilder( "  static public int[]    attributes =\n  {\n", "    ", "  };\n" )
+      local symbols    = ListSourceBuilder( "  static public String[] symbols =\n  {\n", "    ", "  };\n" )
+
+      local defs = Int32DefsBuilder( &prefix="  final static public int ", &suffix=";" )
       forEach (token_type in info//token_types)
-        local def = '$("$"' (token_type//name,token_type//symbol->String.to_escaped_ascii("\""))
-        local attributes = token_type//attributes->Int32
-        if (attributes)
-          def += ",TokenTypeAttribute"
-          local name = attributes_by_value[ attributes ]
-          if (name) def += "." + name
-          else      def += "($)" (attributes)
-        endIf
-        def += ")"
-        defs.add( def, token_type//type )
+        defs.add( token_type//name, token_type//type )
+        attributes.add( token_type//attributes )
+        symbols.add( '"$"' (token_type//symbol->String.to_escaped_ascii("\"")) )
       endForEach
 
-      writer.println( "enum TokenType( symbol:String, attributes=TokenTypeAttribute.NONE:TokenTypeAttribute )" )
+      if (package_name)
+        writer.println( "package $;"(package_name) );
+        writer.println
+      endIf
+      writer.println @|public class TokenType
+                      |{
       defs.print( writer )
-      writer.println @|endEnum
+      writer.println
+
+      attributes.write( writer )
+      writer.println
+
+      symbols.write( writer )
+      writer.println @|}
+
       writer.close
-      }#
 
     method regenerate_TokenizerOpcode
       local writer = output_writer( "TokenizerOpcode.java" )

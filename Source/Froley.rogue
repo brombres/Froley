@@ -7,7 +7,6 @@ $include "CmdType.rogue"
 $include "FroleyError.rogue"
 $include "FroleyParser.rogue"
 $include "FroleyTokenizer.rogue"
-$include "Int32DefsBuilder.rogue"
 $include "Label.rogue"
 $include "ParserAssembler.rogue"
 $include "ParserMethod.rogue"
@@ -152,7 +151,11 @@ class TokenDef( name:String, type:Int32, symbol=null:String, attributes=0:Int32 
       return "$=$ ($) [$]" (name,type,symbol,attributes)
 
     method to->Value
-      return @{ :name, :type, :attributes, symbol:select{symbol||name} }
+      local sym = name
+      if (symbol)
+        if (symbol.count != 1 or (symbol[0] >= 32 and symbol[0] != 127)) sym = symbol
+      endIf
+      return @{ :name, :type, :attributes, symbol:sym }
 endClass
 
 class Froley [singleton]

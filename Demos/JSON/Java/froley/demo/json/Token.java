@@ -54,7 +54,6 @@ public class Token
   public String toString()
   {
     if (content != null) return content;
-    return TokenType._symbols[ type ];
+    return TokenType.symbols[ type ];
   }
 }
-

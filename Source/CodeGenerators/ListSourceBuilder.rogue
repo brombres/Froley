@@ -1,0 +1,51 @@
+module Froley
+
+class ListSourceBuilder
+  PROPERTIES
+    begin_list   : String
+    begin_line   : String
+    end_list     : String
+    elements     = String[]
+    max_width    = 80
+    spacing      = 1
+
+  METHODS
+    method init
+
+    method init( begin_list, begin_line, end_list )
+
+    method add( element:String )
+      elements.add( element )
+
+    method to->String
+      local builder = StringBuilder()
+      write( builder )
+      return builder->String
+
+    method write( writer:PrintWriter )
+      writer.print( begin_list )
+      writer.print( begin_line )
+      local w = begin_line.count
+      local at_beginning = true
+      forEach (element in elements)
+        if (not at_beginning)
+          writer.print( ',' )
+          ++w
+          if (w + element.count + spacing < max_width)
+            loop (spacing) writer.print( ' ' )
+            w += spacing
+          else
+            writer.println
+            writer.print( begin_line )
+            w = begin_line.count
+          endIf
+        endIf
+
+        writer.print( element )
+        w += element.count
+        at_beginning = false
+      endForEach
+      if (w) writer.println
+      writer.print( end_list )
+
+endClass

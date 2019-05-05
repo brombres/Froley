@@ -1,5 +1,8 @@
 module Froley
 
+$include "Int32DefsBuilder.rogue"
+$include "ListSourceBuilder.rogue"
+
 class CodeGenerator
   PROPERTIES
     info             : Value

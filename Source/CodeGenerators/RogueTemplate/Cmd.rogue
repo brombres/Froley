@@ -1,7 +1,7 @@
 augment RogueTemplate
   PROPERTIES
     cmd =
-      @|module RogueFroley
+      @|module FroleyLanguage
        |
        |class Cmd
        |  PROPERTIES
@@ -18,6 +18,10 @@ augment RogueTemplate
        |
        |    method write( builder:StringBuilder )
        |      builder.print( type_name.after_any("Cmd") )
+       |
+       |    method write( cmd:Cmd, builder:StringBuilder )
+       |      if (cmd) cmd.write( builder )
+       |      else     builder.print( "null" )
        |endClass
        |
        |class CmdList : Cmd
@@ -47,7 +51,7 @@ augment RogueTemplate
        |    method write( builder:StringBuilder )
        |      forEach (arg at index in list)
        |        if (index > 0) builder.print( ',' )
-       |        arg.write( builder )
+       |        write( arg, builder )
        |      endForEach
        |endClass
        |
@@ -55,7 +59,7 @@ augment RogueTemplate
        |  METHODS
        |    method write( builder:StringBuilder )
        |      forEach (statement in list)
-       |        statement.write( builder )
+       |        write( statement, builder )
        |        builder.println
        |      endForEach
        |endClass
@@ -71,7 +75,7 @@ augment RogueTemplate
        |
        |    method write( builder:StringBuilder )
        |      builder.print( '(' ).print( op )
-       |      operand.write( builder )
+       |      write( operand, builder )
        |      builder.print( ')' )
        |endClass
        |
@@ -79,7 +83,7 @@ augment RogueTemplate
        |  METHODS
        |    method write( builder:StringBuilder )
        |      builder.print( '(' )
-       |      operand.write( builder )
+       |      write( operand, builder )
        |      builder.print( op ).print( ')' )
        |endClass
        |
@@ -95,9 +99,9 @@ augment RogueTemplate
        |
        |    method write( builder:StringBuilder )
        |      builder.print( '(' )
-       |      left.write( builder )
+       |      write( left, builder )
        |      builder.print( ' ' ).print( op ).print( ' ' )
-       |      right.write( builder )
+       |      write( right, builder )
        |      builder.print( ')' )
        |endClass
 endAugment

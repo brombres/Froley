@@ -8,27 +8,46 @@
 
 # "rogo_default" will run in the absence of any other command line argument.
 
+$define LANGUAGE "CSQ"
+
 routine rogo_default
-  println "Compiling CSQ.froley with JSON and Rogue outputs"
-  execute( "froley CSQ.froley --target=json --target=rogue --main" )
+  rogo_rogue
+  rogo_java
+endRoutine
 
-  if (Files(".","*.rogue").any_newer_than("Build/CSQ"))
-    println "Compiling .rogue files to create CSQ parser (run Build/CSQ with no arguments for interactive mode)"
-    File.create_folder( "Build" )
-    execute "roguec --execute=Test.csq --debug CSQ.rogue --output=Build/CSQ"
-  else
-    println "Executing CSQ parser (run Build/CSQ with no arguments for interactive mode)"
-    execute "Build/CSQ Test.csq"
-  endIf
+routine rogo_rogue
+  println "-" * 79
+  println "Compiling $.froley targeting Rogue" (LANGUAGE)
+  println "-" * 79
+  execute "froley $.froley --target=rogue --main --output=Source/Rogue" (LANGUAGE)
+  println "Compiling .rogue files to create $ parser" (LANGUAGE)
+  File.create_folder( "Build/Rogue" )
+  execute "roguec --debug --compile Source/Rogue/$.rogue --output=Build/Rogue/$" (LANGUAGE,LANGUAGE)
+  println "Executing $ parser (run 'Build/Rogue/$' with no arguments for interactive mode)" (LANGUAGE,LANGUAGE)
+  execute "Build/Rogue/$ Test.csq" (LANGUAGE)
+endRoutine
 
+routine rogo_java
+  println "-" * 79
+  println "Compiling $.froley targeting Java" (LANGUAGE)
+  println "-" * 79
+  local package = "froley.demo.$" (LANGUAGE.to_lowercase)
+  execute( "froley $.froley --target=java --main --output=Source/Java --package=$"(LANGUAGE,package) )
+  println "Compiling .java files to create $ parser" (LANGUAGE)
+  File.create_folder( "Build/Java" )
+  execute "javac -d Build/Java Source/Java/$/*.java" (package.replacing('.','/'))
+  println "Executing $ parser (run 'java -cp Build/Java $.$' with no additional arguments for interactive mode)" (LANGUAGE,package,LANGUAGE)
+  println "(Note: Java target does not currently have customized CSQ.java and Cmd.java files for formatted C-style output)"
+  execute "java -cp Build/Java $.$ Test.csq" (package,LANGUAGE)
 endRoutine
 
 routine rogo_clean
   println "Deleting Build/"
   File.delete( "Build" )
-  println "Deleting generated .json and .rogue files"
-  local files = Files( ".", "*.rogue" ).add( "*.json" ).remove( "Build.rogue" ).remove( "Cmd.rogue" ).remove( "CSQ.rogue" )
-  File.delete( forEach in files )
+  println "Deleting generated .rogue and .java files"
+  File.delete( LANGUAGE+".json" )
+  Files( ".", "Source/Rogue/*.rogue" ).remove( "**/Cmd.rogue" ).remove( "**/CSQ.rogue" ).delete
+  File.delete( "Source/Java" )
 endRoutine
 
 routine execute( commands:String, &suppress_error )->Logical

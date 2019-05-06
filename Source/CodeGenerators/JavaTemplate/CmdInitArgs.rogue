@@ -1,7 +1,7 @@
 augment JavaTemplate
   PROPERTIES
     cmd_init_args =
-      @|<rogue.froley.package>
+      @|<froley.package>
        |
        |import java.util.ArrayList;
        |

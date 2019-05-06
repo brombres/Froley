@@ -1,7 +1,7 @@
 augment JavaTemplate
   PROPERTIES
     string_utility =
-      @|<rogue.froley.package>
+      @|<froley.package>
        |
        |import java.io.*;
        |
@@ -29,7 +29,7 @@ augment JavaTemplate
        |  static public String load( File file )
        |  {
        |    String filepath = file.getPath();
-       |    if (!file.exists()) throw new Error( "RogueFroley", "File not found: " + filepath );
+       |    if (!file.exists()) throw new Error( "FroleyLanguage", "File not found: " + filepath );
        |
        |    try
        |    {
@@ -55,7 +55,7 @@ augment JavaTemplate
        |    }
        |    catch (Exception err)
        |    {
-       |      throw new Error( "RogueFroley", "Error reading file: " + filepath );
+       |      throw new Error( "FroleyLanguage", "Error reading file: " + filepath );
        |    }
        |  }
        |

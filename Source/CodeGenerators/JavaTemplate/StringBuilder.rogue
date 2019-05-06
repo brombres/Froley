@@ -1,7 +1,7 @@
 augment JavaTemplate
   PROPERTIES
     string_builder =
-      @|<rogue.froley.package>
+      @|<froley.package>
        |
        |class StringBuilder implements CharSequence, Comparable<String>
        |{

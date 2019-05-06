@@ -1,7 +1,7 @@
 augment JavaTemplate
   PROPERTIES
     scanner =
-      @|<rogue.froley.package>
+      @|<froley.package>
        |
        |import java.io.*;
        |

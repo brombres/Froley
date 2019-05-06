@@ -1,7 +1,7 @@
 augment JavaTemplate
   PROPERTIES
     int_list =
-      @|<rogue.froley.package>
+      @|<froley.package>
        |
        |public class IntList
        |{

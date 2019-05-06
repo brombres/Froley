@@ -1,7 +1,7 @@
 augment RogueTemplate
   PROPERTIES
     tokenizer =
-      @|module RogueFroley
+      @|module FroleyLanguage
        |
        |$include "Code.rogue"
        |$include "Error.rogue"

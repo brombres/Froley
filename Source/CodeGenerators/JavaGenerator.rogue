@@ -93,11 +93,11 @@ class GenerateJava : CodeGenerator
       if (not writer) return
       if (content_filter) content = content_filter( content )
       if (package_name)
-        content = content.replacing( "<rogue.froley.package>", "package $;"(package_name) );
+        content = content.replacing( "<froley.package>", "package $;"(package_name) );
       else
-        content = content.replacing( "<rogue.froley.package>", "" );
+        content = content.replacing( "<froley.package>", "" );
       endIf
-      content = content.replacing( "RogueFroley", language )
+      content = content.replacing( "FroleyLanguage", language )
       writer.println( content )
       writer.close
 
@@ -224,7 +224,8 @@ class GenerateJava : CodeGenerator
                 case 0
                   builder.println ''      builder.print( "$" );'' (escaped_symbol)
                 others
-                  if (cmd_properties.count > 1) builder.println ''      builder.print( "$(" );'' (escaped_symbol)
+                  local print_cmd_name = (cmd_properties.count > 1 or cmd_properties.first//value == "")
+                  if (print_cmd_name) builder.println ''      builder.print( "$(" );'' (escaped_symbol)
                   forEach (p at index in cmd_properties)
                     if (index > 0) builder.println ''      builder.print( ',' );''
                     if (p//value != "")
@@ -234,10 +235,10 @@ class GenerateJava : CodeGenerator
                         builder.println ''      builder.print( ""+$ );'' (p//name)
                       endIf
                     else
-                      builder.println ''      $.write( builder );'' (p//name)
+                      builder.println ''      write( $, builder );'' (p//name)
                     endIf
                   endForEach
-                  if (cmd_properties.count > 1) builder.println ''      builder.print( ')' );''
+                  if (print_cmd_name) builder.println ''      builder.print( ')' );''
               endWhich
               builder.println "    }"
           endWhich
@@ -300,7 +301,7 @@ class GenerateJava : CodeGenerator
         writer.println "      case $ : return new Cmd.$().init( t, args );" (cmd_type//index,cmd_type//name)
       endForEach
       writer.println  @|      default:
-      writer.println( ''        throw new Error( "RogueFroley", "[INTERNAL] CmdFactory.createCmd() index out of bounds: " + index );'' )
+      writer.println( ''        throw new Error( "FroleyLanguage", "[INTERNAL] CmdFactory.createCmd() index out of bounds: " + index );'' )
       writer.println  @|    }
                        |  }
                        |}

@@ -1,7 +1,7 @@
 augment JavaTemplate
   PROPERTIES
     base64_intx_reader =
-      @|<rogue.froley.package>
+      @|<froley.package>
        |
        |class Base64IntXReader
        |{

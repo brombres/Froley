@@ -1,7 +1,7 @@
 augment JavaTemplate
   PROPERTIES
     cmd =
-      @|<rogue.froley.package>
+      @|<froley.package>
        |
        |import java.util.ArrayList;
        |
@@ -32,6 +32,12 @@ augment JavaTemplate
        |    if (i == -1) i = typeName.lastIndexOf( "Cmd" );
        |    if (i != -1 && i == typeName.length()-1) i = -1;
        |    builder.print( (i==-1) ? typeName : typeName.substring(i+3) );
+       |  }
+       |
+       |  public void write( Cmd cmd, StringBuilder builder )
+       |  {
+       |    if (cmd != null) cmd.write( builder );
+       |    else             builder.print( "null" );
        |  }
        |
        |  static public class CmdList extends Cmd
@@ -69,6 +75,16 @@ augment JavaTemplate
        |    {
        |      return list.get( list.size()-1 );
        |    }
+       |
+       |    public void write( StringBuilder builder )
+       |    {
+       |      for (int i=0; i<list.size(); ++i)
+       |      {
+       |        if (i > 0) builder.print( ',' );
+       |        Cmd cmd = list.get( i );
+       |        write( cmd, builder );
+       |      }
+       |    }
        |  }
        |
        |  static public class CmdStatements extends CmdList
@@ -83,7 +99,7 @@ augment JavaTemplate
        |      for (int i=0; i<list.size(); ++i)
        |      {
        |        Cmd statement = list.get( i );
-       |        statement.write( builder );
+       |        write( statement, builder );
        |        builder.print( '\n' );
        |      }
        |    }
@@ -110,18 +126,18 @@ augment JavaTemplate
        |    public void write( StringBuilder builder )
        |    {
        |      builder.print( '(' ).print( op() );
-       |      operand.write( builder );
+       |      write( operand, builder );
        |      builder.print( ')' );
        |    }
        |  }
        |
        |  static public class CmdPostUnary extends CmdUnary
        |  {
-       |    //METHODS
+       |    // METHODS
        |    public void write( StringBuilder builder )
        |    {
        |      builder.print( '(' );
-       |      operand.write( builder );
+       |      write( operand, builder );
        |      builder.print( op() ).print( ')' );
        |    }
        |  }
@@ -150,9 +166,9 @@ augment JavaTemplate
        |    public void write( StringBuilder builder )
        |    {
        |      builder.print( '(' );
-       |      left.write( builder );
+       |      write( left, builder );
        |      builder.print( ' ' ).print( op() ).print( ' ' );
-       |      right.write( builder );
+       |      write( right, builder );
        |      builder.print( ')' );
        |    }
        |  }

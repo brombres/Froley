@@ -1,7 +1,7 @@
 augment RogueTemplate
   PROPERTIES
     cmd_init_args =
-      @|module RogueFroley
+      @|module FroleyLanguage
        |
        |class CmdInitArgs : Cmd[]
        |  PROPERTIES
@@ -10,7 +10,7 @@ augment RogueTemplate
        |  METHODS
        |    method require_count( required_count:Int32 )
        |      if (count != required_count)
-       |        throw Error( "[RogueFroley]", "init(t,args) got $, expected $." ("# arg".pluralized(count),required_count) )
+       |        throw Error( "[FroleyLanguage]", "init(t,args) got $, expected $." ("# arg".pluralized(count),required_count) )
        |      endIf
        |endClass
        |

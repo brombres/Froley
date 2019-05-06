@@ -1,7 +1,7 @@
 augment RogueTemplate
   PROPERTIES
     token =
-      @|module RogueFroley
+      @|module FroleyLanguage
        |
        |class Token( type:TokenType, filepath:String, source:String, line:Int32, column:Int32, content=null:String )
        |  METHODS

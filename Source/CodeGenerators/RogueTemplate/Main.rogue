@@ -1,13 +1,13 @@
 augment RogueTemplate
   PROPERTIES
     main_with_tokenizer_and_parser =
-      @|module RogueFroley
+      @|module FroleyLanguage
        |
        |$include "Parser.rogue"
        |
-       |RogueFroley()
+       |FroleyLanguage()
        |
-       |class RogueFroley
+       |class FroleyLanguage
        |  METHODS
        |    method init
        |      # Parse input or file by repeatedly calling first method defined in parser.
@@ -53,13 +53,13 @@ augment RogueTemplate
        |
 
     main_with_tokenizer_only =
-      @|module RogueFroley
+      @|module FroleyLanguage
        |
        |$include "Tokenizer.rogue"
        |
-       |RogueFroley()
+       |FroleyLanguage()
        |
-       |class RogueFroley
+       |class FroleyLanguage
        |  METHODS
        |    method init
        |      # Parse input or file

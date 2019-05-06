@@ -1,7 +1,7 @@
 augment JavaTemplate
   PROPERTIES
     parser =
-      @|<rogue.froley.package>
+      @|<froley.package>
        |
        |import java.io.*;
        |import java.util.*;

@@ -1,7 +1,7 @@
 augment JavaTemplate
   PROPERTIES
     error =
-      @|<rogue.froley.package>
+      @|<froley.package>
        |
        |public class Error extends RuntimeException
        |{

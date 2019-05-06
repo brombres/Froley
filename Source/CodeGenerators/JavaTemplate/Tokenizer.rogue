@@ -1,7 +1,7 @@
 augment JavaTemplate
   PROPERTIES
     tokenizer =
-      @|<rogue.froley.package>
+      @|<froley.package>
        |
        |import java.io.*;
        |import java.util.ArrayList;
@@ -418,7 +418,7 @@ augment JavaTemplate
        |
        |  public Token[] tokenize( File file )
        |  {
-       |    if (!file.exists()) throw new Error( "RogueFroley", "File not found: " + file );
+       |    if (!file.exists()) throw new Error( "FroleyLanguage", "File not found: " + file );
        |    return tokenize( file.toString(), StringUtility.load(file) );
        |  }
        |

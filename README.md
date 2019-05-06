@@ -2,7 +2,7 @@
 
 About          | Current Release
 ---------------|-----------------------
-Version        | v0.1.0
+Version        | v1.0.0
 Date           | May 5, 2019
 Output Targets | Rogue, Java
 

@@ -2,49 +2,71 @@ package froley.demo.json;
 
 public class JSON
 {
-  /*
-  METHODS
-  method init
-    # Parse input or file by repeatedly calling first method defined in parser.
-    local parser = Parser()
-    if (System.command_line_arguments.count)
+  // GLOBAL METHODS
+  static public void main( String[] args )
+  {
+    new JSON( args );
+  }
+
+  // METHODS
+  public JSON( String[] args )
+  {
+    // Parse input or file by repeatedly calling first method defined in parser.
+    Parser parser = Parser();
+    if (args.length > 0)
+    {
       try
-        local args = System.command_line_arguments.join( " " )
-        if (File.exists(args))
-          # Parse contents of file
-          parser.open( File(args) )
+      {
+        String commandLine = args[0];
+        for (int i=1; i<args.length; ++i) commandLine += " "+ args[i];
+        if (File.exists(commandLine))
+        {
+          parser.open( new File(commandLine) );
+        }
         else
-          parser.open( "[Command Line]", args )
-        endIf
+        {
+          parser.open( "[Command Line]", commandLine );
+        }
 
-        if (not parser.methods.is_empty)
-          while (parser.has_another)
-            local cmd = parser.parse( parser.methods[0] )
-            println cmd
-          endWhile
-        endIf
-      catch (err:Error)
-        Console.error.println err
-      endTry
-
+        if ( !parser.methodAddresses.isEmpty() )
+        {
+          while (parser.hasAnother())
+          {
+            String cmd = parser.parse( parser.firstMethodAddress );
+            System.out.println( cmd );
+          }
+        }
+      }
+      catch (Error error)
+      {
+        System.err.println( err );
+      }
+    }
     else
-      # Interactive mode
-      loop
+    {
+      // Interactive mode
+      for (;;)
+      {
         try
+        {
           local input = Console.input( "> " )
           parser.open( "[Command Line]", input )
-          if (not parser.methods.is_empty)
+          if ( !parser.methods.isEmpty() )
+          {
             while (parser.has_another)
-              local cmd = parser.parse( parser.methods[0] )
-              println cmd
-            endWhile
-          endIf
+            {
+              Cmd cmd = parser.parse( parser.firstMethodAddress );
+              System.out.println( cmd );
+            }
+          }
+        }
         catch (err:Error)
-          Console.error.println err
-        endTry
-      endLoop
-    endIf
-    */
+        {
+          System.err.println( err );
+        }
+      }
+    }
+  }
 }
 
 

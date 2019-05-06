@@ -338,6 +338,7 @@ augment JavaTemplate
        |                ip += 2;
        |              }
        |              if (foundLink) ++lookahead;
+       |              else           break;
        |            }
        |            // Either no links match or EOI - jump to code of last acceptable node.
        |            // The start node is always acceptable and either contains the
@@ -369,6 +370,7 @@ augment JavaTemplate
        |              ip += 2;
        |            }
        |            if (foundLink) ++lookahead;
+       |            else           break;
        |          }
        |
        |          // Either no links match or EOI
@@ -393,7 +395,7 @@ augment JavaTemplate
        |  public void load( Base64IntXReader reader )
        |  {
        |    int version = reader.readInt32X();
-       |    if (version >= MIN_VERSION) throw new Error( "[INTERNAL]", "Unsupported tokenizer version: " + version );
+       |    if (version < MIN_VERSION) throw new Error( "[INTERNAL]", "Unsupported tokenizer version: " + version );
        |    int n = reader.readInt32X();
        |    strings = new String[ n ];
        |    for (int i=0; i<n; ++i) strings[i] = reader.readString();

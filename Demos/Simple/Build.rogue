@@ -11,7 +11,7 @@
 routine rogo_default
   println "Compiling Simple.froley with JSON, Rogue, and Java outputs"
   #execute( "froley Simple.froley --target=json --rogue --main --java --main --output=Java --package=froley.demo.simple" )
-  execute( "froley Simple.froley --target=json --target=java --main --output=Java --package=froley.demo.simple" )
+  execute( "froley Simple.froley --target=java --main --output=Java --package=froley.demo.simple" )
 
   #{
   if (Files(".","*.rogue").any_newer_than("Build/Simple"))

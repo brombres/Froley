@@ -61,12 +61,17 @@ class GenerateJava : CodeGenerator
     method process( info )
       configure
       if (package_name) output += File.ensure_ends_with_separator( package_name.split('.').join("/") )
-      output = File.ensure_ends_with_separator( File.absolute_filepath( output ) )
       File.create_folder( output )
+      output = File.ensure_ends_with_separator( output )
 
-      generate_Error
-      generate_Token
       generate_Tokenizer
+      generate( JavaTemplate.base64_intx_reader, "Base64IntXReader.java", &do_not_overwrite )
+      generate( JavaTemplate.error,              "Error.java",            &do_not_overwrite )
+      generate( JavaTemplate.int_list,           "IntList.java",          &do_not_overwrite )
+      generate( JavaTemplate.token,              "Token.java",            &do_not_overwrite )
+      generate( JavaTemplate.scanner,            "Scanner.java",          &do_not_overwrite )
+      generate( JavaTemplate.string_builder,     "StringBuilder.java",    &do_not_overwrite )
+      generate( JavaTemplate.string_utility,     "StringUtility.java",    &do_not_overwrite )
 
       regenerate_Code
       regenerate_TokenTypeAttribute
@@ -76,13 +81,12 @@ class GenerateJava : CodeGenerator
       if (has_parser)
         generate_Cmd
         generate_CmdInitArgs
-        #generate_Parser
-
+        generate_Parser
         regenerate_CmdFactory
         regenerate_ParserOpcode
       endIf
 
-      #if (should_generate_main) generate_main
+      if (should_generate_main) generate_main
 
     method generate( content:String, filename:String, content_filter=null:Function(String)->String, &do_not_overwrite )
       local writer = output_writer( filename, &=do_not_overwrite )
@@ -248,24 +252,25 @@ class GenerateJava : CodeGenerator
     method generate_CmdInitArgs
       generate( JavaTemplate.cmd_init_args, "CmdInitArgs.java", &do_not_overwrite )
 
-    method generate_Error
-      generate( JavaTemplate.error, "Error.java", &do_not_overwrite )
-
-      #{
     method generate_main
-      generate( JavaTemplate.main, language+".java", &do_not_overwrite )
+      if (has_parser)
+        generate( JavaTemplate.main_with_tokenizer_and_parser, language+".java", &do_not_overwrite )
+      else
+        generate( JavaTemplate.main_with_tokenizer_only, language+".java", &do_not_overwrite )
+      endIf
 
     method generate_Parser
       local fn = function( content:String )->String
         local def = Froley.token_defs_by_symbol[ "\n" ]
-        if (def) content = content.replacing( "<handle_consume_eols>", "while (TokenType(next_token_type) == TokenType.$) read"(def.name) )
+        if (def)
+          content = content.replacing( "<handle_consume_eols>",
+              "while (nextTokenType == TokenType." + def.name + ") read();" )
+        else
+          content = content.replacing( "<handle_consume_eols>", "" );
+        endIf
         return content
       endFunction
       generate( JavaTemplate.parser, "Parser.java", fn, &do_not_overwrite )
-      }#
-
-    method generate_Token
-      generate( JavaTemplate.token, "Token.java", &do_not_overwrite )
 
     method generate_Tokenizer
       local fn = function( content:String )->String with (info)
@@ -374,8 +379,10 @@ class GenerateJava : CodeGenerator
       local writer = output_writer( "TokenType.java" )
       if (not writer) return
 
-      local attributes = ListSourceBuilder( "  static public int[]    attributes =\n  {\n", "    ", "  };\n" )
+      local attributes = ListSourceBuilder( "  static public int[] attributes =\n  {\n", "    ", "  };\n" )
       local symbols    = ListSourceBuilder( "  static public String[] symbols =\n  {\n", "    ", "  };\n" )
+      attributes.add( "0" )
+      symbols.add( "null" )
 
       local defs = Int32DefsBuilder( &prefix="  final static public int ", &suffix=";" )
       forEach (token_type in info//token_types)

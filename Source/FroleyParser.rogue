@@ -155,6 +155,18 @@ class FroleyParser : Parser
           throw t.error( "'Expected 'consume(<character>)'." )
         endFunction
       )
+      rule.on( "nextIs",
+        function(parser:FroleyParser)->Cmd
+        local t = parser.read  # 'nextIs'
+          if (parser.consume(TokenType.SYMBOL_OPEN_PAREN))
+            local expr = parser.parse_tokenizer_expression()
+            parser.must_consume( TokenType.SYMBOL_CLOSE_PAREN )
+            t = expr.t
+            if (expr.is_integer) return TokenizerCmdNextIsCharacter( t, expr->Int32 )
+          endIf
+          throw t.error( "'Expected 'nextIs(<character>)'." )
+        endFunction
+      )
 
       # parser expression
       rule = add( ParseRule("parser_expression") )
@@ -679,8 +691,8 @@ class FroleyParser : Parser
         statements.add( ParserCmdCreateStatements(t) )
         return
 
-      elseIf (consume(TokenType.KEYWORD_CREATE_ARGS))
-        statements.add( ParserCmdCreateArgs(t) )
+      elseIf (consume(TokenType.KEYWORD_CREATE_LIST))
+        statements.add( ParserCmdCreateList(t) )
         return
 
       elseIf (consume(TokenType.KEYWORD_PRODUCE))
@@ -698,8 +710,8 @@ class FroleyParser : Parser
         statements.add( ParserCmdReturn(t,null) )
         return
 
-      elseIf (consume(TokenType.KEYWORD_PRODUCE_ARGS))
-        statements.add( ParserCmdCreateArgs(t) )
+      elseIf (consume(TokenType.KEYWORD_PRODUCE_LIST))
+        statements.add( ParserCmdCreateList(t) )
         statements.add( ParserCmdReturn(t,null) )
         return
 

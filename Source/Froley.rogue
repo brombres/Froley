@@ -7,7 +7,6 @@ $include "CmdType.rogue"
 $include "FroleyError.rogue"
 $include "FroleyParser.rogue"
 $include "FroleyTokenizer.rogue"
-$include "Int32DefsBuilder.rogue"
 $include "Label.rogue"
 $include "ParserAssembler.rogue"
 $include "ParserMethod.rogue"
@@ -20,7 +19,6 @@ $include "TokenizerOpcode.rogue"
 $include "TokenizerVM.rogue"
 
 $includeFolder "CodeGenerators"
-$includeFolder "CodeGenerators/Template"
 
 Launcher( System.command_line_arguments )
 
@@ -78,17 +76,22 @@ class Launcher
         forEach (option in options)
           local name = option.before_first('=')
           local value = option.after_first('=')
-          local gen = Froley.code_generators[ name ]
-          if (gen)
-            # Switching host language
-            cur_gen = gen
-            active_generators.add( cur_gen )
-            if (language_override) cur_gen.language = language_override
+          if (name == "target")
+            local gen = Froley.code_generators[ value ]
+            if (gen)
+              # Switching host language
+              cur_gen = gen
+              active_generators.add( cur_gen )
+              if (language_override) cur_gen.language = language_override
+            else
+              local valid_names = Froley.code_generators.keys
+              throw FroleyError( "Invalid target '$'. Valid targets: $." (value,valid_names.join(", ")) )
+            endIf
           elseIf (cur_gen is null)
             if (name == "language")
               language_override = value  # leading '--language' overrides .froley-level 'language' for every output
             else
-              throw FroleyError( "Invalid option '$'. Note: no output language has been specified."(option) )
+              throw FroleyError( "Invalid option '$'. Note: no --target has been specified."(option) )
             endIf
           else
             cur_gen.add_option( name, value )
@@ -113,31 +116,27 @@ class Launcher
 
     method print_usage( writer=Console:PrintWriter )->PrintWriter
       writer.println @|USAGE
-               |  froley filename.froley [host-language] [options]
+                      |  froley filename.froley [--target=<target-language>] [options]
                |
-               |HOST LANGUAGES
-               |  Froley can generate code for the following host languages:
-      forEach (key in Froley.code_generators.keys)
-        writer.print  "    --"
-        writer.println key
-      endForEach
+               |TARGET LANGUAGES
+               |  Froley can generate code for the following target languages:
+      writer.print( "    " ).println( forEach in Froley.code_generators.keys )
       writer.println
-      writer.println @|Use '--<host-language>' to include output for that language. Any successive
-                      |options will apply to that language only. Multiple host languages can be
-                      |specified.
+      writer.println @|Use '--target=<language>' to include output for that language. Any successive
+                      |options will apply only to that language until another `--target` is specified.
                       |
                       |GENERAL OPTIONS
                       |  --language=<name>
                       |    Specifies the name of the language that the Froley-generated Tokenizer and
                       |    Parser will parse. For example, to generate Rogue source code that will
                       |    parse a language called Simple you would write:
-                      |      froley --language=Simple --rogue
+                      |      froley --language=Simple --target=rogue
                       |    If no --language is specified then the base name of the '.froley' filename
                       |    is used as the language name.
                       |
                       |OPTIONS
       forEach (key in Froley.code_generators.keys)
-        writer.print  "  --"
+        writer.print  "  --target="
         writer.println key
         writer.println(forEach in Froley.code_generators[ key ].usage_options.sort((a,b)=>a<b)).println
       endForEach
@@ -152,7 +151,11 @@ class TokenDef( name:String, type:Int32, symbol=null:String, attributes=0:Int32 
       return "$=$ ($) [$]" (name,type,symbol,attributes)
 
     method to->Value
-      return @{ :name, :type, :attributes, symbol:select{symbol||name} }
+      local sym = name
+      if (symbol)
+        if (symbol.count != 1 or (symbol[0] >= 32 and symbol[0] != 127)) sym = symbol
+      endIf
+      return @{ :name, :type, :attributes, symbol:sym }
 endClass
 
 class Froley [singleton]
@@ -186,6 +189,9 @@ class Froley [singleton]
     language    : String
 
   METHODS
+    method init
+      token_def( "EOI" ).symbol = "end of input"
+
     method parse( file:File )->Value
       local source = file.load_as_string
       return parse( file.filepath, source )
@@ -211,15 +217,7 @@ class Froley [singleton]
       parser.parse_parser_methods
       local parser_assembler = ParserAssembler()
       local parser_bytes = parser_assembler.assemble( parser_methods )
-
-      #{
-      local max_count  = 0
-      local max_digits = 0
-      forEach (def in token_defs_by_name)
-        max_count = max_count.or_larger( def.name.count )
-        max_digits = max_digits.or_larger( def.type.digit_count )
-      endForEach
-      }#
+      if (parser_methods.is_empty) parser_bytes = Byte[]
 
       local token_attributes = @[]
       forEach (name at index in this.token_attributes.keys)
@@ -298,7 +296,17 @@ class Froley [singleton]
       local parse_type = PARSING_TOKENIZER
       local buffer = StringBuilder()
       local next_attribute_value = 2   # [content] is 1
+      local comment_level = 0
       forEach (line at index in LineReader(source))
+        local trimmed = line.trimmed
+        if (trimmed == "#{")
+          ++comment_level
+          nextIteration
+        elseIf (comment_level)
+          if (trimmed == "}#") --comment_level
+          nextIteration
+        endIf
+
         if (line.begins_with('['))  # new section
           tokenizer_code.println  # keep line numbers consistent
           parser_code.println  # keep line numbers consistent

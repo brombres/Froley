@@ -1,13 +1,13 @@
 augment RogueTemplate
   PROPERTIES
-    main =
-      @|module RogueFroley
+    main_with_tokenizer_and_parser =
+      @|module FroleyLanguage
        |
        |$include "Parser.rogue"
        |
-       |RogueFroley()
+       |FroleyLanguage()
        |
-       |class RogueFroley
+       |class FroleyLanguage
        |  METHODS
        |    method init
        |      # Parse input or file by repeatedly calling first method defined in parser.
@@ -49,6 +49,47 @@ augment RogueTemplate
        |          endTry
        |        endLoop
        |      endIf
+       |endClass
+       |
+
+    main_with_tokenizer_only =
+      @|module FroleyLanguage
+       |
+       |$include "Tokenizer.rogue"
+       |
+       |FroleyLanguage()
+       |
+       |class FroleyLanguage
+       |  METHODS
+       |    method init
+       |      # Parse input or file
+       |      local tokenizer = Tokenizer()
+       |      if (System.command_line_arguments.count)
+       |        try
+       |          local args = System.command_line_arguments.join( " " )
+       |          if (File.exists(args))
+       |            display( tokenizer.tokenize(File(args)) )
+       |          else
+       |            display( tokenizer.tokenize("[Command Line]", args) )
+       |          endIf
+       |        catch (err:Error)
+       |          Console.error.println err
+       |        endTry
+       |
+       |      else
+       |        # Interactive mode
+       |        loop
+       |          try
+       |            local input = Console.input( "> " )
+       |            display( tokenizer.tokenize("[Command Line]", input) )
+       |          catch (err:Error)
+       |            Console.error.println err
+       |          endTry
+       |        endLoop
+       |      endIf
+       |
+       |    method display( tokens:Token[] )
+       |      println (forEach in tokens)
        |endClass
        |
 endAugment

@@ -28,9 +28,16 @@ routine needs_build->Logical
   return (Files("Source","*.rogue").add("**/*.rogue").any_newer_than(Build.EXE))
 endRoutine
 
+routine rogo_demos
+  rogo_simple
+  rogo_csq
+  rogo_json
+  rogo_asm
+endRoutine
+
 routine rogo_csq
   rogo_build
-  execute( "cd Demos/C-esque && rogo clean && rogo" )
+  execute( "cd Demos/CSQ && rogo clean && rogo" )
 endRoutine
 
 routine rogo_simple
@@ -50,7 +57,7 @@ endRoutine
 
 routine rogo_clean
   execute( "cd Demos/Simple && rogo clean" )
-  execute( "cd Demos/C-esque && rogo clean" )
+  execute( "cd Demos/CSQ && rogo clean" )
   execute( "cd Demos/JSON && rogo clean" )
   execute( "cd Demos/ASM && rogo clean" )
   execute( "rm -rf Build" )

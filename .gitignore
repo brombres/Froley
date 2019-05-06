@@ -3,6 +3,7 @@ BuildLocal.rogue
 Build
 *.swo
 *.swp
+*.class
 .DS_Store
 Demos/*/*.json
 Demos/*/*.rogue

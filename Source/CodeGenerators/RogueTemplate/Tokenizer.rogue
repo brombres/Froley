@@ -1,7 +1,13 @@
 augment RogueTemplate
   PROPERTIES
     tokenizer =
-      @|module RogueFroley
+      @|module FroleyLanguage
+       |
+       |$include "Code.rogue"
+       |$include "Error.rogue"
+       |$include "Token.rogue"
+       |$include "TokenType.rogue"
+       |$include "TokenizerOpcode.rogue"
        |
        |class Tokenizer
        |  DEFINITIONS
@@ -37,6 +43,15 @@ augment RogueTemplate
        |      forEach (ch in id_continue) id_characters[ch->Int32] = 2
        |      forEach (ch in id_start)    id_characters[ch->Int32] = 1
        |      load( Code.tokenizer_code )
+       |
+       |    method reset
+       |      stack.clear
+       |      ch = 0
+       |      count = 0
+       |      result = 0
+       |      buffer.clear
+       |      start_ip = 0
+       |      tokens.clear
        |
        |    method add( token_type:Int32 )
        |      local t = Token( TokenType(token_type), filepath, scanner.source, line, column )
@@ -123,6 +138,11 @@ augment RogueTemplate
        |          case TokenizerOpcode.CONSUME_CHARACTER
        |            local value = code[ip]->Character
        |            result = select{ scanner.consume(value):1 || 0 }
+       |            ++ip
+       |            nextIteration
+       |          case TokenizerOpcode.NEXT_IS_CHARACTER
+       |            local value = code[ip]->Character
+       |            result = (scanner.has_another and scanner.peek == value)
        |            ++ip
        |            nextIteration
        |          case TokenizerOpcode.SCAN_DIGITS
@@ -365,7 +385,7 @@ augment RogueTemplate
        |      return tokens
        |
        |    method tokenize( filepath, source:String, start_line=1:Int32, start_column=1:Int32 )->Token[]
-       |      tokens.clear
+       |      reset
        |      scanner = Scanner( source )
        |      scanner.line = start_line
        |      scanner.column = start_column

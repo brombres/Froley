@@ -96,6 +96,6 @@ return
 + term
   on IDENTIFIER -> CmdAccess( name=t.content:String )
   on INTEGER    -> CmdLiteralInt32( value=t.content:Int32 )
-  on "(", expression, ')': return
+  on '(', expression, ')': return
   syntaxError
 

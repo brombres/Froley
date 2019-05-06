@@ -1,17 +1,12 @@
 augment RogueTemplate
   PROPERTIES
     parser =
-      @|module RogueFroley
+      @|module FroleyLanguage
        |
        |$include "Cmd.rogue"
        |$include "CmdInitArgs.rogue"
        |$include "CmdFactory.rogue"
-       |$include "Code.rogue"
-       |$include "Error.rogue"
        |$include "ParserOpcode.rogue"
-       |$include "Token.rogue"
-       |$include "TokenType.rogue"
-       |$include "TokenizerOpcode.rogue"
        |$include "Tokenizer.rogue"
        |
        |class Parser
@@ -29,7 +24,7 @@ augment RogueTemplate
        |    call_stack      = Int32[]
        |    method_stack    = Int32[]
        |    token_stack     = Token[]
-       |    number_stack    = Real64[]
+       |    number_stack    = Int32[]
        |
        |    vars            = Variable[]
        |    var_frames      = Int32[].[ add(0) ]
@@ -43,7 +38,7 @@ augment RogueTemplate
        |
        |    position        = 0
        |    cur_token       : Token
-       |    next_token_type : Int32
+       |    next_token_type = -1
        |
        |    methods_by_address = Table<<Int32,String>>()
        |    tokenizer          = Tokenizer()
@@ -52,7 +47,23 @@ augment RogueTemplate
        |    method init
        |      load( Code.parser_code )
        |
+       |    method reset
+       |      call_stack.clear
+       |      method_stack.clear
+       |      token_stack.clear
+       |      number_stack.clear
+       |      vars.clear
+       |      var_frames.[ clear, add(0) ]
+       |      saved_positions.clear
+       |      list_start_t.clear
+       |      list_start_pos.clear
+       |      position = 0
+       |      cur_token = null
+       |      next_token_type = -1
+       |      tokenizer.reset
+       |
        |    method execute( ip:Int32 )
+       |      cur_token = peek
        |      method_stack.add( ip )
        |      loop
        |        local opcode = ParserOpcode( code[ip] )
@@ -76,6 +87,7 @@ augment RogueTemplate
        |          case ParserOpcode.CALL
        |            call_stack.add( ip+1 )
        |            token_stack.add( cur_token )
+       |            cur_token = peek
        |            ip = code[ ip ]
        |            method_stack.add( ip )
        |            var_frames.add( vars.count )
@@ -134,18 +146,18 @@ augment RogueTemplate
        |            cmd_queue.add( null )
        |            nextIteration
        |
-       |          case ParserOpcode.CREATE_ARGS
-       |            if (list_start_t.is_empty) throw peek.error( "[INTERNAL] No prior beginList before calling produceArgs." )
+       |          case ParserOpcode.CREATE_LIST
+       |            if (list_start_t.is_empty) throw peek.error( "[INTERNAL] No prior beginList before calling createList/produceList." )
        |            local t  = list_start_t.remove_last
        |            local i1 = list_start_pos.remove_last
        |            cmd_args.clear
        |            cmd_args.add( forEach in cmd_queue from i1 )
        |            cmd_queue.discard_from( i1 )
-       |            cmd_queue.add( CmdArgs(t,cmd_args) )
+       |            cmd_queue.add( CmdList(t,cmd_args) )
        |            nextIteration
        |
        |          case ParserOpcode.CREATE_STATEMENTS
-       |            if (list_start_t.is_empty) throw peek.error( "[INTERNAL] No prior beginList before calling produceStatements." )
+       |            if (list_start_t.is_empty) throw peek.error( "[INTERNAL] No prior beginList before calling createStatements/produceStatements." )
        |            local t  = list_start_t.remove_last
        |            local i1 = list_start_pos.remove_last
        |            cmd_args.clear
@@ -224,9 +236,7 @@ augment RogueTemplate
        |            nextIteration
        |
        |          case ParserOpcode.PRINTLN_NUMBER
-       |            local value = number_stack.remove_last
-       |            if (value == value.floor) println value->Int32
-       |            else                      println value.format(".4")
+       |            println number_stack.remove_last
        |            nextIteration
        |
        |          case ParserOpcode.POP_DISCARD
@@ -333,7 +343,7 @@ augment RogueTemplate
        |      forEach (index in vars.count-1 downTo lowest_index)
        |        if (vars[index].name == name) return index
        |      endForEach
-       |      if (must_locate) throw Error( "No variable named '$' has been declared."(name) )
+       |      if (must_locate) throw Error( "[INTERNAL] No variable named '$' has been declared."(name) )
        |      return null
        |
        |    method parse( rule_name:String )->Cmd
@@ -342,16 +352,14 @@ augment RogueTemplate
        |      return parse( methods[index.value] )
        |
        |    method parse( address:Int32 )->Cmd
-       |      call_stack.clear
-       |      cmd_queue.clear
        |      execute( address )
        |      if (cmd_queue.count) return cmd_queue.remove_last
        |      else                 return null
        |
        |    method peek->Token
        |      if (position == tokens.count)
-       |        if (tokens.is_empty) return Token( filepath, "", 0, 0, TokenType(0) )
-       |        local t = tokens.last.cloned
+       |        if (tokens.is_empty) return Token( TokenType(0), filepath, "", 0, 0 )
+       |        local t = tokens.last.cloned( TokenType.EOI )
        |        ++t.column
        |        return t
        |      else
@@ -372,21 +380,20 @@ augment RogueTemplate
        |      require tokenizer
        |      open( file.filepath, tokenizer.tokenize(file) )
        |
-       |    method open( filepath, tokens:Token[] )
-       |      @tokens.clear
-       |      @tokens.add( tokens )
+       |    method open( filepath, _tokens:Token[] )
+       |      tokens.clear
+       |      tokens.add( _tokens )
+       |      reset
        |      if (tokens.count)
        |        next_token_type = tokens.first.type->Int32
        |      else
        |        next_token_type = -1
        |      endIf
-       |      position = 0
-       |      cur_token = null
        |
        |
        |endClass
        |
-       |class Variable( name:String, value:Real64 ) [compound]
+       |class Variable( name:String, value:Int32 ) [compound]
        |endClass
        |
        |class ParsePosition( position:Int32, cmd_count:Int32, cur_token:Token ) [compound]

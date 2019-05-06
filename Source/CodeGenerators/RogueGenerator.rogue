@@ -1,46 +1,33 @@
+$includeFolder "RogueTemplate"
+
 module Froley
 
 Froley.code_generators//rogue = GenerateRogue()
 
 class GenerateRogue : CodeGenerator
   PROPERTIES
-    source_timestamp          : Real64
-    should_generate_framework : Logical
-    should_generate_main      : Logical
+    should_generate_main : Logical
 
   METHODS
     method usage_options->String[]
       return prior.usage_options.add(
-        @|    --framework
-         |      Creates the following framework files for language "XYZ" if they do not
-         |      exist:
-         |        - XYZError.rogue, XYZParser.rogue, XYZToken.rogue, XYZTokenizer.rogue
-         |      Updates XYZCmd.rogue with starter class definitions of any command nodes
-         |      that are not yet defined. Does not delete any code.
-      ).add(
         @|    --main
          |      Creates a main file (if it does not yet exist) to test out the parser
-         |      and tokenizer. Implies '--framework`.
+         |      and tokenizer.
       )
 
     method add_option( name:String, value:String )
       which (name)
-        case "framework"
-          should_generate_framework = true
-          if (value != "") throw FroleyError( "The --framework option should not have any arguments." )
         case "main"
           should_generate_main = true
-          should_generate_framework = true
           if (value != "") throw FroleyError( "The --main option should not have any arguments." )
         others
           prior.add_option( name, value )
       endWhich
 
     method output_filepath( filename:String, &do_not_overwrite, &for_reading )->String
-      local filepath = select{options//output||""} + filename
+      local filepath = output + filename
       if (for_reading) return filepath
-
-      if (File.timestamp(filepath) >= source_timestamp) return null
 
       if (File.exists(filepath))
         if (do_not_overwrite) return null
@@ -64,30 +51,34 @@ class GenerateRogue : CodeGenerator
       return writer
 
     method process( info )
-      if (not language) language = info//language
-      source_timestamp = File.timestamp( info//source_filepath )
+      configure
+      output = File.ensure_ends_with_separator( output  )
+      File.create_folder( output )
 
-      if (should_generate_framework)
+      generate_Error
+      generate_Token
+      generate_Tokenizer
+
+      regenerate_Code
+      regenerate_TokenType
+      regenerate_TokenizerOpcode
+
+      if (has_parser)
         generate_Cmd
         generate_CmdInitArgs
-        generate_Error
         generate_Parser
-        generate_Token
-        generate_Tokenizer
-        if (should_generate_main) generate_main
+
+        regenerate_CmdFactory
+        regenerate_ParserOpcode
       endIf
 
-      regenerate_CmdFactory
-      regenerate_Code
-      regenerate_ParserOpcode
-      regenerate_TokenType
-      regenerate_TokeninzerOpcode
+      if (should_generate_main) generate_main
 
     method generate( content:String, filename:String, content_filter=null:Function(String)->String, &do_not_overwrite )
       local writer = output_writer( filename, &=do_not_overwrite )
       if (not writer) return
       if (content_filter) content = content_filter( content )
-      content = content.replacing( "RogueFroley", language )
+      content = content.replacing( "FroleyLanguage", language )
       writer.println( content )
       writer.close
 
@@ -134,13 +125,13 @@ class GenerateRogue : CodeGenerator
             case ParseRuleType.POST_UNARY: builder.println "PostUnary"
             case ParseRuleType.BINARY:     builder.println "Binary"
             case ParseRuleType.STATEMENTS: builder.println "Statements"
-            case ParseRuleType.ARGS:       builder.println "Args"
+            case ParseRuleType.LIST:       builder.println "List"
             others
               builder.println
           endWhich
           builder.println "  METHODS"
           if (cmd_properties.count)
-            builder.print(   "    method init( t, args:CmdInitArgs )" )
+            builder.println(   "    method init( t, args:CmdInitArgs )" )
             builder.print(   "      args.require_count( " ).print( cmd_type//properties.count($//value=="") ).println( " )" )
             local index = 0
             forEach (p in cmd_properties)
@@ -152,6 +143,7 @@ class GenerateRogue : CodeGenerator
                 if (p//type != "String") builder.print( "->" ).print( p//type )
               else
                 builder.print( "args[ " ).print( index ).print( " ]" )
+                if (p//type != "Cmd") builder.print( " as " ).print( p//type )
                 ++index
               endIf
               builder.println
@@ -166,39 +158,25 @@ class GenerateRogue : CodeGenerator
               builder.println '      return "$"' (escaped_symbol)
             others
               builder.println "    method write( builder:StringBuilder )"
-              builder.print  ("      builder.print " )
               which (cmd_properties.count)
                 case 0
-                  builder.print( '"' ).print( escaped_symbol ).println( '"' )
-                case 1
-                  local p = cmd_properties[ 0 ]
-                  if (p//value != "")
-                    builder.print( p//name )
-                    if (p//type != "String") builder.print( "->String" )
-                  else
-                    builder.print( '"' )
-                    builder.print( escaped_symbol ).print( "($)" )
-                    builder.print( '"' )
-                    builder.print( '(' )
-                    builder.print( p//name )
-                    builder.print( ')' )
-                  endIf
-                  builder.println
+                  builder.println ''      builder.print( "$" )'' (escaped_symbol)
                 others
-                  builder.print( '"' )
-                  builder.print( escaped_symbol ).print( '(' )
+                  local print_cmd_name = (cmd_properties.count > 1 or cmd_properties.first//value == "")
+                  if (print_cmd_name) builder.println ''      builder.print( "$(" )'' (escaped_symbol)
                   forEach (p at index in cmd_properties)
-                    if (index > 0) builder.print( ',' )
-                    builder.print( '$' )
+                    if (index > 0) builder.println ''      builder.print( ',' )''
+                    if (p//value != "")
+                      if (p//type == "String")
+                        builder.println ''      builder.print( $ )'' (p//name)
+                      else
+                        builder.println ''      builder.print( ""+$ )'' (p//name)
+                      endIf
+                    else
+                      builder.println ''      write( $, builder )'' (p//name)
+                    endIf
                   endForEach
-                  builder.print( ')' )
-                  builder.print( '"' )
-                  builder.print( '(' )
-                  forEach (p at index in cmd_properties)
-                    if (index > 0) builder.print( ',' )
-                    builder.print( p//name )
-                  endForEach
-                  builder.println( ')' )
+                  if (print_cmd_name) builder.println ''      builder.print( ')' )''
               endWhich
           endWhich
           builder.println "endClass"
@@ -215,7 +193,11 @@ class GenerateRogue : CodeGenerator
       generate( RogueTemplate.error, "Error.rogue", &do_not_overwrite )
 
     method generate_main
-      generate( RogueTemplate.main, language+".rogue", &do_not_overwrite )
+      if (has_parser)
+        generate( RogueTemplate.main_with_tokenizer_and_parser, language+".rogue", &do_not_overwrite )
+      else
+        generate( RogueTemplate.main_with_tokenizer_only, language+".rogue", &do_not_overwrite )
+      endIf
 
     method generate_Parser
       local fn = function( content:String )->String
@@ -248,8 +230,7 @@ class GenerateRogue : CodeGenerator
       writer.println( "    method create_cmd( index:Int32, t:Token, args:CmdInitArgs )->Cmd" )
       writer.println("      which (index)")
       forEach (cmd_type in info//cmd_types)
-        writer.print  ( "        case " ).print( cmd_type//index ).print( ": " )
-        writer.print  ( "return " ).print( cmd_type//name ).println( "( t, args )" )
+        writer.print "        case $ : return $( t, args )" (cmd_type//index,cmd_type//name)
       endForEach
       writer.println @|        others
       writer.println(''          throw Error( "[INTERNAL] CmdFactory.create_cmd() index out of bounds: " + index )'' )
@@ -271,20 +252,26 @@ class GenerateRogue : CodeGenerator
       writer.println "\""
       writer.println
 
-      writer.println "    parser_code_base64 ="
-      writer.print   "      \""
-      writer.print   info//parser_code->String.word_wrap(64).join( "\" ...\n      \"" )
-      writer.println "\""
-      writer.println
+      if (info//parser_code.count)
+        writer.println "    parser_code_base64 ="
+        writer.print   "      \""
+        writer.print   info//parser_code->String.word_wrap(64).join( "\" ...\n      \"" )
+        writer.println "\""
+        writer.println
+      endIf
 
       writer.println @|  METHODS
-                      |    method parser_code->Byte[]
-                      |      return parser_code_base64.decode_base64
-                      |
                       |    method tokenizer_code->Byte[]
                       |      return tokenizer_code_base64.decode_base64
                       |
-                      |endClass
+
+      if (has_parser)
+        writer.println @|    method parser_code->Byte[]
+                        |      return parser_code_base64.decode_base64
+                        |
+      endIf
+
+      writer.println @|endClass
       writer.close
 
     method regenerate_ParserOpcode
@@ -338,7 +325,7 @@ class GenerateRogue : CodeGenerator
       writer.println @|endEnum
       writer.close
 
-    method regenerate_TokeninzerOpcode
+    method regenerate_TokenizerOpcode
       local writer = output_writer( "TokenizerOpcode.rogue" )
       if (not writer) return
 

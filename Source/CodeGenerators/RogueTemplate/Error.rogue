@@ -1,7 +1,7 @@
 augment RogueTemplate
   PROPERTIES
     error =
-      @|module RogueFroley
+      @|module FroleyLanguage
        |
        |class Error( filepath:String, source:String, line:Int32, column:Int32, message:String ) : ::Error
        |  METHODS

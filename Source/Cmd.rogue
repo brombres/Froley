@@ -688,6 +688,18 @@ class TokenizerCmdConsumeCharacter( t, value:Int32 ) : Cmd
       assembler.write( TokenizerOpcode.CONSUME_CHARACTER, value )
 endClass
 
+class TokenizerCmdNextIsCharacter( t, value:Int32 ) : Cmd
+  METHODS
+    method jump_if_true->TokenizerOpcode
+      return TokenizerOpcode.JUMP_GT
+
+    method to->String
+      return "nextIs($)" (value->Character.to_escaped_ascii)
+
+    method write( assembler:TokenizerAssembler )
+      assembler.write( TokenizerOpcode.NEXT_IS_CHARACTER, value )
+endClass
+
 class TokenizerCmdLiteralString( t, value:String ) : Cmd
   METHODS
     method init( t )
@@ -885,10 +897,10 @@ class ParserCmdCreateStatements( t ) : Cmd
       assembler.write( ParserOpcode.CREATE_STATEMENTS )
 endClass
 
-class ParserCmdCreateArgs( t ) : Cmd
+class ParserCmdCreateList( t ) : Cmd
   METHODS
     method write( assembler:ParserAssembler )
-      assembler.write( ParserOpcode.CREATE_ARGS )
+      assembler.write( ParserOpcode.CREATE_LIST )
 endClass
 
 class ParserCmdPrintlnString( t, value:String ) : Cmd

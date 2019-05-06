@@ -189,13 +189,13 @@ return
   on "sqrt"    -> CmdSqrt
   on "identifier"
     mustConsume ':'
-    create CmdLabel(name=t.content:String)
+    create CmdLabel( name=t.content:String )
     return
   endOn
   syntaxError
 
 - identifier
-  on "identifier" -> CmdIdentifier
+  on "identifier" -> CmdIdentifier( name=t.content:String )
   syntaxError
 
 - string

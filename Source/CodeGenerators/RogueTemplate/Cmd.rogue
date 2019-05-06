@@ -1,7 +1,7 @@
 augment RogueTemplate
   PROPERTIES
     cmd =
-      @|module RogueFroley
+      @|module FroleyLanguage
        |
        |class Cmd
        |  PROPERTIES
@@ -18,6 +18,10 @@ augment RogueTemplate
        |
        |    method write( builder:StringBuilder )
        |      builder.print( type_name.after_any("Cmd") )
+       |
+       |    method write( cmd:Cmd, builder:StringBuilder )
+       |      if (cmd) cmd.write( builder )
+       |      else     builder.print( "null" )
        |endClass
        |
        |class CmdList : Cmd
@@ -43,20 +47,20 @@ augment RogueTemplate
        |
        |    method last->Cmd
        |      return list.last
+       |
+       |    method write( builder:StringBuilder )
+       |      forEach (arg at index in list)
+       |        if (index > 0) builder.print( ',' )
+       |        write( arg, builder )
+       |      endForEach
        |endClass
        |
        |class CmdStatements : CmdList
        |  METHODS
        |    method write( builder:StringBuilder )
-       |      builder.println( forEach in list )
-       |endClass
-       |
-       |class CmdArgs : CmdList
-       |  METHODS
-       |    method write( builder:StringBuilder )
-       |      forEach (arg at index in list)
-       |        if (index > 0) builder.print( ',' )
-       |        builder.print( arg )
+       |      forEach (statement in list)
+       |        write( statement, builder )
+       |        builder.println
        |      endForEach
        |endClass
        |
@@ -70,13 +74,17 @@ augment RogueTemplate
        |      throw UnsupportedOperationError()
        |
        |    method write( builder:StringBuilder )
-       |      builder.print( '(' ).print( op ).print( operand ).print( ')' )
+       |      builder.print( '(' ).print( op )
+       |      write( operand, builder )
+       |      builder.print( ')' )
        |endClass
        |
        |class CmdPostUnary : CmdUnary
        |  METHODS
        |    method write( builder:StringBuilder )
-       |      builder.print( '(' ).print( operand ).print( op ).print( ')' )
+       |      builder.print( '(' )
+       |      write( operand, builder )
+       |      builder.print( op ).print( ')' )
        |endClass
        |
        |class CmdBinary( t, left:Cmd, right:Cmd ) : Cmd
@@ -90,7 +98,11 @@ augment RogueTemplate
        |      throw UnsupportedOperationError()
        |
        |    method write( builder:StringBuilder )
-       |      builder.print( '(' ).print( left ).print( ' ' ).print( op ).print( ' ' ).print( right ).print( ')' )
+       |      builder.print( '(' )
+       |      write( left, builder )
+       |      builder.print( ' ' ).print( op ).print( ' ' )
+       |      write( right, builder )
+       |      builder.print( ')' )
        |endClass
 endAugment
 

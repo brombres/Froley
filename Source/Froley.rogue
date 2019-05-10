@@ -70,7 +70,7 @@ class Launcher
         local active_generators = CodeGenerator[]
         local cur_gen : CodeGenerator
 
-        local default_language = input_filepath.before_last( ".froley", &ignore_case )
+        local default_language = File.filename(input_filepath).before_last( ".froley", &ignore_case )
         local language_override : String
 
         forEach (option in options)

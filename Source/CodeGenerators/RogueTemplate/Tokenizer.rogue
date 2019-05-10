@@ -75,7 +75,25 @@ augment RogueTemplate
        |            start_ip = code[ ip ]
        |            ++ip
        |            nextIteration
-       |          case TokenizerOpcode.ERROR
+       |          case TokenizerOpcode.SYNTAX_ERROR
+       |            local builder = StringBuilder()
+       |            builder.print "Syntax error - unexpected "
+       |            if (not scanner.has_another)
+       |              builder.println "end of input."
+       |            else
+       |              local c = scanner.peek
+       |              if (c == 10 or c == 13)
+       |                builder.println "end of line."
+       |              elseIf (c == '\'')
+       |                builder.println ''"'".''
+       |              elseIf (c >= 32 and c != 127)
+       |                builder.println "'$'." (c)
+       |              else
+       |                builder.println "'$'." (c.to_escaped_ascii)
+       |              endIf
+       |            endIf
+       |            throw Error( filepath, scanner.source, scanner.line, scanner.column, builder->String )
+       |          case TokenizerOpcode.BUFFER_ERROR
        |            throw Error( filepath, scanner.source, scanner.line, scanner.column, buffer->String )
        |          case TokenizerOpcode.MARK_SOURCE_POS
        |            line   = scanner.line

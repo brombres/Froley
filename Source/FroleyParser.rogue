@@ -402,13 +402,17 @@ class FroleyParser : Parser
         statements.add( CmdStatement(t,"restart",TokenizerOpcode.RESTART) )
         return
 
+      elseIf (consume(TokenType.KEYWORD_SYNTAX_ERROR))
+        statements.add( CmdStatement(t,"syntaxError",TokenizerOpcode.SYNTAX_ERROR) )
+        return
+
       elseIf (consume(TokenType.KEYWORD_ERROR))
         if (consume(TokenType.KEYWORD_BUFFER))
-          statements.add( CmdStatement(t,"error buffer",TokenizerOpcode.ERROR) )
+          statements.add( CmdStatement(t,"error buffer",TokenizerOpcode.BUFFER_ERROR) )
         elseIf (next_is(TokenType.STRING))
           statements.add( CmdStatement(t,"clear buffer",TokenizerOpcode.CLEAR_BUFFER) )
           statements.add( TokenizerCmdCollectString(t,read.text) )
-          statements.add( CmdStatement(t,"error <message>",TokenizerOpcode.ERROR) )
+          statements.add( CmdStatement(t,"error <message>",TokenizerOpcode.BUFFER_ERROR) )
         else
           throw peek.error( "Expected 'buffer'." )
         endIf

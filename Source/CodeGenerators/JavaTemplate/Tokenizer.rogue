@@ -86,7 +86,23 @@ augment JavaTemplate
        |        case TokenizerOpcode.MODE_INT32:
        |          startIP = code[ ip++ ];
        |          continue;
-       |        case TokenizerOpcode.ERROR:
+       |        case TokenizerOpcode.SYNTAX_ERROR:
+       |          StringBuilder builder = new StringBuilder();
+       |          builder.print( "Syntax error - unexpected " );
+       |          if ( !scanner.hasAnother() )
+       |          {
+       |            builder.print( "end of input.\n" );
+       |          }
+       |          else
+       |          {
+       |            char c = scanner.peek( 0 );
+       |            if (c == 10 || c == 13)         builder.print( "end of line.\n" );
+       |            else if (ch == '\'')            builder.print( "\"'\".\n" );
+       |            else if (ch >= 32 && ch != 127) builder.print( "'" + ch + "'.\n" );
+       |            else                            builder.print( "'" + StringUtility.stringToPrintableString(""+ch,null) + "'." );
+       |          }
+       |          throw new Error( filepath, scanner.source, scanner.line, scanner.column, builder.toString() );
+       |        case TokenizerOpcode.BUFFER_ERROR:
        |          throw new Error( filepath, scanner.source, scanner.line, scanner.column, buffer.toString() );
        |        case TokenizerOpcode.MARK_SOURCE_POS:
        |          line   = scanner.line;

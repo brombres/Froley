@@ -37,29 +37,29 @@ endRoutine
 
 routine rogo_csq
   rogo_build
-  execute( "cd Demos/CSQ && rogo clean && rogo" )
+  execute( "cd Demos/CSQ && rogo" )
 endRoutine
 
 routine rogo_simple
   rogo_build
-  execute( "cd Demos/Simple && rogo clean && rogo" )
+  execute( "cd Demos/Simple && rogo" )
 endRoutine
 
 routine rogo_json
   rogo_build
-  execute( "cd Demos/JSON && rogo clean && rogo" )
+  execute( "cd Demos/JSON && rogo" )
 endRoutine
 
 routine rogo_asm
   rogo_build
-  execute( "cd Demos/ASM && rogo clean && rogo" )
+  execute( "cd Demos/ASM && rogo" )
 endRoutine
 
-routine rogo_clean
-  execute( "cd Demos/Simple && rogo clean" )
-  execute( "cd Demos/CSQ && rogo clean" )
-  execute( "cd Demos/JSON && rogo clean" )
-  execute( "cd Demos/ASM && rogo clean" )
+routine rogo_xclean
+  execute( "cd Demos/Simple && rogo xclean" )
+  execute( "cd Demos/CSQ && rogo xclean" )
+  execute( "cd Demos/JSON && rogo xclean" )
+  execute( "cd Demos/ASM && rogo xclean" )
   execute( "rm -rf Build" )
   execute( "rm -rf .rogo" )
 endRoutine

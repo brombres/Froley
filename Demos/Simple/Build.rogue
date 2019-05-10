@@ -53,9 +53,13 @@ endRoutine
 routine rogo_clean
   println "Deleting Build/"
   File.delete( "Build" )
+endRoutine
+
+routine rogo_xclean
+  # For demo purposes, deletes more files than one might normally care to.
+  # Normally one does not need to delete any generated source files.
+  rogo_clean
   println "Deleting generated .json, .rogue, and .java files"
-  #local files = Files( ".", "Source/Rogue/**.rogue" ).add( "*.json" ).add( "Source/Java/**" )
-  #File.delete( forEach in files )
   File.delete( LANGUAGE+".json" )
   File.delete( "Source" )
 endRoutine

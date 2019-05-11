@@ -688,6 +688,18 @@ class TokenizerCmdConsumeCharacter( t, value:Int32 ) : Cmd
       assembler.write( TokenizerOpcode.CONSUME_CHARACTER, value )
 endClass
 
+class TokenizerCmdMustConsumeCharacter( t, value:Int32 ) : Cmd
+  METHODS
+    method jump_if_true->TokenizerOpcode
+      return TokenizerOpcode.JUMP_GT
+
+    method to->String
+      return "mustConsume($)" (value->Character.to_escaped_ascii)
+
+    method write( assembler:TokenizerAssembler )
+      assembler.write( TokenizerOpcode.MUST_CONSUME_CHARACTER, value )
+endClass
+
 class TokenizerCmdNextIsCharacter( t, value:Int32 ) : Cmd
   METHODS
     method jump_if_true->TokenizerOpcode

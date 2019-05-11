@@ -364,6 +364,25 @@ class FroleyParser : Parser
         statements.add( TokenizerCmdCreateInt32(t,Froley.token_def(name).type) )
         return
 
+      elseIf (consume(TokenType.KEYWORD_MUST_CONSUME))
+        if (consume(TokenType.SYMBOL_OPEN_PAREN))
+          local expr = parse_tokenizer_expression()
+          must_consume( TokenType.SYMBOL_CLOSE_PAREN )
+          t = expr.t
+          if (expr.is_integer)
+            statements.add TokenizerCmdMustConsumeCharacter( t, expr->Int32 )
+            return
+          endIf
+        else
+          local expr = parse_tokenizer_expression()
+          t = expr.t
+          if (expr.is_integer)
+            statements.add TokenizerCmdMustConsumeCharacter( t, expr->Int32 )
+            return
+          endIf
+        endIf
+        throw t.error( "'Expected 'mustConsume(<character>)'." )
+
       elseIf (consume(TokenType.KEYWORD_PRODUCE))
         local name = read_identifier
         statements.add( TokenizerCmdCreateInt32(t,Froley.token_def(name).type) )

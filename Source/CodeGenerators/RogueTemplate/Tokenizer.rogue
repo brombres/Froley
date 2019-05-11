@@ -58,6 +58,12 @@ augment RogueTemplate
        |      if (t.type.attributes & TokenTypeAttribute.CONTENT) t.content = buffer->String
        |      tokens.add( t )
        |
+       |    method describe_character( c:Character )->String
+       |      if (c == 10 or c == 13)       return "end of line";
+       |      elseIf (c == '\'')            return ''"'"''
+       |      elseIf (c >= 32 and c != 127) return "'$'" (c)
+       |      else                          return "'$'" (c.to_escaped_ascii)
+       |
        |    method execute
        |      local ip = start_ip
        |      loop
@@ -81,16 +87,7 @@ augment RogueTemplate
        |            if (not scanner.has_another)
        |              builder.println "end of input."
        |            else
-       |              local c = scanner.peek
-       |              if (c == 10 or c == 13)
-       |                builder.println "end of line."
-       |              elseIf (c == '\'')
-       |                builder.println ''"'".''
-       |              elseIf (c >= 32 and c != 127)
-       |                builder.println "'$'." (c)
-       |              else
-       |                builder.println "'$'." (c.to_escaped_ascii)
-       |              endIf
+       |              builder.print( describe_character(scanner.peek) ).print( '.' )
        |            endIf
        |            throw Error( filepath, scanner.source, scanner.line, scanner.column, builder->String )
        |          case TokenizerOpcode.BUFFER_ERROR
@@ -157,6 +154,16 @@ augment RogueTemplate
        |            local value = code[ip]->Character
        |            result = select{ scanner.consume(value):1 || 0 }
        |            ++ip
+       |            nextIteration
+       |          case TokenizerOpcode.MUST_CONSUME_CHARACTER
+       |            local value = code[ip]->Character
+       |            ++ip
+       |            if (not scanner.consume(value))
+       |              local message = "Syntax error - expected $, found " (describe_character(value))
+       |              if (scanner.has_another) message += describe_character(scanner.peek) + "."
+       |              else                     message += "end of input."
+       |              throw Error( filepath, scanner.source, scanner.line, scanner.column, message )
+       |            endIf
        |            nextIteration
        |          case TokenizerOpcode.NEXT_IS_CHARACTER
        |            local value = code[ip]->Character

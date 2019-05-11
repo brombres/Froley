@@ -24,9 +24,10 @@ augment RogueTemplate
        |      endIf
        |      builder.println.println
        |      builder.println( message.word_wrapped(79) )
+       |      builder.println
        |
        |      if (line and column and source)
-       |        builder.println.println
+       |        builder.println
        |        local skip = select{ column<=70:0 || column-70 }
        |        forEach (line at index in LineReader(source))
        |          if (index+1 == this.line)

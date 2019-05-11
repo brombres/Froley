@@ -53,10 +53,11 @@ augment JavaTemplate
        |    }
        |    builder.print( "\n\n" );
        |    StringUtility.wordWrap( message, 79, builder, null );
+       |    builder.print( "\n" );
        |
        |    if (line>0 && column>0 && source!=null)
        |    {
-       |      builder.print( "\n\n" );
+       |      builder.print( "\n" );
        |      int skip = (column<=70) ? 0 : column-35;
        |      Scanner scanner = new Scanner( (filepath!=null)?filepath:"", source );
        |      while (scanner.hasAnother())

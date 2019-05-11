@@ -236,13 +236,13 @@ augment RogueTemplate
        |            result = count - code[ip]
        |            ++ip
        |            nextIteration
-       |          case TokenizerOpcode.CH_IS_DIGIT_INT32
+       |          case TokenizerOpcode.CH_IS_DIGIT_BASE_INT32
        |            local base = code[ip]
        |            ++ip
        |            local n = (ch->Character).to_number( base )
        |            result = select{ (n>=0 and n<base):1 || 0 }
        |            nextIteration
-       |          case TokenizerOpcode.CH_IS_DIGIT_COUNT
+       |          case TokenizerOpcode.CH_IS_DIGIT_BASE_COUNT
        |            local n = (ch->Character).to_number( count )
        |            result = select{ (n>=0 and n<count):1 || 0 }
        |            nextIteration

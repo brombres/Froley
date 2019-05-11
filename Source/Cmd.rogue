@@ -410,7 +410,7 @@ class TokenizerCmdChIsDigit( t, base:Int32 ) : Cmd
       return TokenizerOpcode.JUMP_NE
 
     method write( assembler:TokenizerAssembler )
-      assembler.write( TokenizerOpcode.CH_IS_DIGIT_INT32, base )
+      assembler.write( TokenizerOpcode.CH_IS_DIGIT_BASE_INT32, base )
 endClass
 
 class TokenizerCmdChIsDigitCount( t ) : Cmd
@@ -419,7 +419,7 @@ class TokenizerCmdChIsDigitCount( t ) : Cmd
       return TokenizerOpcode.JUMP_NE
 
     method write( assembler:TokenizerAssembler )
-      assembler.write( TokenizerOpcode.CH_IS_DIGIT_COUNT )
+      assembler.write( TokenizerOpcode.CH_IS_DIGIT_BASE_COUNT )
 endClass
 
 

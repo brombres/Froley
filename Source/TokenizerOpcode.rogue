@@ -37,8 +37,8 @@ enum TokenizerOpcode( size=1:Int32 )
   PRINT_STRING(2)       # println strings[index:ARG1]
   COMPARE_CH_INT32      # RESULT = ch - ARG1
   COMPARE_COUNT_INT32   # RESULT = count - ARG1
-  CH_IS_DIGIT_INT32(2)  # RESULT = select{ ch.is_digit(base:ARG1):1 || 0 }
-  CH_IS_DIGIT_COUNT     # RESULT = select{ ch.is_digit(base:count):1 || 0 }
+  CH_IS_DIGIT_BASE_INT32(2)  # RESULT = select{ ch.is_digit(base:ARG1):1 || 0 }
+  CH_IS_DIGIT_BASE_COUNT     # RESULT = select{ ch.is_digit(base:count):1 || 0 }
   CH_IS_LETTER          # RESULT = select{ ch.is_letter:1 || 0 }
   PUSH_CH               # STACK.add( ch )
   PUSH_COUNT            # STACK.add( count )

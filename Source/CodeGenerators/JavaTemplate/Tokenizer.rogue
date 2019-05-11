@@ -255,16 +255,15 @@ augment JavaTemplate
        |        case TokenizerOpcode.COMPARE_COUNT_INT32:
        |          result = count - code[ip++];
        |          continue;
-       |        case TokenizerOpcode.CH_IS_DIGIT_INT32:
+       |        case TokenizerOpcode.CH_IS_DIGIT_BASE_INT32:
        |          {
        |            int base = code[ip++];
        |            int n = StringUtility.characterToNumber( ch, base );
        |            result = (n != -1) ? 1 : 0;
        |            continue;
        |          }
-       |        case TokenizerOpcode.CH_IS_DIGIT_COUNT:
+       |        case TokenizerOpcode.CH_IS_DIGIT_BASE_COUNT:
        |          {
-       |            int base = code[ip++];
        |            int n = StringUtility.characterToNumber( ch, count );
        |            result = (n != -1) ? 1 : 0;
        |            continue;

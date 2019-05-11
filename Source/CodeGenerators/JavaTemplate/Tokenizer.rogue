@@ -96,10 +96,10 @@ augment JavaTemplate
        |          else
        |          {
        |            char c = scanner.peek( 0 );
-       |            if (c == 10 || c == 13)         builder.print( "end of line.\n" );
-       |            else if (ch == '\'')            builder.print( "\"'\".\n" );
-       |            else if (ch >= 32 && ch != 127) builder.print( "'" + ch + "'.\n" );
-       |            else                            builder.print( "'" + StringUtility.stringToPrintableString(""+ch,null) + "'." );
+       |            if (c == 10 || c == 13)       builder.print( "end of line.\n" );
+       |            else if (c == '\'')           builder.print( "\"'\".\n" );
+       |            else if (c >= 32 && c != 127) builder.print( "'" + c + "'.\n" );
+       |            else                          builder.print( "'" + StringUtility.stringToPrintableString(""+c,null) + "'." );
        |          }
        |          throw new Error( filepath, scanner.source, scanner.line, scanner.column, builder.toString() );
        |        case TokenizerOpcode.BUFFER_ERROR:

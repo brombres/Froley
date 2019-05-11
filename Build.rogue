@@ -55,7 +55,7 @@ routine rogo_asm
   execute( "cd Demos/ASM && rogo" )
 endRoutine
 
-routine rogo_xclean
+routine rogo_clean
   execute( "cd Demos/Simple && rogo xclean" )
   execute( "cd Demos/CSQ && rogo xclean" )
   execute( "cd Demos/JSON && rogo xclean" )

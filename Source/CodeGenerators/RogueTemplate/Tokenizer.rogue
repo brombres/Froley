@@ -23,7 +23,7 @@ augment RogueTemplate
        |    count        : Int32
        |    result       : Int32
        |    buffer       = StringBuilder()
-       |    work_buffer  = StringBuilder()  # used for bufferToLowercase
+       |    buffer_stack = StringBuilder[]
        |    tokens       = Token[](1024)
        |
        |    filepath : String
@@ -214,9 +214,10 @@ augment RogueTemplate
        |            ++ip
        |            nextIteration
        |          case TokenizerOpcode.BUFFER_TO_LOWERCASE
-       |            work_buffer.clear
-       |            work_buffer.print( (forEach in buffer).to_lowercase )
-       |            buffer.clear.print( work_buffer )
+       |            local lowercase_buffer = StringBuilder.pool.on_use
+       |            lowercase_buffer.print( (forEach in buffer).to_lowercase )
+       |            StringBuilder.pool.on_end_use( buffer )
+       |            buffer = lowercase_buffer
        |            nextIteration
        |          case TokenizerOpcode.PRINT_BUFFER
        |            print (forEach in buffer)
@@ -256,11 +257,24 @@ augment RogueTemplate
        |          case TokenizerOpcode.CH_IS_LETTER
        |            result = select{ ((ch>='a' and ch<='z') or (ch>='A' and ch<='Z')):1 || 0 }
        |            nextIteration
+       |          case TokenizerOpcode.PUSH_AND_JOIN_BUFFER
+       |            if (buffer_stack.is_empty) throw Error( "[Compiled Code]", "'buffer = pop + buffer' on empty stack." )
+       |            buffer_stack.last.print( buffer )
+       |            nextIteration
+       |          case TokenizerOpcode.PUSH_BUFFER
+       |            buffer_stack.add( buffer )
+       |            buffer = StringBuilder.pool.on_use.print( buffer )
+       |            nextIteration
        |          case TokenizerOpcode.PUSH_CH
        |            stack.add( ch )
        |            nextIteration
        |          case TokenizerOpcode.PUSH_COUNT
        |            stack.add( count )
+       |            nextIteration
+       |          case TokenizerOpcode.POP_BUFFER
+       |            if (buffer_stack.is_empty) throw Error( "[Compiled Code]", "'pop buffer' on empty stack." )
+       |            StringBuilder.pool.on_end_use( buffer )
+       |            buffer = buffer_stack.remove_last
        |            nextIteration
        |          case TokenizerOpcode.POP_CH
        |            if (stack.is_empty) throw Error( "[Compiled Code]", "'pop ch' on empty stack." )

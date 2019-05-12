@@ -127,6 +127,14 @@ augment JavaTemplate
        |    return print( ""+value );
        |  }
        |
+       |  public StringBuilder print( StringBuilder value )
+       |  {
+       |    int n = value.count;
+       |    reserve( n );
+       |    for (int i=0; i<n; ++i) print( value.characters[i] );
+       |    return this;
+       |  }
+       |
        |  public StringBuilder reserve( int additional )
        |  {
        |    int requiredCapacity = count + additional;

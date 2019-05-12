@@ -9,6 +9,9 @@ endEnum
 
 augment Cmd
   METHODS
+    method is_buffer->Logical
+      return false
+
     method is_ch->Logical
       return false
 
@@ -241,6 +244,25 @@ class TokenizerCmdAdd( t, target:Cmd, value:Cmd ) : Cmd
       target.write_add( assembler, value )
 endClass
 
+class TokenizerCmdPopPlusBuffer( t ) : Cmd
+  METHODS
+    method to->String
+      return "pop + buffer"
+
+    method write( assembler:TokenizerAssembler )
+      throw t.error( "Syntax error - expected 'buffer = pop + buffer'." )
+endClass
+
+class TokenizerCmdSetBufferToPopPlusBuffer( t ) : Cmd
+  METHODS
+    method to->String
+      return "buffer = pop + buffer"
+
+    method write( assembler:TokenizerAssembler )
+      assembler.write( TokenizerOpcode.PUSH_AND_JOIN_BUFFER )
+      assembler.write( TokenizerOpcode.POP_BUFFER )
+endClass
+
 class TokenizerCmdSubtract( t, target:Cmd, value:Cmd ) : Cmd
   METHODS
     method write( assembler:TokenizerAssembler )
@@ -432,6 +454,38 @@ class TokenizerCmdChIsLetter( t ) : Cmd
       assembler.write( TokenizerOpcode.CH_IS_LETTER )
 endClass
 
+class TokenizerCmdSetBufferToString( t, value:String ) : Cmd
+  METHODS
+    method write( assembler:TokenizerAssembler )
+      assembler.write( TokenizerOpcode.CLEAR_BUFFER )
+      assembler.write( TokenizerOpcode.PRINT_STRING, value )
+
+    method to->String
+      return ''buffer = "$"'' (value.to_escaped_ascii)
+endClass
+
+class TokenizerCmdRegisterBuffer( t ) : Cmd
+  METHODS
+    method is_buffer->Logical
+      return true
+
+    method resolve_assignment( new_value:Cmd )->Cmd
+      if (new_value instanceOf TokenizerCmdPop)
+        return CmdStatement( t, "buffer = pop", TokenizerOpcode.POP_BUFFER )
+      elseIf (new_value instanceOf TokenizerCmdLiteralString)
+        return TokenizerCmdSetBufferToString( t, (new_value as TokenizerCmdLiteralString).value )
+      elseIf (new_value instanceOf TokenizerCmdPopPlusBuffer)
+        return TokenizerCmdSetBufferToPopPlusBuffer( new_value.t )
+      else
+        throw t.error( "Illegal 'buffer' assignment. Expected 'pop' or a literal string." )
+      endIf
+
+    method to->String
+      return "buffer"
+
+    method write( assembler:TokenizerAssembler )
+      throw t.error( ''Syntax error - expected 'buffer = pop' or 'buffer = "<string>"'.'' )
+endClass
 
 class TokenizerCmdRegisterCh( t ) : Cmd
   METHODS
@@ -439,7 +493,6 @@ class TokenizerCmdRegisterCh( t ) : Cmd
       return true
 
     method resolve_assignment( new_value:Cmd )->Cmd
-      local cmd_int32 = new_value as TokenizerCmdLiteralInt32
       if (new_value.is_integer)
         return TokenizerCmdSetChToInt32( t, new_value->Int32 )
       elseIf (new_value instanceOf TokenizerCmdRegisterCount)

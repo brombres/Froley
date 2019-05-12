@@ -22,8 +22,10 @@ augment JavaTemplate
        |  public int count;
        |  public int result;
        |
-       |  public StringBuilder buffer    = new StringBuilder();
-       |  public ArrayList<Token> tokens = new ArrayList<Token>( 1024 );
+       |  public StringBuilder            buffer       = new StringBuilder();
+       |  public ArrayList<StringBuilder> buffer_stack = new ArrayList<StringBuilder>();
+       |  public ArrayList<StringBuilder> free_buffers = new ArrayList<StringBuilder>();
+       |  public ArrayList<Token>         tokens       = new ArrayList<Token>( 1024 );
        |
        |  public String  filepath;
        |  public Scanner scanner;
@@ -281,12 +283,38 @@ augment JavaTemplate
        |        case TokenizerOpcode.CH_IS_LETTER:
        |          result = ((ch>='a' && ch<='z') || (ch>='A' && ch<='Z')) ? 1 : 0;
        |          continue;
+       |        case TokenizerOpcode.PUSH_AND_JOIN_BUFFER:
+       |        {
+       |          int count = buffer_stack.size();
+       |          if (count == 0) throw new Error( "[Compiled Code]", "'buffer = pop + buffer' on empty stack." );
+       |          buffer_stack.get(count-1).print( buffer );
+       |          continue;
+       |        }
+       |        case TokenizerOpcode.PUSH_BUFFER:
+       |        {
+       |          StringBuilder copy;
+       |          int count = free_buffers.size();
+       |          if (count > 0) copy = free_buffers.remove( count-1 );
+       |          else           copy = new StringBuilder();
+       |          copy.clear().print( buffer );
+       |          buffer_stack.add( copy );
+       |          continue;
+       |        }
        |        case TokenizerOpcode.PUSH_CH:
        |          stack.add( ch );
        |          continue;
        |        case TokenizerOpcode.PUSH_COUNT:
        |          stack.add( count );
        |          continue;
+       |        case TokenizerOpcode.POP_BUFFER:
+       |        {
+       |          int count = buffer_stack.size();
+       |          if (count == 0) throw new Error( "[Compiled Code]", "'pop buffer' on empty stack." );
+       |          buffer.clear();
+       |          free_buffers.add( buffer );
+       |          buffer = buffer_stack.remove( count-1 );
+       |          continue;
+       |        }
        |        case TokenizerOpcode.POP_CH:
        |          if (stack.count == 0) throw new Error( "[Compiled Code]", "'pop ch' on empty stack." );
        |          ch = stack.removeLast();

@@ -52,7 +52,7 @@ routine rogo_xclean
   rogo_clean
   println "Deleting generated .rogue and .java files"
   File.delete( LANGUAGE+".json" )
-  Files( ".", "Source/Rogue/*.rogue" ).remove( "**/Cmd.rogue" ).remove( "**/CSQ.rogue" ).delete
+  Files( ".", "Source/Rogue/*.rogue" ).remove( "**/Cmd.rogue" ).delete
   File.delete( "Source/Java" )
 endRoutine
 

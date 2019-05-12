@@ -14,6 +14,7 @@ CR    '\r'
 [tokens]
 IDENTIFIER identifier [content]
 INTEGER    integer    [content]
+BEGIN_END  begin_end  [content]
 
 [keywords]
 KEYWORD_FOR      for

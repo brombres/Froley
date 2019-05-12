@@ -41,8 +41,11 @@ enum TokenizerOpcode( size=1:Int32 )
   CH_IS_DIGIT_BASE_INT32(2)  # RESULT = select{ ch.is_digit(base:ARG1):1 || 0 }
   CH_IS_DIGIT_BASE_COUNT     # RESULT = select{ ch.is_digit(base:count):1 || 0 }
   CH_IS_LETTER          # RESULT = select{ ch.is_letter:1 || 0 }
+  PUSH_AND_JOIN_BUFFER  # BUFFER_STACK.last.print(buffer) (part of 'buffer = pop + buffer')
+  PUSH_BUFFER           # BUFFER_STACK.add( buffer ); buffer = Buffer().print(buffer)
   PUSH_CH               # STACK.add( ch )
   PUSH_COUNT            # STACK.add( count )
+  POP_BUFFER            # buffer = BUFFER_STACK.remove_last
   POP_CH                # ch = STACK.remove_last
   POP_COUNT             # count = STACK.remove_last
   SET_CH_TO_INT32(2)    # ch = ARG1

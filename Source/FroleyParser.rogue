@@ -896,11 +896,15 @@ class FroleyParser : Parser
     method parse_cmd_init_args( cmd_name:String )->CmdTypeProperty[]
       if (not consume(TokenType.SYMBOL_OPEN_PAREN)) return null
 
+      consume_eols
+
       local args = CmdTypeProperty[]
       local first = true
       while (first or consume(TokenType.SYMBOL_COMMA))
         first = false
+        consume_eols
         args.add( parse_cmd_init_arg )
+        consume_eols
       endWhile
       must_consume( TokenType.SYMBOL_CLOSE_PAREN )
       store_optional_tag( cmd_name )

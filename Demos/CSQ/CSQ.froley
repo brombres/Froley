@@ -71,7 +71,7 @@ endIf
 
 which (input)
   produceAny [symbols]
-  case '#'
+  case "//"
     # Single-line comment
     ch = read
     while (ch != '\n') ch = read

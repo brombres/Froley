@@ -51,7 +51,8 @@ class MethodTypeParseRule : MethodType [singleton]
     method write( m:ParserMethod, cmd:ParserCmdOnTypeProduce, assembler:ParserAssembler )
       local label_no_match = Label()
       local def = cmd.token_type_def
-      assembler.write( ParserOpcode.ON_TOKEN_TYPE, def.type )
+      if (cmd.peek) assembler.write( ParserOpcode.ON_PEEK_TOKEN_TYPE, def.type )
+      else          assembler.write( ParserOpcode.ON_TOKEN_TYPE, def.type )
       assembler.write_address( label_no_match )
       assembler.write( ParserOpcode.CREATE_CMD, cmd.cmd_type.index )
       assembler.write( 0 )  # 0 Cmd args
@@ -72,6 +73,7 @@ class MethodTypePreUnaryParseRule : MethodType [singleton]
     method write( m:ParserMethod, cmd:ParserCmdOnTypeProduce, assembler:ParserAssembler )
       local label_no_match = Label()
       local def = cmd.token_type_def
+      if (cmd.peek) throw cmd.t.error( "onPeek and elseOnPeek can only be used in regular rules of type ParseRule." )
       assembler.write( ParserOpcode.ON_TOKEN_TYPE, def.type )
       assembler.write_address( label_no_match )
 
@@ -99,6 +101,7 @@ class MethodTypePostUnaryParseRule : MethodType [singleton]
     method write( m:ParserMethod, cmd:ParserCmdOnTypeProduce, assembler:ParserAssembler )
       local label_no_match = Label()
       local def = cmd.token_type_def
+      if (cmd.peek) throw cmd.t.error( "onPeek and elseOnPeek can only be used in regular rules of type ParseRule." )
       assembler.write( ParserOpcode.ON_TOKEN_TYPE, def.type )
       assembler.write_address( label_no_match )
 
@@ -124,6 +127,7 @@ class MethodTypeBinaryParseRule : MethodType [singleton]
     method write( m:ParserMethod, cmd:ParserCmdOnTypeProduce, assembler:ParserAssembler )
       local label_no_match = Label()
       local def = cmd.token_type_def
+      if (cmd.peek) throw cmd.t.error( "onPeek and elseOnPeek can only be used in regular rules of type ParseRule." )
       assembler.write( ParserOpcode.ON_TOKEN_TYPE, def.type )
       assembler.write_address( label_no_match )
 
@@ -151,6 +155,7 @@ class MethodTypeRightAssociativeBinaryParseRule : MethodType [singleton]
     method write( m:ParserMethod, cmd:ParserCmdOnTypeProduce, assembler:ParserAssembler )
       local label_no_match = Label()
       local def = cmd.token_type_def
+      if (cmd.peek) throw cmd.t.error( "onPeek and elseOnPeek can only be used in regular rules of type ParseRule." )
       assembler.write( ParserOpcode.ON_TOKEN_TYPE, def.type )
       assembler.write_address( label_no_match )
 

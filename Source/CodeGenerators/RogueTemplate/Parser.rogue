@@ -111,6 +111,14 @@ augment RogueTemplate
        |              ip = code[ ip+1 ]
        |            endIf
        |            nextIteration
+       |          case ParserOpcode.ON_PEEK_TOKEN_TYPE
+       |            if (code[ip] == next_token_type)
+       |              ip += 2
+       |              cur_token = peek
+       |            else
+       |              ip = code[ ip+1 ]
+       |            endIf
+       |            nextIteration
        |          case ParserOpcode.HAS_ANOTHER
        |            number_stack.add( next_token_type != -1 )
        |            nextIteration

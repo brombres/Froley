@@ -134,6 +134,17 @@ augment JavaTemplate
        |            ip = code[ ip+1 ];
        |          }
        |          continue;
+       |        case ParserOpcode.ON_PEEK_TOKEN_TYPE:
+       |          if (code[ip] == nextTokenType)
+       |          {
+       |            ip += 2;
+       |            curToken = peek();
+       |          }
+       |          else
+       |          {
+       |            ip = code[ ip+1 ];
+       |          }
+       |          continue;
        |        case ParserOpcode.HAS_ANOTHER:
        |          numberStack.add( (nextTokenType!=-1)?1:0 );
        |          continue;

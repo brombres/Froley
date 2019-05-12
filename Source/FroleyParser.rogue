@@ -649,16 +649,19 @@ class FroleyParser : Parser
       local t = peek
       if (t.type.is_structural) return
 
-      if (consume(TokenType.KEYWORD_ON))
+      local is_peek = next_is( TokenType.KEYWORD_ON_PEEK )
+      if (consume(TokenType.KEYWORD_ON) or consume(TokenType.KEYWORD_ON_PEEK))
         local token_type_def = read_token_type_def
         if (consume(TokenType.SYMBOL_ARROW))
           local cmd = ParserCmdOnTypeProduce( t, token_type_def, parse_cmd_type(token_type_def) )
+          if (is_peek) cmd.peek = true
           statements.add( cmd )
           return
         else
           local on_commands = parse_on_commands
           consume( TokenType.SYMBOL_COLON )
           local cmd = ParserCmdOnType( t, token_type_def )
+          if (is_peek) cmd.peek = true
           statements.add( cmd )
 
           if (on_commands)
@@ -675,13 +678,16 @@ class FroleyParser : Parser
           if ((not on_commands or on_commands.is_empty) and consume_eols)
             parse_multi_line_parser_statements( cmd.statements )
             t = peek
-            while (consume(TokenType.KEYWORD_ELSE_ON))
+            is_peek = next_is( TokenType.KEYWORD_ELSE_ON_PEEK )
+            while (consume(TokenType.KEYWORD_ON) or consume(TokenType.KEYWORD_ON_PEEK))
               cmd.else_on = ParserCmdOnType( t, read_token_type_def )
+              if (is_peek) cmd.else_on.peek = true
               on_commands = parse_on_commands
               if (on_commands) cmd.statements.add( on_commands )
               cmd = cmd.else_on
               parse_multi_line_parser_statements( cmd.statements )
               t = peek
+              is_peek = next_is( TokenType.KEYWORD_ELSE_ON_PEEK )
             endWhile
             if (consume(TokenType.KEYWORD_ELSE))
               cmd.else_on = ParserCmdOnType( t, null )

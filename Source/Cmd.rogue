@@ -894,13 +894,15 @@ class ParserCmdOnType( t, token_type_def:TokenDef ) : Cmd
   PROPERTIES
     statements = CmdStatements()
     else_on    : ParserCmdOnType
+    peek       = false
 
   METHODS
     method write( assembler:ParserAssembler )
       if (token_type_def)
         local label_else = Label()
         local label_done = Label()
-        assembler.write( ParserOpcode.ON_TOKEN_TYPE, token_type_def.type )
+        if (peek) assembler.write( ParserOpcode.ON_PEEK_TOKEN_TYPE, token_type_def.type )
+        else      assembler.write( ParserOpcode.ON_TOKEN_TYPE, token_type_def.type )
         assembler.write_address( label_else )
         statements.write( assembler )
         assembler.write( ParserOpcode.JUMP, label_done )
@@ -916,6 +918,7 @@ endClass
 class ParserCmdOnTypeProduce( t, token_type_def:TokenDef, cmd_type:CmdType ) : Cmd
   PROPERTIES
     statements = CmdStatements()
+    peek : Logical
 
   METHODS
     method write( assembler:ParserAssembler )

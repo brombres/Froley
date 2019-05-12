@@ -61,5 +61,6 @@ enum TokenizerOpcode( size=1:Int32 )
   SUBTRACT_CH_COUNT     # ch    += count
   WHICH_INPUT           # (complex)
   WHICH_BUFFER          # (complex)
+  TRACE                 #
 endEnum
 

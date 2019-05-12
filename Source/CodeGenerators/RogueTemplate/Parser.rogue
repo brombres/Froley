@@ -210,7 +210,7 @@ augment RogueTemplate
        |            nextIteration
        |
        |          case ParserOpcode.TRACE
-       |            print( "Line " ).print( code[ip] ).print( " next:" )
+       |            print( "Line " ).print( code[ip] ).print( " peek:" )
        |            if (next_token_type != -1) print( peek )
        |            else                       print( "end of input" )
        |            ++ip

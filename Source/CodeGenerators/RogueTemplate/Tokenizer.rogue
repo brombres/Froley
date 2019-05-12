@@ -392,6 +392,15 @@ augment RogueTemplate
        |            endIf
        |            ip = cur_node + code[cur_node+1] * 2 + 2
        |            nextIteration
+       |          case TokenizerOpcode.TRACE
+       |            print( "Line " ).print( code[ip] ).print( " peek:" )
+       |            if (scanner.has_another) print( scanner.peek )
+       |            else                     print( "end of input" )
+       |            ++ip
+       |            print( " opcode:" ).print( TokenizerOpcode(code[ip]) )
+       |            println( " ch:$ ($) count:$ result:$" (Character(ch),ch,count,result) )
+       |            println( "buffer:" + buffer )
+       |            nextIteration
        |          others
        |            throw Error( "[INTERNAL]", "Unhandled tokenizer opcode: " + TokenizerOpcode(opcode) )
        |        endWhich

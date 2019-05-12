@@ -884,6 +884,12 @@ class TokenizerCmdLogicalOr : CmdBinary
 
 endClass
 
+class TokenizerCmdTrace : Cmd
+  METHODS
+    method write( assembler:TokenizerAssembler )
+      assembler.write( TokenizerOpcode.TRACE, t.line )
+endClass
+
 class ParserCmdOnType( t, token_type_def:TokenDef ) : Cmd
   PROPERTIES
     statements = CmdStatements()

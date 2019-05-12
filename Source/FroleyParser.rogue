@@ -507,6 +507,10 @@ class FroleyParser : Parser
       elseIf (consume(TokenType.KEYWORD_SCAN_DIGITS))
         throw t.error( "Syntax error. Expected 'ch = scanDigits <min-digits>[..<max-digits>] [base <number-base>]'." )
 
+      elseIf (consume(TokenType.KEYWORD_TRACE))
+        statements.add( TokenizerCmdTrace(t) )
+        return
+
       elseIf (consume(TokenType.KEYWORD_WHICH))
         local has_parens = consume( TokenType.SYMBOL_OPEN_PAREN )
         local uses_input = consume( TokenType.KEYWORD_INPUT )

@@ -434,6 +434,14 @@ augment JavaTemplate
        |          }
        |          ip = curNode + code[curNode+1] * 2 + 2;
        |          continue;
+       |        case TokenizerOpcode.TRACE:
+       |          System.out.print( "Line " + code[ip++] + " peek:" );
+       |          if (scanner.hasAnother()) System.out.print( scanner.peek(0) );
+       |          else                      System.out.print( "end of input" );
+       |          System.out.print( " opcode:" + code[ip] );
+       |          System.out.println( " ch:" + (char)ch + " (" + ch + ") count:" + count + " result:" + result );
+       |          System.out.println( "buffer:" + buffer );
+       |          continue;
        |        default:
        |          throw new Error( "[INTERNAL]", "Unhandled tokenizer opcode: " + opcode );
        |      }

@@ -1,2 +1,8 @@
-begin
-x
+for (int a=5; b<10; c++, a+=2)
+{
+  d;
+  e;
+  if (a) for (;;){}
+  else f;
+  for (;;);
+}

@@ -216,7 +216,9 @@ augment JavaTemplate
        |          continue;
        |
        |        case ParserOpcode.MUST_CONSUME_TYPE:
-       |          if (nextTokenType == code[ip++])
+       |        {
+       |          int token_type = code[ ip++ ];
+       |          if (nextTokenType == token_type)
        |          {
        |            read();
        |            continue;
@@ -224,9 +226,10 @@ augment JavaTemplate
        |          else
        |          {
        |            throw peek().error(
-       |                "Expected " + StringUtility.quoted(TokenType.symbols[code[ip]]) +
+       |                "Expected " + StringUtility.quoted(TokenType.symbols[token_type]) +
        |                ", found " + ((nextTokenType!=-1) ? StringUtility.quoted(peek().toString()) : "end of input") + "." );
        |          }
+       |        }
        |
        |        case ParserOpcode.SAVE_POSITION:
        |          savedPositions.add( new ParsePosition(position,cmdQueue.size(),curToken) );
@@ -485,7 +488,7 @@ augment JavaTemplate
        |      System.out.print( " " );
        |    }
        |
-       |    System.out.print( "Line " );
+       |    System.out.print( "peek:" );
        |    if (nextTokenType != -1) System.out.print( peek() );
        |    else                     System.out.print( "end of input" );
        |    System.out.print( " opcode:" );

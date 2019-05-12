@@ -75,7 +75,7 @@ augment JavaTemplate
        |    for (;;)
        |    {
        |      int opcode = code[ ip++ ];
-       |      // trace( ip, 0 );
+       |      // trace( ip-1, 0 );
        |      switch (opcode)
        |      {
        |        case ParserOpcode.SYNTAX_ERROR:
@@ -90,16 +90,20 @@ augment JavaTemplate
        |            throw t.error( "Syntax error - unexpected " + sym + "." );
        |          }
        |        case ParserOpcode.RETURN:
+       |        {
+       |          if (callStack.count == 0)
        |          {
-       |            if (callStack.count == 0) return;
-       |            ip = callStack.removeLast();
-       |            methodStack.removeLast();
-       |            curToken = tokenStack.remove( tokenStack.size() - 1 );
-       |            int varCount = varFrames.removeLast();
-       |            while (varNames.size() > varCount) varNames.remove( varNames.size()-1 );
-       |            varValues.count = varCount;
-       |            continue;
+       |            methodStack.clear();
+       |            return;
        |          }
+       |          ip = callStack.removeLast();
+       |          methodStack.removeLast();
+       |          curToken = tokenStack.remove( tokenStack.size() - 1 );
+       |          int varCount = varFrames.removeLast();
+       |          while (varNames.size() > varCount) varNames.remove( varNames.size()-1 );
+       |          varValues.count = varCount;
+       |          continue;
+       |        }
        |        case ParserOpcode.CALL:
        |          callStack.add( ip+1 );
        |          tokenStack.add( curToken );
@@ -149,10 +153,15 @@ augment JavaTemplate
        |          int cmdTypeIndex = code[ ip++ ];
        |          int argCount = code[ ip++ ];
        |          cmdArgs.clear();
+       |          cmdArgs.t = curToken;
        |          if (argCount > 0)
        |          {
        |            int i1 = cmdQueue.size() - argCount;
-       |            if (i1 < 0) throw curToken.error( "[INTERNAL] Command queue too small." );
+       |            if (i1 < 0)
+       |            {
+       |              trace( ip-2, 0 );
+       |              throw curToken.error( "[INTERNAL] Command queue too small." );
+       |            }
        |            for (int i=i1; i<cmdQueue.size(); ++i)
        |            {
        |              cmdArgs.add( cmdQueue.get(i) );
@@ -173,6 +182,7 @@ augment JavaTemplate
        |          Token t  = listStartT.remove( listStartT.size() - 1 );
        |          int   i1 = listStartPos.removeLast();
        |          cmdArgs.clear();
+       |          cmdArgs.t = curToken;
        |          for (int i=i1; i<cmdQueue.size(); ++i)
        |          {
        |            cmdArgs.add( cmdQueue.get(i) );
@@ -188,6 +198,7 @@ augment JavaTemplate
        |          Token t  = listStartT.remove( listStartT.size() - 1 );
        |          int   i1 = listStartPos.removeLast();
        |          cmdArgs.clear();
+       |          cmdArgs.t = curToken;
        |          for (int i=i1; i<cmdQueue.size(); ++i)
        |          {
        |            cmdArgs.add( cmdQueue.get(i) );

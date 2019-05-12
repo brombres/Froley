@@ -78,7 +78,7 @@ augment RogueTemplate
        |              throw t.error( "Syntax error - unexpected '$'." (t.type.symbol.to_escaped_ascii) )
        |            endIf
        |          case ParserOpcode.RETURN
-       |            if (call_stack.is_empty) return
+       |            if (call_stack.is_empty) method_stack.clear; return
        |            ip = call_stack.remove_last
        |            method_stack.remove_last
        |            cur_token = token_stack.remove_last
@@ -131,9 +131,11 @@ augment RogueTemplate
        |            local arg_count = code[ ip+1 ]
        |            ip += 2
        |            cmd_args.clear
+       |            cmd_args.t = cur_token
        |            if (arg_count > 0)
        |              local i1 = cmd_queue.count - arg_count
        |              if (i1 < 0)
+       |                print_trace( ip-2, 0 )
        |                throw cur_token.error( "[INTERNAL] Command queue too small." )
        |              endIf
        |              cmd_args.add( forEach in cmd_queue from i1 )
@@ -151,6 +153,7 @@ augment RogueTemplate
        |            local t  = list_start_t.remove_last
        |            local i1 = list_start_pos.remove_last
        |            cmd_args.clear
+       |            cmd_args.t = cur_token
        |            cmd_args.add( forEach in cmd_queue from i1 )
        |            cmd_queue.discard_from( i1 )
        |            cmd_queue.add( CmdList(t,cmd_args) )
@@ -161,6 +164,7 @@ augment RogueTemplate
        |            local t  = list_start_t.remove_last
        |            local i1 = list_start_pos.remove_last
        |            cmd_args.clear
+       |            cmd_args.t = cur_token
        |            cmd_args.add( forEach in cmd_queue from i1 )
        |            cmd_queue.discard_from( i1 )
        |            cmd_queue.add( CmdStatements(t,cmd_args) )
@@ -210,24 +214,8 @@ augment RogueTemplate
        |            nextIteration
        |
        |          case ParserOpcode.TRACE
-       |            print( "Line " ).print( code[ip] ).print( " peek:" )
-       |            if (next_token_type != -1) print( peek )
-       |            else                       print( "end of input" )
+       |            print_trace( ip, code[ip] )
        |            ++ip
-       |            print( " opcode:" ).print( ParserOpcode(code[ip]) )
-       |            println
-       |            print "  "
-       |            forEach (m_ip at index in method_stack)
-       |              if (index > 0) print " > "
-       |              print methods_by_address[ m_ip ]
-       |            endForEach
-       |            println
-       |            print "  ["
-       |            forEach (cmd at index in cmd_queue)
-       |              if (index > 0) print ","
-       |              print select{ cmd:cmd.type_name || "null" }
-       |            endForEach
-       |            println "]"
        |            nextIteration
        |
        |          case ParserOpcode.PRINTLN_STRING
@@ -365,6 +353,26 @@ augment RogueTemplate
        |      else
        |        return tokens[ position ]
        |      endIf
+       |
+       |    method print_trace( ip:Int32, line:Int32 )
+       |      if (line) print( "Line " ).print( code[ip] )
+       |      print( " peek:" )
+       |      if (next_token_type != -1) print( peek )
+       |      else                       print( "end of input" )
+       |      print( " opcode:" ).print( ParserOpcode(code[ip+1]) )
+       |      println
+       |      print "  "
+       |      forEach (m_ip at index in method_stack)
+       |        if (index > 0) print " > "
+       |        print methods_by_address[ m_ip ]
+       |      endForEach
+       |      println
+       |      print "  ["
+       |      forEach (cmd at index in cmd_queue)
+       |        if (index > 0) print ","
+       |        print select{ cmd:cmd.type_name || "null" }
+       |      endForEach
+       |      println "]"
        |
        |    method read->Token
        |      ++position

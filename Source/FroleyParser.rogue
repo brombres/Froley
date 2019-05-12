@@ -705,7 +705,9 @@ class FroleyParser : Parser
         return
 
       elseIf (consume(TokenType.KEYWORD_MUST_CONSUME))
+        local has_parens = consume( TokenType.SYMBOL_OPEN_PAREN )
         statements.add( ParserCmdMustConsumeType(t,read_token_type_def) )
+        if (has_parens) must_consume( TokenType.SYMBOL_CLOSE_PAREN )
         return
 
       elseIf (consume(TokenType.KEYWORD_NO_ACTION))

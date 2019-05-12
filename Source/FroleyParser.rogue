@@ -860,6 +860,7 @@ class FroleyParser : Parser
 
     method parse_on_commands->CmdStatements
       local commands : CmdStatements
+      local work_list = CmdStatements()
 
       while (consume(TokenType.SYMBOL_COMMA))
         ensure commands
@@ -870,20 +871,22 @@ class FroleyParser : Parser
           if (def) commands.add( ParserCmdMustConsumeType(t,def) )
           else     throw t.error( "No token has symbol '$'." (symbol) )
         else
-          local cmd = parse_parser_expression()
-          if (cmd instanceOf ParserCmdLiteralInt32)
-            local symbol = (cmd as ParserCmdLiteralInt32).value->Character->String
-            local def = Froley.token_defs_by_symbol[ symbol ]
-            if (def) commands.add( ParserCmdMustConsumeType(cmd.t,def) )
-            else     throw cmd.t.error( "No token has symbol '$'." (symbol) )
-          elseIf (cmd instanceOf ParserCmdAccess)
-            local name = (cmd as ParserCmdAccess).name
-            local def = Froley.token_defs_by_name[ name ]
-            if (def) commands.add( ParserCmdMustConsumeType(cmd.t,def) )
-            else     commands.add( cmd )
-          else
-            commands.add( cmd )
-          endIf
+          parse_parser_statement( work_list.[clear] )
+          forEach (cmd in work_list)
+            if (cmd instanceOf ParserCmdLiteralInt32)
+              local symbol = (cmd as ParserCmdLiteralInt32).value->Character->String
+              local def = Froley.token_defs_by_symbol[ symbol ]
+              if (def) commands.add( ParserCmdMustConsumeType(cmd.t,def) )
+              else     throw cmd.t.error( "No token has symbol '$'." (symbol) )
+            elseIf (cmd instanceOf ParserCmdAccess)
+              local name = (cmd as ParserCmdAccess).name
+              local def = Froley.token_defs_by_name[ name ]
+              if (def) commands.add( ParserCmdMustConsumeType(cmd.t,def) )
+              else     commands.add( cmd )
+            else
+              commands.add( cmd )
+            endIf
+          endForEach
         endIf
       endWhile
 

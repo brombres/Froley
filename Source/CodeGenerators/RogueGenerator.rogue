@@ -55,20 +55,18 @@ class GenerateRogue : CodeGenerator
       output = File.ensure_ends_with_separator( output  )
       File.create_folder( output )
 
+      regenerate_Code
       generate_Error
       generate_Token
-      generate_Tokenizer
-
-      regenerate_Code
       regenerate_TokenType
+      generate_Tokenizer
       regenerate_TokenizerOpcode
 
       if (has_parser)
         generate_Cmd
+        regenerate_CmdFactory
         generate_CmdInitArgs
         generate_Parser
-
-        regenerate_CmdFactory
         regenerate_ParserOpcode
       endIf
 
@@ -205,7 +203,8 @@ class GenerateRogue : CodeGenerator
         if (def) content = content.replacing( "<handle_consume_eols>", "while (TokenType(next_token_type) == TokenType.$) read"(def.name) )
         return content
       endFunction
-      generate( RogueTemplate.parser, "Parser.rogue", fn, &do_not_overwrite )
+      generate( RogueTemplate.parser_vm, "ParserVM.rogue", fn )
+      generate( RogueTemplate.parser,    "Parser.rogue",   &do_not_overwrite )
 
     method generate_Token
       generate( RogueTemplate.token, "Token.rogue", &do_not_overwrite )
@@ -217,7 +216,8 @@ class GenerateRogue : CodeGenerator
         content = content.replacing( "<id_continue>", info//id_characters//continue->String.to_escaped_ascii("\"") )
         return content
       endFunction
-      generate( RogueTemplate.tokenizer, "Tokenizer.rogue", fn, &do_not_overwrite )
+      generate( RogueTemplate.tokenizer_vm, "TokenizerVM.rogue", fn )
+      generate( RogueTemplate.tokenizer,    "Tokenizer.rogue",   &do_not_overwrite )
 
     method regenerate_CmdFactory
       local writer = output_writer( "CmdFactory.rogue" )

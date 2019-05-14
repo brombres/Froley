@@ -433,18 +433,14 @@ class FroleyParser : Parser
         return
 
       elseIf (consume(TokenType.KEYWORD_SYNTAX_ERROR))
-        statements.add( CmdStatement(t,"syntaxError",TokenizerOpcode.SYNTAX_ERROR) )
-        return
-
-      elseIf (consume(TokenType.KEYWORD_ERROR))
         if (consume(TokenType.KEYWORD_BUFFER))
-          statements.add( CmdStatement(t,"error buffer",TokenizerOpcode.BUFFER_ERROR) )
+          statements.add( CmdStatement(t,"syntaxError buffer",TokenizerOpcode.SYNTAX_ERROR_BUFFER) )
         elseIf (next_is(TokenType.STRING))
           statements.add( CmdStatement(t,"clear buffer",TokenizerOpcode.CLEAR_BUFFER) )
           statements.add( TokenizerCmdCollectString(t,read.text) )
-          statements.add( CmdStatement(t,"error <message>",TokenizerOpcode.BUFFER_ERROR) )
+          statements.add( CmdStatement(t,"syntaxError <message>",TokenizerOpcode.SYNTAX_ERROR_BUFFER) )
         else
-          throw peek.error( "Expected 'buffer'." )
+          statements.add( CmdStatement(t,"syntaxError",TokenizerOpcode.SYNTAX_ERROR) )
         endIf
         return
 
@@ -705,7 +701,11 @@ class FroleyParser : Parser
         endIf
 
       elseIf (consume(TokenType.KEYWORD_SYNTAX_ERROR))
-        statements.add( ParserCmdSyntaxError(t) )
+        if (next_is(TokenType.STRING))
+          statements.add( ParserCmdSyntaxError(t,read_string) )
+        else
+          statements.add( ParserCmdSyntaxError(t) )
+        endIf
         return
 
       elseIf (consume(TokenType.KEYWORD_BEGIN_LIST))

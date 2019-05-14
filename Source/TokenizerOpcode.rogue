@@ -5,7 +5,7 @@ enum TokenizerOpcode( size=1:Int32 )
   RESTART               # BUFFER.clear, IP = START_IP
   MODE_INT32            # START_IP = ARG1
   SYNTAX_ERROR          # Throws "Syntax error - unexpected '(next character)'." using current line and column.
-  BUFFER_ERROR          # Throws error using current line, column, and message in BUFFER
+  SYNTAX_ERROR_BUFFER   # Throws error using current line, column, and message in BUFFER
   MARK_SOURCE_POS       # Implementation-dependent; usually records scanner line and column for later token creation
   CREATE_INT32(2)       # Invokes VM callback add(token_type:ARG1) then clears BUFFER & jumps to START_IP
   JUMP(2)               # IP = ARG1

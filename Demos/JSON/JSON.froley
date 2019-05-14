@@ -39,7 +39,7 @@ if (scanIdentifier)
   which (buffer)
     produceAny [keywords]
     others
-      error "Syntax error - unrecognized identifier."
+      syntaxError "Syntax error - unrecognized identifier."
   endWhich
 endIf
 
@@ -54,12 +54,7 @@ which (input)
     endIf
 endWhich
 
-clear buffer
-collect "Syntax error - unexpected '"
-ch = peek
-collect ch
-collect "'."
-error buffer
+syntaxError
 
 <scan_number>
 clear buffer
@@ -92,7 +87,7 @@ produce NUMBER
 
 <collect_digits>
 ch = peek
-if (ch is not digit) error "Digit expected."
+if (ch is not digit) syntaxError "Digit expected."
 while (ch is digit)
   ch = read
   collect ch
@@ -122,14 +117,14 @@ while (hasAnother and ch!='"' and ch>=' ' and ch != 127)
         ch = peek
         collect ch
         collect "'."
-        error buffer
+        syntaxError buffer
     endWhich
   else
     collect ch
   endIf
   ch = peek
 endWhile
-if (not consume('"')) error "Closing \" expected."
+if (not consume('"')) syntaxError "Closing \" expected."
 produce STRING
 
 [parser]

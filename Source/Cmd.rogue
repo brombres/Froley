@@ -1019,10 +1019,14 @@ class ParserCmdAccess( t, name:String ) : Cmd
       ParserCmdWriteVar( t, name, new_value ).write( assembler )
 endClass
 
-class ParserCmdSyntaxError : Cmd
+class ParserCmdSyntaxError( t, message=null:String ) : Cmd
   METHODS
     method write( assembler:ParserAssembler )
-      assembler.write( ParserOpcode.SYNTAX_ERROR )
+      if (message)
+        assembler.write( ParserOpcode.SYNTAX_ERROR_STRING, message )
+      else
+        assembler.write( ParserOpcode.SYNTAX_ERROR )
+      endIf
 endClass
 
 class ParserCmdWhile( t, condition:Cmd ) : Cmd

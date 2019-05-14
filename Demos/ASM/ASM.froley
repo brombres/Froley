@@ -91,12 +91,7 @@ which (input)
     endIf
 endWhich
 
-clear buffer
-collect "Syntax error - unexpected '"
-ch = peek
-collect ch
-collect "'."
-error buffer
+syntaxError
 
 <scan_integer>
 while (ch is digit or ch == '_')
@@ -115,7 +110,7 @@ while (hasAnother and ch != '"' and ch != '\n')
   collect ch
   ch = peek
 endWhile
-if (not consume('"')) error "Closing \" expected."
+if (not consume('"')) syntaxError "Closing \" expected."
 return
 
 [parser]

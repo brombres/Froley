@@ -1,33 +1,34 @@
 module Froley
 
 enum ParserOpcode( size=1:Int32 )
-  SYNTAX_ERROR          # Throw "Syntax error, unexpected '<token>'
-  RETURN                # Pop ip and cur_token off call stack
-  CALL(2)               # Push ip and cur_token on call stack; ip = address:ARG1
-  JUMP(2)               # ip = address:ARG1
-  JUMP_IF_TRUE(2)       # if (number_stack.remove_last) ip = address:ARG1
-  JUMP_IF_FALSE(2)      # if (0 == number_stack.remove_last) ip = address:ARG1
-  ON_TOKEN_TYPE(3)      # cur_token = read() if peek.type == TYPE:ARG1 or else ip=address_if_no_match:ARG2
-  ON_PEEK_TOKEN_TYPE(3) # cur_token = peek() if peek.type == TYPE:ARG1 or else ip=address_if_no_match:ARG2
-  HAS_ANOTHER           # True if another token exists
+  SYNTAX_ERROR           # Throw "Syntax error, unexpected '<token>'
+  SYNTAX_ERROR_STRING(2) # message_index:ARG1
+  RETURN                 # Pop ip and cur_token off call stack
+  CALL(2)                # Push ip and cur_token on call stack; ip = address:ARG1
+  JUMP(2)                # ip = address:ARG1
+  JUMP_IF_TRUE(2)        # if (number_stack.remove_last) ip = address:ARG1
+  JUMP_IF_FALSE(2)       # if (0 == number_stack.remove_last) ip = address:ARG1
+  ON_TOKEN_TYPE(3)       # cur_token = read() if peek.type == TYPE:ARG1 or else ip=address_if_no_match:ARG2
+  ON_PEEK_TOKEN_TYPE(3)  # cur_token = peek() if peek.type == TYPE:ARG1 or else ip=address_if_no_match:ARG2
+  HAS_ANOTHER            # True if another token exists
   NEXT_HAS_ATTRIBUTE(2)
   NEXT_IS_TYPE(2)
-  BEGIN_LIST            #
-  CREATE_CMD(3)         # Create command of type type_index:ARG1 using cur_token and ARGC:ARG2 commands off stackq
-  CREATE_NULL_CMD       # Push null Cmd on stackq
-  CREATE_LIST           #
-  CREATE_STATEMENTS     #
-  CONSUME_EOLS          # Automatically called between operator and next operand; implement as desired
-  CONSUME_TYPE(2)       # number_stack.add( type == type_index:ARG1 )
-  MUST_CONSUME_TYPE(2)  # Throws error if next token.type != type_index:ARG1
+  BEGIN_LIST             #
+  CREATE_CMD(3)          # Create command of type type_index:ARG1 using cur_token and ARGC:ARG2 commands off stackq
+  CREATE_NULL_CMD        # Push null Cmd on stackq
+  CREATE_LIST            #
+  CREATE_STATEMENTS      #
+  CONSUME_EOLS           # Automatically called between operator and next operand; implement as desired
+  CONSUME_TYPE(2)        # number_stack.add( type == type_index:ARG1 )
+  MUST_CONSUME_TYPE(2)   # Throws error if next token.type != type_index:ARG1
   SAVE_POSITION
   RESTORE_POSITION
   DISCARD_SAVED_POSITION
   TRACE
-  PRINTLN_STRING(2)     # println string with INDEX:ARG1
+  PRINTLN_STRING(2)      # println string with INDEX:ARG1
   PRINTLN_NUMBER
   POP_DISCARD
-  PUSH_INT32(2)         # number_stack.add(value:ARG1)
+  PUSH_INT32(2)          # number_stack.add(value:ARG1)
   DECLARE_VAR(2)
   WRITE_VAR(2)
   READ_VAR(2)

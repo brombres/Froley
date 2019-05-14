@@ -1227,7 +1227,7 @@ class FroleyParser : Parser
 
     method read_string->String
       if (next_is(TokenType.STRING))
-        return read->String
+        return read.text
       else
         throw peek.error( "Literal string expected." )
       endIf

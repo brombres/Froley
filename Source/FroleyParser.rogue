@@ -677,7 +677,7 @@ class FroleyParser : Parser
             parse_multi_line_parser_statements( cmd.statements )
             t = peek
             is_peek = next_is( TokenType.KEYWORD_ELSE_ON_PEEK )
-            while (consume(TokenType.KEYWORD_ON) or consume(TokenType.KEYWORD_ON_PEEK))
+            while (consume(TokenType.KEYWORD_ELSE_ON) or consume(TokenType.KEYWORD_ELSE_ON_PEEK))
               cmd.else_on = ParserCmdOnType( t, read_token_type_def )
               if (is_peek) cmd.else_on.peek = true
               on_commands = parse_on_commands

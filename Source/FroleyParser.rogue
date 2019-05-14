@@ -653,6 +653,7 @@ class FroleyParser : Parser
       if (consume(TokenType.KEYWORD_ON) or consume(TokenType.KEYWORD_ON_PEEK))
         local token_type_def = read_token_type_def
         if (consume(TokenType.SYMBOL_ARROW))
+          consume_eols
           local cmd = ParserCmdOnTypeProduce( t, token_type_def, parse_cmd_type(token_type_def) )
           if (is_peek) cmd.peek = true
           statements.add( cmd )
@@ -669,6 +670,7 @@ class FroleyParser : Parser
 
             t = peek
             if (consume(TokenType.SYMBOL_ARROW))
+              consume_eols
               cmd.statements.add( ParserCmdCreate(t,parse_cmd_type) )
               cmd.statements.add( ParserCmdReturn(t,null) )
               return

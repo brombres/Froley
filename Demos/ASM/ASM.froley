@@ -139,65 +139,65 @@ return
   endIf
 
 - cmd_with_id_arg
-  on "jmp",     identifier -> CmdJMP(label)
-  on "jeq",     identifier -> CmdJEQ(label)
-  on "jne",     identifier -> CmdJNE(label)
-  on "jgt",     identifier -> CmdJGT(label)
-  on "jge",     identifier -> CmdJGE(label)
-  on "jlt",     identifier -> CmdJLT(label)
-  on "jle",     identifier -> CmdJLE(label)
-  on "read_a",  identifier -> CmdReadA(label)
-  on "read_b",  identifier -> CmdReadB(label)
-  on "write_a", identifier -> CmdWriteA(label)
-  on "write_b", identifier -> CmdWriteB(label)
+  on "jmp",     identifier -> JMP(label)
+  on "jeq",     identifier -> JEQ(label)
+  on "jne",     identifier -> JNE(label)
+  on "jgt",     identifier -> JGT(label)
+  on "jge",     identifier -> JGE(label)
+  on "jlt",     identifier -> JLT(label)
+  on "jle",     identifier -> JLE(label)
+  on "read_a",  identifier -> ReadA(label)
+  on "read_b",  identifier -> ReadB(label)
+  on "write_a", identifier -> WriteA(label)
+  on "write_b", identifier -> WriteB(label)
   syntaxError
 
 - cmd_with_int_arg
   on "literal_a"
     integer
-    create CmdLiteralA(name)
+    create LiteralA(name)
   elseOn "literal_b"
     integer
-    create CmdLiteralB(name)
+    create LiteralB(name)
   else
     syntaxError
   endOn
   return
 
 - cmd_with_string_arg
-  on "print_text", string -> CmdPrintText(value)
+  on "print_text", string -> PrintText(value)
   syntaxError
 
 - cmd_with_no_arg_or_label
-  on "halt"    -> CmdHalt
-  on "input_a" -> CmdInputA
-  on "input_b" -> CmdInputB
-  on "newline" -> CmdNewline
-  on "print_a" -> CmdPrintA
-  on "print_b" -> CmdPrintB
-  on "add"     -> CmdAdd
-  on "sub"     -> CmdSub
-  on "mul"     -> CmdMul
-  on "div"     -> CmdDiv
-  on "mod"     -> CmdMod
-  on "cmp"     -> CmdCmp
-  on "sqrt"    -> CmdSqrt
+  on "halt"    -> Halt
+  on "input_a" -> InputA
+  on "input_b" -> InputB
+  on "newline" -> Newline
+  on "print_a" -> PrintA
+  on "print_b" -> PrintB
+  on "add"     -> Add
+  on "sub"     -> Sub
+  on "mul"     -> Mul
+  on "div"     -> Div
+  on "mod"     -> Mod
+  on "cmp"     -> Cmp
+  on "sqrt"    -> Sqrt
   on "identifier"
     mustConsume ':'
-    create CmdLabel( name=t.content:String )
+    create Label( name=t.content:String )
     return
   endOn
   syntaxError
 
 - identifier
-  on "identifier" -> CmdIdentifier( name=t.content:String )
+  on "identifier" -> Identifier( name=t.content:String )
   syntaxError
 
 - string
-  on "string" -> CmdString( value=t.content:String )
+  on "string" -> LiteralString( value=t.content:String )
   syntaxError
 
 - integer
-  on "integer" -> CmdInteger( value=t.content:Int32 )
+  on "integer" -> Integer( value=t.content:Int32 )
   syntaxError
 

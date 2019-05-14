@@ -14,8 +14,8 @@ enum ParserOpcode( size=1:Int32 )
   NEXT_HAS_ATTRIBUTE(2)
   NEXT_IS_TYPE(2)
   BEGIN_LIST             #
-  CREATE_CMD(3)          # Create command of type type_index:ARG1 using cur_token and ARGC:ARG2 commands off stackq
-  CREATE_NULL_CMD        # Push null Cmd on stackq
+  CREATE_NODE(3)         # Create command of type type_index:ARG1 using cur_token and ARGC:ARG2 commands off stackq
+  CREATE_NULL_NODE       # Push null Node on stackq
   CREATE_LIST            #
   CREATE_STATEMENTS      #
   CONSUME_EOLS           # Automatically called between operator and next operand; implement as desired

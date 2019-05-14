@@ -1,11 +1,11 @@
 augment JavaTemplate
   PROPERTIES
-    cmd_init_args =
+    node_init_args =
       @|<froley.package>
        |
        |import java.util.ArrayList;
        |
-       |public class CmdInitArgs extends ArrayList<Cmd>
+       |public class NodeInitArgs extends ArrayList<Node>
        |{
        |  // PROPERTIES
        |  public Token t;

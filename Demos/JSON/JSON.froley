@@ -129,13 +129,13 @@ produce STRING
 
 [parser]
 - value
-  on '{', definitions, '}' -> CmdObject(definitions:CmdList)
-  on '[', array, ']'       -> CmdArray(array:CmdList)
-  on STRING                -> CmdString( value=t.content:String )
-  on NUMBER                -> CmdNumber( value=t.content:Real64 )
-  on "true"                -> CmdTrue
-  on "false"               -> CmdFalse
-  on "null"                -> CmdNull
+  on '{', definitions, '}' -> ObjectValue(definitions:NodeList)
+  on '[', array, ']'       -> ArrayValue(array:NodeList)
+  on STRING                -> StringValue( value=t.content:String )
+  on NUMBER                -> NumberValue( value=t.content:Real64 )
+  on "true"                -> TrueValue
+  on "false"               -> FalseValue
+  on "null"                -> NullValue
   syntaxError
 
 - definitions
@@ -149,7 +149,7 @@ produce STRING
   createList
 
 - definition
-  on STRING, ':', value -> CmdMapping(name=t.content:String,value)
+  on STRING, ':', value -> Mapping(name=t.content:String,value)
   syntaxError
 
 - array

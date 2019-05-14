@@ -3,9 +3,9 @@ augment RogueTemplate
     parser_vm =
       @|module FroleyLanguage
        |
-       |$include "Cmd.rogue"
-       |$include "CmdInitArgs.rogue"
-       |$include "CmdFactory.rogue"
+       |$include "Node.rogue"
+       |$include "NodeInitArgs.rogue"
+       |$include "NodeFactory.rogue"
        |$include "ParserOpcode.rogue"
        |$include "Tokenizer.rogue"
        |
@@ -30,8 +30,8 @@ augment RogueTemplate
        |
        |    saved_positions = ParsePosition[]
        |
-       |    cmd_queue       = Cmd[]
-       |    cmd_args        = CmdInitArgs()
+       |    node_queue      = Node[]
+       |    node_args       = NodeInitArgs()
        |    list_start_t    = Token[]
        |    list_start_pos  = Int32[]
        |
@@ -125,50 +125,50 @@ augment RogueTemplate
        |            nextIteration
        |          case ParserOpcode.BEGIN_LIST
        |            list_start_t.add( peek )
-       |            list_start_pos.add( cmd_queue.count )
+       |            list_start_pos.add( node_queue.count )
        |            nextIteration
-       |          case ParserOpcode.CREATE_CMD
-       |            local cmd_type_index = code[ ip ]
+       |          case ParserOpcode.CREATE_NODE
+       |            local node_type_index = code[ ip ]
        |            local arg_count = code[ ip+1 ]
        |            ip += 2
-       |            cmd_args.clear
-       |            cmd_args.t = cur_token
+       |            node_args.clear
+       |            node_args.t = cur_token
        |            if (arg_count > 0)
-       |              local i1 = cmd_queue.count - arg_count
+       |              local i1 = node_queue.count - arg_count
        |              if (i1 < 0)
        |                print_trace( ip-2, 0 )
-       |                throw cur_token.error( "[INTERNAL] Command queue too small for new Cmd." )
+       |                throw cur_token.error( "[INTERNAL] Command queue too small for new node." )
        |              endIf
-       |              cmd_args.add( forEach in cmd_queue from i1 )
-       |              cmd_queue.discard_from( i1 )
+       |              node_args.add( forEach in node_queue from i1 )
+       |              node_queue.discard_from( i1 )
        |            endIf
-       |            cmd_queue.add( CmdFactory.create_cmd(cmd_type_index,cur_token,cmd_args) )
+       |            node_queue.add( NodeFactory.create_node(node_type_index,cur_token,node_args) )
        |            nextIteration
        |
-       |          case ParserOpcode.CREATE_NULL_CMD
-       |            cmd_queue.add( null )
+       |          case ParserOpcode.CREATE_NULL_NODE
+       |            node_queue.add( null )
        |            nextIteration
        |
        |          case ParserOpcode.CREATE_LIST
        |            if (list_start_t.is_empty) throw peek.error( "[INTERNAL] No prior beginList before calling createList/produceList." )
        |            local t  = list_start_t.remove_last
        |            local i1 = list_start_pos.remove_last
-       |            cmd_args.clear
-       |            cmd_args.t = cur_token
-       |            cmd_args.add( forEach in cmd_queue from i1 )
-       |            cmd_queue.discard_from( i1 )
-       |            cmd_queue.add( CmdList(t,cmd_args) )
+       |            node_args.clear
+       |            node_args.t = cur_token
+       |            node_args.add( forEach in node_queue from i1 )
+       |            node_queue.discard_from( i1 )
+       |            node_queue.add( NodeList(t,node_args) )
        |            nextIteration
        |
        |          case ParserOpcode.CREATE_STATEMENTS
        |            if (list_start_t.is_empty) throw peek.error( "[INTERNAL] No prior beginList before calling createStatements/produceStatements." )
        |            local t  = list_start_t.remove_last
        |            local i1 = list_start_pos.remove_last
-       |            cmd_args.clear
-       |            cmd_args.t = cur_token
-       |            cmd_args.add( forEach in cmd_queue from i1 )
-       |            cmd_queue.discard_from( i1 )
-       |            cmd_queue.add( CmdStatements(t,cmd_args) )
+       |            node_args.clear
+       |            node_args.t = cur_token
+       |            node_args.add( forEach in node_queue from i1 )
+       |            node_queue.discard_from( i1 )
+       |            node_queue.add( Statements(t,node_args) )
        |            nextIteration
        |
        |          case ParserOpcode.CONSUME_EOLS
@@ -197,14 +197,14 @@ augment RogueTemplate
        |            endIf
        |
        |          case ParserOpcode.SAVE_POSITION
-       |            saved_positions.add( ParsePosition(position,cmd_queue.count,cur_token) )
+       |            saved_positions.add( ParsePosition(position,node_queue.count,cur_token) )
        |            nextIteration
        |
        |          case ParserOpcode.RESTORE_POSITION
        |            if (saved_positions.is_empty) throw peek.error( "[INTERNAL] No savePosition to restore." )
        |            local pos = saved_positions.remove_last
        |            position = pos.position
-       |            cmd_queue.discard_from( pos.cmd_count )
+       |            node_queue.discard_from( pos.node_count )
        |            cur_token = pos.cur_token
        |            if (position < tokens.count) next_token_type = tokens[position].type->Int32
        |            else                         next_token_type = -1
@@ -335,15 +335,15 @@ augment RogueTemplate
        |      if (must_locate) throw Error( "[INTERNAL] No variable named '$' has been declared."(name) )
        |      return null
        |
-       |    method parse( rule_name:String )->Cmd
+       |    method parse( rule_name:String )->Node
        |      local index = methods.locate( rule_name )
        |      if (not index.exists) throw Error( "[INTERNAL]", "No parse rule '$' exists."(rule_name) )
        |      return parse( methods[index.value] )
        |
-       |    method parse( address:Int32 )->Cmd
+       |    method parse( address:Int32 )->Node
        |      execute( address )
-       |      if (cmd_queue.count) return cmd_queue.remove_last
-       |      else                 return null
+       |      if (node_queue.count) return node_queue.remove_last
+       |      else                  return null
        |
        |    method peek->Token
        |      if (position == tokens.count)
@@ -369,9 +369,9 @@ augment RogueTemplate
        |      endForEach
        |      println
        |      print "  ["
-       |      forEach (cmd at index in cmd_queue)
+       |      forEach (node at index in node_queue)
        |        if (index > 0) print ","
-       |        print select{ cmd:cmd.type_name || "null" }
+       |        print select{ node:node.type_name || "null" }
        |      endForEach
        |      println "]"
        |
@@ -421,7 +421,7 @@ augment RogueTemplate
        |class Variable( name:String, value:Int32 ) [compound]
        |endClass
        |
-       |class ParsePosition( position:Int32, cmd_count:Int32, cur_token:Token ) [compound]
+       |class ParsePosition( position:Int32, node_count:Int32, cur_token:Token ) [compound]
        |endClass
        |
 endAugment

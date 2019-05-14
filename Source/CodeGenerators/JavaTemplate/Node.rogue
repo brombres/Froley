@@ -1,17 +1,17 @@
 augment JavaTemplate
   PROPERTIES
-    cmd =
+    node =
       @|<froley.package>
        |
        |import java.util.ArrayList;
        |
-       |public class Cmd
+       |public class Node
        |{
        |  // PROPERTIES
        |  public Token t;
        |
        |  // METHODS
-       |  public Cmd init( Token t, CmdInitArgs args )
+       |  public Node init( Token t, NodeInitArgs args )
        |  {
        |    this.t = t;
        |    args.requireCount( 0 );
@@ -29,27 +29,27 @@ augment JavaTemplate
        |  {
        |    String typeName = getClass().getName();
        |    int i = typeName.lastIndexOf( '$' );
-       |    if (i == -1) i = typeName.lastIndexOf( "Cmd" );
+       |    if (i == -1) i = typeName.lastIndexOf( "Node" );
        |    if (i != -1 && i == typeName.length()-1) i = -1;
        |    builder.print( (i==-1) ? typeName : typeName.substring(i+3) );
        |  }
        |
-       |  public void write( Cmd cmd, StringBuilder builder )
+       |  public void write( Node node, StringBuilder builder )
        |  {
-       |    if (cmd != null) cmd.write( builder );
+       |    if (node != null) node.write( builder );
        |    else             builder.print( "null" );
        |  }
        |
-       |  static public class CmdList extends Cmd
+       |  static public class NodeList extends Node
        |  {
        |    //PROPERTIES
-       |    public ArrayList<Cmd> list;
+       |    public ArrayList<Node> list;
        |
        |    //METHODS
-       |    public CmdList( Token t, CmdInitArgs args )
+       |    public NodeList( Token t, NodeInitArgs args )
        |    {
        |      this.t = t;
-       |      list = new ArrayList<Cmd>( args.size() );
+       |      list = new ArrayList<Node>( args.size() );
        |      for (int i=0; i<args.size(); ++i)
        |      {
        |        list.add( args.get(i) );
@@ -61,17 +61,17 @@ augment JavaTemplate
        |      return list.size();
        |    }
        |
-       |    public Cmd first()
+       |    public Node first()
        |    {
        |      return list.get( 0 );
        |    }
        |
-       |    public Cmd get( int index )
+       |    public Node get( int index )
        |    {
        |      return list.get( index );
        |    }
        |
-       |    public Cmd last()
+       |    public Node last()
        |    {
        |      return list.get( list.size()-1 );
        |    }
@@ -82,16 +82,16 @@ augment JavaTemplate
        |      for (int i=0; i<list.size(); ++i)
        |      {
        |        if (i > 0) builder.print( ',' );
-       |        Cmd cmd = list.get( i );
-       |        write( cmd, builder );
+       |        Node node = list.get( i );
+       |        write( node, builder );
        |      }
        |      builder.print( ']' );
        |    }
        |  }
        |
-       |  static public class CmdStatements extends CmdList
+       |  static public class Statements extends NodeList
        |  {
-       |    public CmdStatements( Token t, CmdInitArgs args )
+       |    public Statements( Token t, NodeInitArgs args )
        |    {
        |      super( t, args );
        |    }
@@ -100,20 +100,20 @@ augment JavaTemplate
        |    {
        |      for (int i=0; i<list.size(); ++i)
        |      {
-       |        Cmd statement = list.get( i );
+       |        Node statement = list.get( i );
        |        write( statement, builder );
        |        builder.print( '\n' );
        |      }
        |    }
        |  }
        |
-       |  static public class CmdUnary extends Cmd
+       |  static public class Unary extends Node
        |  {
        |    // PROPERTIES
-       |    public Cmd operand;
+       |    public Node operand;
        |
        |    // METHODS
-       |    public Cmd init( Token t, CmdInitArgs args )
+       |    public Node init( Token t, NodeInitArgs args )
        |    {
        |      this.t = t;
        |      args.requireCount( 1 );
@@ -133,7 +133,7 @@ augment JavaTemplate
        |    }
        |  }
        |
-       |  static public class CmdPostUnary extends CmdUnary
+       |  static public class PostUnary extends Unary
        |  {
        |    // METHODS
        |    public void write( StringBuilder builder )
@@ -144,14 +144,14 @@ augment JavaTemplate
        |    }
        |  }
        |
-       |  static public class CmdBinary extends Cmd
+       |  static public class Binary extends Node
        |  {
        |    // PROPERTIES
-       |    public Cmd left;
-       |    public Cmd right;
+       |    public Node left;
+       |    public Node right;
        |
        |    // METHODS
-       |    public Cmd init( Token t, CmdInitArgs args )
+       |    public Node init( Token t, NodeInitArgs args )
        |    {
        |      this.t = t;
        |      args.requireCount( 2 );

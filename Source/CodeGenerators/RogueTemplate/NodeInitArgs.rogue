@@ -1,9 +1,9 @@
 augment RogueTemplate
   PROPERTIES
-    cmd_init_args =
+    node_init_args =
       @|module FroleyLanguage
        |
-       |class CmdInitArgs : Cmd[]
+       |class NodeInitArgs : Node[]
        |  PROPERTIES
        |    t : Token
        |

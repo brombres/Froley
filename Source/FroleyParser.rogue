@@ -900,7 +900,7 @@ class FroleyParser : Parser
       local args = parse_cmd_init_args( name )
       local symbol = select{ token_type_def:token_type_def.symbol || null as String }
       if (symbol is null)
-        symbol = name.after_any( "Cmd" )
+        symbol = name.after_any( "Node" )
       endIf
       return Froley.cmd_type( t, name, parse_rule_type, symbol, args )
 
@@ -924,7 +924,7 @@ class FroleyParser : Parser
     method parse_cmd_init_arg->CmdTypeProperty
       local name = read_identifier
       local value = ""
-      local type = "Cmd"
+      local type = "Node"
       if (consume(TokenType.SYMBOL_EQUALS))
         value = read_identifier
         if (consume(TokenType.SYMBOL_DOT)) value += '.' + read_identifier

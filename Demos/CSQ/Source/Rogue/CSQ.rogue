@@ -20,9 +20,9 @@ class CSQ
           endIf
 
           while (parser.has_another)
-            local cmd = parser.parse( parser.methods[0] )
+            local node = parser.parse( parser.methods[0] )
             local builder = StringBuilder()
-            cmd.write( builder )
+            node.write( builder )
             println builder
           endWhile
         catch (err:Error)
@@ -36,9 +36,9 @@ class CSQ
             local input = Console.input( "CSQ> " )
             parser.open( "[Command Line]", input )
             while (parser.has_another)
-              local cmd = parser.parse( parser.methods[0] )
+              local node = parser.parse( parser.methods[0] )
               local builder = StringBuilder()
-              cmd.write( builder )
+              node.write( builder )
               println builder
             endWhile
           catch (err:Error)

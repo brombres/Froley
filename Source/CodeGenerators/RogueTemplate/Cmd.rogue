@@ -49,10 +49,12 @@ augment RogueTemplate
        |      return list.last
        |
        |    method write( builder:StringBuilder )
+       |      builder.print( '[' )
        |      forEach (arg at index in list)
        |        if (index > 0) builder.print( ',' )
        |        write( arg, builder )
        |      endForEach
+       |      builder.print( ']' )
        |endClass
        |
        |class CmdStatements : CmdList

@@ -1,6 +1,7 @@
 .rogo
 BuildLocal.rogue
 Build
+*.swn
 *.swo
 *.swp
 *.class

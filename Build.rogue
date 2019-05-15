@@ -56,12 +56,16 @@ routine rogo_asm
 endRoutine
 
 routine rogo_clean
+  rogo_clean_demos
+  execute( "rm -rf Build" )
+  execute( "rm -rf .rogo" )
+endRoutine
+
+routine rogo_clean_demos
   execute( "cd Demos/Simple && rogo xclean" )
   execute( "cd Demos/CSQ && rogo xclean" )
   execute( "cd Demos/JSON && rogo xclean" )
   execute( "cd Demos/ASM && rogo xclean" )
-  execute( "rm -rf Build" )
-  execute( "rm -rf .rogo" )
 endRoutine
 
 routine rogo_build

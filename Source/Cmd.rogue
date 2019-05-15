@@ -905,6 +905,7 @@ class ParserCmdOnType( t, token_type_def:TokenDef ) : Cmd
         else      assembler.write( ParserOpcode.ON_TOKEN_TYPE, token_type_def.type )
         assembler.write_address( label_else )
         statements.write( assembler )
+        assembler.write( ParserOpcode.POP_CUR_TOKEN )
         assembler.write( ParserOpcode.JUMP, label_done )
         assembler.define( label_else )
         if (else_on) else_on.write( assembler )

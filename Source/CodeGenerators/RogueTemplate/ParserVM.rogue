@@ -14,30 +14,31 @@ augment RogueTemplate
        |    MIN_VERSION = 1
        |
        |  PROPERTIES
-       |    filepath        : String
-       |    code            = Int32[]
-       |    strings         = String[]
-       |    tokens          = Token[]
-       |    methods         = LookupList<<Int32>>()
+       |    filepath           : String
+       |    code               = Int32[]
+       |    strings            = String[]
+       |    tokens             = Token[]
+       |    methods            = LookupList<<Int32>>()
        |
-       |    call_stack      = Int32[]
-       |    method_stack    = Int32[]
-       |    token_stack     = Token[]
-       |    number_stack    = Int32[]
+       |    call_stack         = Int32[]
+       |    method_stack       = Int32[]
+       |    token_stack        = Token[]
+       |    token_stack_frames = Int32[]
+       |    number_stack       = Int32[]
        |
-       |    vars            = Variable[]
-       |    var_frames      = Int32[].[ add(0) ]
+       |    vars               = Variable[]
+       |    var_frames         = Int32[].[ add(0) ]
        |
-       |    saved_positions = ParsePosition[]
+       |    saved_positions    = ParsePosition[]
        |
-       |    node_queue      = Node[]
-       |    node_args       = NodeInitArgs()
-       |    list_start_t    = Token[]
-       |    list_start_pos  = Int32[]
+       |    node_queue         = Node[]
+       |    node_args          = NodeInitArgs()
+       |    list_start_t       = Token[]
+       |    list_start_pos     = Int32[]
        |
-       |    position        = 0
-       |    cur_token       : Token
-       |    next_token_type = -1
+       |    position           = 0
+       |    cur_token          : Token
+       |    next_token_type    = -1
        |
        |    methods_by_address = Table<<Int32,String>>()
        |    tokenizer          = Tokenizer()
@@ -47,6 +48,7 @@ augment RogueTemplate
        |      call_stack.clear
        |      method_stack.clear
        |      token_stack.clear
+       |      token_stack_frames.clear
        |      number_stack.clear
        |      vars.clear
        |      var_frames.[ clear, add(0) ]
@@ -74,12 +76,14 @@ augment RogueTemplate
        |            if (call_stack.is_empty) method_stack.clear; return
        |            ip = call_stack.remove_last
        |            method_stack.remove_last
+       |            token_stack.discard_from( token_stack_frames.remove_last )
        |            cur_token = token_stack.remove_last
        |            vars.discard_from( var_frames.remove_last )
        |            nextIteration
        |          case ParserOpcode.CALL
        |            call_stack.add( ip+1 )
        |            token_stack.add( cur_token )
+       |            token_stack_frames.add( token_stack.count )
        |            cur_token = peek
        |            ip = code[ ip ]
        |            method_stack.add( ip )
@@ -99,6 +103,7 @@ augment RogueTemplate
        |          case ParserOpcode.ON_TOKEN_TYPE
        |            if (code[ip] == next_token_type)
        |              ip += 2
+       |              token_stack.add( cur_token )
        |              cur_token = read
        |            else
        |              ip = code[ ip+1 ]
@@ -107,10 +112,14 @@ augment RogueTemplate
        |          case ParserOpcode.ON_PEEK_TOKEN_TYPE
        |            if (code[ip] == next_token_type)
        |              ip += 2
+       |              token_stack.add( cur_token )
        |              cur_token = peek
        |            else
        |              ip = code[ ip+1 ]
        |            endIf
+       |            nextIteration
+       |          case ParserOpcode.POP_CUR_TOKEN
+       |            cur_token = token_stack.remove_last
        |            nextIteration
        |          case ParserOpcode.HAS_ANOTHER
        |            number_stack.add( next_token_type != -1 )

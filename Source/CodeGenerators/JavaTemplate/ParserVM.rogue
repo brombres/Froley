@@ -25,6 +25,7 @@ augment JavaTemplate
        |  public IntList methodStack         = new IntList();
        |  public IntList numberStack         = new IntList();
        |  public ArrayList<Token> tokenStack = new ArrayList<Token>();
+       |  public IntList tokenStackFrames    = new IntList();
        |
        |  public ArrayList<String> varNames  = new ArrayList<String>();
        |  public IntList           varValues = new IntList();
@@ -48,6 +49,7 @@ augment JavaTemplate
        |    callStack.clear();
        |    methodStack.clear();
        |    tokenStack.clear();
+       |    tokenStackFrames.clear();
        |    numberStack.clear();
        |    varNames.clear();
        |    varValues.clear();
@@ -84,6 +86,8 @@ augment JavaTemplate
        |          }
        |          ip = callStack.removeLast();
        |          methodStack.removeLast();
+       |          int tCount = tokenStackFrames.removeLast();
+       |          while (tokenStack.size() > tCount) tokenStack.remove( tokenStack.size()-1 );
        |          curToken = tokenStack.remove( tokenStack.size() - 1 );
        |          int varCount = varFrames.removeLast();
        |          while (varNames.size() > varCount) varNames.remove( varNames.size()-1 );
@@ -93,6 +97,7 @@ augment JavaTemplate
        |        case ParserOpcode.CALL:
        |          callStack.add( ip+1 );
        |          tokenStack.add( curToken );
+       |          tokenStackFrames.add( tokenStack.size() );
        |          curToken = peek();
        |          ip = code[ ip ];
        |          methodStack.add( ip );
@@ -113,6 +118,7 @@ augment JavaTemplate
        |          if (code[ip] == nextTokenType)
        |          {
        |            ip += 2;
+       |            tokenStack.add( curToken );
        |            curToken = read();
        |          }
        |          else
@@ -124,12 +130,16 @@ augment JavaTemplate
        |          if (code[ip] == nextTokenType)
        |          {
        |            ip += 2;
+       |            tokenStack.add( curToken );
        |            curToken = peek();
        |          }
        |          else
        |          {
        |            ip = code[ ip+1 ];
        |          }
+       |          continue;
+       |        case ParserOpcode.POP_CUR_TOKEN:
+       |          curToken = tokenStack.remove( tokenStack.size()-1 );
        |          continue;
        |        case ParserOpcode.HAS_ANOTHER:
        |          numberStack.add( (nextTokenType!=-1)?1:0 );

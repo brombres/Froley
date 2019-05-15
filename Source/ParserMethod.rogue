@@ -107,6 +107,7 @@ class MethodTypePostUnaryParseRule : MethodType [singleton]
 
       assembler.write( ParserOpcode.CREATE_NODE, cmd.cmd_type.index )
       assembler.write( 1 ) # 1 Cmd arg
+      assembler.write( ParserOpcode.POP_CUR_TOKEN )
       assembler.write( ParserOpcode.JUMP, m.recurse_label )
 
       assembler.define( label_no_match )
@@ -135,6 +136,7 @@ class MethodTypeBinaryParseRule : MethodType [singleton]
       assembler.write( ParserOpcode.CALL, m.nested_method.start_label )
       assembler.write( ParserOpcode.CREATE_NODE, cmd.cmd_type.index )
       assembler.write( 2 ) # 2 Cmd args
+      assembler.write( ParserOpcode.POP_CUR_TOKEN )
       assembler.write( ParserOpcode.JUMP, m.recurse_label )
       assembler.define( label_no_match )
 endClass

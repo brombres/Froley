@@ -10,6 +10,7 @@ enum ParserOpcode( size=1:Int32 )
   JUMP_IF_FALSE(2)       # if (0 == number_stack.remove_last) ip = address:ARG1
   ON_TOKEN_TYPE(3)       # cur_token = read() if peek.type == TYPE:ARG1 or else ip=address_if_no_match:ARG2
   ON_PEEK_TOKEN_TYPE(3)  # cur_token = peek() if peek.type == TYPE:ARG1 or else ip=address_if_no_match:ARG2
+  POP_CUR_TOKEN
   HAS_ANOTHER            # True if another token exists
   NEXT_HAS_ATTRIBUTE(2)
   NEXT_IS_TYPE(2)

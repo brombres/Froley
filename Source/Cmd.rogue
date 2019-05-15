@@ -1208,10 +1208,10 @@ class ParserCmdRestorePosition( t ) : Cmd
       assembler.write( ParserOpcode.RESTORE_POSITION )
 endClass
 
-class ParserCmdDiscardSavedPosition( t ) : Cmd
+class ParserCmdDiscardPosition( t ) : Cmd
   METHODS
     method write( assembler:ParserAssembler )
-      assembler.write( ParserOpcode.DISCARD_SAVED_POSITION )
+      assembler.write( ParserOpcode.DISCARD_POSITION )
 endClass
 
 class ParserCmdCompare<<$OPCODE>> : CmdBinary

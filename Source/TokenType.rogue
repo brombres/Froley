@@ -28,7 +28,7 @@ augment TokenType
   KEYWORD_DIGIT             ( "digit",                &is_keyword )
   KEYWORD_DISCARD           ( "discard",              &is_keyword )
   KEYWORD_DISCARD_ANY       ( "discardAny",           &is_keyword, &is_structural )
-  KEYWORD_DISCARD_SAVED_POS ( "discardSavedPosition", &is_keyword, &is_structural )
+  KEYWORD_DISCARD_POSITION  ( "discardPosition",      &is_keyword )
   KEYWORD_ELSE              ( "else",                 &is_keyword, &is_structural )
   KEYWORD_ELSE_IF           ( "elseIf",               &is_keyword, &is_structural )
   KEYWORD_ELSE_ON           ( "elseOn",               &is_keyword, &is_structural )

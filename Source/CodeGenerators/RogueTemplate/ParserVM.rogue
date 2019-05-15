@@ -210,7 +210,7 @@ augment RogueTemplate
        |            else                         next_token_type = -1
        |            nextIteration
        |
-       |          case ParserOpcode.DISCARD_SAVED_POSITION
+       |          case ParserOpcode.DISCARD_POSITION
        |            if (saved_positions.count) saved_positions.remove_last
        |            nextIteration
        |

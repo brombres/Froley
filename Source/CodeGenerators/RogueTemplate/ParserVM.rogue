@@ -185,6 +185,11 @@ augment RogueTemplate
        |            node_queue.add( Statements(t,node_args) )
        |            nextIteration
        |
+       |          case ParserOpcode.SWAP
+       |            local n = node_queue.count
+       |            if (n >= 2) node_queue.swap(n-2,n-1)
+       |            nextIteration
+       |
        |          case ParserOpcode.CONSUME_EOLS
        |            # Called to automatically consume EOL tokens that occur in the
        |            # midst of parsing a unary or binary operator, like "a+\nb".

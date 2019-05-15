@@ -119,7 +119,7 @@ augment CmdArgs
       (forEach in this).write( assembler )
 endAugment
 
-class CmdStatement( t, name:String, opcode:TokenizerOpcode ) : Cmd
+class TokenizerCmdOp( t, name:String, opcode:TokenizerOpcode ) : Cmd
   # Generic statement with opcode and no operands
   METHODS
     method to->String
@@ -471,7 +471,7 @@ class TokenizerCmdRegisterBuffer( t ) : Cmd
 
     method resolve_assignment( new_value:Cmd )->Cmd
       if (new_value instanceOf TokenizerCmdPop)
-        return CmdStatement( t, "buffer = pop", TokenizerOpcode.POP_BUFFER )
+        return TokenizerCmdOp( t, "buffer = pop", TokenizerOpcode.POP_BUFFER )
       elseIf (new_value instanceOf TokenizerCmdLiteralString)
         return TokenizerCmdSetBufferToString( t, (new_value as TokenizerCmdLiteralString).value )
       elseIf (new_value instanceOf TokenizerCmdPopPlusBuffer)
@@ -509,7 +509,7 @@ class TokenizerCmdRegisterCh( t ) : Cmd
         (new_value as TokenizerCmdScanDigits).is_resolved = true
         return new_value
       elseIf (new_value instanceOf TokenizerCmdPop)
-        return CmdStatement( t, "ch = pop", TokenizerOpcode.POP_CH )
+        return TokenizerCmdOp( t, "ch = pop", TokenizerOpcode.POP_CH )
       else
         throw t.error( "Illegal 'ch' assignment. Expected 'count', 'read', 'scanDigits', or an integer." )
       endIf
@@ -583,7 +583,7 @@ class TokenizerCmdRegisterCount( t ) : Cmd
       elseIf (new_value.is_ch)
         return TokenizerCmdSetCountToCh( t )
       elseIf (new_value instanceOf TokenizerCmdPop)
-        return CmdStatement( t, "count = pop", TokenizerOpcode.POP_COUNT )
+        return TokenizerCmdOp( t, "count = pop", TokenizerOpcode.POP_COUNT )
       else
         throw t.error( "Illegal 'count' assignment. Expected 'ch', 'pop', or an integer." )
       endIf
@@ -1265,4 +1265,14 @@ class ParserCmdCompareLT : ParserCmdCompare<<COMPARE_LT>>;
 class ParserCmdCompareLE : ParserCmdCompare<<COMPARE_LE>>;
 class ParserCmdCompareGT : ParserCmdCompare<<COMPARE_GT>>;
 class ParserCmdCompareGE : ParserCmdCompare<<COMPARE_GE>>;
+
+class ParserCmdOp( t, name:String, opcode:ParserOpcode ) : Cmd
+  # Generic statement with opcode and no operands
+  METHODS
+    method to->String
+      return name
+
+    method write( assembler:ParserAssembler )
+      assembler.write( opcode )
+endClass
 

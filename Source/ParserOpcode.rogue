@@ -20,6 +20,7 @@ enum ParserOpcode( size=1:Int32 )
   CREATE_NULL_NODE       # Push null Node on stackq
   CREATE_LIST            #
   CREATE_STATEMENTS      #
+  SWAP                   # swaps positions of most recent two nodes on queue
   CONSUME_EOLS           # Automatically called between operator and next operand; implement as desired
   CONSUME_TYPE(2)        # number_stack.add( type == type_index:ARG1 )
   CONSUME_STRING(2)      # number_stack.add( type == type_index:ARG1 )

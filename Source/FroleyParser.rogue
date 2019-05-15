@@ -383,25 +383,25 @@ class FroleyParser : Parser
       elseIf (consume(TokenType.KEYWORD_PRODUCE))
         local name = read_identifier
         statements.add( TokenizerCmdCreateInt32(t,Froley.token_def(name).type) )
-        statements.add( CmdStatement(t,"restart",TokenizerOpcode.RESTART) )
+        statements.add( TokenizerCmdOp(t,"restart",TokenizerOpcode.RESTART) )
         return
 
       elseIf (consume(TokenType.KEYWORD_CLEAR))
         if (consume(TokenType.KEYWORD_BUFFER))
-          statements.add( CmdStatement(t,"clear buffer",TokenizerOpcode.CLEAR_BUFFER) )
+          statements.add( TokenizerCmdOp(t,"clear buffer",TokenizerOpcode.CLEAR_BUFFER) )
           return
         else
           throw peek.error( "Expected 'buffer'." )
         endIf
 
       elseIf (consume(TokenType.KEYWORD_BUFFER_TO_LC))
-        statements.add( CmdStatement(t,"bufferToLowercase",TokenizerOpcode.BUFFER_TO_LOWERCASE) )
+        statements.add( TokenizerCmdOp(t,"bufferToLowercase",TokenizerOpcode.BUFFER_TO_LOWERCASE) )
         return
 
       elseIf (consume(TokenType.KEYWORD_COLLECT))
         if (next_is(TokenType.KEYWORD_CH))
           must_consume_register_ch
-          statements.add( CmdStatement(t,"collect ch",TokenizerOpcode.COLLECT_CH) )
+          statements.add( TokenizerCmdOp(t,"collect ch",TokenizerOpcode.COLLECT_CH) )
           return
         elseIf (next_is(TokenType.STRING))
           statements.add( TokenizerCmdCollectString(t,read.text) )
@@ -415,18 +415,18 @@ class FroleyParser : Parser
         return
 
       elseIf (consume(TokenType.KEYWORD_DISCARD))
-        statements.add( CmdStatement(t,"restart",TokenizerOpcode.RESTART) )
+        statements.add( TokenizerCmdOp(t,"restart",TokenizerOpcode.RESTART) )
         return
 
       elseIf (consume(TokenType.KEYWORD_SYNTAX_ERROR))
         if (consume(TokenType.KEYWORD_BUFFER))
-          statements.add( CmdStatement(t,"syntaxError buffer",TokenizerOpcode.SYNTAX_ERROR_BUFFER) )
+          statements.add( TokenizerCmdOp(t,"syntaxError buffer",TokenizerOpcode.SYNTAX_ERROR_BUFFER) )
         elseIf (next_is(TokenType.STRING))
-          statements.add( CmdStatement(t,"clear buffer",TokenizerOpcode.CLEAR_BUFFER) )
+          statements.add( TokenizerCmdOp(t,"clear buffer",TokenizerOpcode.CLEAR_BUFFER) )
           statements.add( TokenizerCmdCollectString(t,read.text) )
-          statements.add( CmdStatement(t,"syntaxError <message>",TokenizerOpcode.SYNTAX_ERROR_BUFFER) )
+          statements.add( TokenizerCmdOp(t,"syntaxError <message>",TokenizerOpcode.SYNTAX_ERROR_BUFFER) )
         else
-          statements.add( CmdStatement(t,"syntaxError",TokenizerOpcode.SYNTAX_ERROR) )
+          statements.add( TokenizerCmdOp(t,"syntaxError",TokenizerOpcode.SYNTAX_ERROR) )
         endIf
         return
 
@@ -435,11 +435,11 @@ class FroleyParser : Parser
         return
 
       elseIf (consume(TokenType.KEYWORD_HALT))
-        statements.add( CmdStatement(t,"halt",TokenizerOpcode.HALT) )
+        statements.add( TokenizerCmdOp(t,"halt",TokenizerOpcode.HALT) )
         return
 
       elseIf (consume(TokenType.KEYWORD_MARK_SRC_POS))
-        statements.add( CmdStatement(t,"markSourcePosition",TokenizerOpcode.MARK_SOURCE_POS) )
+        statements.add( TokenizerCmdOp(t,"markSourcePosition",TokenizerOpcode.MARK_SOURCE_POS) )
         return
 
       elseIf (consume(TokenType.KEYWORD_MODE))
@@ -452,7 +452,7 @@ class FroleyParser : Parser
 
       elseIf (consume(TokenType.KEYWORD_PRINT))
         if (consume(TokenType.KEYWORD_BUFFER))
-          statements.add( CmdStatement(t,"print buffer",TokenizerOpcode.PRINT_BUFFER) )
+          statements.add( TokenizerCmdOp(t,"print buffer",TokenizerOpcode.PRINT_BUFFER) )
           return
         elseIf (next_is(TokenType.STRING))
           statements.add( TokenizerCmdPrintString(t,read.text) )
@@ -461,10 +461,10 @@ class FroleyParser : Parser
           if (not (next_is(TokenType.EOL) or next_is(TokenType.SYMBOL_SEMICOLON)))
             local expr = parse_tokenizer_expression()
             if (expr.is_ch)
-              statements.add( CmdStatement(t,"print ch",TokenizerOpcode.PRINT_CH) )
+              statements.add( TokenizerCmdOp(t,"print ch",TokenizerOpcode.PRINT_CH) )
               return
             elseIf (expr.is_count)
-              statements.add( CmdStatement(t,"print count",TokenizerOpcode.PRINT_COUNT) )
+              statements.add( TokenizerCmdOp(t,"print count",TokenizerOpcode.PRINT_COUNT) )
               return
             elseIf (expr.is_integer)
               statements.add( TokenizerCmdPrintCharacter(t,expr->Int32) )
@@ -479,11 +479,11 @@ class FroleyParser : Parser
           local t2 = peek
           statements.add( TokenizerCmdMode(t2,read_identifier) )
         endIf
-        statements.add( CmdStatement(t,"restart",TokenizerOpcode.RESTART) )
+        statements.add( TokenizerCmdOp(t,"restart",TokenizerOpcode.RESTART) )
         return
 
       elseIf (consume(TokenType.KEYWORD_RETURN))
-        statements.add( CmdStatement(t,"return",TokenizerOpcode.RETURN) )
+        statements.add( TokenizerCmdOp(t,"return",TokenizerOpcode.RETURN) )
         return
 
       elseIf (consume(TokenType.KEYWORD_SCAN_DIGITS))
@@ -532,11 +532,11 @@ class FroleyParser : Parser
 
       elseIf (consume(TokenType.KEYWORD_PUSH))
         if (consume(TokenType.KEYWORD_BUFFER))
-          statements.add( CmdStatement(t,"push buffer",TokenizerOpcode.PUSH_BUFFER) )
+          statements.add( TokenizerCmdOp(t,"push buffer",TokenizerOpcode.PUSH_BUFFER) )
         elseIf (consume(TokenType.KEYWORD_CH))
-          statements.add( CmdStatement(t,"push ch",TokenizerOpcode.PUSH_CH) )
+          statements.add( TokenizerCmdOp(t,"push ch",TokenizerOpcode.PUSH_CH) )
         elseIf (consume(TokenType.KEYWORD_COUNT))
-          statements.add( CmdStatement(t,"push count",TokenizerOpcode.PUSH_COUNT) )
+          statements.add( TokenizerCmdOp(t,"push count",TokenizerOpcode.PUSH_COUNT) )
         else
           throw peek.error( "Expected 'buffer,', 'ch', or 'count'." )
         endIf
@@ -780,6 +780,10 @@ class FroleyParser : Parser
 
       elseIf (consume(TokenType.KEYWORD_DISCARD_POSITION))
         statements.add( ParserCmdDiscardPosition(t) )
+        return
+
+      elseIf (consume(TokenType.KEYWORD_SWAP))
+        statements.add( ParserCmdOp(t,"swap",ParserOpcode.SWAP) )
         return
 
       elseIf (consume(TokenType.KEYWORD_TRACE))
@@ -1053,7 +1057,7 @@ class FroleyParser : Parser
                 local node = cmd_which_input.start
                 node = node.link( forEach in def.symbol )
                 node.statements.add( TokenizerCmdCreateInt32(t,def.type) )
-                node.statements.add( CmdStatement(t,"restart",TokenizerOpcode.RESTART) )
+                node.statements.add( TokenizerCmdOp(t,"restart",TokenizerOpcode.RESTART) )
               endIf
             endForEach
           else
@@ -1069,7 +1073,7 @@ class FroleyParser : Parser
               if (def.symbol)
                 local node = cmd_which_input.start
                 node = node.link( forEach in def.symbol )
-                node.statements.add( CmdStatement(t,"restart",TokenizerOpcode.RESTART) )
+                node.statements.add( TokenizerCmdOp(t,"restart",TokenizerOpcode.RESTART) )
               endIf
             endForEach
           else
@@ -1119,7 +1123,7 @@ class FroleyParser : Parser
                 local node = cmd_which.start
                 node = node.link( forEach in def.symbol )
                 node.statements.add( TokenizerCmdCreateInt32(t,def.type) )
-                node.statements.add( CmdStatement(t,"restart",TokenizerOpcode.RESTART) )
+                node.statements.add( TokenizerCmdOp(t,"restart",TokenizerOpcode.RESTART) )
               endIf
             endForEach
           else
@@ -1135,7 +1139,7 @@ class FroleyParser : Parser
               if (def.symbol)
                 local node = cmd_which.start
                 node = node.link( forEach in def.symbol )
-                node.statements.add( CmdStatement(t,"restart",TokenizerOpcode.RESTART) )
+                node.statements.add( TokenizerCmdOp(t,"restart",TokenizerOpcode.RESTART) )
               endIf
             endForEach
           else

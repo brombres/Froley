@@ -75,6 +75,7 @@ augment TokenType
   KEYWORD_SAVE_POSITION     ( "savePosition",         &is_keyword )
   KEYWORD_SCAN_DIGITS       ( "scanDigits",           &is_keyword )
   KEYWORD_SCAN_IDENTIFIER   ( "scanIdentifier",       &is_keyword )
+  KEYWORD_SWAP              ( "swap",                 &is_keyword )
   KEYWORD_SYNTAX_ERROR      ( "syntaxError",          &is_keyword )
   KEYWORD_TRACE             ( "trace",                &is_keyword )
   KEYWORD_TRUE              ( "true",                 &is_keyword )

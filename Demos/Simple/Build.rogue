@@ -47,7 +47,7 @@ routine rogo_java
   File.create_folder( "Build/Java" )
   execute "javac -d Build/Java Source/Java/$/*.java" (package.replacing('.','/'))
   println "Executing $ parser (run 'java -cp Build/Java $.$' with no additional arguments for interactive mode)" (LANGUAGE,package,LANGUAGE)
-  execute "java -cp Build/Java $.$ a=b=3+4+5" (package,LANGUAGE)
+  execute "java -cp Build/Java $.$ a=b=3+4*5" (package,LANGUAGE)
 endRoutine
 
 routine rogo_clean

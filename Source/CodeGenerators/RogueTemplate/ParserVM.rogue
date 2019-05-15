@@ -361,7 +361,7 @@ augment RogueTemplate
        |      forEach (index in vars.count-1 downTo lowest_index)
        |        if (vars[index].name == name) return index
        |      endForEach
-       |      if (must_locate) throw Error( "[INTERNAL] No variable named '$' has been declared."(name) )
+       |      if (must_locate) throw Error( "[INTERNAL] No parse rule or variable named '$' has been declared."(name) )
        |      return null
        |
        |    method parse( rule_name:String )->Node

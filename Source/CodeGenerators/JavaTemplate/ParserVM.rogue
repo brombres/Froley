@@ -450,7 +450,7 @@ augment JavaTemplate
        |    {
        |      if (varNames.get(index).equals(name)) return index;
        |    }
-       |    if (mustLocate) throw new Error( "[INTERNAL] No variable named '" + name + "' has been declared." );
+       |    if (mustLocate) throw new Error( "[INTERNAL] No parse rule or variable named '" + name + "' has been declared." );
        |    return -1;
        |  }
        |

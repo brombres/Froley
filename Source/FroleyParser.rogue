@@ -234,14 +234,7 @@ class FroleyParser : Parser
       )
       rule.on( "nextIs",
         function(parser:FroleyParser)->Cmd
-          local t = parser.read  # 'nextIs'
-          if (parser.consume(TokenType.SYMBOL_OPEN_PAREN))
-            local result = ParserCmdNextIsTokenType( t, parser.read_token_type_def )
-            parser.must_consume( TokenType.SYMBOL_CLOSE_PAREN )
-            return result
-          else
-            return ParserCmdNextIsTokenType( t, parser.read_token_type_def )
-          endIf
+          return parser.handle_cmd_with_token_type_def_or_string( (t,d)=>ParserCmdNextIsTokenType(t,d), (t,s)=>ParserCmdNextIsString(t,s) )
         endFunction
       )
       rule.on( "hasAnother",    <<ParserCmdHasAnother>> )
@@ -261,14 +254,7 @@ class FroleyParser : Parser
       )
       rule.on( "consume",
         function(parser:FroleyParser)->Cmd
-          local t = parser.read  # 'consume'
-          if (parser.consume(TokenType.SYMBOL_OPEN_PAREN))
-            local result = ParserCmdConsumeTokenType( t, parser.read_token_type_def )
-            parser.must_consume( TokenType.SYMBOL_CLOSE_PAREN )
-            return result
-          else
-            return ParserCmdConsumeTokenType( t, parser.read_token_type_def )
-          endIf
+          return parser.handle_cmd_with_token_type_def_or_string( (t,d)=>ParserCmdConsumeTokenType(t,d), (t,s)=>ParserCmdConsumeString(t,s) )
         endFunction
       )
 
@@ -611,15 +597,20 @@ class FroleyParser : Parser
         endIf
       endIf
 
+    method read_token_type_def_for_string( symbol:String )->TokenDef
+      if (Froley.token_defs_by_symbol.contains(symbol))
+        return Froley.token_defs_by_symbol[ symbol ]
+      else
+        return null
+      endIf
+
     method read_token_type_def->TokenDef
       local token_type_name : String
       if (next_is(TokenType.STRING))
         local symbol = read.text
-        if (Froley.token_defs_by_symbol.contains(symbol))
-          return Froley.token_defs_by_symbol[ symbol ]
-        else
-          throw peek.error( "No token has symbol '$'." (symbol) )
-        endIf
+        local result = read_token_type_def_for_string( symbol )
+        if (result) return result
+        throw peek.error( "No token has symbol '$'." (symbol) )
       elseIf (next_is(TokenType.INTEGER))
         local symbol = read->Int32->Character->String
         if (Froley.token_defs_by_symbol.contains(symbol))
@@ -638,6 +629,18 @@ class FroleyParser : Parser
       endIf
 
       return Froley.token_defs_by_name[ token_type_name ]
+
+    method handle_cmd_with_token_type_def_or_string( fn_if_token_type:Function(Token,TokenDef)->Cmd, fn_if_string:Function(Token,String)->Cmd )->Cmd
+      local t = read  # keyword
+      local has_parens = consume( TokenType.SYMBOL_OPEN_PAREN )
+      local result : Cmd
+      if (consume(TokenType.SYMBOL_AT))
+        result = fn_if_string( t, read_string )
+      else
+        result = fn_if_token_type( t, read_token_type_def )
+      endIf
+      if (has_parens) must_consume( TokenType.SYMBOL_CLOSE_PAREN )
+      return result
 
     method parse_parser_statement( statements:CmdStatements, &allow_control_structures )
       consume_eols
@@ -712,10 +715,8 @@ class FroleyParser : Parser
         statements.add( ParserCmdBeginList(t) )
         return
 
-      elseIf (consume(TokenType.KEYWORD_MUST_CONSUME))
-        local has_parens = consume( TokenType.SYMBOL_OPEN_PAREN )
-        statements.add( ParserCmdMustConsumeType(t,read_token_type_def) )
-        if (has_parens) must_consume( TokenType.SYMBOL_CLOSE_PAREN )
+      elseIf (next_is(TokenType.KEYWORD_MUST_CONSUME))
+        statements.add( handle_cmd_with_token_type_def_or_string( (t,d)=>ParserCmdMustConsumeType(t,d), (t,s)=>ParserCmdMustConsumeString(t,s) ) )
         return
 
       elseIf (consume(TokenType.KEYWORD_NO_ACTION))
@@ -1225,10 +1226,11 @@ class FroleyParser : Parser
       #local t = peek
       #if (consume(TokenType.TAG)) Froley.id_tags[ name ] = t
 
-    method read_string->String
+    method read_string( &optional )->String
       if (next_is(TokenType.STRING))
         return read.text
       else
+        if (optional) return null
         throw peek.error( "Literal string expected." )
       endIf
 

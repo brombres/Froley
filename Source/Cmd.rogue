@@ -934,6 +934,15 @@ class ParserCmdConsumeTokenType( t, token_type_def:TokenDef ) : Cmd
       assembler.write( ParserOpcode.CONSUME_TYPE, token_type_def.type )
 endClass
 
+class ParserCmdConsumeString( t, content:String ) : Cmd
+  METHODS
+    method type->ValueType?
+      return ValueType.LOGICAL
+
+    method write( assembler:ParserAssembler )
+      assembler.write( ParserOpcode.CONSUME_STRING, content )
+endClass
+
 class ParserCmdNextIsTokenType( t, token_type_def:TokenDef ) : Cmd
   METHODS
     method type->ValueType?
@@ -943,10 +952,25 @@ class ParserCmdNextIsTokenType( t, token_type_def:TokenDef ) : Cmd
       assembler.write( ParserOpcode.NEXT_IS_TYPE, token_type_def.type )
 endClass
 
+class ParserCmdNextIsString( t, content:String ) : Cmd
+  METHODS
+    method type->ValueType?
+      return ValueType.LOGICAL
+
+    method write( assembler:ParserAssembler )
+      assembler.write( ParserOpcode.NEXT_IS_STRING, content )
+endClass
+
 class ParserCmdMustConsumeType( t, token_type_def:TokenDef ) : Cmd
   METHODS
     method write( assembler:ParserAssembler )
       assembler.write( ParserOpcode.MUST_CONSUME_TYPE, token_type_def.type )
+endClass
+
+class ParserCmdMustConsumeString( t, content:String ) : Cmd
+  METHODS
+    method write( assembler:ParserAssembler )
+      assembler.write( ParserOpcode.MUST_CONSUME_STRING, content )
 endClass
 
 class ParserCmdCreate( t, cmd_type:CmdType ) : Cmd

@@ -13,6 +13,7 @@ enum ParserOpcode( size=1:Int32 )
   HAS_ANOTHER            # True if another token exists
   NEXT_HAS_ATTRIBUTE(2)
   NEXT_IS_TYPE(2)
+  NEXT_IS_STRING(2)
   BEGIN_LIST             #
   CREATE_NODE(3)         # Create command of type type_index:ARG1 using cur_token and ARGC:ARG2 commands off stackq
   CREATE_NULL_NODE       # Push null Node on stackq
@@ -20,7 +21,9 @@ enum ParserOpcode( size=1:Int32 )
   CREATE_STATEMENTS      #
   CONSUME_EOLS           # Automatically called between operator and next operand; implement as desired
   CONSUME_TYPE(2)        # number_stack.add( type == type_index:ARG1 )
+  CONSUME_STRING(2)      # number_stack.add( type == type_index:ARG1 )
   MUST_CONSUME_TYPE(2)   # Throws error if next token.type != type_index:ARG1
+  MUST_CONSUME_STRING(2) # Throws error if next token.content != strings[ARG1]
   SAVE_POSITION
   RESTORE_POSITION
   DISCARD_POSITION

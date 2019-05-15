@@ -141,6 +141,13 @@ augment JavaTemplate
        |        case ParserOpcode.NEXT_IS_TYPE:
        |          numberStack.add( (nextTokenType == code[ip++]) ? 1 : 0 );
        |          continue;
+       |        case ParserOpcode.NEXT_IS_STRING:
+       |        {
+       |          String content = peek().content;
+       |          numberStack.add( (content != null && content.equals(strings[code[ip]])) ? 1 : 0 );
+       |          ++ip;
+       |          continue;
+       |        }
        |        case ParserOpcode.BEGIN_LIST:
        |          listStartT.add( peek() );
        |          listStartPos.add( nodeQueue.size() );
@@ -223,18 +230,37 @@ augment JavaTemplate
        |          }
        |          continue;
        |
-       |        case ParserOpcode.MUST_CONSUME_TYPE:
+       |        case ParserOpcode.CONSUME_STRING:
        |        {
-       |          int tokenType = code[ ip++ ];
-       |          if (nextTokenType == tokenType)
+       |          String content = peek().content;
+       |          if (content != null && content.equals(strings[code[ip]]))
        |          {
        |            read();
-       |            continue;
+       |            numberStack.add( 1 );
        |          }
        |          else
        |          {
-       |            throwExpectedTokenTypeError( tokenType );
+       |            numberStack.add( 0 );
        |          }
+       |          ++ip;
+       |          continue;
+       |        }
+       |
+       |        case ParserOpcode.MUST_CONSUME_TYPE:
+       |        {
+       |          int tokenType = code[ ip++ ];
+       |          if (nextTokenType == tokenType) read();
+       |          else throwExpectedTokenTypeError( tokenType );
+       |          continue;
+       |        }
+       |
+       |        case ParserOpcode.MUST_CONSUME_STRING:
+       |        {
+       |          String content = peek().content;
+       |          String st = strings[code[ip++]];
+       |          if (content != null && content.equals(st)) read();
+       |          else throwExpectedInputError( "'" + st + "'" );
+       |          continue;
        |        }
        |
        |        case ParserOpcode.SAVE_POSITION:
@@ -485,6 +511,13 @@ augment JavaTemplate
        |    position = 0;
        |  }
        |
+       |  public void throwExpectedInputError( String expected )
+       |  {
+       |    throw peek().error(
+       |      "Syntax error - expected " + expected +
+       |      ", found " + ((nextTokenType!=-1) ? StringUtility.quoted(peek().toString()) : "end of input") + "." );
+       |  }
+       |
        |  public void throwExpectedTokenTypeError( int tokenType )
        |  {
        |    // Single-quote any type that don't contain content.
@@ -494,9 +527,7 @@ augment JavaTemplate
        |    {
        |      expected = StringUtility.quoted( expected );
        |    }
-       |    throw peek().error(
-       |      "Syntax error - expected " + expected +
-       |      ", found " + ((nextTokenType!=-1) ? StringUtility.quoted(peek().toString()) : "end of input") + "." );
+       |    throwExpectedInputError( expected );
        |  }
        |
        |  public void throwSyntaxError()

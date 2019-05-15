@@ -85,6 +85,7 @@ augment TokenType
 
   SYMBOL_ARROW              ( "->",  &is_symbol )
   SYMBOL_ASTERISK           ( "*",   &is_symbol )
+  SYMBOL_AT                 ( "@",   &is_symbol )
   SYMBOL_CLOSE_BRACKET      ( "]",   &is_symbol, &is_structural )
   SYMBOL_CLOSE_CURLY        ( "}",   &is_symbol, &is_structural )
   SYMBOL_CLOSE_PAREN        ( ")",   &is_symbol, &is_structural )

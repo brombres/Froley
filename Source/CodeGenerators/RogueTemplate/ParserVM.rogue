@@ -123,6 +123,11 @@ augment RogueTemplate
        |            number_stack.add( next_token_type == code[ip] )
        |            ++ip
        |            nextIteration
+       |          case ParserOpcode.NEXT_IS_STRING
+       |            local content = peek.content
+       |            number_stack.add( content and content == strings[code[ip]] )
+       |            ++ip
+       |            nextIteration
        |          case ParserOpcode.BEGIN_LIST
        |            list_start_t.add( peek )
        |            list_start_pos.add( node_queue.count )
@@ -187,6 +192,13 @@ augment RogueTemplate
        |            ++ip
        |            nextIteration
        |
+       |          case ParserOpcode.CONSUME_STRING
+       |            local content = peek.content
+       |            local st = strings[code[ip]]
+       |            ++ip
+       |            number_stack.add( content and content == st )
+       |            nextIteration
+       |
        |          case ParserOpcode.MUST_CONSUME_TYPE
        |            if (next_token_type == code[ip])
        |              read
@@ -195,6 +207,14 @@ augment RogueTemplate
        |            else
        |              throw_expected_token_type_error( TokenType(code[ip]) )
        |            endIf
+       |
+       |          case ParserOpcode.MUST_CONSUME_STRING
+       |            local content = peek.content
+       |            local st = strings[code[ip]]
+       |            ++ip
+       |            if (content and content == st ) read
+       |            else throw_expected_input_error( "'$'" (st) )
+       |            nextIteration
        |
        |          case ParserOpcode.SAVE_POSITION
        |            saved_positions.add( ParsePosition(position,node_queue.count,cur_token) )
@@ -399,14 +419,17 @@ augment RogueTemplate
        |        next_token_type = -1
        |      endIf
        |
-       |    method throw_expected_token_type_error( token_type:TokenType )
-       |      local expected = token_type.symbol
-       |      if (expected == "'") expected = ''"'"''
-       |      elseIf (not (token_type.attributes & TokenTypeAttribute.CONTENT)) expected = "'$'"(expected)
+       |    method throw_expected_input_error( expected:String )
        |      throw peek.error(
        |        "Expected '$', found $." ...
        |        (expected,?:{next_token_type!=-1:"'$'"(peek->String) || "end of input"})
        |      )
+       |
+       |    method throw_expected_token_type_error( token_type:TokenType )
+       |      local expected = token_type.symbol
+       |      if (expected == "'") expected = ''"'"''
+       |      elseIf (not (token_type.attributes & TokenTypeAttribute.CONTENT)) expected = "'$'"(expected)
+       |      throw_expected_input_error( expected )
        |
        |    method throw_syntax_error
        |      if (position == tokens.count)

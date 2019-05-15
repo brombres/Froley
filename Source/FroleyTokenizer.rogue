@@ -3,18 +3,6 @@ module Froley
 
 class FroleyTokenizer : Tokenizer
   METHODS
-    method init
-      ScanRules[ '@' ] = ScanRule( "@",
-        function (tokenizer:FroleyTokenizer)
-          use builder = StringBuilder.pool
-            while (tokenizer.has_another and tokenizer.peek != ' ' and tokenizer.peek != '\n')
-              builder.print( tokenizer.read )
-            endWhile
-            tokenizer.tokens.add( Token(TokenType.TAG,builder->String) )
-          endUse
-        endFunction
-      )
-
     method consume_whitespace->Logical
       return consume_spaces
 

@@ -1,0 +1,42 @@
+augment RogueTemplate
+  PROPERTIES
+    visitor =
+      @|module FroleyLanguage
+       |
+       |class Visitor
+       |  GLOBAL PROPERTIES
+       |    type_Node = <<Node>>
+       |
+       |  METHODS
+       |    method visit( node:Node )->Node
+       |      if (node.type_info is type_Node) return node
+       |      return node.dispatch( this )
+       |
+       |    method visit( list:NodeList )->NodeList
+       |      forEach (node at index in list)
+       |        if (node) list[ index ] = node.dispatch( this )
+       |      endForEach
+       |      return list
+       |
+       |    method visit( statements:Statements )->Statements
+       |      forEach (statement at index in statements)
+       |        if (statement) statements[ index ] = statement.dispatch( this )
+       |      endForEach
+       |      return statements
+       |
+       |    method visit( node:Unary )->Unary
+       |      if (node.operand) node.operand = node.operand.dispatch( this )
+       |      return node
+       |
+       |    method visit( node:PostUnary )->PostUnary
+       |      if (node.operand) node.operand = node.operand.dispatch( this )
+       |      return node
+       |
+       |    method visit( node:Binary )->Binary
+       |      if (node.left)  node.left  = node.left.dispatch( this )
+       |      if (node.right) node.right = node.right.dispatch( this )
+       |      return node
+       |endClass
+       |
+endAugment
+

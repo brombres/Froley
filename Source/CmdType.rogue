@@ -6,8 +6,8 @@ enum ParseRuleType
   PRE_UNARY
   POST_UNARY
   BINARY
-  STATEMENTS
   LIST
+  STATEMENTS
 endEnum
 
 class CmdTypeProperty( name:String, type:String, value="":String )

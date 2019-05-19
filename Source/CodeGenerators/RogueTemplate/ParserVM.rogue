@@ -8,6 +8,7 @@ augment RogueTemplate
        |$include "NodeFactory.rogue"
        |$include "ParserOpcode.rogue"
        |$include "Tokenizer.rogue"
+       |$include "Visitor.rogue"
        |
        |class ParserVM
        |  DEFINITIONS
@@ -210,7 +211,8 @@ augment RogueTemplate
        |            local content = peek.content
        |            local st = strings[code[ip]]
        |            ++ip
-       |            number_stack.add( content and content == st )
+       |            if (content and content == st) read; number_stack.add( 1 )
+       |            else                           number_stack.add( 0 )
        |            nextIteration
        |
        |          case ParserOpcode.MUST_CONSUME_TYPE

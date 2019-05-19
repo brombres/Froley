@@ -1,0 +1,61 @@
+augment JavaTemplate
+  PROPERTIES
+    visitor =
+      @|<froley.package>
+       |
+       |import java.util.ArrayList;
+       |
+       |public class Visitor
+       |{
+       |  public Node visit( Node node )
+       |  {
+       |    if (node.getClass() == Node.class) return node;
+       |    return node.dispatch( this );
+       |  }
+       |
+       |  public Node.NodeList visit( Node.NodeList node )
+       |  {
+       |    ArrayList<Node> list = node.list;
+       |    int count = list.size();
+       |    for (int i=0; i<count; ++i)
+       |    {
+       |      Node element = list.get( i );
+       |      if (element != null) list.set( i, element.dispatch(this) );
+       |    }
+       |    return node;
+       |  }
+       |
+       |  public Node.Statements visit( Node.Statements node )
+       |  {
+       |    ArrayList<Node> list = node.list;
+       |    int count = list.size();
+       |    for (int i=0; i<count; ++i)
+       |    {
+       |      Node element = list.get( i );
+       |      if (element != null) list.set( i, element.dispatch(this) );
+       |    }
+       |    return node;
+       |  }
+       |
+       |  public Node.Unary visit( Node.Unary node )
+       |  {
+       |    if (node.operand != null) node.operand = node.operand.dispatch( this );
+       |    return node;
+       |  }
+       |
+       |  public Node.PostUnary visit( Node.PostUnary node )
+       |  {
+       |    if (node.operand != null) node.operand = node.operand.dispatch( this );
+       |    return node;
+       |  }
+       |
+       |  public Node.Binary visit( Node.Binary node )
+       |  {
+       |    if (node.left != null)  node.left = node.left.dispatch( this );
+       |    if (node.right != null) node.right = node.right.dispatch( this );
+       |    return node;
+       |  }
+       |}
+       |
+endAugment
+

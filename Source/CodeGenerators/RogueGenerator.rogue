@@ -64,6 +64,7 @@ class GenerateRogue : CodeGenerator
 
       if (has_parser)
         generate_Node
+        generate_Visitor
         regenerate_NodeFactory
         generate_NodeInitArgs
         generate_Parser
@@ -147,6 +148,10 @@ class GenerateRogue : CodeGenerator
             builder.println
           endIf
 
+          builder.println "    method dispatch( visitor:Visitor )->$" (class_name)
+          builder.println "      return visitor.visit( this )"
+          builder.println
+
           local escaped_symbol = node_type//symbol->String.to_escaped_ascii("\"")
           which (type)
             case ParseRuleType.PRE_UNARY, ParseRuleType.POST_UNARY, ParseRuleType.BINARY
@@ -179,6 +184,71 @@ class GenerateRogue : CodeGenerator
         endIf
       endForEach
       if (builder)
+        File.save( filepath, builder->String )
+      endIf
+
+    method generate_Visitor
+      generate( RogueTemplate.visitor, "Visitor.rogue", &do_not_overwrite )
+
+      # Update Visitor.rogue by adding visit() methods for new classes
+      local filepath = output_filepath( "Visitor.rogue", &for_reading )
+      local content = File.load_as_string( filepath )
+      local builder : StringBuilder
+      forEach (node_type in info//node_types)
+        local base_name = (node_type//name)->String
+        local visit_method_name = "method visit( node:$ )->$" (base_name,base_name)
+        if (not content.contains(visit_method_name))
+          if (not builder)
+            println "Updating " + filepath
+            builder = StringBuilder( content.count * 1.5 )
+            local endClass_index = content.locate_last( "endClass" )
+            if (endClass_index.exists)
+              content = content.substring( 0, endClass_index.value-1 )
+            endIf
+            builder.println( content ).println
+          endIf
+
+          print( "  " ).println( visit_method_name )
+          builder.println.print( "    " ).println( visit_method_name )
+
+          local type = ParseRuleType( node_type//type )
+          which (type)
+            case ParseRuleType.PRE_UNARY
+              builder.println "      if (node.operand)  node.operand = node.operand.dispatch( this )"
+              builder.println "      return node"
+            case ParseRuleType.POST_UNARY
+              builder.println "      if (node.operand)  node.operand = node.operand.dispatch( this )"
+              builder.println "      return node"
+            case ParseRuleType.BINARY
+              builder.println "      if (node.left)  node.left  = node.left.dispatch( this )"
+              builder.println "      if (node.right) node.right = node.right.dispatch( this )"
+              builder.println "      return node"
+            case ParseRuleType.LIST
+              builder.println "      forEach (element at index in node)"
+              builder.println "        if (element) node[ index ] = element.dispatch( this )"
+              builder.println "      endForEach"
+              builder.println "      return node"
+            case ParseRuleType.STATEMENTS
+              builder.println "      forEach (element at index in node)"
+              builder.println "        if (element) node[ index ] = element.dispatch( this )"
+              builder.println "      endForEach"
+              builder.println "      return node"
+            others
+              local node_properties = node_type//properties
+              forEach (p in node_properties)
+                if (p//value.count == 0)
+                  # Not a primitive
+                  local p_name = p//name
+                  builder.println( "      if (node.$) node.$ = node.$.dispatch( this )" (p_name,p_name,p_name) )
+                endIf
+              endForEach
+              builder.println( "      return node" )
+          endWhich
+        endIf
+      endForEach
+
+      if (builder)
+        builder.println( "endClass" )
         File.save( filepath, builder->String )
       endIf
 

@@ -11,6 +11,9 @@ augment RogueTemplate
        |    method init( t, args:NodeInitArgs )
        |      args.require_count( 0 )
        |
+       |    method dispatch( visitor:Visitor )->Node
+       |      return visitor.visit( this )
+       |
        |    method to->String
        |      local result = StringBuilder()
        |      write( result )
@@ -39,6 +42,9 @@ augment RogueTemplate
        |    method count->Int32
        |      return list.count
        |
+       |    method dispatch( visitor:Visitor )->NodeList
+       |      return visitor.visit( this )
+       |
        |    method first->Node
        |      return list.first
        |
@@ -47,6 +53,10 @@ augment RogueTemplate
        |
        |    method last->Node
        |      return list.last
+       |
+       |    method set( index:Int32, value:Node )->this
+       |      list[ index ] = value
+       |      return this
        |
        |    method write( builder:StringBuilder )
        |      builder.print( '[' )
@@ -59,6 +69,9 @@ augment RogueTemplate
        |
        |class Statements : NodeList
        |  METHODS
+       |    method dispatch( visitor:Visitor )->Statements
+       |      return visitor.visit( this )
+       |
        |    method write( builder:StringBuilder )
        |      forEach (statement in list)
        |        write( statement, builder )
@@ -72,6 +85,9 @@ augment RogueTemplate
        |      args.require_count( 1 )
        |      operand = args.first
        |
+       |    method dispatch( visitor:Visitor )->Unary
+       |      return visitor.visit( this )
+       |
        |    method op->String
        |      throw UnsupportedOperationError()
        |
@@ -83,6 +99,9 @@ augment RogueTemplate
        |
        |class PostUnary : Unary
        |  METHODS
+       |    method dispatch( visitor:Visitor )->PostUnary
+       |      return visitor.visit( this )
+       |
        |    method write( builder:StringBuilder )
        |      builder.print( '(' )
        |      write( operand, builder )
@@ -95,6 +114,9 @@ augment RogueTemplate
        |      args.require_count( 2 )
        |      left = args.first
        |      right = args.last
+       |
+       |    method dispatch( visitor:Visitor )->Binary
+       |      return visitor.visit( this )
        |
        |    method op->String
        |      throw UnsupportedOperationError()

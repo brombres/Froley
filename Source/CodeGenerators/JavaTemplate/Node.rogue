@@ -18,6 +18,11 @@ augment JavaTemplate
        |    return this;
        |  }
        |
+       |  public Node dispatch( Visitor visitor )
+       |  {
+       |    return visitor.visit( this );
+       |  }
+       |
        |  public String toString()
        |  {
        |    StringBuilder result = new StringBuilder();
@@ -61,6 +66,11 @@ augment JavaTemplate
        |      return list.size();
        |    }
        |
+       |    public NodeList dispatch( Visitor visitor )
+       |    {
+       |      return visitor.visit( this );
+       |    }
+       |
        |    public Node first()
        |    {
        |      return list.get( 0 );
@@ -96,6 +106,11 @@ augment JavaTemplate
        |      super( t, args );
        |    }
        |
+       |    public Statements dispatch( Visitor visitor )
+       |    {
+       |      return visitor.visit( this );
+       |    }
+       |
        |    public void write( StringBuilder builder )
        |    {
        |      for (int i=0; i<list.size(); ++i)
@@ -120,6 +135,11 @@ augment JavaTemplate
        |      return this;
        |    }
        |
+       |    public Unary dispatch( Visitor visitor )
+       |    {
+       |      return visitor.visit( this );
+       |    }
+       |
        |    public String op()
        |    {
        |      throw new UnsupportedOperationException();
@@ -136,6 +156,11 @@ augment JavaTemplate
        |  static public class PostUnary extends Unary
        |  {
        |    // METHODS
+       |    public PostUnary dispatch( Visitor visitor )
+       |    {
+       |      return visitor.visit( this );
+       |    }
+       |
        |    public void write( StringBuilder builder )
        |    {
        |      builder.print( '(' );
@@ -158,6 +183,11 @@ augment JavaTemplate
        |      left = args.get( 0 );
        |      right = args.get( 1 );
        |      return this;
+       |    }
+       |
+       |    public Binary dispatch( Visitor visitor )
+       |    {
+       |      return visitor.visit( this );
        |    }
        |
        |    public String op()

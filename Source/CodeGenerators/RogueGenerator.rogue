@@ -132,7 +132,7 @@ class GenerateRogue : CodeGenerator
             builder.print(   "      args.require_count( " ).print( node_type//properties.count($//value=="") ).println( " )" )
             local index = 0
             forEach (p in node_properties)
-              builder.print( "      " )
+              builder.print( "      this." )
               builder.print( p//name )
               builder.print( " = " )
               if (p//value != "")

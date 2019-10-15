@@ -186,7 +186,7 @@ class GenerateJava : CodeGenerator
             builder.println(   "      this.t = t;" )
             local index = 0
             forEach (p in node_properties)
-              builder.print( "      " )
+              builder.print( "      this." )
               builder.print( p//name )
               builder.print( " = " )
               if (p//value != "")

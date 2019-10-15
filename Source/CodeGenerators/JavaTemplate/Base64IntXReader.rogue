@@ -33,25 +33,44 @@ augment JavaTemplate
        |
        |  public int readInt32X()
        |  {
-       |    int result = readBase64();
-       |    if ((result & 0xC0) != 0x80)
+       |    // Reads a variable-length encoded value that is stored in 1..9 bytes.
+       |    // Encoded values are treated as signed.
+       |    //
+       |    // - If the first two bits are not "10" then the first byte is cast to
+       |    //   a signed integer value and returned. This allows for the range
+       |    //   -64..127 using the following bit patterns:
+       |    //
+       |    //     0xxxxxxx    0 .. 127
+       |    //     11xxxxxx  -64 ..  -1
+       |    //
+       |    // - If the first two bits are "10" then the data has been encoded
+       |    //   in the next 6 bits as well as any number of following bytes,
+       |    //   using 7 data bits per byte with an MSBit of 0 representing a halt
+       |    //   or 1 a continuation. The next bit after the leading 10 is
+       |    //   treated as negative magnitude.
+       |    //
+       |    //     10xxxxxx 0yyyyyyy            (13-bit number xxxxxxyyyyyyy)
+       |    //     10xxxxxx 1yyyyyyy 0zzzzzzz   (20-bit number xxxxxxyyyyyyyzzzzzzz)
+       |    //     etc.
+       |    int b = readBase64();
+       |    if ((b & 0xc0) != 0x80)
        |    {
        |      // leftmost 2 bits are not %10
-       |      // -64..127
-       |      if (result < 128) return result;
-       |      else              return (result - 256);
+       |      if (b < 128) return b;        // unsigned 0..127 is fine as-is
+       |      else         return b - 256;  // Convert unsigned 192..255 into -64..127
        |    }
-       |    else
+       |
+       |    int result = (b & 0x3f);        //  0..63  (unsigned)
+       |    if (result >= 32) result -= 64; // -64..63 (signed)
+       |
+       |    for (;;)
        |    {
-       |      // 10NNNxxx xxxxxxxx*N
-       |      int n = ((result>>3) & 7) + 1; // 1 to 8 bytes follow
-       |      result = (result & 7);         //  0..7 (unsigned)
-       |      if (result >= 4) result -= 8;  // -4..3 (signed)
-       |
-       |      for (int i=n; --i>=0;) result = (result << 8) | readBase64();
-       |
-       |      return result;
+       |      int next = readBase64();
+       |      result = (result << 7) | (next & 0x7f);
+       |      if (0 == (next & 0x80)) break;
        |    }
+       |
+       |    return result;
        |  }
        |
        |  public String readString()

@@ -407,7 +407,7 @@ augment RogueTemplate
        |      print "  ["
        |      forEach (node at index in node_queue)
        |        if (index > 0) print ","
-       |        print select{ node:node.type_name || "null" }
+       |        print which{ node:node.type_name || "null" }
        |      endForEach
        |      println "]"
        |

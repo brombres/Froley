@@ -46,7 +46,7 @@ class ScanState
     method write( assembler:TokenizerAssembler, label_end:Label )
       assembler.define( label )
       if (statements.count) is_acceptable = true
-      assembler.write( select{is_acceptable:1 || 0} )
+      assembler.write( which{is_acceptable:1 || 0} )
 
       # Write links
       assembler.write( links.count )

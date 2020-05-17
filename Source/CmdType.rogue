@@ -48,8 +48,8 @@ class CmdType( t:Token, name:String, type:ParseRuleType, index:Int32, symbol:Str
         endForEach
 
       unsatisfied
-        local a_sig = select{ properties:"$($)"(name,properties.join(",")) || name+"()" }
-        local b_sig = select{ args:"$($)"(name,args.join(",")) || name+"()" }
+        local a_sig = which{ properties:"$($)"(name,properties.join(",")) || name+"()" }
+        local b_sig = which{ args:"$($)"(name,args.join(",")) || name+"()" }
         throw t.error( "Inconsistent initializers used for $ ($ <> $)." (name,a_sig,b_sig) )
 
       endContingent

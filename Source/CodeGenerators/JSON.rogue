@@ -18,7 +18,7 @@ class GenerateJSON : CodeGenerator
       endWhich
 
     method process( info:Value )
-      local output = select{options//output||""}
+      local output = which{options//output||""}
       if (output == "" or File.is_folder(output))
         local filename = info//language + ".json"
         if (output == "") output = filename

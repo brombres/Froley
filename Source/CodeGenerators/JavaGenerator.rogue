@@ -34,7 +34,7 @@ class GenerateJava : CodeGenerator
       endWhich
 
     method output_filepath( filename:String, &do_not_overwrite, &for_reading )->String
-      local filepath = select{output||""} + filename
+      local filepath = which{output||""} + filename
       if (for_reading) return filepath
 
       if (File.exists(filepath))

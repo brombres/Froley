@@ -12,7 +12,7 @@
 
 augment Build
   PROPERTIES
-    EXE = select{System.os=="Windows":"Build/froley.exe" || "Build/Froley-"+System.os} : String
+    EXE = which{System.os=="Windows":"Build/froley.exe" || "Build/Froley-"+System.os} : String
     BINDIR   = "/usr/local/bin"
 endAugment
 

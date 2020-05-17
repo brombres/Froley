@@ -28,7 +28,7 @@ augment RogueTemplate
        |
        |      if (line and column and source)
        |        builder.println
-       |        local skip = select{ column<=70:0 || column-70 }
+       |        local skip = which{ column<=70:0 || column-70 }
        |        forEach (line at index in LineReader(source))
        |          if (index+1 == this.line)
        |            if (skip) line = line.from( skip )

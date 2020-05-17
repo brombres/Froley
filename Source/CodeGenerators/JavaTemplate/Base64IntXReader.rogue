@@ -33,7 +33,7 @@ augment JavaTemplate
        |
        |  public int readInt32X()
        |  {
-       |    // Reads a variable-length encoded value that is stored in 1..9 bytes.
+       |    // Reads a variable-length encoded value that is stored in 1..5 bytes.
        |    // Encoded values are treated as signed.
        |    //
        |    // - If the first two bits are not "10" then the first byte is cast to

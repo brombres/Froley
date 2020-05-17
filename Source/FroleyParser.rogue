@@ -903,7 +903,7 @@ class FroleyParser : Parser
       local t = peek
       local name = read_identifier
       local args = parse_cmd_init_args( name )
-      local symbol = select{ token_type_def:token_type_def.symbol || null as String }
+      local symbol = which{ token_type_def:token_type_def.symbol || null as String }
       if (symbol is null)
         symbol = name.after_any( "Node" )
       endIf

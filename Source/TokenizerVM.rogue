@@ -103,7 +103,7 @@ class TokenizerVM
             ip = stack.remove_last
             nextIteration
           case TokenizerOpcode.HAS_ANOTHER
-            result = select{ scanner.has_another:1 || 0 }
+            result = which{ scanner.has_another:1 || 0 }
             nextIteration
           case TokenizerOpcode.PEEK_CH_INT32
             ch = scanner.peek( code[ip] )
@@ -117,7 +117,7 @@ class TokenizerVM
             nextIteration
           case TokenizerOpcode.CONSUME_CHARACTER
             local value = code[ip]->Character
-            result = select{ scanner.consume(value):1 || 0 }
+            result = which{ scanner.consume(value):1 || 0 }
             ++ip
             nextIteration
           case TokenizerOpcode.SCAN_DIGITS
@@ -192,14 +192,14 @@ class TokenizerVM
             local base = code[ip]
             ++ip
             local n = (ch->Character).to_number( base )
-            result = select{ (n>=0 and n<base):1 || 0 }
+            result = which{ (n>=0 and n<base):1 || 0 }
             nextIteration
           case TokenizerOpcode.CH_IS_DIGIT_COUNT
             local n = (ch->Character).to_number( count )
-            result = select{ (n>=0 and n<count):1 || 0 }
+            result = which{ (n>=0 and n<count):1 || 0 }
             nextIteration
           case TokenizerOpcode.CH_IS_LETTER
-            result = select{ ((ch>='a' and ch<='z') or (ch>='A' and ch<='Z')):1 || 0 }
+            result = which{ ((ch>='a' and ch<='z') or (ch>='A' and ch<='Z')):1 || 0 }
             nextIteration
           case TokenizerOpcode.PUSH_CH
             stack.add( ch )

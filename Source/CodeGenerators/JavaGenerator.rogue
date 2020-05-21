@@ -78,10 +78,10 @@ class GenerateJava : CodeGenerator
       regenerate_TokenizerOpcode
 
       if (has_parser)
-        generate_Node
+        generate_Cmd
         generate_Visitor
-        regenerate_NodeFactory
-        generate_NodeInitArgs
+        regenerate_CmdFactory
+        generate_CmdInitArgs
         generate_Parser
         regenerate_ParserOpcode
       endIf
@@ -113,16 +113,16 @@ class GenerateJava : CodeGenerator
         others:           return name
       endWhich
 
-    method generate_Node
-      generate( JavaTemplate.node, "Node.java", &do_not_overwrite )
+    method generate_Cmd
+      generate( JavaTemplate.cmd, "Cmd.java", &do_not_overwrite )
 
-      # Update Node.java by adding new class skeletons
-      local filepath = output_filepath( "Node.java", &for_reading )
+      # Update Cmd.java by adding new class skeletons
+      local filepath = output_filepath( "Cmd.java", &for_reading )
       local content = File.load_as_string( filepath )
 
       local builder : StringBuilder
-      forEach (node_type in info//node_types)
-        local base_name = (node_type//name)->String
+      forEach (cmd_type in info//cmd_types)
+        local base_name = (cmd_type//name)->String
         local class_name = base_name
         local class_class_name = "static public class " + class_name
         if (not content.contains(class_class_name))
@@ -135,7 +135,7 @@ class GenerateJava : CodeGenerator
             endIf
             builder.println( content )
           endIf
-          local type = ParseRuleType( node_type//type )
+          local type = ParseRuleType( cmd_type//type )
           print( "  class " ).println( class_name )
           builder.println.print( "  " ).print( class_class_name )
           which (type)
@@ -143,22 +143,22 @@ class GenerateJava : CodeGenerator
             case ParseRuleType.POST_UNARY: builder.println " extends PostUnary"
             case ParseRuleType.BINARY:     builder.println " extends Binary"
             case ParseRuleType.STATEMENTS: builder.println " extends Statements"
-            case ParseRuleType.LIST:       builder.println " extends NodeList"
-            others:                        builder.println " extends Node"
+            case ParseRuleType.LIST:       builder.println " extends CmdList"
+            others:                        builder.println " extends Cmd"
           endWhich
           builder.println( "  {" )
 
-          local node_properties = node_type//properties
-          if (node_properties.count)
+          local cmd_properties = cmd_type//properties
+          if (cmd_properties.count)
             builder.println "    // PROPERTIES"
-            forEach (p in node_properties)
+            forEach (p in cmd_properties)
               builder.println( "    public $ $;" (fix_type(p//type),p//name) )
             endForEach
             builder.println
           endIf
 
           builder.println "    // METHODS"
-          if (node_properties.count)
+          if (cmd_properties.count)
             # Default constructor
             builder.println "    public $()" (class_name)
             builder.println "    {"
@@ -167,25 +167,25 @@ class GenerateJava : CodeGenerator
 
             # Property-setting constructor
             builder.print( "    public $( Token t" (class_name) )
-            forEach (p in node_properties)
+            forEach (p in cmd_properties)
               builder.print( ", $ $" (fix_type(p//type),p//name) )
             endForEach
             builder.println( " )" )
             builder.println "    {"
             builder.println "      this.t = t;"
-            forEach (p in node_properties)
+            forEach (p in cmd_properties)
               builder.println( "      this.$ = $;" (p//name,p//name) )
             endForEach
             builder.println "    }"
             builder.println
 
             # Systematic initializer
-            builder.println(   "    public $ init( Token t, NodeInitArgs args )" (class_name) )
+            builder.println(   "    public $ init( Token t, CmdInitArgs args )" (class_name) )
             builder.println( "    {" )
-            builder.println(   "      args.requireCount( $ );" (node_type//properties.count($//value=="")) )
+            builder.println(   "      args.requireCount( $ );" (cmd_type//properties.count($//value=="")) )
             builder.println(   "      this.t = t;" )
             local index = 0
-            forEach (p in node_properties)
+            forEach (p in cmd_properties)
               builder.print( "      this." )
               builder.print( p//name )
               builder.print( " = " )
@@ -198,7 +198,7 @@ class GenerateJava : CodeGenerator
                   builder.println( "StringUtility.stringTo$( $ );" (p//type,p//value) )
                 endIf
               else
-                if (p//type != "Node") builder.print( "($)" (fix_type(p//type)) )
+                if (p//type != "Cmd") builder.print( "($)" (fix_type(p//type)) )
                 builder.println( "args.get( $ );" (index) )
                 ++index
               endIf
@@ -214,7 +214,7 @@ class GenerateJava : CodeGenerator
           builder.println "  }"
           builder.println
 
-          local escaped_symbol = node_type//symbol->String.to_escaped_ascii("\"")
+          local escaped_symbol = cmd_type//symbol->String.to_escaped_ascii("\"")
           which (type)
             case ParseRuleType.PRE_UNARY, ParseRuleType.POST_UNARY, ParseRuleType.BINARY
               builder.println "    public String op()"
@@ -224,13 +224,13 @@ class GenerateJava : CodeGenerator
             others
               builder.println "    public void write( StringBuilder builder )"
               builder.println "    {"
-              which (node_properties.count)
+              which (cmd_properties.count)
                 case 0
                   builder.println ''      builder.print( "$" );'' (escaped_symbol)
                 others
-                  local print_node_name = (node_properties.count > 1 or node_properties.first//value == "")
-                  if (print_node_name) builder.println ''      builder.print( "$(" );'' (escaped_symbol)
-                  forEach (p at index in node_properties)
+                  local print_cmd_name = (cmd_properties.count > 1 or cmd_properties.first//value == "")
+                  if (print_cmd_name) builder.println ''      builder.print( "$(" );'' (escaped_symbol)
+                  forEach (p at index in cmd_properties)
                     if (index > 0) builder.println ''      builder.print( ',' );''
                     if (p//value != "")
                       if (p//type == "String")
@@ -242,7 +242,7 @@ class GenerateJava : CodeGenerator
                       builder.println ''      write( $, builder );'' (p//name)
                     endIf
                   endForEach
-                  if (print_node_name) builder.println ''      builder.print( ')' );''
+                  if (print_cmd_name) builder.println ''      builder.print( ')' );''
               endWhich
               builder.println "    }"
           endWhich
@@ -261,9 +261,9 @@ class GenerateJava : CodeGenerator
       local filepath = output_filepath( "Visitor.java", &for_reading )
       local content = File.load_as_string( filepath )
       local builder : StringBuilder
-      forEach (node_type in info//node_types)
-        local base_name = (node_type//name)->String
-        local visit_method_name = "public Node.$ visit( Node.$ node )" (base_name,base_name)
+      forEach (cmd_type in info//cmd_types)
+        local base_name = (cmd_type//name)->String
+        local visit_method_name = "public Cmd.$ visit( Cmd.$ cmd )" (base_name,base_name)
         if (not content.contains(visit_method_name))
           if (not builder)
             println "Updating " + filepath
@@ -279,40 +279,40 @@ class GenerateJava : CodeGenerator
           builder.println.print( "  " ).println( visit_method_name )
           builder.println( "  {" )
 
-          local type = ParseRuleType( node_type//type )
+          local type = ParseRuleType( cmd_type//type )
           which (type)
             case ParseRuleType.PRE_UNARY
-              builder.println "      if (node.operand != null)  node.operand = node.operand.dispatch( this );"
-              builder.println "      return node;"
+              builder.println "      if (cmd.operand != null)  cmd.operand = cmd.operand.dispatch( this );"
+              builder.println "      return cmd;"
             case ParseRuleType.POST_UNARY
-              builder.println "      if (node.operand != null)  node.operand = node.operand.dispatch( this );"
-              builder.println "      return node;"
+              builder.println "      if (cmd.operand != null)  cmd.operand = cmd.operand.dispatch( this );"
+              builder.println "      return cmd;"
             case ParseRuleType.BINARY
-              builder.println "      if (node.left != null)  node.left  = node.left.dispatch( this );"
-              builder.println "      if (node.right != null) node.right = node.right.dispatch( this );"
-              builder.println "      return node;"
+              builder.println "      if (cmd.left != null)  cmd.left  = cmd.left.dispatch( this );"
+              builder.println "      if (cmd.right != null) cmd.right = cmd.right.dispatch( this );"
+              builder.println "      return cmd;"
             case ParseRuleType.LIST
-              builder.println @|    forEach (element at index in node)
+              builder.println @|    forEach (element at index in cmd)
                                |    {
-                               |      if (element != null) node.set( index, element.dispatch(this) );
+                               |      if (element != null) cmd.set( index, element.dispatch(this) );
                                |    }
-                               |    return node;
+                               |    return cmd;
             case ParseRuleType.STATEMENTS
-              builder.println @|    forEach (element at index in node)
+              builder.println @|    forEach (element at index in cmd)
                                |    {
-                               |      if (element != null) node.set( index, element.dispatch(this) );
+                               |      if (element != null) cmd.set( index, element.dispatch(this) );
                                |    }
-                               |    return node;
+                               |    return cmd;
             others
-              local node_properties = node_type//properties
-              forEach (p in node_properties)
+              local cmd_properties = cmd_type//properties
+              forEach (p in cmd_properties)
                 if (p//value.count == 0)
                   # Not a primitive
                   local p_name = p//name
-                  builder.println( "    if (node.$ != null) node.$ = node.$.dispatch( this );" (p_name,p_name,p_name) )
+                  builder.println( "    if (cmd.$ != null) cmd.$ = cmd.$.dispatch( this );" (p_name,p_name,p_name) )
                 endIf
               endForEach
-              builder.println( "    return node;" )
+              builder.println( "    return cmd;" )
           endWhich
 
           builder.println( "  }" )
@@ -324,8 +324,8 @@ class GenerateJava : CodeGenerator
         File.save( filepath, builder->String )
       endIf
 
-    method generate_NodeInitArgs
-      generate( JavaTemplate.node_init_args, "NodeInitArgs.java", &do_not_overwrite )
+    method generate_CmdInitArgs
+      generate( JavaTemplate.cmd_init_args, "CmdInitArgs.java", &do_not_overwrite )
 
     method generate_main
       if (has_parser)
@@ -358,26 +358,26 @@ class GenerateJava : CodeGenerator
       generate( JavaTemplate.tokenizer_vm, "TokenizerVM.java", fn )
       generate( JavaTemplate.tokenizer,    "Tokenizer.java",   &do_not_overwrite )
 
-    method regenerate_NodeFactory
-      local writer = output_writer( "NodeFactory.java" )
+    method regenerate_CmdFactory
+      local writer = output_writer( "CmdFactory.java" )
       if (not writer) return
 
       if (package_name)
         writer.println( "package $;"(package_name) );
         writer.println
       endIf
-      writer.println  @|class NodeFactory
+      writer.println  @|class CmdFactory
                        |{
                        |  // GLOBAL METHODS
-                       |  static public Node createNode( int index, Token t, NodeInitArgs args )
+                       |  static public Cmd createCmd( int index, Token t, CmdInitArgs args )
                        |  {
                        |    switch (index)
                        |    {
-      forEach (node_type in info//node_types)
-        writer.println "      case $ : return new Node.$().init( t, args );" (node_type//index,node_type//name)
+      forEach (cmd_type in info//cmd_types)
+        writer.println "      case $ : return new Cmd.$().init( t, args );" (cmd_type//index,cmd_type//name)
       endForEach
       writer.println  @|      default:
-      writer.println( ''        throw new Error( "FroleyLanguage", "[INTERNAL] NodeFactory.createNode() index out of bounds: " + index );'' )
+      writer.println( ''        throw new Error( "FroleyLanguage", "[INTERNAL] CmdFactory.createCmd() index out of bounds: " + index );'' )
       writer.println  @|    }
                        |  }
                        |}

@@ -258,25 +258,25 @@ class TokenizerVM
             ch -= count
             nextIteration
           case TokenizerOpcode.WHICH_INPUT
-            local cur_node = ip
+            local cur_cmd = ip
             local lookahead = 0
-            local last_acceptable_node = 0
+            local last_acceptable_cmd = 0
             local last_acceptable_link_count = 0
             local last_acceptable_lookahead = 0
             loop
-              local link_count = code[cur_node+1]
-              if (code[cur_node])
-                last_acceptable_node = cur_node
+              local link_count = code[cur_cmd+1]
+              if (code[cur_cmd])
+                last_acceptable_cmd = cur_cmd
                 last_acceptable_link_count = link_count
                 last_acceptable_lookahead = lookahead
               endIf
               if (not scanner.has_another(lookahead+1)) escapeLoop
               local c = scanner.peek( lookahead )
-              ip = cur_node + 2
+              ip = cur_cmd + 2
               contingent
                 loop (link_count)
                   if (c == code[ip])
-                    cur_node = code[ ip+1 ]
+                    cur_cmd = code[ ip+1 ]
                     sufficient true
                   endIf
                   ip += 2
@@ -286,26 +286,26 @@ class TokenizerVM
                 ++lookahead
               endContingent
             endLoop
-            # Either no links match or EOI - jump to code of last acceptable node.
-            # The start node is always acceptable and either contains the
+            # Either no links match or EOI - jump to code of last acceptable cmd.
+            # The start cmd is always acceptable and either contains the
             # 'others' case or jumps to the end of the scan table.
-            ip = last_acceptable_node + last_acceptable_link_count * 2 + 2
+            ip = last_acceptable_cmd + last_acceptable_link_count * 2 + 2
             loop (last_acceptable_lookahead) buffer.print( scanner.read )
             nextIteration
 
           case TokenizerOpcode.WHICH_BUFFER
-            local cur_node = ip
-            local start_node = cur_node
+            local cur_cmd = ip
+            local start_cmd = cur_cmd
             local lookahead = 0
             loop
-              local link_count = code[cur_node+1]
+              local link_count = code[cur_cmd+1]
               if (lookahead == buffer.count) escapeLoop
               local c = buffer[ lookahead ]
-              ip = cur_node + 2
+              ip = cur_cmd + 2
               contingent
                 loop (link_count)
                   if (c == code[ip])
-                    cur_node = code[ ip+1 ]
+                    cur_cmd = code[ ip+1 ]
                     sufficient true
                   endIf
                   ip += 2
@@ -317,11 +317,11 @@ class TokenizerVM
             endLoop
 
             # Either no links match or EOI
-            if (code[cur_node] == 0 or lookahead < buffer.count)
-              # Not a complete match; use the 'others' code in the start node
-              cur_node = start_node
+            if (code[cur_cmd] == 0 or lookahead < buffer.count)
+              # Not a complete match; use the 'others' code in the start cmd
+              cur_cmd = start_cmd
             endIf
-            ip = cur_node + code[cur_node+1] * 2 + 2
+            ip = cur_cmd + code[cur_cmd+1] * 2 + 2
             nextIteration
           others
             throw FroleyError( "[INTERNAL] Unhandled opcode: " + TokenizerOpcode(opcode) )

@@ -1,17 +1,17 @@
 augment RogueTemplate
   PROPERTIES
-    node =
+    cmd =
       @|module FroleyLanguage
        |
-       |class Node
+       |class Cmd
        |  PROPERTIES
        |    t : Token
        |
        |  METHODS
-       |    method init( t, args:NodeInitArgs )
+       |    method init( t, args:CmdInitArgs )
        |      args.require_count( 0 )
        |
-       |    method dispatch( visitor:Visitor )->Node
+       |    method dispatch( visitor:Visitor )->Cmd
        |      return visitor.visit( this )
        |
        |    method to->String
@@ -20,41 +20,41 @@ augment RogueTemplate
        |      return result->String
        |
        |    method write( builder:StringBuilder )
-       |      builder.print( type_name.after_any("Node") )
+       |      builder.print( type_name.after_any("Cmd") )
        |
-       |    method write( node:Node, builder:StringBuilder )
-       |      if (node) node.write( builder )
+       |    method write( cmd:Cmd, builder:StringBuilder )
+       |      if (cmd) cmd.write( builder )
        |      else      builder.print( "null" )
        |endClass
        |
-       |class NodeList : Node
+       |class CmdList : Cmd
        |  PROPERTIES
-       |    list : Node[]
+       |    list : Cmd[]
        |
        |  METHODS
        |    method init( t )
-       |      list = Node[](5)
+       |      list = Cmd[](5)
        |
-       |    method init( t, args:NodeInitArgs )
-       |      list = Node[]( args.count )
+       |    method init( t, args:CmdInitArgs )
+       |      list = Cmd[]( args.count )
        |      list.add( forEach in args )
        |
        |    method count->Int32
        |      return list.count
        |
-       |    method dispatch( visitor:Visitor )->NodeList
+       |    method dispatch( visitor:Visitor )->CmdList
        |      return visitor.visit( this )
        |
-       |    method first->Node
+       |    method first->Cmd
        |      return list.first
        |
-       |    method get( index:Int32 )->Node
+       |    method get( index:Int32 )->Cmd
        |      return list[ index ]
        |
-       |    method last->Node
+       |    method last->Cmd
        |      return list.last
        |
-       |    method set( index:Int32, value:Node )->this
+       |    method set( index:Int32, value:Cmd )->this
        |      list[ index ] = value
        |      return this
        |
@@ -67,7 +67,7 @@ augment RogueTemplate
        |      builder.print( ']' )
        |endClass
        |
-       |class Statements : NodeList
+       |class Statements : CmdList
        |  METHODS
        |    method dispatch( visitor:Visitor )->Statements
        |      return visitor.visit( this )
@@ -79,9 +79,9 @@ augment RogueTemplate
        |      endForEach
        |endClass
        |
-       |class Unary( t, operand:Node ) : Node
+       |class Unary( t, operand:Cmd ) : Cmd
        |  METHODS
-       |    method init( t, args:NodeInitArgs )
+       |    method init( t, args:CmdInitArgs )
        |      args.require_count( 1 )
        |      operand = args.first
        |
@@ -108,9 +108,9 @@ augment RogueTemplate
        |      builder.print( op ).print( ')' )
        |endClass
        |
-       |class Binary( t, left:Node, right:Node ) : Node
+       |class Binary( t, left:Cmd, right:Cmd ) : Cmd
        |  METHODS
-       |    method init( t, args:NodeInitArgs )
+       |    method init( t, args:CmdInitArgs )
        |      args.require_count( 2 )
        |      left = args.first
        |      right = args.last

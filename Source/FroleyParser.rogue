@@ -905,7 +905,7 @@ class FroleyParser : Parser
       local args = parse_cmd_init_args( name )
       local symbol = which{ token_type_def:token_type_def.symbol || null as String }
       if (symbol is null)
-        symbol = name.after_any( "Node" )
+        symbol = name.after_any( "Cmd" )
       endIf
       return Froley.cmd_type( t, name, parse_rule_type, symbol, args )
 
@@ -929,7 +929,7 @@ class FroleyParser : Parser
     method parse_cmd_init_arg->CmdTypeProperty
       local name = read_identifier
       local value = ""
-      local type = "Node"
+      local type = "Cmd"
       if (consume(TokenType.SYMBOL_EQUALS))
         value = read_identifier
         if (consume(TokenType.SYMBOL_DOT)) value += '.' + read_identifier
@@ -1033,17 +1033,17 @@ class FroleyParser : Parser
           else
             }#
           local expr = parse_tokenizer_expression()
-          local node = cmd_which_input.start
+          local cmd = cmd_which_input.start
           if (expr.is_integer)
-            node = node.link( expr->Int32->Character )
+            cmd = cmd.link( expr->Int32->Character )
           elseIf (expr instanceOf TokenizerCmdLiteralString)
             local st = (expr as TokenizerCmdLiteralString).value
-            node = node.link( forEach in st )
+            cmd = cmd.link( forEach in st )
           else
             throw expr.t.error( "Syntax error - expected character, character code, or string." )
           endIf
           consume( TokenType.SYMBOL_COLON )
-          parse_tokenizer_statements( node.statements )
+          parse_tokenizer_statements( cmd.statements )
           #endIf
 
         elseIf (consume(TokenType.KEYWORD_PRODUCE_ANY))
@@ -1054,10 +1054,10 @@ class FroleyParser : Parser
           if (Froley.token_defs_by_section.contains(name))
             forEach (def in Froley.section_defs(name))
               if (def.symbol)
-                local node = cmd_which_input.start
-                node = node.link( forEach in def.symbol )
-                node.statements.add( TokenizerCmdCreateInt32(t,def.type) )
-                node.statements.add( TokenizerCmdOp(t,"restart",TokenizerOpcode.RESTART) )
+                local cmd = cmd_which_input.start
+                cmd = cmd.link( forEach in def.symbol )
+                cmd.statements.add( TokenizerCmdCreateInt32(t,def.type) )
+                cmd.statements.add( TokenizerCmdOp(t,"restart",TokenizerOpcode.RESTART) )
               endIf
             endForEach
           else
@@ -1071,9 +1071,9 @@ class FroleyParser : Parser
           if (Froley.token_defs_by_section.contains(name))
             forEach (def in Froley.section_defs(name))
               if (def.symbol)
-                local node = cmd_which_input.start
-                node = node.link( forEach in def.symbol )
-                node.statements.add( TokenizerCmdOp(t,"restart",TokenizerOpcode.RESTART) )
+                local cmd = cmd_which_input.start
+                cmd = cmd.link( forEach in def.symbol )
+                cmd.statements.add( TokenizerCmdOp(t,"restart",TokenizerOpcode.RESTART) )
               endIf
             endForEach
           else
@@ -1100,17 +1100,17 @@ class FroleyParser : Parser
       while (has_another and not next_is(TokenType.KEYWORD_END_WHICH))
         if (consume(TokenType.KEYWORD_CASE))
           local expr = parse_tokenizer_expression()
-          local node = cmd_which.start
+          local cmd = cmd_which.start
           if (expr.is_integer)
-            node = node.link( expr->Int32->Character )
+            cmd = cmd.link( expr->Int32->Character )
           elseIf (expr instanceOf TokenizerCmdLiteralString)
             local st = (expr as TokenizerCmdLiteralString).value
-            node = node.link( forEach in st )
+            cmd = cmd.link( forEach in st )
           else
             throw expr.t.error( "Syntax error - expected character, character code, or string." )
           endIf
           consume( TokenType.SYMBOL_COLON )
-          parse_tokenizer_statements( node.statements )
+          parse_tokenizer_statements( cmd.statements )
 
         elseIf (consume(TokenType.KEYWORD_PRODUCE_ANY))
           local t    = peek
@@ -1120,10 +1120,10 @@ class FroleyParser : Parser
           if (Froley.token_defs_by_section.contains(name))
             forEach (def in Froley.section_defs(name))
               if (def.symbol)
-                local node = cmd_which.start
-                node = node.link( forEach in def.symbol )
-                node.statements.add( TokenizerCmdCreateInt32(t,def.type) )
-                node.statements.add( TokenizerCmdOp(t,"restart",TokenizerOpcode.RESTART) )
+                local cmd = cmd_which.start
+                cmd = cmd.link( forEach in def.symbol )
+                cmd.statements.add( TokenizerCmdCreateInt32(t,def.type) )
+                cmd.statements.add( TokenizerCmdOp(t,"restart",TokenizerOpcode.RESTART) )
               endIf
             endForEach
           else
@@ -1137,9 +1137,9 @@ class FroleyParser : Parser
           if (Froley.token_defs_by_section.contains(name))
             forEach (def in Froley.section_defs(name))
               if (def.symbol)
-                local node = cmd_which.start
-                node = node.link( forEach in def.symbol )
-                node.statements.add( TokenizerCmdOp(t,"restart",TokenizerOpcode.RESTART) )
+                local cmd = cmd_which.start
+                cmd = cmd.link( forEach in def.symbol )
+                cmd.statements.add( TokenizerCmdOp(t,"restart",TokenizerOpcode.RESTART) )
               endIf
             endForEach
           else

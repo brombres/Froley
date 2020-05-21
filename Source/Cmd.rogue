@@ -980,14 +980,14 @@ class ParserCmdCreate( t, cmd_type:CmdType ) : Cmd
 
   METHODS
     method write( assembler:ParserAssembler )
-      assembler.write( ParserOpcode.CREATE_NODE, cmd_type.index )
+      assembler.write( ParserOpcode.CREATE_CMD, cmd_type.index )
       assembler.write( cmd_type.subcommand_count )
 endClass
 
 class ParserCmdCreateNull( t ) : Cmd
   METHODS
     method write( assembler:ParserAssembler )
-      assembler.write( ParserOpcode.CREATE_NULL_NODE )
+      assembler.write( ParserOpcode.CREATE_NULL_CMD )
 endClass
 
 class ParserCmdCreateStatements( t ) : Cmd

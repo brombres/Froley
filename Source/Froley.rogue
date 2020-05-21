@@ -233,8 +233,8 @@ class Froley [singleton]
         tokenizer_opcodes.add( @{ :name, value:TokenizerOpcode(name)->Int32 } )
       endForEach
 
-      local node_types = @[]
-      node_types.add( (forEach in Froley.cmd_type_lookup)->Value )
+      local cmd_types = @[]
+      cmd_types.add( (forEach in Froley.cmd_type_lookup)->Value )
 
       local parser_opcodes = @[]
       forEach (name in ParserOpcode.names)
@@ -260,7 +260,7 @@ class Froley [singleton]
         :token_types,
         :tokenizer_opcodes,
         tokenizer_code:tokenizer_bytes.to_base64,
-        :node_types,
+        :cmd_types,
         :parser_opcodes,
         parser_code:parser_bytes.to_base64
       }

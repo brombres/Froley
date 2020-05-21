@@ -129,8 +129,8 @@ produce STRING
 
 [parser]
 - value
-  on '{', definitions, '}' -> ObjectValue(definitions:NodeList)
-  on '[', array, ']'       -> ArrayValue(array:NodeList)
+  on '{', definitions, '}' -> ObjectValue(definitions:CmdList)
+  on '[', array, ']'       -> ArrayValue(array:CmdList)
   on STRING                -> StringValue( value=t.content:String )
   on NUMBER                -> NumberValue( value=t.content:Real64 )
   on "true"                -> TrueValue

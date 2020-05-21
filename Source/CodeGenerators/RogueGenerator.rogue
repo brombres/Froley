@@ -63,10 +63,10 @@ class GenerateRogue : CodeGenerator
       regenerate_TokenizerOpcode
 
       if (has_parser)
-        generate_Node
+        generate_Cmd
         generate_Visitor
-        regenerate_NodeFactory
-        generate_NodeInitArgs
+        regenerate_CmdFactory
+        generate_CmdInitArgs
         generate_Parser
         regenerate_ParserOpcode
       endIf
@@ -81,15 +81,15 @@ class GenerateRogue : CodeGenerator
       writer.println( content )
       writer.close
 
-    method generate_Node
-      generate( RogueTemplate.node, "Node.rogue", &do_not_overwrite )
+    method generate_Cmd
+      generate( RogueTemplate.cmd, "Cmd.rogue", &do_not_overwrite )
 
-      # Update Node.rogue by adding new class skeletons
-      local filepath = output_filepath( "Node.rogue", &for_reading )
+      # Update Cmd.rogue by adding new class skeletons
+      local filepath = output_filepath( "Cmd.rogue", &for_reading )
       local content = File.load_as_string( filepath )
       local builder : StringBuilder
-      forEach (node_type in info//node_types)
-        local base_name = (node_type//name)->String
+      forEach (cmd_type in info//cmd_types)
+        local base_name = (cmd_type//name)->String
         local class_name = base_name
         local class_class_name = "class " + class_name
         if (not content.contains(class_class_name))
@@ -98,14 +98,14 @@ class GenerateRogue : CodeGenerator
             builder = StringBuilder( content.count * 1.5 )
             builder.println( content )
           endIf
-          local type = ParseRuleType( node_type//type )
+          local type = ParseRuleType( cmd_type//type )
           print( "  " ).println( class_class_name )
           builder.println.print( class_class_name )
 
-          local node_properties = node_type//properties
-          if (node_properties.count)
+          local cmd_properties = cmd_type//properties
+          if (cmd_properties.count)
             builder.print( "( t" )
-            forEach (p in node_properties)
+            forEach (p in cmd_properties)
               builder.print( ", " )
               builder.print( p//name )
               builder.print( ':' )
@@ -123,15 +123,15 @@ class GenerateRogue : CodeGenerator
             case ParseRuleType.POST_UNARY: builder.println " : PostUnary"
             case ParseRuleType.BINARY:     builder.println " : Binary"
             case ParseRuleType.STATEMENTS: builder.println " : Statements"
-            case ParseRuleType.LIST:       builder.println " : NodeList"
-            others:                        builder.println " : Node"
+            case ParseRuleType.LIST:       builder.println " : CmdList"
+            others:                        builder.println " : Cmd"
           endWhich
           builder.println "  METHODS"
-          if (node_properties.count)
-            builder.println(   "    method init( t, args:NodeInitArgs )" )
-            builder.print(   "      args.require_count( " ).print( node_type//properties.count($//value=="") ).println( " )" )
+          if (cmd_properties.count)
+            builder.println(   "    method init( t, args:CmdInitArgs )" )
+            builder.print(   "      args.require_count( " ).print( cmd_type//properties.count($//value=="") ).println( " )" )
             local index = 0
-            forEach (p in node_properties)
+            forEach (p in cmd_properties)
               builder.print( "      this." )
               builder.print( p//name )
               builder.print( " = " )
@@ -140,7 +140,7 @@ class GenerateRogue : CodeGenerator
                 if (p//type != "String") builder.print( "->" ).print( p//type )
               else
                 builder.print( "args[ " ).print( index ).print( " ]" )
-                if (p//type != "Node") builder.print( " as " ).print( p//type )
+                if (p//type != "Cmd") builder.print( " as " ).print( p//type )
                 ++index
               endIf
               builder.println
@@ -152,20 +152,20 @@ class GenerateRogue : CodeGenerator
           builder.println "      return visitor.visit( this )"
           builder.println
 
-          local escaped_symbol = node_type//symbol->String.to_escaped_ascii("\"")
+          local escaped_symbol = cmd_type//symbol->String.to_escaped_ascii("\"")
           which (type)
             case ParseRuleType.PRE_UNARY, ParseRuleType.POST_UNARY, ParseRuleType.BINARY
               builder.println "    method op->String"
               builder.println '      return "$"' (escaped_symbol)
             others
               builder.println "    method write( builder:StringBuilder )"
-              which (node_properties.count)
+              which (cmd_properties.count)
                 case 0
                   builder.println ''      builder.print( "$" )'' (escaped_symbol)
                 others
-                  local print_node_name = (node_properties.count > 1 or node_properties.first//value == "")
-                  if (print_node_name) builder.println ''      builder.print( "$(" )'' (escaped_symbol)
-                  forEach (p at index in node_properties)
+                  local print_cmd_name = (cmd_properties.count > 1 or cmd_properties.first//value == "")
+                  if (print_cmd_name) builder.println ''      builder.print( "$(" )'' (escaped_symbol)
+                  forEach (p at index in cmd_properties)
                     if (index > 0) builder.println ''      builder.print( ',' )''
                     if (p//value != "")
                       if (p//type == "String")
@@ -177,7 +177,7 @@ class GenerateRogue : CodeGenerator
                       builder.println ''      write( $, builder )'' (p//name)
                     endIf
                   endForEach
-                  if (print_node_name) builder.println ''      builder.print( ')' )''
+                  if (print_cmd_name) builder.println ''      builder.print( ')' )''
               endWhich
           endWhich
           builder.println "endClass"
@@ -194,9 +194,9 @@ class GenerateRogue : CodeGenerator
       local filepath = output_filepath( "Visitor.rogue", &for_reading )
       local content = File.load_as_string( filepath )
       local builder : StringBuilder
-      forEach (node_type in info//node_types)
-        local base_name = (node_type//name)->String
-        local visit_method_name = "method visit( node:$ )->$" (base_name,base_name)
+      forEach (cmd_type in info//cmd_types)
+        local base_name = (cmd_type//name)->String
+        local visit_method_name = "method visit( cmd:$ )->$" (base_name,base_name)
         if (not content.contains(visit_method_name))
           if (not builder)
             println "Updating " + filepath
@@ -211,38 +211,38 @@ class GenerateRogue : CodeGenerator
           print( "  " ).println( visit_method_name )
           builder.println.print( "    " ).println( visit_method_name )
 
-          local type = ParseRuleType( node_type//type )
+          local type = ParseRuleType( cmd_type//type )
           which (type)
             case ParseRuleType.PRE_UNARY
-              builder.println "      if (node.operand)  node.operand = node.operand.dispatch( this )"
-              builder.println "      return node"
+              builder.println "      if (cmd.operand)  cmd.operand = cmd.operand.dispatch( this )"
+              builder.println "      return cmd"
             case ParseRuleType.POST_UNARY
-              builder.println "      if (node.operand)  node.operand = node.operand.dispatch( this )"
-              builder.println "      return node"
+              builder.println "      if (cmd.operand)  cmd.operand = cmd.operand.dispatch( this )"
+              builder.println "      return cmd"
             case ParseRuleType.BINARY
-              builder.println "      if (node.left)  node.left  = node.left.dispatch( this )"
-              builder.println "      if (node.right) node.right = node.right.dispatch( this )"
-              builder.println "      return node"
+              builder.println "      if (cmd.left)  cmd.left  = cmd.left.dispatch( this )"
+              builder.println "      if (cmd.right) cmd.right = cmd.right.dispatch( this )"
+              builder.println "      return cmd"
             case ParseRuleType.LIST
-              builder.println "      forEach (element at index in node)"
-              builder.println "        if (element) node[ index ] = element.dispatch( this )"
+              builder.println "      forEach (element at index in cmd)"
+              builder.println "        if (element) cmd[ index ] = element.dispatch( this )"
               builder.println "      endForEach"
-              builder.println "      return node"
+              builder.println "      return cmd"
             case ParseRuleType.STATEMENTS
-              builder.println "      forEach (element at index in node)"
-              builder.println "        if (element) node[ index ] = element.dispatch( this )"
+              builder.println "      forEach (element at index in cmd)"
+              builder.println "        if (element) cmd[ index ] = element.dispatch( this )"
               builder.println "      endForEach"
-              builder.println "      return node"
+              builder.println "      return cmd"
             others
-              local node_properties = node_type//properties
-              forEach (p in node_properties)
+              local cmd_properties = cmd_type//properties
+              forEach (p in cmd_properties)
                 if (p//value.count == 0)
                   # Not a primitive
                   local p_name = p//name
-                  builder.println( "      if (node.$) node.$ = node.$.dispatch( this )" (p_name,p_name,p_name) )
+                  builder.println( "      if (cmd.$) cmd.$ = cmd.$.dispatch( this )" (p_name,p_name,p_name) )
                 endIf
               endForEach
-              builder.println( "      return node" )
+              builder.println( "      return cmd" )
           endWhich
         endIf
       endForEach
@@ -252,8 +252,8 @@ class GenerateRogue : CodeGenerator
         File.save( filepath, builder->String )
       endIf
 
-    method generate_NodeInitArgs
-      generate( RogueTemplate.node_init_args, "NodeInitArgs.rogue", &do_not_overwrite )
+    method generate_CmdInitArgs
+      generate( RogueTemplate.cmd_init_args, "CmdInitArgs.rogue", &do_not_overwrite )
 
     method generate_Error
       generate( RogueTemplate.error, "Error.rogue", &do_not_overwrite )
@@ -287,21 +287,21 @@ class GenerateRogue : CodeGenerator
       generate( RogueTemplate.tokenizer_vm, "TokenizerVM.rogue", fn )
       generate( RogueTemplate.tokenizer,    "Tokenizer.rogue",   &do_not_overwrite )
 
-    method regenerate_NodeFactory
-      local writer = output_writer( "NodeFactory.rogue" )
+    method regenerate_CmdFactory
+      local writer = output_writer( "CmdFactory.rogue" )
       if (not writer) return
 
       writer.print  ("module ").println( language )
       writer.println
-      writer.println( "class NodeFactory" )
+      writer.println( "class CmdFactory" )
       writer.println( "  GLOBAL METHODS" )
-      writer.println( "    method create_node( index:Int32, t:Token, args:NodeInitArgs )->Node" )
+      writer.println( "    method create_cmd( index:Int32, t:Token, args:CmdInitArgs )->Cmd" )
       writer.println("      which (index)")
-      forEach (node_type in info//node_types)
-        writer.print "        case $ : return $( t, args )" (node_type//index,node_type//name)
+      forEach (cmd_type in info//cmd_types)
+        writer.print "        case $ : return $( t, args )" (cmd_type//index,cmd_type//name)
       endForEach
       writer.println @|        others
-      writer.println(''          throw Error( "[INTERNAL] NodeFactory.create_node() index out of bounds: " + index )'' )
+      writer.println(''          throw Error( "[INTERNAL] CmdFactory.create_cmd() index out of bounds: " + index )'' )
       writer.println @|      endWhich
                       |endClass
       writer.close

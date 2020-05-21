@@ -1,24 +1,24 @@
 augment JavaTemplate
   PROPERTIES
-    node =
+    cmd =
       @|<froley.package>
        |
        |import java.util.ArrayList;
        |
-       |public class Node
+       |public class Cmd
        |{
        |  // PROPERTIES
        |  public Token t;
        |
        |  // METHODS
-       |  public Node init( Token t, NodeInitArgs args )
+       |  public Cmd init( Token t, CmdInitArgs args )
        |  {
        |    this.t = t;
        |    args.requireCount( 0 );
        |    return this;
        |  }
        |
-       |  public Node dispatch( Visitor visitor )
+       |  public Cmd dispatch( Visitor visitor )
        |  {
        |    return visitor.visit( this );
        |  }
@@ -34,27 +34,27 @@ augment JavaTemplate
        |  {
        |    String typeName = getClass().getName();
        |    int i = typeName.lastIndexOf( '$' );
-       |    if (i == -1) i = typeName.lastIndexOf( "Node" );
+       |    if (i == -1) i = typeName.lastIndexOf( "Cmd" );
        |    if (i != -1 && i == typeName.length()-1) i = -1;
        |    builder.print( (i==-1) ? typeName : typeName.substring(i+3) );
        |  }
        |
-       |  public void write( Node node, StringBuilder builder )
+       |  public void write( Cmd cmd, StringBuilder builder )
        |  {
-       |    if (node != null) node.write( builder );
+       |    if (cmd != null) cmd.write( builder );
        |    else             builder.print( "null" );
        |  }
        |
-       |  static public class NodeList extends Node
+       |  static public class CmdList extends Cmd
        |  {
        |    //PROPERTIES
-       |    public ArrayList<Node> list;
+       |    public ArrayList<Cmd> list;
        |
        |    //METHODS
-       |    public NodeList( Token t, NodeInitArgs args )
+       |    public CmdList( Token t, CmdInitArgs args )
        |    {
        |      this.t = t;
-       |      list = new ArrayList<Node>( args.size() );
+       |      list = new ArrayList<Cmd>( args.size() );
        |      for (int i=0; i<args.size(); ++i)
        |      {
        |        list.add( args.get(i) );
@@ -66,22 +66,22 @@ augment JavaTemplate
        |      return list.size();
        |    }
        |
-       |    public NodeList dispatch( Visitor visitor )
+       |    public CmdList dispatch( Visitor visitor )
        |    {
        |      return visitor.visit( this );
        |    }
        |
-       |    public Node first()
+       |    public Cmd first()
        |    {
        |      return list.get( 0 );
        |    }
        |
-       |    public Node get( int index )
+       |    public Cmd get( int index )
        |    {
        |      return list.get( index );
        |    }
        |
-       |    public Node last()
+       |    public Cmd last()
        |    {
        |      return list.get( list.size()-1 );
        |    }
@@ -92,16 +92,16 @@ augment JavaTemplate
        |      for (int i=0; i<list.size(); ++i)
        |      {
        |        if (i > 0) builder.print( ',' );
-       |        Node node = list.get( i );
-       |        write( node, builder );
+       |        Cmd cmd = list.get( i );
+       |        write( cmd, builder );
        |      }
        |      builder.print( ']' );
        |    }
        |  }
        |
-       |  static public class Statements extends NodeList
+       |  static public class Statements extends CmdList
        |  {
-       |    public Statements( Token t, NodeInitArgs args )
+       |    public Statements( Token t, CmdInitArgs args )
        |    {
        |      super( t, args );
        |    }
@@ -115,20 +115,20 @@ augment JavaTemplate
        |    {
        |      for (int i=0; i<list.size(); ++i)
        |      {
-       |        Node statement = list.get( i );
+       |        Cmd statement = list.get( i );
        |        write( statement, builder );
        |        builder.print( '\n' );
        |      }
        |    }
        |  }
        |
-       |  static public class Unary extends Node
+       |  static public class Unary extends Cmd
        |  {
        |    // PROPERTIES
-       |    public Node operand;
+       |    public Cmd operand;
        |
        |    // METHODS
-       |    public Node init( Token t, NodeInitArgs args )
+       |    public Cmd init( Token t, CmdInitArgs args )
        |    {
        |      this.t = t;
        |      args.requireCount( 1 );
@@ -169,14 +169,14 @@ augment JavaTemplate
        |    }
        |  }
        |
-       |  static public class Binary extends Node
+       |  static public class Binary extends Cmd
        |  {
        |    // PROPERTIES
-       |    public Node left;
-       |    public Node right;
+       |    public Cmd left;
+       |    public Cmd right;
        |
        |    // METHODS
-       |    public Node init( Token t, NodeInitArgs args )
+       |    public Cmd init( Token t, CmdInitArgs args )
        |    {
        |      this.t = t;
        |      args.requireCount( 2 );

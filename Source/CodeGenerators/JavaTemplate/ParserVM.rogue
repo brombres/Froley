@@ -33,8 +33,8 @@ augment JavaTemplate
        |
        |  public ArrayList<ParsePosition> savedPositions = new ArrayList<ParsePosition>();
        |
-       |  public ArrayList<Node>  nodeQueue    = new ArrayList<Node>();
-       |  public NodeInitArgs     nodeArgs     = new NodeInitArgs();
+       |  public ArrayList<Cmd>  cmdQueue    = new ArrayList<Cmd>();
+       |  public CmdInitArgs     cmdArgs     = new CmdInitArgs();
        |  public ArrayList<Token> listStartT   = new ArrayList<Token>();
        |  public IntList          listStartPos = new IntList();
        |
@@ -160,34 +160,34 @@ augment JavaTemplate
        |        }
        |        case ParserOpcode.BEGIN_LIST:
        |          listStartT.add( peek() );
-       |          listStartPos.add( nodeQueue.size() );
+       |          listStartPos.add( cmdQueue.size() );
        |          continue;
-       |        case ParserOpcode.CREATE_NODE:
+       |        case ParserOpcode.CREATE_CMD:
        |        {
-       |          int nodeTypeIndex = code[ ip++ ];
+       |          int cmdTypeIndex = code[ ip++ ];
        |          int argCount = code[ ip++ ];
-       |          nodeArgs.clear();
-       |          nodeArgs.t = curToken;
+       |          cmdArgs.clear();
+       |          cmdArgs.t = curToken;
        |          if (argCount > 0)
        |          {
-       |            int i1 = nodeQueue.size() - argCount;
+       |            int i1 = cmdQueue.size() - argCount;
        |            if (i1 < 0)
        |            {
        |              trace( ip-2, 0 );
-       |              throw curToken.error( "[INTERNAL] Command queue too small for new node." );
+       |              throw curToken.error( "[INTERNAL] Command queue too small for new cmd." );
        |            }
-       |            for (int i=i1; i<nodeQueue.size(); ++i)
+       |            for (int i=i1; i<cmdQueue.size(); ++i)
        |            {
-       |              nodeArgs.add( nodeQueue.get(i) );
+       |              cmdArgs.add( cmdQueue.get(i) );
        |            }
-       |            while (nodeQueue.size() > i1) nodeQueue.remove( nodeQueue.size() - 1 );
+       |            while (cmdQueue.size() > i1) cmdQueue.remove( cmdQueue.size() - 1 );
        |          }
-       |          nodeQueue.add( NodeFactory.createNode(nodeTypeIndex,curToken,nodeArgs) );
+       |          cmdQueue.add( CmdFactory.createCmd(cmdTypeIndex,curToken,cmdArgs) );
        |          continue;
        |        }
        |
-       |        case ParserOpcode.CREATE_NULL_NODE:
-       |          nodeQueue.add( null );
+       |        case ParserOpcode.CREATE_NULL_CMD:
+       |          cmdQueue.add( null );
        |          continue;
        |
        |        case ParserOpcode.CREATE_LIST:
@@ -195,14 +195,14 @@ augment JavaTemplate
        |          if (listStartT.isEmpty()) throw peek().error( "[INTERNAL] No prior beginList before calling createList/produceList." );
        |          Token t  = listStartT.remove( listStartT.size() - 1 );
        |          int   i1 = listStartPos.removeLast();
-       |          nodeArgs.clear();
-       |          nodeArgs.t = curToken;
-       |          for (int i=i1; i<nodeQueue.size(); ++i)
+       |          cmdArgs.clear();
+       |          cmdArgs.t = curToken;
+       |          for (int i=i1; i<cmdQueue.size(); ++i)
        |          {
-       |            nodeArgs.add( nodeQueue.get(i) );
+       |            cmdArgs.add( cmdQueue.get(i) );
        |          }
-       |          while (nodeQueue.size() > i1) nodeQueue.remove( nodeQueue.size() - 1 );
-       |          nodeQueue.add( new Node.NodeList(curToken,nodeArgs) );
+       |          while (cmdQueue.size() > i1) cmdQueue.remove( cmdQueue.size() - 1 );
+       |          cmdQueue.add( new Cmd.CmdList(curToken,cmdArgs) );
        |          continue;
        |        }
        |
@@ -211,26 +211,26 @@ augment JavaTemplate
        |          if (listStartT.isEmpty()) throw peek().error( "[INTERNAL] No prior beginList before calling createStatements/produceStatements." );
        |          Token t  = listStartT.remove( listStartT.size() - 1 );
        |          int   i1 = listStartPos.removeLast();
-       |          nodeArgs.clear();
-       |          nodeArgs.t = curToken;
-       |          for (int i=i1; i<nodeQueue.size(); ++i)
+       |          cmdArgs.clear();
+       |          cmdArgs.t = curToken;
+       |          for (int i=i1; i<cmdQueue.size(); ++i)
        |          {
-       |            nodeArgs.add( nodeQueue.get(i) );
+       |            cmdArgs.add( cmdQueue.get(i) );
        |          }
-       |          while (nodeQueue.size() > i1) nodeQueue.remove( nodeQueue.size() - 1 );
-       |          nodeQueue.add( new Node.Statements(curToken,nodeArgs) );
+       |          while (cmdQueue.size() > i1) cmdQueue.remove( cmdQueue.size() - 1 );
+       |          cmdQueue.add( new Cmd.Statements(curToken,cmdArgs) );
        |          continue;
        |        }
        |
        |        case ParserOpcode.SWAP:
        |        {
-       |          int n = nodeQueue.size();
+       |          int n = cmdQueue.size();
        |          if (n >= 2)
        |          {
-       |            Node a = nodeQueue.get( n-2 );
-       |            Node b = nodeQueue.get( n-1 );
-       |            nodeQueue.set( n-2, b );
-       |            nodeQueue.set( n-1, a );
+       |            Cmd a = cmdQueue.get( n-2 );
+       |            Cmd b = cmdQueue.get( n-1 );
+       |            cmdQueue.set( n-2, b );
+       |            cmdQueue.set( n-1, a );
        |          }
        |          continue;
        |        }
@@ -287,7 +287,7 @@ augment JavaTemplate
        |        }
        |
        |        case ParserOpcode.SAVE_POSITION:
-       |          savedPositions.add( new ParsePosition(position,nodeQueue.size(),curToken) );
+       |          savedPositions.add( new ParsePosition(position,cmdQueue.size(),curToken) );
        |          continue;
        |
        |        case ParserOpcode.RESTORE_POSITION:
@@ -296,8 +296,8 @@ augment JavaTemplate
        |          if (count == 0) throw peek().error( "[INTERNAL] No savePosition to restore." );
        |          ParsePosition savedPosition = savedPositions.remove( count - 1 );
        |          position = savedPosition.position;
-       |          int discardFrom = savedPosition.nodeCount;
-       |          while (nodeQueue.size() > discardFrom) nodeQueue.remove( nodeQueue.size() - 1 );
+       |          int discardFrom = savedPosition.cmdCount;
+       |          while (cmdQueue.size() > discardFrom) cmdQueue.remove( cmdQueue.size() - 1 );
        |          curToken = savedPosition.curToken;
        |          if (position < tokens.length) nextTokenType = tokens[position].type;
        |          else                          nextTokenType = -1;
@@ -467,18 +467,18 @@ augment JavaTemplate
        |    return -1;
        |  }
        |
-       |  public Node parse( String ruleName )
+       |  public Cmd parse( String ruleName )
        |  {
        |    Integer methodAddress = methodAddresses.get( ruleName );
        |    if (methodAddress == null) throw new Error( "[INTERNAL] No parse rule '" + ruleName + "' exists." );
        |    return parse( methodAddress );
        |  }
        |
-       |  public Node parse( int address )
+       |  public Cmd parse( int address )
        |  {
        |    execute( address );
-       |    if (nodeQueue.isEmpty()) return null;
-       |    return nodeQueue.remove( nodeQueue.size() - 1 );
+       |    if (cmdQueue.isEmpty()) return null;
+       |    return cmdQueue.remove( cmdQueue.size() - 1 );
        |  }
        |
        |  public Token peek()
@@ -590,18 +590,18 @@ augment JavaTemplate
        |    }
        |    System.out.println();
        |    System.out.print( "  [" );
-       |    for (int index=0; index<nodeQueue.size(); ++index)
+       |    for (int index=0; index<cmdQueue.size(); ++index)
        |    {
-       |      Node node = nodeQueue.get( index );
+       |      Cmd cmd = cmdQueue.get( index );
        |      if (index > 0) System.out.print( "," );
-       |      if (node == null)
+       |      if (cmd == null)
        |      {
        |        System.out.print( "null" );
        |      }
        |      else
        |      {
-       |        String name = node.getClass().getName();
-       |        int i = name.lastIndexOf( "Node" );
+       |        String name = cmd.getClass().getName();
+       |        int i = name.lastIndexOf( "Cmd" );
        |        if (i != -1) name = name.substring( i+4 );
        |        i = name.lastIndexOf( "$" );
        |        if (i != -1) name = name.substring( i+1 );
@@ -616,13 +616,13 @@ augment JavaTemplate
        |  static public class ParsePosition
        |  {
        |    public int   position;
-       |    public int   nodeCount;
+       |    public int   cmdCount;
        |    public Token curToken;
        |
-       |    public ParsePosition( int position, int nodeCount, Token curToken )
+       |    public ParsePosition( int position, int cmdCount, Token curToken )
        |    {
        |      this.position  = position;
-       |      this.nodeCount = nodeCount;
+       |      this.cmdCount = cmdCount;
        |      this.curToken  = curToken;
        |    }
        |  }

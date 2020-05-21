@@ -38,8 +38,8 @@ augment JavaTemplate
        |        {
        |          while (parser.hasAnother())
        |          {
-       |            Node node = parser.parse( parser.firstMethodAddress );
-       |            System.out.println( node );
+       |            Cmd cmd = parser.parse( parser.firstMethodAddress );
+       |            System.out.println( cmd );
        |          }
        |        }
        |      }
@@ -64,8 +64,8 @@ augment JavaTemplate
        |          {
        |            while (parser.hasAnother())
        |            {
-       |              Node node = parser.parse( parser.firstMethodAddress );
-       |              System.out.println( node );
+       |              Cmd cmd = parser.parse( parser.firstMethodAddress );
+       |              System.out.println( cmd );
        |            }
        |          }
        |        }

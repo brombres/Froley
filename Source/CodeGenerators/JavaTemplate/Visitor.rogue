@@ -7,53 +7,53 @@ augment JavaTemplate
        |
        |public class Visitor
        |{
-       |  public Node visit( Node node )
+       |  public Cmd visit( Cmd cmd )
        |  {
-       |    if (node.getClass() == Node.class) return node;
-       |    return node.dispatch( this );
+       |    if (cmd.getClass() == Cmd.class) return cmd;
+       |    return cmd.dispatch( this );
        |  }
        |
-       |  public Node.NodeList visit( Node.NodeList node )
+       |  public Cmd.CmdList visit( Cmd.CmdList cmd )
        |  {
-       |    ArrayList<Node> list = node.list;
+       |    ArrayList<Cmd> list = cmd.list;
        |    int count = list.size();
        |    for (int i=0; i<count; ++i)
        |    {
-       |      Node element = list.get( i );
+       |      Cmd element = list.get( i );
        |      if (element != null) list.set( i, element.dispatch(this) );
        |    }
-       |    return node;
+       |    return cmd;
        |  }
        |
-       |  public Node.Statements visit( Node.Statements node )
+       |  public Cmd.Statements visit( Cmd.Statements cmd )
        |  {
-       |    ArrayList<Node> list = node.list;
+       |    ArrayList<Cmd> list = cmd.list;
        |    int count = list.size();
        |    for (int i=0; i<count; ++i)
        |    {
-       |      Node element = list.get( i );
+       |      Cmd element = list.get( i );
        |      if (element != null) list.set( i, element.dispatch(this) );
        |    }
-       |    return node;
+       |    return cmd;
        |  }
        |
-       |  public Node.Unary visit( Node.Unary node )
+       |  public Cmd.Unary visit( Cmd.Unary cmd )
        |  {
-       |    if (node.operand != null) node.operand = node.operand.dispatch( this );
-       |    return node;
+       |    if (cmd.operand != null) cmd.operand = cmd.operand.dispatch( this );
+       |    return cmd;
        |  }
        |
-       |  public Node.PostUnary visit( Node.PostUnary node )
+       |  public Cmd.PostUnary visit( Cmd.PostUnary cmd )
        |  {
-       |    if (node.operand != null) node.operand = node.operand.dispatch( this );
-       |    return node;
+       |    if (cmd.operand != null) cmd.operand = cmd.operand.dispatch( this );
+       |    return cmd;
        |  }
        |
-       |  public Node.Binary visit( Node.Binary node )
+       |  public Cmd.Binary visit( Cmd.Binary cmd )
        |  {
-       |    if (node.left != null)  node.left = node.left.dispatch( this );
-       |    if (node.right != null) node.right = node.right.dispatch( this );
-       |    return node;
+       |    if (cmd.left != null)  cmd.left = cmd.left.dispatch( this );
+       |    if (cmd.right != null) cmd.right = cmd.right.dispatch( this );
+       |    return cmd;
        |  }
        |}
        |

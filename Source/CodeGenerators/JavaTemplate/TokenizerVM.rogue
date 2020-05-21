@@ -350,29 +350,29 @@ augment JavaTemplate
        |          continue;
        |        case TokenizerOpcode.WHICH_INPUT:
        |          {
-       |            int curNode = ip;
+       |            int curCmd = ip;
        |            int lookahead = 0;
-       |            int lastAcceptableNode      = 0;
+       |            int lastAcceptableCmd      = 0;
        |            int lastAcceptableLinkCount = 0;
        |            int lastAcceptableLookahead = 0;
        |            for (;;)
        |            {
-       |              int linkCount = code[curNode+1];
-       |              if (code[curNode] != 0)
+       |              int linkCount = code[curCmd+1];
+       |              if (code[curCmd] != 0)
        |              {
-       |                lastAcceptableNode = curNode;
+       |                lastAcceptableCmd = curCmd;
        |                lastAcceptableLinkCount = linkCount;
        |                lastAcceptableLookahead = lookahead;
        |              }
        |              if ( !scanner.hasAnother(lookahead+1) ) break;
        |              int c = scanner.peek( lookahead );
-       |              ip = curNode + 2;
+       |              ip = curCmd + 2;
        |              boolean foundLink = false;
        |              for (int i=linkCount; --i>=0; )
        |              {
        |                if (c == code[ip])
        |                {
-       |                  curNode = code[ ip+1 ];
+       |                  curCmd = code[ ip+1 ];
        |                  foundLink = true;
        |                  break;
        |                }
@@ -381,30 +381,30 @@ augment JavaTemplate
        |              if (foundLink) ++lookahead;
        |              else           break;
        |            }
-       |            // Either no links match or EOI - jump to code of last acceptable node.
-       |            // The start node is always acceptable and either contains the
+       |            // Either no links match or EOI - jump to code of last acceptable cmd.
+       |            // The start cmd is always acceptable and either contains the
        |            // 'others' case or jumps to the end of the scan table.
-       |            ip = lastAcceptableNode + lastAcceptableLinkCount * 2 + 2;
+       |            ip = lastAcceptableCmd + lastAcceptableLinkCount * 2 + 2;
        |            for (int i=lastAcceptableLookahead; --i>=0; ) buffer.print( scanner.read() );
        |            continue;
        |          }
        |
        |        case TokenizerOpcode.WHICH_BUFFER:
-       |          int curNode   = ip;
-       |          int startNode = curNode;
+       |          int curCmd   = ip;
+       |          int startCmd = curCmd;
        |          int lookahead = 0;
        |          for (;;)
        |          {
-       |            int linkCount = code[curNode+1];
+       |            int linkCount = code[curCmd+1];
        |            if (lookahead == buffer.count) break;
        |            int c = buffer.characters[ lookahead ];
-       |            ip = curNode + 2;
+       |            ip = curCmd + 2;
        |            boolean foundLink = false;
        |            for (int i=linkCount; --i>=0; )
        |            {
        |              if (c == code[ip])
        |              {
-       |                curNode = code[ ip+1 ];
+       |                curCmd = code[ ip+1 ];
        |                foundLink = true;
        |                break;
        |              }
@@ -415,12 +415,12 @@ augment JavaTemplate
        |          }
        |
        |          // Either no links match or EOI
-       |          if (code[curNode] == 0 || lookahead < buffer.count)
+       |          if (code[curCmd] == 0 || lookahead < buffer.count)
        |          {
-       |            // Not a complete match; use the 'others' code in the start node
-       |            curNode = startNode;
+       |            // Not a complete match; use the 'others' code in the start cmd
+       |            curCmd = startCmd;
        |          }
-       |          ip = curNode + code[curNode+1] * 2 + 2;
+       |          ip = curCmd + code[curCmd+1] * 2 + 2;
        |          continue;
        |        case TokenizerOpcode.TRACE:
        |          System.out.print( "Line " + code[ip++] + " peek:" );

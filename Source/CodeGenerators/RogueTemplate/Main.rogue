@@ -24,8 +24,8 @@ augment RogueTemplate
        |
        |          if (not parser.methods.is_empty)
        |            while (parser.has_another)
-       |              local node = parser.parse( parser.methods[0] )
-       |              println node
+       |              local cmd = parser.parse( parser.methods[0] )
+       |              println cmd
        |            endWhile
        |          endIf
        |        catch (err:Error)
@@ -40,8 +40,8 @@ augment RogueTemplate
        |            parser.open( "[Command Line]", input )
        |            if (not parser.methods.is_empty)
        |              while (parser.has_another)
-       |                local node = parser.parse( parser.methods[0] )
-       |                println node
+       |                local cmd = parser.parse( parser.methods[0] )
+       |                println cmd
        |              endWhile
        |            endIf
        |          catch (err:Error)

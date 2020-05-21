@@ -5,16 +5,16 @@ augment RogueTemplate
        |
        |class Visitor
        |  GLOBAL PROPERTIES
-       |    type_Node = <<Node>>
+       |    type_Cmd = <<Cmd>>
        |
        |  METHODS
-       |    method visit( node:Node )->Node
-       |      if (node.type_info is type_Node) return node
-       |      return node.dispatch( this )
+       |    method visit( cmd:Cmd )->Cmd
+       |      if (cmd.type_info is type_Cmd) return cmd
+       |      return cmd.dispatch( this )
        |
-       |    method visit( list:NodeList )->NodeList
-       |      forEach (node at index in list)
-       |        if (node) list[ index ] = node.dispatch( this )
+       |    method visit( list:CmdList )->CmdList
+       |      forEach (cmd at index in list)
+       |        if (cmd) list[ index ] = cmd.dispatch( this )
        |      endForEach
        |      return list
        |
@@ -24,18 +24,18 @@ augment RogueTemplate
        |      endForEach
        |      return statements
        |
-       |    method visit( node:Unary )->Unary
-       |      if (node.operand) node.operand = node.operand.dispatch( this )
-       |      return node
+       |    method visit( cmd:Unary )->Unary
+       |      if (cmd.operand) cmd.operand = cmd.operand.dispatch( this )
+       |      return cmd
        |
-       |    method visit( node:PostUnary )->PostUnary
-       |      if (node.operand) node.operand = node.operand.dispatch( this )
-       |      return node
+       |    method visit( cmd:PostUnary )->PostUnary
+       |      if (cmd.operand) cmd.operand = cmd.operand.dispatch( this )
+       |      return cmd
        |
-       |    method visit( node:Binary )->Binary
-       |      if (node.left)  node.left  = node.left.dispatch( this )
-       |      if (node.right) node.right = node.right.dispatch( this )
-       |      return node
+       |    method visit( cmd:Binary )->Binary
+       |      if (cmd.left)  cmd.left  = cmd.left.dispatch( this )
+       |      if (cmd.right) cmd.right = cmd.right.dispatch( this )
+       |      return cmd
        |endClass
        |
 endAugment

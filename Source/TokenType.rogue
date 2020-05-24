@@ -111,6 +111,7 @@ augment TokenType
   SYMBOL_PLUS_EQUALS        ( "+=",  &is_symbol )
   SYMBOL_PLUS_PLUS          ( "++",  &is_symbol )
   SYMBOL_SEMICOLON          ( ";",   &is_symbol )
+  SYMBOL_TILDE              ( "~",   &is_symbol )
   SYMBOL_VERTICAL_BAR       ( "|",   &is_symbol )
 endAugment
 

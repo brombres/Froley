@@ -1019,19 +1019,9 @@ class FroleyParser : Parser
       throw t.error( "Register 'ch' or 'count' expected." )
 
     method parse_which_input( cmd_which_input:TokenizerCmdWhichInput )
-      #local patterns = (Pattern,ScanState)[]
       consume_eols
       while (has_another and not next_is(TokenType.KEYWORD_END_WHICH))
         if (consume(TokenType.KEYWORD_CASE))
-          #{
-          if (next_is(TokenType.SYMBOL_OPEN_CURLY))
-            local pattern = parse_pattern
-            local state = ScanState()
-            consume( TokenType.SYMBOL_COLON )
-            parse_tokenizer_statements( state.statements )
-            patterns.add( (pattern,state) )
-          else
-            }#
           local expr = parse_tokenizer_expression()
           local cmd = cmd_which_input.start
           if (expr.is_integer)
@@ -1044,7 +1034,6 @@ class FroleyParser : Parser
           endIf
           consume( TokenType.SYMBOL_COLON )
           parse_tokenizer_statements( cmd.statements )
-          #endIf
 
         elseIf (consume(TokenType.KEYWORD_PRODUCE_ANY))
           local t    = peek
@@ -1088,24 +1077,25 @@ class FroleyParser : Parser
         consume_eols
       endWhile
 
-      #forEach ((pattern,state) in patterns)
-      #  PatternGraphBuilder( pattern, state ).apply( cmd_which_input.start )
-      #endForEach
-
-
     method parse_which_buffer( cmd_which:TokenizerCmdWhichBuffer )
-      #local patterns = (Pattern,ScanState)[]
-
       consume_eols
       while (has_another and not next_is(TokenType.KEYWORD_END_WHICH))
         if (consume(TokenType.KEYWORD_CASE))
+          local ignore_case = consume( TokenType.SYMBOL_TILDE )
           local expr = parse_tokenizer_expression()
           local cmd = cmd_which.start
           if (expr.is_integer)
-            cmd = cmd.link( expr->Int32->Character )
+            local ch = expr->Int32->Character
+            local uc = ch.to_uppercase
+            local lc = ch.to_lowercase
+            if (ignore_case and uc != lc)
+              cmd = cmd.link( uc, cmd.link(lc) )
+            else
+              cmd = cmd.link( ch )
+            endIf
           elseIf (expr instanceOf TokenizerCmdLiteralString)
             local st = (expr as TokenizerCmdLiteralString).value
-            cmd = cmd.link( forEach in st )
+            if (st.count) cmd = cmd.link( st, &=ignore_case )
           else
             throw expr.t.error( "Syntax error - expected character, character code, or string." )
           endIf
@@ -1153,69 +1143,6 @@ class FroleyParser : Parser
         endIf
         consume_eols
       endWhile
-
-      #forEach ((pattern,state) in patterns)
-      #  PatternGraphBuilder( pattern, state ).apply( cmd_which.start )
-      #endForEach
-
-      #method parse_pattern->Pattern
-      #  local t = peek
-      #  must_consume( TokenType.SYMBOL_OPEN_CURLY )
-      #  return parse_pattern_sequence( t, TokenType.SYMBOL_CLOSE_CURLY )
-
-      #method parse_pattern_sequence( t:Token, close_type:TokenType )->Pattern
-      #  local sequence = SequencePattern( t )
-      #  while (reader.has_another and not next_is(close_type))
-      #    sequence.add( parse_pattern_or )
-      #  endWhile
-      #  must_consume( close_type )
-      #  return sequence
-
-      #method parse_pattern_or->Pattern
-      #  local pattern = parse_pattern_multiples
-      #  if (not next_is(TokenType.SYMBOL_VERTICAL_BAR)) return pattern
-
-      #  local result = OrPattern( peek )
-      #  result.add( pattern )
-      #  while (consume(TokenType.SYMBOL_VERTICAL_BAR))
-      #    consume_eols
-      #    result.add( parse_pattern_multiples )
-      #  endWhile
-      #  return result
-
-      #method parse_pattern_multiples->Pattern
-      #  local pattern = parse_pattern_term
-      #  if (next_is(TokenType.SYMBOL_ASTERISK))
-      #    return ZeroOrMorePattern( read, pattern )
-      #  else
-      #    return pattern
-      #  endIf
-
-      #method parse_pattern_term->Pattern
-      #  local t = peek
-      #  if (consume(TokenType.STRING))
-      #    return StringPattern( t, t.text )
-      #  elseIf (consume(TokenType.KEYWORD_LETTER))
-      #    return LetterPattern( t )
-      #  elseIf (consume(TokenType.KEYWORD_DIGIT))
-      #    return DigitPattern( t )
-      #  elseIf (consume(TokenType.INTEGER))
-      #    return CharacterPattern( t, t->Int32 )
-      #  elseIf (consume(TokenType.SYMBOL_OPEN_PAREN))
-      #    return parse_pattern_sequence( t, TokenType.SYMBOL_CLOSE_PAREN )
-      #  else
-      #    throw t.error( "Syntax error - unexpected '$'." (t->String) )
-      #  endIf
-
-      #  #{
-      #  if consume( TokenType.SYMBOL_OPEN_PAREN )
-      #  local sequence = SequencePattern()
-      #  while (reader.has_another and not next_is(TokenType.SYMBOL_CLOSE_CURLY))
-      #    sequence.add( parse_pattern_element )
-      #  endWhile
-      #  must_consume( TokenType.SYMBOL_CLOSE_CURLY )
-      #  return sequence
-      #  }#
 
     method read_identifier->String
       if (next_is(TokenType.IDENTIFIER))

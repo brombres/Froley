@@ -26,15 +26,32 @@ class ScanState
       states.add( this )
       (forEach in links).collect( states )
 
-    method link( ch:Character )->ScanState
+    method link( ch:Character, next_state=null:ScanState )->ScanState
       local entry = links.find( ch )
       if (entry)
         return entry.value
       else
-        local result = ScanState()
-        links[ ch ] = result
-        return result
+        if (not next_state) next_state = ScanState()
+        links[ ch ] = next_state
+        return next_state
       endIf
+
+    method link( st:String, &ignore_case )->ScanState
+      local state = this
+      forEach (ch in st) state = state.link( ch )
+      if (not ignore_case) return state
+
+      link( st, state )
+      return state
+
+    method link( st:String, final_state:ScanState )
+      if (st.count == 0) return
+      local uc = st[0].to_uppercase
+      local lc = uc.to_lowercase
+
+      local remaining = st.rightmost( -1 )
+      link( uc, final_state ).link( remaining, final_state )
+      if (uc != lc) link( lc, final_state ).link( remaining, final_state )
 
     method resolve
       if (is_visited) return

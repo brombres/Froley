@@ -931,7 +931,9 @@ class FroleyParser : Parser
       local value = ""
       local type = "Cmd"
       if (consume(TokenType.SYMBOL_EQUALS))
-        value = read_identifier
+        local t = read
+        if (t.text) value = t.text
+        else        value = t.number->String
         if (consume(TokenType.SYMBOL_DOT)) value += '.' + read_identifier
       endIf
       if (consume(TokenType.SYMBOL_COLON)) type = read_identifier

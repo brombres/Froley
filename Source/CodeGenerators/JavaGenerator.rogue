@@ -138,14 +138,19 @@ class GenerateJava : CodeGenerator
           local type = ParseRuleType( cmd_type//type )
           print( "  class " ).println( class_name )
           builder.println.print( "  " ).print( class_class_name )
-          which (type)
-            case ParseRuleType.PRE_UNARY:  builder.println " extends Unary"
-            case ParseRuleType.POST_UNARY: builder.println " extends PostUnary"
-            case ParseRuleType.BINARY:     builder.println " extends Binary"
-            case ParseRuleType.STATEMENTS: builder.println " extends Statements"
-            case ParseRuleType.LIST:       builder.println " extends CmdList"
-            others:                        builder.println " extends Cmd"
-          endWhich
+
+          if (cmd_type//base_type)
+            builder.print( " extends " ).println( cmd_type//base_type )
+          else
+            which (type)
+              case ParseRuleType.PRE_UNARY:  builder.println " extends Unary"
+              case ParseRuleType.POST_UNARY: builder.println " extends PostUnary"
+              case ParseRuleType.BINARY:     builder.println " extends Binary"
+              case ParseRuleType.STATEMENTS: builder.println " extends Statements"
+              case ParseRuleType.LIST:       builder.println " extends CmdList"
+              others:                        builder.println " extends Cmd"
+            endWhich
+          endIf
           builder.println( "  {" )
 
           local cmd_properties = cmd_type//properties

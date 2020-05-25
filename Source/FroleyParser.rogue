@@ -907,7 +907,11 @@ class FroleyParser : Parser
       if (symbol is null)
         symbol = name.after_any( "Cmd" )
       endIf
-      return Froley.cmd_type( t, name, parse_rule_type, symbol, args )
+      local base_type : String
+      if (consume(TokenType.SYMBOL_COLON))
+        base_type = read_identifier
+      endIf
+      return Froley.cmd_type( t, name, parse_rule_type, symbol, args, base_type )
 
     method parse_cmd_init_args( cmd_name:String )->CmdTypeProperty[]
       if (not consume(TokenType.SYMBOL_OPEN_PAREN)) return null

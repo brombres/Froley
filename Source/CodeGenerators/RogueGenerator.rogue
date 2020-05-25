@@ -118,14 +118,18 @@ class GenerateRogue : CodeGenerator
             builder.print( " )" )
           endIf
 
-          which (type)
-            case ParseRuleType.PRE_UNARY:  builder.println " : Unary"
-            case ParseRuleType.POST_UNARY: builder.println " : PostUnary"
-            case ParseRuleType.BINARY:     builder.println " : Binary"
-            case ParseRuleType.STATEMENTS: builder.println " : Statements"
-            case ParseRuleType.LIST:       builder.println " : CmdList"
-            others:                        builder.println " : Cmd"
-          endWhich
+          if (cmd_type//base_type)
+            builder.print( " : " ).println( cmd_type//base_type )
+          else
+            which (type)
+              case ParseRuleType.PRE_UNARY:  builder.println " : Unary"
+              case ParseRuleType.POST_UNARY: builder.println " : PostUnary"
+              case ParseRuleType.BINARY:     builder.println " : Binary"
+              case ParseRuleType.STATEMENTS: builder.println " : Statements"
+              case ParseRuleType.LIST:       builder.println " : CmdList"
+              others:                        builder.println " : Cmd"
+            endWhich
+          endIf
           builder.println "  METHODS"
           if (cmd_properties.count)
             builder.println(   "    method init( t, args:CmdInitArgs )" )

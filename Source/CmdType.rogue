@@ -19,7 +19,7 @@ class CmdTypeProperty( name:String, type:String, value="":String )
       return @{ :name, :type, :value }
 endClass
 
-class CmdType( t:Token, name:String, type:ParseRuleType, index:Int32, symbol:String, properties:CmdTypeProperty[] )
+class CmdType( t:Token, name:String, type:ParseRuleType, index:Int32, symbol:String, properties:CmdTypeProperty[], base_type:String )
   METHODS
     method subcommand_count->Int32
       if (properties is null) return 0
@@ -33,7 +33,7 @@ class CmdType( t:Token, name:String, type:ParseRuleType, index:Int32, symbol:Str
     method to->Value
       local property_list = @[]
       if (properties) property_list.add( (forEach in properties)->Value )
-      return @{ :name, :index, :type, :symbol, properties:property_list }
+      return @{ :name, :index, :type, :symbol, properties:property_list, :base_type }
 
     method verify_args( args:CmdTypeProperty[] )
       contingent

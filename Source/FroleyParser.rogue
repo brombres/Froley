@@ -940,6 +940,7 @@ class FroleyParser : Parser
         else        value = t.number->String
         if (consume(TokenType.SYMBOL_DOT)) value += '.' + read_identifier
       endIf
+      if (value == "t") value = "t.content"
       if (consume(TokenType.SYMBOL_COLON)) type = read_identifier
       return CmdTypeProperty( name, type, value )
 

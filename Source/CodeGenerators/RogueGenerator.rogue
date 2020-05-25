@@ -148,10 +148,6 @@ class GenerateRogue : CodeGenerator
             builder.println
           endIf
 
-          builder.println "    method dispatch( visitor:Visitor )->$" (class_name)
-          builder.println "      return visitor.visit( this )"
-          builder.println
-
           local escaped_symbol = cmd_type//symbol->String.to_escaped_ascii("\"")
           which (type)
             case ParseRuleType.PRE_UNARY, ParseRuleType.POST_UNARY, ParseRuleType.BINARY

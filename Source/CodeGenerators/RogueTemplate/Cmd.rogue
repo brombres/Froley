@@ -11,7 +11,7 @@ augment RogueTemplate
        |    method init( t, args:CmdInitArgs )
        |      args.require_count( 0 )
        |
-       |    method dispatch( visitor:Visitor )->Cmd
+       |    method dispatch( visitor:Visitor )->Cmd [propagated]
        |      return visitor.visit( this )
        |
        |    method to->String
@@ -42,9 +42,6 @@ augment RogueTemplate
        |    method count->Int32
        |      return list.count
        |
-       |    method dispatch( visitor:Visitor )->CmdList
-       |      return visitor.visit( this )
-       |
        |    method first->Cmd
        |      return list.first
        |
@@ -69,9 +66,6 @@ augment RogueTemplate
        |
        |class Statements : CmdList
        |  METHODS
-       |    method dispatch( visitor:Visitor )->Statements
-       |      return visitor.visit( this )
-       |
        |    method write( builder:StringBuilder )
        |      forEach (statement in list)
        |        write( statement, builder )
@@ -85,9 +79,6 @@ augment RogueTemplate
        |      args.require_count( 1 )
        |      operand = args.first
        |
-       |    method dispatch( visitor:Visitor )->Unary
-       |      return visitor.visit( this )
-       |
        |    method op->String
        |      throw UnsupportedOperationError()
        |
@@ -99,9 +90,6 @@ augment RogueTemplate
        |
        |class PostUnary : Unary
        |  METHODS
-       |    method dispatch( visitor:Visitor )->PostUnary
-       |      return visitor.visit( this )
-       |
        |    method write( builder:StringBuilder )
        |      builder.print( '(' )
        |      write( operand, builder )
@@ -114,9 +102,6 @@ augment RogueTemplate
        |      args.require_count( 2 )
        |      left = args.first
        |      right = args.last
-       |
-       |    method dispatch( visitor:Visitor )->Binary
-       |      return visitor.visit( this )
        |
        |    method op->String
        |      throw UnsupportedOperationError()

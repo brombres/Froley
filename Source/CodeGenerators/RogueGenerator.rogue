@@ -294,7 +294,7 @@ class GenerateRogue : CodeGenerator
       writer.println( "    method create_cmd( index:Int32, t:Token, args:CmdInitArgs )->Cmd" )
       writer.println("      which (index)")
       forEach (cmd_type in info//cmd_types)
-        writer.print "        case $ : return $( t, args )" (cmd_type//index,cmd_type//name)
+        writer.println "        case $ : return $( t, args )" (cmd_type//index,cmd_type//name)
       endForEach
       writer.println @|        others
       writer.println(''          throw Error( "[INTERNAL] CmdFactory.create_cmd() index out of bounds: " + index )'' )

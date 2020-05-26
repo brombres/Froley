@@ -1,7 +1,5 @@
 # To run this build file, install Rogue from github.com/AbePralle/Rogue and type "rogo" at the command line.
 
-#$ ROGUEC_ARGS = --api
-
 # Rogo is a "build your own build system" facilitator. At its core Rogo just recompiles build files if
 # needed and then runs the build executable while forwarding any command line arguments. This file contains
 # a default framework which uses introspection to turn command line arguments into parameterized routine calls.
@@ -10,22 +8,90 @@
 
 # "rogo_default" will run in the absence of any other command line argument.
 
+# The following "comment directives" can be used in this file to control how RogueC compiles it and to
+# manage automatic dependency installation and linking.
+
+# Each of the following should be on a line beginning with the characters #$ (preceding whitespace is fine).
+# Sample args are given.
+
+#   ROGUEC       = roguec       # Path to roguec compiler to compile this file with
+#   ROGUEC_ARGS  = --whatever   # Additional options to pass to RogueC
+#   CPP          = g++ -Wall -std=gnu++11 -fno-strict-aliasing -Wno-invalid-offsetof   # C++ compiler path and/or invocation
+#   CPP_ARGS     = -a -b -c          # Additional C++ args
+#   LINK         = true              # Links following LIBRARIES with this Build file
+#   LINK         = -lalpha -lbeta    # Links following LIBRARIES and includes these additional flags
+#   LINK         = false             # Linking turned off for following LIBRARIES - info can still be obtained from #$LIBRARY_FLAGS()
+#   LINK(macOS)  = ...               # Options applying only to System.os=="macOS" (use with any OS and any comment directive)
+#   LIBRARIES    = libalpha
+#   LIBRARIES    = libbeta(library-name)
+#   LIBRARIES    = libfreetype6-dev(freetype2)
+#   DEPENDENCIES = Library/Rogue/**/*.rogue
+#
+#   LIBRARIES    = name(package)
+#   LIBRARIES    = name(package:<package> install:<install-cmd> link:<link-flags>)
+#
+# The following macro is replaced within this file (Build.rogue) - the libraries should also be declared in #$ LIBRARIES:
+#
+#   $LIBRARY_FLAGS(lib1,lib2)                              # sample macro
+#     ->
+#   -Ipath/to/lib1/include -Lpath/to/lib1/library -I ...   # sample replacement
+
+# description()s are optional - Rogo uses introspection to determine which commands are available.
+# 'rogo help default' displays the description for "default", etc.
+description( "default", "The default action is performed when no other actions are specified. Use 'rogo default' to explicitly perform the default option." )
+description( "help",    "Displays a list of all actions that can be performed by Rogo." )
+
 augment Build
+  # You can create a Local.mk file with overrides for these values, e.g.:
+  # LAUNCHER_FOLDER = "~/bin"
   PROPERTIES
-    EXE = which{System.os=="Windows":"Build/froley.exe" || "Build/Froley-"+System.os} : String
-    BINDIR   = "/usr/local/bin"
+    PROJECT         = "Froley"
+    LAUNCHER_NAME   = "froley"
+    LAUNCHER_FOLDER = "/usr/local/bin"
 endAugment
 
-routine rogo_default
-  if (needs_build)
-    rogo_build
-  else
-    println "Everything up-to-date ('rogo help' for help)"
-  endIf
+routine exe_filepath->String
+  if (System.is_windows) return "Build/$.exe" (Build.LAUNCHER_NAME)
+  return "Build/$-$" (Build.PROJECT,System.os)
 endRoutine
 
-routine needs_build->Logical
-  return (Files("Source","*.rogue").add("**/*.rogue").any_newer_than(Build.EXE))
+routine launcher_folder->String
+  local result = Build.LAUNCHER_FOLDER
+  result = File.expand_filepath( result )
+  return File.without_trailing_separator( result )
+endRoutine
+
+routine rogo_default
+  rogo_build
+  rogo_run
+  rogo_install_launcher  # Uncomment to automatically install a /usr/local/bin/froley launcher
+endRoutine
+
+routine rogo_build
+  block exe_filepath
+    local source_files = Files( "Source", "***/*.rogue" )
+    local src_filepath = "Source/$.rogue" (Build.PROJECT)
+    if (source_files.any_newer_than(exe_filepath))
+      local cpp_filepath = "Build/$-$.cpp" (Build.PROJECT,System.os)
+      if (source_files.any_newer_than(cpp_filepath))
+        execute "roguec $ --main --output=$ --target=Console,C++,$" (src_filepath,cpp_filepath,System.os)
+      endIf
+      if (System.is_windows)
+        local libs = ""
+        local cc = "cl /EHsc /nologo $ /Fe$ $" (cpp_filepath,exe_filepath,libs)
+        #cc += " /link /LTCG"   # uncomment this if there are errors linking libraries
+        execute cc
+      else
+        local libs = ""
+        local cc = "c++ -Wall -std=gnu++11 -fno-strict-aliasing -Wno-invalid-offsetof $ -o $$" (cpp_filepath,exe_filepath,libs)
+        execute cc
+      endIf
+    endIf
+  endBlock
+endRoutine
+
+routine rogo_run
+  execute File.conventional_filepath(exe_filepath)
 endRoutine
 
 routine rogo_demos
@@ -55,10 +121,51 @@ routine rogo_asm
   execute( "cd Demos/ASM && rogo" )
 endRoutine
 
+routine rogo_install_launcher
+  local exe_filepath = File.absolute_filepath( exe_filepath )
+  if (System.is_windows)
+    local exe_folder = File.conventional_filepath( File.folder(exe_filepath) )
+    local path = System.environment//PATH
+    if (not path.to_lowercase.contains(exe_folder.to_lowercase))
+      println
+      println ''Add the following to your system PATH then reopen this command prompt to be able''
+      println ''to launch $ by typing "$":'' (Build.PROJECT,Build.LAUNCHER_NAME)
+      println
+      println "  ADD THIS TO YOUR PATH"
+      println "  " + exe_folder
+    endIf
+  else
+    contingent
+      local result = Process.run( "which " + Build.LAUNCHER_NAME, &env )
+      necessary (result.success)
+      local launcher_filepath = result->String.trimmed
+      necessary launcher_filepath
+      necessary File.load_as_string( launcher_filepath ).contains( exe_filepath )
+
+    unsatisfied
+      local launcher_filepath = "$/$" (launcher_folder,Build.LAUNCHER_NAME)
+      println "Creating launcher " + launcher_filepath
+      local sudo = ""
+      loop
+        try
+          if (not File.exists(launcher_folder)) execute( "$mkdir $"(sudo,launcher_folder) )
+          File.save( "$.launcher"(Build.LAUNCHER_NAME), ''#!/bin/sh\nexec "$" "$@"\n''(exe_filepath,'$') )
+          execute( "$mv $.launcher $"(sudo,Build.LAUNCHER_NAME,launcher_filepath) )
+          execute( "$chmod a+x $"(sudo,launcher_filepath) )
+          escapeLoop
+        catch (err:Error)
+          if (sudo != "") throw err
+          sudo = "sudo "
+        endTry
+      endLoop
+    endContingent
+  endIf
+endRoutine
+
 routine rogo_clean
   rogo_clean_demos
-  execute( "rm -rf Build" )
-  execute( "rm -rf .rogo" )
+  verbose_delete( "Build" )
+  if (not System.is_windows) verbose_delete( "$/$"(launcher_folder,Build.LAUNCHER_NAME) )
 endRoutine
 
 routine rogo_clean_demos
@@ -68,64 +175,15 @@ routine rogo_clean_demos
   execute( "cd Demos/ASM && rogo xclean" )
 endRoutine
 
-routine rogo_build
-  if (needs_build)
-    File.create_folder( "Build" )
-    println "Compiling froley"
-    execute "roguec --debug Source/Froley.rogue --output=$ --compile" (Build.EXE)
-  endIf
-
-  if (System.os != "Windows" and Process.run( "which froley", &inherit_environment ).output_string == "") install_launcher
-endRoutine
-
-routine rogo_execute( arg:String )
-  execute "$ $" (Build.EXE,arg)
-endRoutine
-
-routine rogo_link
-  install_launcher
-endRoutine
-
-routine rogo_unlink
-  if (System.os == "Windows") return
-  local launcher = Process.run( "which froley", &inherit_environment ).output_string
-  if (launcher != "")
-    local cmd = "rm " + launcher
-    if (not execute(cmd,&suppress_error))
-      println "Error deleting $ - retrying with 'sudo'." (launcher)
-      #execute( "sudo " + cmd )
+routine verbose_delete( filepath:String )
+  if (File.exists(filepath))
+    println "> Delete " + filepath
+    if (not File.delete(filepath))
+      println "*** Failed to delete - retrying with sudo"
+      local cmd = ''sudo rm -rf $'' (File.shell_escaped(filepath))
+      execute cmd
     endIf
   endIf
-endRoutine
-
-routine install_launcher
-  if (System.os == "Windows") return
-  println "-------------------------------------------------------------------------------"
-  println "Creating $/froley launcher linked to $" (Build.BINDIR,Build.EXE)
-  println "-------------------------------------------------------------------------------"
-
-  local sudo = ""
-  if (not File.exists(Build.BINDIR))
-    println "$ does not exist. Creating..." (Build.BINDIR)
-    if (not execute( "mkdir -p $" (Build.BINDIR), &suppress_error ))
-      println "Error creating folder, trying again with 'sudo'"
-      sudo = "sudo "
-      execute( "sudo mkdir -p $" (Build.BINDIR) )
-    endIf
-    println "Created."
-  endIf
-
-  local folder = Process.run( "pwd" ).output_string.before_first('\n')
-  local script = "#!/bin/sh\n"
-  script += ''exec "$/$" "$@"\n'' (folder,Build.EXE,'$')
-  File.save( ".rogo/launcher.script", script )
-  if (not execute("$cp .rogo/launcher.script $/froley" (sudo,Build.BINDIR), &suppress_error=(sudo=="")))
-    println "Error copying launcher script - retrying with 'sudo'."
-    sudo = "sudo "
-    execute "sudo cp .rogo/launcher.script $/froley" (Build.BINDIR)
-  endIf
-  execute "$chmod a+x $/froley" (sudo,Build.BINDIR)
-  File.delete( ".rogo/launcher.script" )
 endRoutine
 
 routine execute( commands:String, &suppress_error )->Logical
@@ -176,7 +234,7 @@ class Build [singleton]
   METHODS
     method launch
       rogo_args.add( forEach in System.command_line_arguments )
-      read_local_defs
+      read_defs
       on_launch
       parse_args
       dispatch_command
@@ -201,7 +259,9 @@ class Build [singleton]
       return <<Global>>.find_method( rogo_prefix + name )
 
     method on_error
+      Console.error.println "=" * 79
       Console.error.println rogo_error
+      Console.error.println "=" * 79
       on_exit
       System.exit 1
 
@@ -247,10 +307,10 @@ class Build [singleton]
         on_command_found
       endBlock
 
-    method read_local_defs
-      read_local_defs( LOCAL_DEFS_FILE )
+    method read_defs
+      read_defs( LOCAL_DEFS_FILE )
 
-    method read_local_defs( defs_filepath:String )
+    method read_defs( defs_filepath:String )
       # Attempt to read defs from Local.mk
       local overrides = String[]
       if (File.exists(defs_filepath))

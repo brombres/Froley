@@ -1,3 +1,5 @@
+$define VERSION_INFO "Froley v1.2 - May 25, 2020 by Abe Pralle"
+
 module Froley
   uses ParseKit<<Froley>>
 
@@ -115,6 +117,9 @@ class Launcher
       endTry
 
     method print_usage( writer=Console:PrintWriter )->PrintWriter
+      writer.println VERSION_INFO
+      writer.println
+
       writer.println @|USAGE
                       |  froley filename.froley [--target=<target-language>] [options]
                |

@@ -2,8 +2,9 @@
 
 About          | Current Release
 ---------------|-----------------------
-Version        | v1.1.0
-Date           | May 17, 2020
+Version        | v1.2
+Date           | May 25, 2020
+Platforms      | macOS, Linux, Windows
 Output Targets | Rogue, Java
 
 ## Overview
@@ -15,7 +16,9 @@ Output Targets | Rogue, Java
 ## Installation
 1. Clone this Froley project
 2. Install [Rogue](https://github.com/AbePralle/Rogue)
-3. Run `rogo` in the base folder to compile the Froley compiler. A launcher will be installed at `/usr/local/bin/froley`.
+3. Run `rogo` in this folder to compile Froley.
+    - On macOS and Linux a launcher will be created here: `/usr/local/bin/froley`.
+    - On Windows the build process will print the necessary folder to add to the system PATH environment variable.
 
 ## Demos
 The `Demos/` folder contains a number of examples that can be adapted to your own projects. Execute the following Rogo commands to try the different examples:

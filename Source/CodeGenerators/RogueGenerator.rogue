@@ -196,7 +196,7 @@ class GenerateRogue : CodeGenerator
       local builder : StringBuilder
       forEach (cmd_type in info//cmd_types)
         local base_name = (cmd_type//name)->String
-        local visit_method_name = "method visit( cmd:$ )->$" (base_name,base_name)
+        local visit_method_name = "method visit( cmd:$ )->Cmd" (base_name)
         if (not content.contains(visit_method_name))
           if (not builder)
             println "Updating " + filepath
@@ -239,7 +239,9 @@ class GenerateRogue : CodeGenerator
                 if (p//value.count == 0)
                   # Not a primitive
                   local p_name = p//name
-                  builder.println( "      if (cmd.$) cmd.$ = cmd.$.dispatch( this )" (p_name,p_name,p_name) )
+                  builder.print "      if (cmd.$) cmd.$ = cmd.$.dispatch( this )" (p_name,p_name,p_name)
+                  if (p//type != "Cmd") builder.println " as " + p//type
+                  builder.println
                 endIf
               endForEach
               builder.println( "      return cmd" )

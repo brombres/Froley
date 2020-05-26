@@ -66,7 +66,7 @@ augment JavaTemplate
        |      return list.size();
        |    }
        |
-       |    public CmdList dispatch( Visitor visitor )
+       |    public Cmd dispatch( Visitor visitor )
        |    {
        |      return visitor.visit( this );
        |    }
@@ -106,7 +106,7 @@ augment JavaTemplate
        |      super( t, args );
        |    }
        |
-       |    public Statements dispatch( Visitor visitor )
+       |    public Cmd dispatch( Visitor visitor )
        |    {
        |      return visitor.visit( this );
        |    }
@@ -135,7 +135,7 @@ augment JavaTemplate
        |      return this;
        |    }
        |
-       |    public Unary dispatch( Visitor visitor )
+       |    public Cmd dispatch( Visitor visitor )
        |    {
        |      return visitor.visit( this );
        |    }
@@ -156,7 +156,7 @@ augment JavaTemplate
        |  static public class PostUnary extends Unary
        |  {
        |    // METHODS
-       |    public PostUnary dispatch( Visitor visitor )
+       |    public Cmd dispatch( Visitor visitor )
        |    {
        |      return visitor.visit( this );
        |    }
@@ -185,7 +185,7 @@ augment JavaTemplate
        |      return this;
        |    }
        |
-       |    public Binary dispatch( Visitor visitor )
+       |    public Cmd dispatch( Visitor visitor )
        |    {
        |      return visitor.visit( this );
        |    }

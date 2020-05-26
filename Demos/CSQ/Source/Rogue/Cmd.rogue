@@ -8,7 +8,7 @@ class Cmd
     method init( t, args:CmdInitArgs )
       args.require_count( 0 )
 
-    method dispatch( visitor:Visitor )->Cmd
+    method dispatch( visitor:Visitor )->Cmd [propagated]
       return visitor.visit( this )
 
     method to->String
@@ -39,9 +39,6 @@ class CmdList : Cmd
     method count->Int32
       return list.count
 
-    method dispatch( visitor:Visitor )->CmdList
-      return visitor.visit( this )
-
     method first->Cmd
       return list.first
 
@@ -66,9 +63,6 @@ endClass
 
 class Statements : CmdList
   METHODS
-    method dispatch( visitor:Visitor )->Statements
-      return visitor.visit( this )
-
     method write( builder:StringBuilder )
       forEach (statement in list)
         write( statement, builder )
@@ -82,9 +76,6 @@ class Unary( t, operand:Cmd ) : Cmd
       args.require_count( 1 )
       operand = args.first
 
-    method dispatch( visitor:Visitor )->Unary
-      return visitor.visit( this )
-
     method op->String
       throw UnsupportedOperationError()
 
@@ -96,9 +87,6 @@ endClass
 
 class PostUnary : Unary
   METHODS
-    method dispatch( visitor:Visitor )->PostUnary
-      return visitor.visit( this )
-
     method write( builder:StringBuilder )
       builder.print( '(' )
       write( operand, builder )
@@ -111,9 +99,6 @@ class Binary( t, left:Cmd, right:Cmd ) : Cmd
       args.require_count( 2 )
       left = args.first
       right = args.last
-
-    method dispatch( visitor:Visitor )->Binary
-      return visitor.visit( this )
 
     method op->String
       throw UnsupportedOperationError()
@@ -135,9 +120,6 @@ class If( t, condition:Cmd, body:Cmd, else_body:Cmd ) : Cmd
       this.body = args[ 1 ]
       this.else_body = args[ 2 ]
 
-    method dispatch( visitor:Visitor )->If
-      return visitor.visit( this )
-
     method write( builder:StringBuilder )
       builder.print( "If(" )
       write( condition, builder )
@@ -156,9 +138,6 @@ class For( t, initializer:Cmd, condition:Cmd, modifier:Cmd, body:Cmd ) : Cmd
       this.condition = args[ 1 ]
       this.modifier = args[ 2 ]
       this.body = args[ 3 ]
-
-    method dispatch( visitor:Visitor )->For
-      return visitor.visit( this )
 
     method write( builder:StringBuilder )
       builder.print( "For(" )
@@ -179,9 +158,6 @@ class While( t, condition:Cmd, body:Cmd ) : Cmd
       this.condition = args[ 0 ]
       this.body = args[ 1 ]
 
-    method dispatch( visitor:Visitor )->While
-      return visitor.visit( this )
-
     method write( builder:StringBuilder )
       builder.print( "While(" )
       write( condition, builder )
@@ -196,9 +172,6 @@ class Name( t, value:String ) : Cmd
       args.require_count( 0 )
       this.value = t.content
 
-    method dispatch( visitor:Visitor )->Name
-      return visitor.visit( this )
-
     method write( builder:StringBuilder )
       builder.print( value )
 endClass
@@ -210,9 +183,6 @@ class LocalDeclaration( t, type:Cmd, name:Cmd, initial_value:Cmd ) : Cmd
       this.type = args[ 0 ]
       this.name = args[ 1 ]
       this.initial_value = args[ 2 ]
-
-    method dispatch( visitor:Visitor )->LocalDeclaration
-      return visitor.visit( this )
 
     method write( builder:StringBuilder )
       builder.print( "LocalDeclaration(" )
@@ -226,207 +196,138 @@ endClass
 
 class Assign : Binary
   METHODS
-    method dispatch( visitor:Visitor )->Assign
-      return visitor.visit( this )
-
     method op->String
       return "="
 endClass
 
 class AddAndAssign : Binary
   METHODS
-    method dispatch( visitor:Visitor )->AddAndAssign
-      return visitor.visit( this )
-
     method op->String
       return "+="
 endClass
 
 class SubtractAndAssign : Binary
   METHODS
-    method dispatch( visitor:Visitor )->SubtractAndAssign
-      return visitor.visit( this )
-
     method op->String
       return "-="
 endClass
 
 class MultiplyAndAssign : Binary
   METHODS
-    method dispatch( visitor:Visitor )->MultiplyAndAssign
-      return visitor.visit( this )
-
     method op->String
       return "*="
 endClass
 
 class DivideAndAssign : Binary
   METHODS
-    method dispatch( visitor:Visitor )->DivideAndAssign
-      return visitor.visit( this )
-
     method op->String
       return "/="
 endClass
 
 class ModAndAssign : Binary
   METHODS
-    method dispatch( visitor:Visitor )->ModAndAssign
-      return visitor.visit( this )
-
     method op->String
       return "%="
 endClass
 
 class AndAndAssign : Binary
   METHODS
-    method dispatch( visitor:Visitor )->AndAndAssign
-      return visitor.visit( this )
-
     method op->String
       return "&="
 endClass
 
 class OrAndAssign : Binary
   METHODS
-    method dispatch( visitor:Visitor )->OrAndAssign
-      return visitor.visit( this )
-
     method op->String
       return "|="
 endClass
 
 class CompareEQ : Binary
   METHODS
-    method dispatch( visitor:Visitor )->CompareEQ
-      return visitor.visit( this )
-
     method op->String
       return "=="
 endClass
 
 class CompareNE : Binary
   METHODS
-    method dispatch( visitor:Visitor )->CompareNE
-      return visitor.visit( this )
-
     method op->String
       return "!="
 endClass
 
 class CompareLT : Binary
   METHODS
-    method dispatch( visitor:Visitor )->CompareLT
-      return visitor.visit( this )
-
     method op->String
       return "<"
 endClass
 
 class CompareGT : Binary
   METHODS
-    method dispatch( visitor:Visitor )->CompareGT
-      return visitor.visit( this )
-
     method op->String
       return ">"
 endClass
 
 class CompareLE : Binary
   METHODS
-    method dispatch( visitor:Visitor )->CompareLE
-      return visitor.visit( this )
-
     method op->String
       return "<="
 endClass
 
 class CompareGE : Binary
   METHODS
-    method dispatch( visitor:Visitor )->CompareGE
-      return visitor.visit( this )
-
     method op->String
       return ">="
 endClass
 
 class Add : Binary
   METHODS
-    method dispatch( visitor:Visitor )->Add
-      return visitor.visit( this )
-
     method op->String
       return "+"
 endClass
 
 class Subtract : Binary
   METHODS
-    method dispatch( visitor:Visitor )->Subtract
-      return visitor.visit( this )
-
     method op->String
       return "-"
 endClass
 
 class Multiply : Binary
   METHODS
-    method dispatch( visitor:Visitor )->Multiply
-      return visitor.visit( this )
-
     method op->String
       return "*"
 endClass
 
 class Divide : Binary
   METHODS
-    method dispatch( visitor:Visitor )->Divide
-      return visitor.visit( this )
-
     method op->String
       return "/"
 endClass
 
 class Negate : Unary
   METHODS
-    method dispatch( visitor:Visitor )->Negate
-      return visitor.visit( this )
-
     method op->String
       return "-"
 endClass
 
 class PreIncrement : Unary
   METHODS
-    method dispatch( visitor:Visitor )->PreIncrement
-      return visitor.visit( this )
-
     method op->String
       return "++"
 endClass
 
 class PreDecrement : Unary
   METHODS
-    method dispatch( visitor:Visitor )->PreDecrement
-      return visitor.visit( this )
-
     method op->String
       return "--"
 endClass
 
 class PostIncrement : PostUnary
   METHODS
-    method dispatch( visitor:Visitor )->PostIncrement
-      return visitor.visit( this )
-
     method op->String
       return "++"
 endClass
 
 class PostDecrement : PostUnary
   METHODS
-    method dispatch( visitor:Visitor )->PostDecrement
-      return visitor.visit( this )
-
     method op->String
       return "--"
 endClass
@@ -437,9 +338,6 @@ class Access( t, value:String ) : Cmd
       args.require_count( 0 )
       this.value = t.content
 
-    method dispatch( visitor:Visitor )->Access
-      return visitor.visit( this )
-
     method write( builder:StringBuilder )
       builder.print( value )
 endClass
@@ -449,9 +347,6 @@ class LiteralInt32( t, value:Int32 ) : Cmd
     method init( t, args:CmdInitArgs )
       args.require_count( 0 )
       this.value = t.content->Int32
-
-    method dispatch( visitor:Visitor )->LiteralInt32
-      return visitor.visit( this )
 
     method write( builder:StringBuilder )
       builder.print( ""+value )

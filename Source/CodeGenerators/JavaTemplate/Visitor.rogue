@@ -13,7 +13,7 @@ augment JavaTemplate
        |    return cmd.dispatch( this );
        |  }
        |
-       |  public Cmd.CmdList visit( Cmd.CmdList cmd )
+       |  public Cmd visit( Cmd.CmdList cmd )
        |  {
        |    ArrayList<Cmd> list = cmd.list;
        |    int count = list.size();
@@ -25,7 +25,7 @@ augment JavaTemplate
        |    return cmd;
        |  }
        |
-       |  public Cmd.Statements visit( Cmd.Statements cmd )
+       |  public Cmd visit( Cmd.Statements cmd )
        |  {
        |    ArrayList<Cmd> list = cmd.list;
        |    int count = list.size();
@@ -37,19 +37,19 @@ augment JavaTemplate
        |    return cmd;
        |  }
        |
-       |  public Cmd.Unary visit( Cmd.Unary cmd )
+       |  public Cmd visit( Cmd.Unary cmd )
        |  {
        |    if (cmd.operand != null) cmd.operand = cmd.operand.dispatch( this );
        |    return cmd;
        |  }
        |
-       |  public Cmd.PostUnary visit( Cmd.PostUnary cmd )
+       |  public Cmd visit( Cmd.PostUnary cmd )
        |  {
        |    if (cmd.operand != null) cmd.operand = cmd.operand.dispatch( this );
        |    return cmd;
        |  }
        |
-       |  public Cmd.Binary visit( Cmd.Binary cmd )
+       |  public Cmd visit( Cmd.Binary cmd )
        |  {
        |    if (cmd.left != null)  cmd.left = cmd.left.dispatch( this );
        |    if (cmd.right != null) cmd.right = cmd.right.dispatch( this );

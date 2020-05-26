@@ -213,10 +213,10 @@ class GenerateJava : CodeGenerator
             builder.println
           endIf
 
-          builder.println "  public $ dispatch( Visitor visitor )" (class_name)
-          builder.println "  {"
-          builder.println "    return visitor.visit( this );"
-          builder.println "  }"
+          builder.println "    public Cmd dispatch( Visitor visitor )"
+          builder.println "    {"
+          builder.println "      return visitor.visit( this );"
+          builder.println "    }"
           builder.println
 
           local escaped_symbol = cmd_type//symbol->String.to_escaped_ascii("\"")
@@ -268,7 +268,7 @@ class GenerateJava : CodeGenerator
       local builder : StringBuilder
       forEach (cmd_type in info//cmd_types)
         local base_name = (cmd_type//name)->String
-        local visit_method_name = "public Cmd.$ visit( Cmd.$ cmd )" (base_name,base_name)
+        local visit_method_name = "public Cmd visit( Cmd.$ cmd )" (base_name)
         if (not content.contains(visit_method_name))
           if (not builder)
             println "Updating " + filepath
@@ -280,9 +280,9 @@ class GenerateJava : CodeGenerator
             builder.println( content ).println
           endIf
 
-          print( "  " ).println( visit_method_name )
-          builder.println.print( "  " ).println( visit_method_name )
-          builder.println( "  {" )
+          print( "    " ).println( visit_method_name )
+          builder.println.print( "    " ).println( visit_method_name )
+          builder.println( "    {" )
 
           local type = ParseRuleType( cmd_type//type )
           which (type)
@@ -314,13 +314,14 @@ class GenerateJava : CodeGenerator
                 if (p//value.count == 0)
                   # Not a primitive
                   local p_name = p//name
-                  builder.println( "    if (cmd.$ != null) cmd.$ = cmd.$.dispatch( this );" (p_name,p_name,p_name) )
+                  local cast = which{ p//type=="Cmd":"" || "(Cmd.$)"(p//type) }
+                  builder.println( "      if (cmd.$ != null) cmd.$ = $cmd.$.dispatch( this );" (p_name,p_name,cast,p_name) )
                 endIf
               endForEach
-              builder.println( "    return cmd;" )
+              builder.println( "      return cmd;" )
           endWhich
 
-          builder.println( "  }" )
+          builder.println( "    }" )
         endIf
       endForEach
 

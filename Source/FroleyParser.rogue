@@ -493,6 +493,14 @@ class FroleyParser : Parser
         statements.add( TokenizerCmdTrace(t) )
         return
 
+      elseIf (consume(TokenType.KEYWORD_TRIM))
+        if (consume(TokenType.KEYWORD_BUFFER))
+          statements.add( TokenizerCmdOp(t,"trim buffer",TokenizerOpcode.TRIM_BUFFER) )
+          return
+        else
+          throw peek.error( "Expected 'buffer'." )
+        endIf
+
       elseIf (consume(TokenType.KEYWORD_WHICH))
         local has_parens = consume( TokenType.SYMBOL_OPEN_PAREN )
         local uses_input = consume( TokenType.KEYWORD_INPUT )

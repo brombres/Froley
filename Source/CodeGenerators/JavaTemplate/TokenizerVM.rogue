@@ -249,6 +249,12 @@ augment JavaTemplate
        |        case TokenizerOpcode.PRINT_STRING:
        |          System.out.print( strings[code[ip++]] );
        |          continue;
+       |        case TokenizerOpcode.TRIM_BUFFER:
+       |          {
+       |            String trimmed = buffer.toString().trim();
+       |            buffer.clear().print( trimmed );
+       |          }
+       |          continue;
        |        case TokenizerOpcode.COMPARE_CH_INT32:
        |          result = ch - code[ip++];
        |          continue;

@@ -78,6 +78,7 @@ augment TokenType
   KEYWORD_SWAP              ( "swap",                 &is_keyword )
   KEYWORD_SYNTAX_ERROR      ( "syntaxError",          &is_keyword )
   KEYWORD_TRACE             ( "trace",                &is_keyword )
+  KEYWORD_TRIM              ( "trim",                 &is_keyword )
   KEYWORD_TRUE              ( "true",                 &is_keyword )
   KEYWORD_VAR               ( "var",                  &is_keyword )
   KEYWORD_WHICH             ( "which",                &is_keyword )

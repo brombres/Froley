@@ -222,6 +222,10 @@ augment RogueTemplate
        |            print strings[ code[ip] ]
        |            ++ip
        |            nextIteration
+       |          case TokenizerOpcode.TRIM_BUFFER
+       |            local trimmed = buffer->String.trimmed
+       |            buffer.[ clear, print trimmed ]
+       |            nextIteration
        |          case TokenizerOpcode.COMPARE_CH_INT32
        |            result = ch - code[ip]
        |            ++ip

@@ -59,6 +59,7 @@ enum TokenizerOpcode( size=1:Int32 )
   ADD_CH_INT32(2)       # ch    += ARG1
   ADD_COUNT_INT32(2)    # count += ARG1
   SUBTRACT_CH_COUNT     # ch    += count
+  TRIM_BUFFER           # BUFFER = BUFFER->String.trimmed
   WHICH_INPUT           # (complex)
   WHICH_BUFFER          # (complex)
   TRACE                 #

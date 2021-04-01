@@ -86,7 +86,7 @@ class Launcher
               active_generators.add( cur_gen )
               if (language_override) cur_gen.language = language_override
             else
-              local valid_names = Froley.code_generators.keys
+              local valid_names = Froley.code_generators.keys.to_list
               throw FroleyError( "Invalid target '$'. Valid targets: $." (value,valid_names.join(", ")) )
             endIf
           elseIf (cur_gen is null)

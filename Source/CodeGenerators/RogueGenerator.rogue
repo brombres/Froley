@@ -133,15 +133,23 @@ class GenerateRogue : CodeGenerator
           builder.println "  METHODS"
           if (cmd_properties.count)
             builder.println(   "    method init( t, args:CmdInitArgs )" )
-            builder.print(   "      args.require_count( " ).print( cmd_type//properties.count($//value=="") ).println( " )" )
+            builder.print(   "      args.require_count( " ).print( cmd_type//properties.count(not ($//value->String.begins_with("t."))) ).println( " )" )
             local index = 0
             forEach (p in cmd_properties)
               builder.print( "      this." )
               builder.print( p//name )
               builder.print( " = " )
               if (p//value != "")
-                builder.print( p//value )
-                if (p//type != "String") builder.print( "->" ).print( p//type )
+                local initializer = p//value->String
+                if (initializer.begins_with("t.") or not initializer.contains("."))
+                  builder.print( initializer )
+                  if (p//type != "String") builder.print( "->" ).print( p//type )
+                else
+                  local init_type     = initializer.before_first('.')
+                  local init_property = initializer.after_first('.')
+                  builder.print( "(args[$] as $).$"(index,init_type,init_property) )
+                  ++index
+                endIf
               else
                 builder.print( "args[ " ).print( index ).print( " ]" )
                 if (p//type != "Cmd") builder.print( " as " ).print( p//type )

@@ -187,7 +187,7 @@ class GenerateJava : CodeGenerator
             # Systematic initializer
             builder.println(   "    public $ init( Token t, CmdInitArgs args )" (class_name) )
             builder.println( "    {" )
-            builder.println(   "      args.requireCount( $ );" (cmd_type//properties.count($//value=="")) )
+            builder.println(   "      args.requireCount( $ );" (cmd_type//properties.count(not $//value->String.begins_with("t."))) )
             builder.println(   "      this.t = t;" )
             local index = 0
             forEach (p in cmd_properties)
@@ -197,10 +197,18 @@ class GenerateJava : CodeGenerator
               if (p//value != "")
                 # name = t.content;
                 # name = StringUtility.stringToInt32( t.content );
-                if (p//type == "String")
-                  builder.print( p//value ).println( ';' )
+                local initializer = p//value->String
+                if (initializer.begins_with("t.") or not initializer.contains("."))
+                  if (p//type == "String")
+                    builder.print( initializer ).println( ';' )
+                  else
+                    builder.println( "StringUtility.stringTo$( $ );" (p//type,p//value) )
+                  endIf
                 else
-                  builder.println( "StringUtility.stringTo$( $ );" (p//type,p//value) )
+                  local init_type     = initializer.before_first('.')
+                  local init_property = initializer.after_first('.')
+                  builder.println( "(($) args.get($)).$;"(init_type,index,init_property) )
+                  ++index
                 endIf
               else
                 if (p//type != "Cmd") builder.print( "($)" (fix_type(p//type)) )

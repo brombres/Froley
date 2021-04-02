@@ -24,7 +24,7 @@ class CmdType( t:Token, name:String, type:ParseRuleType, index:Int32, symbol:Str
     method subcommand_count->Int32
       if (properties is null) return 0
       local n = 0
-      if ((forEach in properties).value == "") ++n
+      if (not ((forEach in properties).value->String.begins_with("t."))) ++n
       return n
 
     method to->String

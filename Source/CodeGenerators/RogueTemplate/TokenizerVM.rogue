@@ -42,6 +42,27 @@ augment RogueTemplate
        |      forEach (ch in id_continue) id_characters[ch->Int32] = 2
        |      forEach (ch in id_start)    id_characters[ch->Int32] = 1
        |
+       |    method set_mode( new_mode_name:String )
+       |      forEach (entry_point in entry_points)
+       |        if (entry_point.name == new_mode_name)
+       |          start_ip = entry_point.ip
+       |          return
+       |        endIf
+       |      endForEach
+       |      throw UnsupportedOperationError( ''No such mode "$".'' (new_mode_name) )
+       |
+       |    method tokenize( file:File )->Token[]
+       |      if (not file.exists) throw Error( "File not found: $." (file.filepath) )
+       |      tokenize( file.filepath, file.load_as_string )
+       |      return tokens
+       |
+       |    method tokenize( filepath, source:String, start_line=1:Int32, start_column=1:Int32 )->Token[]
+       |      scanner = Scanner( source )
+       |      scanner.line = start_line
+       |      scanner.column = start_column
+       |      execute
+       |      return tokens
+       |
        |    method reset
        |      stack.clear
        |      ch = 0
@@ -435,19 +456,6 @@ augment RogueTemplate
        |        builder.print( describe_character(scanner.peek) ).print( '.' )
        |      endIf
        |      throw Error( filepath, scanner.source, scanner.line, scanner.column, builder->String )
-       |
-       |    method tokenize( file:File )->Token[]
-       |      if (not file.exists) throw Error( "File not found: $." (file.filepath) )
-       |      tokenize( file.filepath, file.load_as_string )
-       |      return tokens
-       |
-       |    method tokenize( filepath, source:String, start_line=1:Int32, start_column=1:Int32 )->Token[]
-       |      reset
-       |      scanner = Scanner( source )
-       |      scanner.line = start_line
-       |      scanner.column = start_column
-       |      execute
-       |      return tokens
        |endClass
        |
        |class EntryPoint( name:String, ip:Int32 ) [compound]

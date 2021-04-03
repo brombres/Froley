@@ -50,6 +50,35 @@ augment JavaTemplate
        |    }
        |  }
        |
+       |  public void setMode( String newModeName )
+       |  {
+       |    for (int i=0; i<entryPoints.length; ++i)
+       |    {
+       |      EntryPoint entryPoint = entryPoints[i];
+       |      if (entryPoint.name.equals(newModeName))
+       |      {
+       |        startIP = entryPoint.ip;
+       |        return;
+       |      }
+       |    }
+       |    throw new RuntimeException( "No such mode \"" + newModeName + "\"." );
+       |  }
+       |
+       |  public Token[] tokenize( String filepath, String source )
+       |  {
+       |    return tokenize( filepath, source, 1, 1 );
+       |  }
+       |
+       |  public Token[] tokenize( String filepath, String source, int start_line, int start_column )
+       |  {
+       |    this.filepath = filepath;
+       |    scanner = new Scanner( filepath, source );
+       |    scanner.line = start_line;
+       |    scanner.column = start_column;
+       |    execute();
+       |    return tokens.toArray( new Token[ tokens.size() ] );
+       |  }
+       |
        |  public void reset()
        |  {
        |    stack.clear();
@@ -497,22 +526,6 @@ augment JavaTemplate
        |  {
        |    if (!file.exists()) throw new Error( "FroleyLanguage", "File not found: " + file );
        |    return tokenize( file.toString(), StringUtility.load(file) );
-       |  }
-       |
-       |  public Token[] tokenize( String filepath, String source )
-       |  {
-       |    return tokenize( filepath, source, 1, 1 );
-       |  }
-       |
-       |  public Token[] tokenize( String filepath, String source, int start_line, int start_column )
-       |  {
-       |    this.filepath = filepath;
-       |    reset();
-       |    scanner = new Scanner( filepath, source );
-       |    scanner.line = start_line;
-       |    scanner.column = start_column;
-       |    execute();
-       |    return tokens.toArray( new Token[ tokens.size() ] );
        |  }
        |
        |  static public class EntryPoint

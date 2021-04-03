@@ -647,6 +647,13 @@ class TokenizerCmdCompare<<$OPCODE>> : CmdBinary
           return
         endIf
       endIf
+      if (left.is_buffer)
+        local st = right as TokenizerCmdLiteralString
+        if (st)
+          assembler.write( TokenizerOpcode.COMPARE_BUFFER_STRING, st.value )
+          return
+        endIf
+      endIf
       throw t.error( "Unsupported comparison between '$' and '$'." (left,right) )
 endClass
 

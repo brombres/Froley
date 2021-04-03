@@ -36,6 +36,7 @@ enum TokenizerOpcode( size=1:Int32 )
   PRINT_COUNT           # println count->Int32
   PRINT_CHARACTER(2)    # println ARG1->Character
   PRINT_STRING(2)       # println strings[index:ARG1]
+  COMPARE_BUFFER_STRING # RESULT = buffer.compare_to(strings[index:ARG1])
   COMPARE_CH_INT32      # RESULT = ch - ARG1
   COMPARE_COUNT_INT32   # RESULT = count - ARG1
   CH_IS_DIGIT_BASE_INT32(2)  # RESULT = which{ ch.is_digit(base:ARG1):1 || 0 }

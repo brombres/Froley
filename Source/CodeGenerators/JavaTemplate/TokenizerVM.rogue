@@ -284,6 +284,9 @@ augment JavaTemplate
        |            buffer.clear().print( trimmed );
        |          }
        |          continue;
+       |        case TokenizerOpcode.COMPARE_BUFFER_STRING:
+       |          result = buffer.compareTo( strings[code[ip++]] );
+       |          continue;
        |        case TokenizerOpcode.COMPARE_CH_INT32:
        |          result = ch - code[ip++];
        |          continue;

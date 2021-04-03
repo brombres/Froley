@@ -69,7 +69,7 @@ endRoutine
 
 routine rogo_build
   block exe_filepath
-    local source_files = Files( "Source", "***/*.rogue" )
+    local source_files = Files( "Source", "**/*.rogue" )
     local src_filepath = "Source/$.rogue" (Build.PROJECT)
     if (source_files.any_newer_than(exe_filepath))
       local cpp_filepath = "Build/$-$.cpp" (Build.PROJECT,System.os)

@@ -732,7 +732,7 @@ endClass
 class TokenizerCmdConsumeCharacter( t, value:Int32 ) : Cmd
   METHODS
     method jump_if_true->TokenizerOpcode
-      return TokenizerOpcode.JUMP_GT
+      return TokenizerOpcode.JUMP_NE
 
     method to->String
       return "consume($)" (value->Character.to_escaped_ascii)
@@ -744,7 +744,7 @@ endClass
 class TokenizerCmdMustConsumeCharacter( t, value:Int32 ) : Cmd
   METHODS
     method jump_if_true->TokenizerOpcode
-      return TokenizerOpcode.JUMP_GT
+      return TokenizerOpcode.JUMP_NE
 
     method to->String
       return "mustConsume($)" (value->Character.to_escaped_ascii)
@@ -756,7 +756,7 @@ endClass
 class TokenizerCmdNextIsCharacter( t, value:Int32 ) : Cmd
   METHODS
     method jump_if_true->TokenizerOpcode
-      return TokenizerOpcode.JUMP_GT
+      return TokenizerOpcode.JUMP_NE
 
     method to->String
       return "nextIs($)" (value->Character.to_escaped_ascii)

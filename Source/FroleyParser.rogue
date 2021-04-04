@@ -148,7 +148,7 @@ class FroleyParser : Parser
             local expr = parser.parse_tokenizer_expression()
             if (expr.is_integer) return TokenizerCmdPeekInt32( t, expr->Int32 )
             if (expr.is_count)   return TokenizerCmdPeekCount( t )
-            throw expr.t.error( "'Expected 'peek', 'peek(<integer>)', or 'peek(count)'." )
+            throw expr.t.error( "Expected 'peek', 'peek(<integer>)', or 'peek(count)'." )
           else
             return TokenizerCmdPeek( t )
           endIf
@@ -162,8 +162,9 @@ class FroleyParser : Parser
             parser.must_consume( TokenType.SYMBOL_CLOSE_PAREN )
             t = expr.t
             if (expr.is_integer) return TokenizerCmdConsumeCharacter( t, expr->Int32 )
+            if (expr.is_string)  return TokenizerCmdConsumeString( t, expr.text )
           endIf
-          throw t.error( "'Expected 'consume(<character>)'." )
+          throw t.error( "Expected 'consume(<character>)' or 'consume(<string>)'." )
         endFunction
       )
       rule.on( "nextIs",
@@ -175,7 +176,18 @@ class FroleyParser : Parser
             t = expr.t
             if (expr.is_integer) return TokenizerCmdNextIsCharacter( t, expr->Int32 )
           endIf
-          throw t.error( "'Expected 'nextIs(<character>)'." )
+          throw t.error( "Expected 'nextIs(<character>)'." )
+        endFunction
+      )
+      rule.on( "modeIs",
+        function(parser:FroleyParser)->Cmd
+        local t = parser.read  # 'modeIs'
+          if (parser.consume(TokenType.SYMBOL_OPEN_PAREN))
+            local label_name = parser.read_label_name
+            parser.must_consume( TokenType.SYMBOL_CLOSE_PAREN )
+            return TokenizerCmdModeIs( t, label_name )
+          endIf
+          throw t.error( "Expected 'modeIs(<label>)'." )
         endFunction
       )
 
@@ -378,7 +390,7 @@ class FroleyParser : Parser
             return
           endIf
         endIf
-        throw t.error( "'Expected 'mustConsume(<character>)'." )
+        throw t.error( "Expected 'mustConsume(<character>)'." )
 
       elseIf (consume(TokenType.KEYWORD_PRODUCE))
         local name = read_identifier

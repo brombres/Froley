@@ -140,6 +140,9 @@ augment JavaTemplate
        |        case TokenizerOpcode.MODE_INT32:
        |          startIP = code[ ip++ ];
        |          continue;
+       |        case TokenizerOpcode.MODE_IS:
+       |          result = (startIP == code[ ip++ ]) ? 1 : 0;
+       |          continue;
        |        case TokenizerOpcode.SYNTAX_ERROR:
        |          throwSyntaxError();
        |        case TokenizerOpcode.SYNTAX_ERROR_BUFFER:
@@ -206,6 +209,25 @@ augment JavaTemplate
        |          {
        |            int value = code[ip++];
        |            result = (scanner.consume((char)value) ? 1 : 0);
+       |            continue;
+       |          }
+       |        case TokenizerOpcode.CONSUME_STRING:
+       |          {
+       |            String value = strings[ code[ip++] ];
+       |            int limit = value.length();
+       |            result = 1;
+       |            for (int index=0; index<limit; ++index)
+       |            {
+       |              if (scanner.peek(index) != value.charAt(index))
+       |              {
+       |                result = 0;
+       |                break;
+       |              }
+       |            }
+       |            if (result == 1)
+       |            {
+       |              for (int index=0; index<limit; ++index) scanner.read();
+       |            }
        |            continue;
        |          }
        |        case TokenizerOpcode.MUST_CONSUME_CHARACTER:

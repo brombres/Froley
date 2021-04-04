@@ -103,6 +103,10 @@ augment RogueTemplate
        |            start_ip = code[ ip ]
        |            ++ip
        |            nextIteration
+       |          case TokenizerOpcode.MODE_IS
+       |            result = which{ start_ip==code[ip]:1 || 0 }
+       |            ++ip
+       |            nextIteration
        |          case TokenizerOpcode.SYNTAX_ERROR
        |            throw_syntax_error
        |          case TokenizerOpcode.SYNTAX_ERROR_BUFFER
@@ -169,6 +173,17 @@ augment RogueTemplate
        |            local value = code[ip]->Character
        |            result = which{ scanner.consume(value):1 || 0 }
        |            ++ip
+       |            nextIteration
+       |          case TokenizerOpcode.CONSUME_STRING
+       |            block
+       |              local st = strings[ code[ip] ]
+       |              ++ip
+       |              forEach (ch at index in st)
+       |                if (ch != scanner.peek(index)) result = 0; escapeBlock
+       |              endForEach
+       |              result = 1
+       |              loop (st.count) scanner.read
+       |            endBlock
        |            nextIteration
        |          case TokenizerOpcode.MUST_CONSUME_CHARACTER
        |            local ch = code[ip]->Character

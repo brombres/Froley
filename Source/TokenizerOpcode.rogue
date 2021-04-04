@@ -3,7 +3,8 @@ module Froley
 enum TokenizerOpcode( size=1:Int32 )
   HALT                  # Tokenization complete; VM.tokenize() returns
   RESTART               # BUFFER.clear, IP = START_IP
-  MODE_INT32            # START_IP = ARG1
+  MODE_INT32(2)         # START_IP = ARG1
+  MODE_IS(2)            # result = (START_IP == ARG1) ? 1 : 0
   SYNTAX_ERROR          # Throws "Syntax error - unexpected '(next character)'." using current line and column.
   SYNTAX_ERROR_BUFFER   # Throws error using current line, column, and message in BUFFER
   MARK_SOURCE_POS       # Implementation-dependent; usually records scanner line and column for later token creation
@@ -22,6 +23,7 @@ enum TokenizerOpcode( size=1:Int32 )
   PEEK_CH_COUNT         # CH = peek(lookahead=COUNT)
   READ_CH               # CH = read
   CONSUME_CHARACTER(2)  # if consume(character:ARG1) then RESULT=1 else RESULT=0
+  CONSUME_STRING(2)     # if consume(strings[index:ARG1]) then RESULT=1 else RESULT=0
   MUST_CONSUME_CHARACTER(2)
   NEXT_IS_CHARACTER(2)
   SCAN_DIGITS(4)        # min..max:ARG1..ARG2, base:ARG3; RESULT = n_read - min_digits

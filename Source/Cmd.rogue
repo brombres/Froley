@@ -21,6 +21,9 @@ augment Cmd
     method is_integer->Logical
       return false
 
+    method is_string->Logical
+      return false
+
     method jump_if_true->TokenizerOpcode
       throw t.error( "Value expected." )
 
@@ -41,6 +44,9 @@ augment Cmd
 
     method resolve_assignment( new_value:Cmd )->Cmd
       throw t.error( "Illegal assignment." )
+
+    method text->String
+      return this->String
 
     method to->Int32
       throw UnsupportedOperationError()
@@ -163,6 +169,15 @@ class TokenizerCmdMode( t, label_name:String) : Cmd
 
     method to->String
       return "mode " + label_name
+endClass
+
+class TokenizerCmdModeIs( t, label_name:String) : Cmd
+  METHODS
+    method write( assembler:TokenizerAssembler )
+      assembler.[ write(TokenizerOpcode.MODE_IS), write_address(label_name) ]
+
+    method to->String
+      return "modeIs " + label_name
 endClass
 
 class TokenizerCmdLabel( t, name:String ) : Cmd
@@ -748,6 +763,18 @@ class TokenizerCmdConsumeCharacter( t, value:Int32 ) : Cmd
       assembler.write( TokenizerOpcode.CONSUME_CHARACTER, value )
 endClass
 
+class TokenizerCmdConsumeString( t, value:String ) : Cmd
+  METHODS
+    method jump_if_true->TokenizerOpcode
+      return TokenizerOpcode.JUMP_NE
+
+    method to->String
+      return "consume($)" (value.to_escaped_ascii)
+
+    method write( assembler:TokenizerAssembler )
+      assembler.write( TokenizerOpcode.CONSUME_STRING, value )
+endClass
+
 class TokenizerCmdMustConsumeCharacter( t, value:Int32 ) : Cmd
   METHODS
     method jump_if_true->TokenizerOpcode
@@ -776,6 +803,12 @@ class TokenizerCmdLiteralString( t, value:String ) : Cmd
   METHODS
     method init( t )
       value = t.text
+
+    method is_string->Logical
+      return true
+
+    method text->String
+      return value
 
     method to->String
       return ''"$"'' (value.to_escaped_ascii)

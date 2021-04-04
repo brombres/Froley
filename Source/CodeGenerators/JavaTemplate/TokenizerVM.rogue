@@ -77,6 +77,7 @@ augment JavaTemplate
        |
        |  public void open( String filepath, String source, int start_line, int start_column )
        |  {
+       |    reset();
        |    this.filepath = filepath;
        |    scanner = new Scanner( filepath, source );
        |    scanner.line = start_line;

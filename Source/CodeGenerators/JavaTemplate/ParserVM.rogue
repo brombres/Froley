@@ -44,6 +44,82 @@ augment JavaTemplate
        |
        |  public Tokenizer tokenizer = new Tokenizer();
        |
+       |  public void load( String data )
+       |  {
+       |    load( new Base64IntXReader(data) );
+       |  }
+       |
+       |  public void load( Base64IntXReader reader )
+       |  {
+       |    int version = reader.readInt32X();
+       |    if (version < MIN_VERSION) throw new Error( "[INTERNAL] Unsupported parser version: " + version );
+       |
+       |    int n = reader.readInt32X();
+       |    strings = new String[ n ];
+       |    for (int i=0; i<n; ++i)
+       |    {
+       |      strings[i] = reader.readString();
+       |    }
+       |
+       |    // Method names & addresses
+       |    n = reader.readInt32X();
+       |    for (int i=0; i<n; ++i)
+       |    {
+       |      String name = strings[ reader.readInt32X() ];
+       |      int methodAddress = reader.readInt32X();
+       |      methodAddresses.put( name, methodAddress );
+       |      methodNamesByAddress.put( methodAddress, name );
+       |      if (i == 0) firstMethodAddress = methodAddress;
+       |    }
+       |
+       |    n = reader.readInt32X();
+       |    code = new int[ n ];
+       |    for (int i=0; i<n; ++i)
+       |    {
+       |      code[i] = reader.readInt32X();
+       |    }
+       |  }
+       |
+       |  public void open( String filepath, String content )
+       |  {
+       |    open( filepath, content, 1, 1 );
+       |  }
+       |
+       |  public void open( String filepath, String content, int startLine, int startColumn )
+       |  {
+       |    tokenizer.open( filepath, content, startLine, startColumn );
+       |    open( filepath, tokenizer.tokenize() );
+       |  }
+       |
+       |  public void open( File file )
+       |  {
+       |    tokenizer.open( file );
+       |    open( file.getPath(), tokenizer.tokenize() );
+       |  }
+       |
+       |  public void open( String filepath, Token[] tokens )
+       |  {
+       |    reset();
+       |    this.filepath = filepath;
+       |    this.tokens = tokens;
+       |    if (tokens.length > 0)
+       |    {
+       |      nextTokenType = tokens[0].type;
+       |    }
+       |    else
+       |    {
+       |      nextTokenType = -1;
+       |    }
+       |    position = 0;
+       |  }
+       |
+       |  public Cmd parse( String ruleName )
+       |  {
+       |    Integer methodAddress = methodAddresses.get( ruleName );
+       |    if (methodAddress == null) throw new Error( "[INTERNAL] No parse rule '" + ruleName + "' exists." );
+       |    return parse( methodAddress );
+       |  }
+       |
        |  public void reset()
        |  {
        |    callStack.clear();
@@ -421,42 +497,6 @@ augment JavaTemplate
        |    return (position < tokens.length);
        |  }
        |
-       |  public void load( String data )
-       |  {
-       |    load( new Base64IntXReader(data) );
-       |  }
-       |
-       |  public void load( Base64IntXReader reader )
-       |  {
-       |    int version = reader.readInt32X();
-       |    if (version < MIN_VERSION) throw new Error( "[INTERNAL] Unsupported parser version: " + version );
-       |
-       |    int n = reader.readInt32X();
-       |    strings = new String[ n ];
-       |    for (int i=0; i<n; ++i)
-       |    {
-       |      strings[i] = reader.readString();
-       |    }
-       |
-       |    // Method names & addresses
-       |    n = reader.readInt32X();
-       |    for (int i=0; i<n; ++i)
-       |    {
-       |      String name = strings[ reader.readInt32X() ];
-       |      int methodAddress = reader.readInt32X();
-       |      methodAddresses.put( name, methodAddress );
-       |      methodNamesByAddress.put( methodAddress, name );
-       |      if (i == 0) firstMethodAddress = methodAddress;
-       |    }
-       |
-       |    n = reader.readInt32X();
-       |    code = new int[ n ];
-       |    for (int i=0; i<n; ++i)
-       |    {
-       |      code[i] = reader.readInt32X();
-       |    }
-       |  }
-       |
        |  public int locateVar( String name, int lowestIndex, boolean mustLocate )
        |  {
        |    for (int index=varValues.count; --index>=lowestIndex; )
@@ -465,13 +505,6 @@ augment JavaTemplate
        |    }
        |    if (mustLocate) throw new Error( "[INTERNAL] No parse rule or variable named '" + name + "' has been declared." );
        |    return -1;
-       |  }
-       |
-       |  public Cmd parse( String ruleName )
-       |  {
-       |    Integer methodAddress = methodAddresses.get( ruleName );
-       |    if (methodAddress == null) throw new Error( "[INTERNAL] No parse rule '" + ruleName + "' exists." );
-       |    return parse( methodAddress );
        |  }
        |
        |  public Cmd parse( int address )
@@ -501,37 +534,6 @@ augment JavaTemplate
        |    if (++position < tokens.length) nextTokenType = tokens[position].type;
        |    else                           nextTokenType = -1;
        |    return tokens[ position-1 ];
-       |  }
-       |
-       |  public void open( String filepath, String content )
-       |  {
-       |    open( filepath, content, 1, 1 );
-       |  }
-       |
-       |  public void open( String filepath, String content, int startLine, int startColumn )
-       |  {
-       |    open( filepath, tokenizer.tokenize(filepath,content,startLine,startColumn) );
-       |  }
-       |
-       |  public void open( File file )
-       |  {
-       |    open( file.getPath(), tokenizer.tokenize(file) );
-       |  }
-       |
-       |  public void open( String filepath, Token[] tokens )
-       |  {
-       |    reset();
-       |    this.filepath = filepath;
-       |    this.tokens = tokens;
-       |    if (tokens.length > 0)
-       |    {
-       |      nextTokenType = tokens[0].type;
-       |    }
-       |    else
-       |    {
-       |      nextTokenType = -1;
-       |    }
-       |    position = 0;
        |  }
        |
        |  public void throwExpectedInputError( String expected )

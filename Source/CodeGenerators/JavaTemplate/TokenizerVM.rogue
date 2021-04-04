@@ -64,17 +64,33 @@ augment JavaTemplate
        |    throw new RuntimeException( "No such mode \"" + newModeName + "\"." );
        |  }
        |
-       |  public Token[] tokenize( String filepath, String source )
+       |  public void open( File file )
        |  {
-       |    return tokenize( filepath, source, 1, 1 );
+       |    if (!file.exists()) throw new Error( "FroleyLanguage", "File not found: " + file );
+       |    open( file.toString(), StringUtility.load(file) );
        |  }
        |
-       |  public Token[] tokenize( String filepath, String source, int start_line, int start_column )
+       |  public void open( String filepath, String source )
+       |  {
+       |    open( filepath, source, 1, 1 );
+       |  }
+       |
+       |  public void open( String filepath, String source, int start_line, int start_column )
        |  {
        |    this.filepath = filepath;
        |    scanner = new Scanner( filepath, source );
        |    scanner.line = start_line;
        |    scanner.column = start_column;
+       |  }
+       |
+       |  public Token[] tokenize()
+       |  {
+       |    return tokenize( null );
+       |  }
+       |
+       |  public Token[] tokenize( String mode )
+       |  {
+       |    if (mode != null) setMode( mode );
        |    execute();
        |    return tokens.toArray( new Token[ tokens.size() ] );
        |  }
@@ -523,12 +539,6 @@ augment JavaTemplate
        |    if ( !scanner.hasAnother() ) builder.print( "end of input.\n" );
        |    else                         builder.print( describeCharacter(scanner.peek(0)) ).print( '.' );
        |    throw new Error( filepath, scanner.source, scanner.line, scanner.column, builder.toString() );
-       |  }
-       |
-       |  public Token[] tokenize( File file )
-       |  {
-       |    if (!file.exists()) throw new Error( "FroleyLanguage", "File not found: " + file );
-       |    return tokenize( file.toString(), StringUtility.load(file) );
        |  }
        |
        |  static public class EntryPoint

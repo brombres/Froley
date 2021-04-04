@@ -23,7 +23,7 @@ augment RogueTemplate
        |    result       : Int32
        |    buffer       = StringBuilder()
        |    buffer_stack = StringBuilder[]
-       |    tokens       = Token[](1024)
+       |    tokens       : Token[]
        |
        |    filepath : String
        |    scanner  : Scanner
@@ -39,8 +39,8 @@ augment RogueTemplate
        |
        |  METHODS
        |    method init
-       |      forEach (ch in id_continue) id_characters[ch->Int32] = 2
-       |      forEach (ch in id_start)    id_characters[ch->Int32] = 1
+       |      forEach (ch in id_continue) id_characters[ch->Int32] = 2  # '2' = can be start or continue
+       |      forEach (ch in id_start)    id_characters[ch->Int32] = 1  # '1' = can be start only
        |
        |    method set_mode( new_mode_name:String )
        |      forEach (entry_point in entry_points)
@@ -51,15 +51,18 @@ augment RogueTemplate
        |      endForEach
        |      throw UnsupportedOperationError( ''No such mode "$".'' (new_mode_name) )
        |
-       |    method tokenize( file:File )->Token[]
+       |    method open( file:File )
        |      if (not file.exists) throw Error( "File not found: $." (file.filepath) )
-       |      tokenize( file.filepath, file.load_as_string )
-       |      return tokens
+       |      open( file.filepath, file.load_as_string )
        |
-       |    method tokenize( filepath, source:String, start_line=1:Int32, start_column=1:Int32 )->Token[]
+       |    method open( filepath, source:String, start_line=1:Int32, start_column=1:Int32 )
        |      scanner = Scanner( source )
        |      scanner.line = start_line
        |      scanner.column = start_column
+       |
+       |    method tokenize( mode=null:String )->Token[]
+       |      if (mode) set_mode( mode )
+       |      tokens = Token[](1024)
        |      execute
        |      return tokens
        |
@@ -70,7 +73,6 @@ augment RogueTemplate
        |      result = 0
        |      buffer.clear
        |      start_ip = 0
-       |      tokens.clear
        |
        |    method add( token_type:Int32 )
        |      local t = Token( TokenType(token_type), filepath, scanner.source, line, column )

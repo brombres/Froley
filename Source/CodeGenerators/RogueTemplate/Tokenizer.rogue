@@ -11,6 +11,14 @@ augment RogueTemplate
        |      prior.init
        |      load( Code.tokenizer_code )
        |
+       |    method init( file:File )
+       |      init
+       |      open( file )
+       |
+       |    method init( filepath:String, source:String )
+       |      init
+       |      open( filepath, source )
+       |
        |endClass
        |
 endAugment

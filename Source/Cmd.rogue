@@ -997,16 +997,10 @@ class ParserCmdCreateNull( t ) : Cmd
       assembler.write( ParserOpcode.CREATE_NULL_CMD )
 endClass
 
-class ParserCmdCreateStatements( t ) : Cmd
+class ParserCmdCreateList( t, list_type:CmdType ) : Cmd
   METHODS
     method write( assembler:ParserAssembler )
-      assembler.write( ParserOpcode.CREATE_STATEMENTS )
-endClass
-
-class ParserCmdCreateList( t ) : Cmd
-  METHODS
-    method write( assembler:ParserAssembler )
-      assembler.write( ParserOpcode.CREATE_LIST )
+      assembler.write( ParserOpcode.CREATE_LIST, list_type.index )
 endClass
 
 class ParserCmdPrintlnString( t, value:String ) : Cmd

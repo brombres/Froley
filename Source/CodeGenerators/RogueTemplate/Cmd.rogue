@@ -64,15 +64,6 @@ augment RogueTemplate
        |      builder.print( ']' )
        |endClass
        |
-       |class Statements : CmdList
-       |  METHODS
-       |    method write( builder:StringBuilder )
-       |      forEach (statement in list)
-       |        write( statement, builder )
-       |        builder.println
-       |      endForEach
-       |endClass
-       |
        |class Unary( t, operand:Cmd ) : Cmd
        |  METHODS
        |    method init( t, args:CmdInitArgs )

@@ -735,12 +735,11 @@ class FroleyParser : Parser
         statements.add( ParserCmdCreateNull(t) )
         return
 
-      elseIf (consume(TokenType.KEYWORD_CREATE_STATEMENTS))
-        statements.add( ParserCmdCreateStatements(t) )
-        return
-
       elseIf (consume(TokenType.KEYWORD_CREATE_LIST))
-        statements.add( ParserCmdCreateList(t) )
+        local list_type : CmdType
+        if (next_is(TokenType.IDENTIFIER)) list_type = parse_cmd_type( &base_type="CmdList", &parse_rule_type=ParseRuleType.LIST )
+        else                               list_type = Froley.cmd_type( t, "CmdList", ParseRuleType.LIST )
+        statements.add( ParserCmdCreateList(t,list_type) )
         return
 
       elseIf (consume(TokenType.KEYWORD_PRODUCE))
@@ -753,13 +752,11 @@ class FroleyParser : Parser
         statements.add( ParserCmdReturn(t,null) )
         return
 
-      elseIf (consume(TokenType.KEYWORD_PRODUCE_STATEMENTS))
-        statements.add( ParserCmdCreateStatements(t) )
-        statements.add( ParserCmdReturn(t,null) )
-        return
-
       elseIf (consume(TokenType.KEYWORD_PRODUCE_LIST))
-        statements.add( ParserCmdCreateList(t) )
+        local list_type : CmdType
+        if (next_is(TokenType.IDENTIFIER)) list_type = parse_cmd_type( &base_type="CmdList", &parse_rule_type=ParseRuleType.LIST )
+        else                               list_type = Froley.cmd_type( t, "CmdList", ParseRuleType.LIST )
+        statements.add( ParserCmdCreateList(t,list_type) )
         statements.add( ParserCmdReturn(t,null) )
         return
 
@@ -896,7 +893,7 @@ class FroleyParser : Parser
 
       return commands
 
-    method parse_cmd_type( token_type_def=null:TokenDef )->CmdType
+    method parse_cmd_type( token_type_def=null:TokenDef, base_type=null:String, parse_rule_type=null:ParseRuleType? )->CmdType
       local t = peek
       local name = read_identifier
       local args = parse_cmd_init_args( name )
@@ -904,11 +901,14 @@ class FroleyParser : Parser
       if (symbol is null)
         symbol = name.after_any( "Cmd" )
       endIf
-      local base_type : String
+
       if (consume(TokenType.SYMBOL_COLON))
         base_type = read_identifier
       endIf
-      return Froley.cmd_type( t, name, parse_rule_type, symbol, args, base_type )
+
+      if (not parse_rule_type) parse_rule_type = this.parse_rule_type
+
+      return Froley.cmd_type( t, name, parse_rule_type.value, symbol, args, base_type )
 
     method parse_cmd_init_args( cmd_name:String )->CmdTypeProperty[]
       if (not consume(TokenType.SYMBOL_OPEN_PAREN)) return null

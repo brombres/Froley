@@ -12,17 +12,11 @@ augment RogueTemplate
        |      if (cmd.type_info is type_Cmd) return cmd
        |      return cmd.dispatch( this )
        |
-       |    method visit( list:CmdList )->Cmd
-       |      forEach (cmd at index in list)
-       |        if (cmd) list[ index ] = cmd.dispatch( this )
+       |    method visit( cmd:CmdList )->Cmd
+       |      forEach (item at index in cmd)
+       |        if (item) cmd[ index ] = item.dispatch( this )
        |      endForEach
-       |      return list
-       |
-       |    method visit( statements:Statements )->Cmd
-       |      forEach (statement at index in statements)
-       |        if (statement) statements[ index ] = statement.dispatch( this )
-       |      endForEach
-       |      return statements
+       |      return cmd
        |
        |    method visit( cmd:Unary )->Cmd
        |      if (cmd.operand) cmd.operand = cmd.operand.dispatch( this )

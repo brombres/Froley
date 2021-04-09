@@ -49,7 +49,7 @@ routine rogo_xclean
   # For demo purposes, deletes more files than one might normally care to.
   # Normally one does not need to delete any generated source files.
   rogo_clean
-  println "Deleting generated .rogue and .java files"
+  println "Deleting generated .rogue files"
   File.delete( LANGUAGE+".json" )
   Files( ".", "Source/Rogue/*.rogue" ).remove( "**/Cmd.rogue" ).remove( "**/CSQ.rogue" ).delete
   File.delete( "Source/Java" )

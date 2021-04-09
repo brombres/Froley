@@ -125,7 +125,6 @@ class GenerateRogue : CodeGenerator
               case ParseRuleType.PRE_UNARY:  builder.println " : Unary"
               case ParseRuleType.POST_UNARY: builder.println " : PostUnary"
               case ParseRuleType.BINARY:     builder.println " : Binary"
-              case ParseRuleType.STATEMENTS: builder.println " : Statements"
               case ParseRuleType.LIST:       builder.println " : CmdList"
               others:                        builder.println " : Cmd"
             endWhich
@@ -166,26 +165,37 @@ class GenerateRogue : CodeGenerator
               builder.println "    method op->String"
               builder.println '      return "$"' (escaped_symbol)
             others
-              builder.println "    method write( builder:StringBuilder )"
-              which (cmd_properties.count)
-                case 0
-                  builder.println ''      builder.print( "$" )'' (escaped_symbol)
+              which (type)
+                case ParseRuleType.LIST
+                  builder.println @|    method write( builder:StringBuilder )
+                                   |      builder.print( '[' )
+                                   |      forEach (element at index in this)
+                                   |        if (index > 0) builder.print( ',' )
+                                   |        write( element, builder )
+                                   |      endForEach
+                                   |      builder.print( ']' )
                 others
-                  local print_cmd_name = (cmd_properties.count > 1 or cmd_properties.first//value == "")
-                  if (print_cmd_name) builder.println ''      builder.print( "$(" )'' (escaped_symbol)
-                  forEach (p at index in cmd_properties)
-                    if (index > 0) builder.println ''      builder.print( ',' )''
-                    if (p//value != "")
-                      if (p//type == "String")
-                        builder.println ''      builder.print( $ )'' (p//name)
-                      else
-                        builder.println ''      builder.print( ""+$ )'' (p//name)
-                      endIf
-                    else
-                      builder.println ''      write( $, builder )'' (p//name)
-                    endIf
-                  endForEach
-                  if (print_cmd_name) builder.println ''      builder.print( ')' )''
+                  builder.println "    method write( builder:StringBuilder )"
+                  which (cmd_properties.count)
+                    case 0
+                      builder.println ''      builder.print( "$" )'' (escaped_symbol)
+                    others
+                      local print_cmd_name = (cmd_properties.count > 1 or cmd_properties.first//value == "")
+                      if (print_cmd_name) builder.println ''      builder.print( "$(" )'' (escaped_symbol)
+                      forEach (p at index in cmd_properties)
+                        if (index > 0) builder.println ''      builder.print( ',' )''
+                        if (p//value != "")
+                          if (p//type == "String")
+                            builder.println ''      builder.print( $ )'' (p//name)
+                          else
+                            builder.println ''      builder.print( ""+$ )'' (p//name)
+                          endIf
+                        else
+                          builder.println ''      write( $, builder )'' (p//name)
+                        endIf
+                      endForEach
+                      if (print_cmd_name) builder.println ''      builder.print( ')' )''
+                  endWhich
               endWhich
           endWhich
           builder.println "endClass"
@@ -213,7 +223,7 @@ class GenerateRogue : CodeGenerator
             if (endClass_index.exists)
               content = content.substring( 0, endClass_index.value-1 )
             endIf
-            builder.println( content ).println
+            builder.println( content )
           endIf
 
           print( "  " ).println( visit_method_name )
@@ -232,11 +242,6 @@ class GenerateRogue : CodeGenerator
               builder.println "      if (cmd.right) cmd.right = cmd.right.dispatch( this )"
               builder.println "      return cmd"
             case ParseRuleType.LIST
-              builder.println "      forEach (element at index in cmd)"
-              builder.println "        if (element) cmd[ index ] = element.dispatch( this )"
-              builder.println "      endForEach"
-              builder.println "      return cmd"
-            case ParseRuleType.STATEMENTS
               builder.println "      forEach (element at index in cmd)"
               builder.println "        if (element) cmd[ index ] = element.dispatch( this )"
               builder.println "      endForEach"

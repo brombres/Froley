@@ -121,7 +121,7 @@ return
       statement
       while (consume(EOL)) noAction
     endWhile
-  createStatements
+  createList Statements
 
 - statement
   if (nextHasAttribute(idArg))

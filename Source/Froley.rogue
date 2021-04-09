@@ -272,7 +272,7 @@ class Froley [singleton]
 
       return output
 
-    method cmd_type( t:Token, name:String, type:ParseRuleType, symbol=null:String, args:CmdTypeProperty[], base_type=null:String )->CmdType
+    method cmd_type( t:Token, name:String, type:ParseRuleType, symbol=null:String, args=null:CmdTypeProperty[], base_type=null:String )->CmdType
       local cmd_type = cmd_type_lookup[ name ]
       if (cmd_type)
         cmd_type.verify_args( args )

@@ -199,24 +199,15 @@ augment RogueTemplate
        |
        |          case ParserOpcode.CREATE_LIST
        |            if (list_start_t.is_empty) throw peek.error( "[INTERNAL] No prior beginList before calling createList/produceList." )
+       |            local cmd_type_index = code[ ip ]
+       |            ++ip
        |            local t  = list_start_t.remove_last
        |            local i1 = list_start_pos.remove_last
        |            cmd_args.clear
        |            cmd_args.t = cur_token
        |            cmd_args.add( forEach in cmd_queue from i1 )
        |            cmd_queue.discard_from( i1 )
-       |            cmd_queue.add( CmdList(t,cmd_args) )
-       |            nextIteration
-       |
-       |          case ParserOpcode.CREATE_STATEMENTS
-       |            if (list_start_t.is_empty) throw peek.error( "[INTERNAL] No prior beginList before calling createStatements/produceStatements." )
-       |            local t  = list_start_t.remove_last
-       |            local i1 = list_start_pos.remove_last
-       |            cmd_args.clear
-       |            cmd_args.t = cur_token
-       |            cmd_args.add( forEach in cmd_queue from i1 )
-       |            cmd_queue.discard_from( i1 )
-       |            cmd_queue.add( Statements(t,cmd_args) )
+       |            cmd_queue.add( CmdFactory.create_cmd(cmd_type_index,t,cmd_args) )
        |            nextIteration
        |
        |          case ParserOpcode.SWAP

@@ -107,7 +107,7 @@ return
   while (hasAnother and not nextHasAttribute(structural))
     statement
   endWhile
-  createStatements
+  createList Statements
   return
 
 - args
@@ -168,7 +168,7 @@ return
   endOn
 
 - command
-  on ';' beginList; createStatements; return
+  on ';' beginList; createList Statements; return
   expression
   on ';' return
   if (nextIs("identifier")) var_declaration

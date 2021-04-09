@@ -259,25 +259,6 @@ class TokenizerCmdAdd( t, target:Cmd, value:Cmd ) : Cmd
       target.write_add( assembler, value )
 endClass
 
-class TokenizerCmdPopPlusBuffer( t ) : Cmd
-  METHODS
-    method to->String
-      return "pop + buffer"
-
-    method write( assembler:TokenizerAssembler )
-      throw t.error( "Syntax error - expected 'buffer = pop + buffer'." )
-endClass
-
-class TokenizerCmdSetBufferToPopPlusBuffer( t ) : Cmd
-  METHODS
-    method to->String
-      return "buffer = pop + buffer"
-
-    method write( assembler:TokenizerAssembler )
-      assembler.write( TokenizerOpcode.PUSH_AND_JOIN_BUFFER )
-      assembler.write( TokenizerOpcode.POP_BUFFER )
-endClass
-
 class TokenizerCmdSubtract( t, target:Cmd, value:Cmd ) : Cmd
   METHODS
     method write( assembler:TokenizerAssembler )
@@ -485,14 +466,10 @@ class TokenizerCmdRegisterBuffer( t ) : Cmd
       return true
 
     method resolve_assignment( new_value:Cmd )->Cmd
-      if (new_value instanceOf TokenizerCmdPop)
-        return TokenizerCmdOp( t, "buffer = pop", TokenizerOpcode.POP_BUFFER )
-      elseIf (new_value instanceOf TokenizerCmdLiteralString)
+      if (new_value instanceOf TokenizerCmdLiteralString)
         return TokenizerCmdSetBufferToString( t, (new_value as TokenizerCmdLiteralString).value )
-      elseIf (new_value instanceOf TokenizerCmdPopPlusBuffer)
-        return TokenizerCmdSetBufferToPopPlusBuffer( new_value.t )
       else
-        throw t.error( "Illegal 'buffer' assignment. Expected 'pop' or a literal string." )
+        throw t.error( "Illegal 'buffer' assignment. Expected a literal string." )
       endIf
 
     method to->String
@@ -523,8 +500,6 @@ class TokenizerCmdRegisterCh( t ) : Cmd
       elseIf (new_value instanceOf TokenizerCmdScanDigits)
         (new_value as TokenizerCmdScanDigits).is_resolved = true
         return new_value
-      elseIf (new_value instanceOf TokenizerCmdPop)
-        return TokenizerCmdOp( t, "ch = pop", TokenizerOpcode.POP_CH )
       else
         throw t.error( "Illegal 'ch' assignment. Expected 'count', 'read', 'scanDigits', or an integer." )
       endIf
@@ -597,10 +572,8 @@ class TokenizerCmdRegisterCount( t ) : Cmd
         return TokenizerCmdSetCountToInt32( t, new_value->Int32 )
       elseIf (new_value.is_ch)
         return TokenizerCmdSetCountToCh( t )
-      elseIf (new_value instanceOf TokenizerCmdPop)
-        return TokenizerCmdOp( t, "count = pop", TokenizerOpcode.POP_COUNT )
       else
-        throw t.error( "Illegal 'count' assignment. Expected 'ch', 'pop', or an integer." )
+        throw t.error( "Illegal 'count' assignment. Expected 'ch' or an integer." )
       endIf
 
     method to->String
@@ -624,12 +597,6 @@ class TokenizerCmdRegisterCount( t ) : Cmd
       else
         throw expression.error( "Illegal operation value; integer expected." )
       endIf
-endClass
-
-class TokenizerCmdPop( t ) : Cmd
-  METHODS
-    method write( assembler:TokenizerAssembler )
-      throw t.error( "Syntax error - expected 'ch = pop' or 'count = pop'." )
 endClass
 
 class TokenizerCmdCompare<<$OPCODE>> : CmdBinary

@@ -290,33 +290,6 @@ augment RogueTemplate
        |          case TokenizerOpcode.CH_IS_LETTER
        |            result = which{ ((ch>='a' and ch<='z') or (ch>='A' and ch<='Z')):1 || 0 }
        |            nextIteration
-       |          case TokenizerOpcode.PUSH_AND_JOIN_BUFFER
-       |            if (buffer_stack.is_empty) throw Error( "[INTERNAL]", "'buffer = pop + buffer' on empty stack." )
-       |            buffer_stack.last.print( buffer )
-       |            nextIteration
-       |          case TokenizerOpcode.PUSH_BUFFER
-       |            buffer_stack.add( buffer )
-       |            buffer = StringBuilder.pool.on_use.print( buffer )
-       |            nextIteration
-       |          case TokenizerOpcode.PUSH_CH
-       |            stack.add( ch )
-       |            nextIteration
-       |          case TokenizerOpcode.PUSH_COUNT
-       |            stack.add( count )
-       |            nextIteration
-       |          case TokenizerOpcode.POP_BUFFER
-       |            if (buffer_stack.is_empty) throw Error( "[INTERNAL]", "'pop buffer' on empty stack." )
-       |            StringBuilder.pool.on_end_use( buffer )
-       |            buffer = buffer_stack.remove_last
-       |            nextIteration
-       |          case TokenizerOpcode.POP_CH
-       |            if (stack.is_empty) throw Error( "[INTERNAL]", "'pop ch' on empty stack." )
-       |            ch = stack.remove_last
-       |            nextIteration
-       |          case TokenizerOpcode.POP_COUNT
-       |            if (stack.is_empty) throw Error( "[INTERNAL]", "'pop count' on empty stack." )
-       |            count = stack.remove_last
-       |            nextIteration
        |          case TokenizerOpcode.SET_CH_TO_INT32
        |            ch = code[ ip ]
        |            result = ch

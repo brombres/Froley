@@ -205,20 +205,6 @@ class TokenizerVM
           case TokenizerOpcode.CH_IS_LETTER
             result = which{ ((ch>='a' and ch<='z') or (ch>='A' and ch<='Z')):1 || 0 }
             nextIteration
-          case TokenizerOpcode.PUSH_CH
-            stack.add( ch )
-            nextIteration
-          case TokenizerOpcode.PUSH_COUNT
-            stack.add( count )
-            nextIteration
-          case TokenizerOpcode.POP_CH
-            if (stack.is_empty) throw FroleyError( "[Compiled Code]", "'pop ch' on empty stack." )
-            ch = stack.remove_last
-            nextIteration
-          case TokenizerOpcode.POP_COUNT
-            if (stack.is_empty) throw FroleyError( "[Compiled Code]", "'pop count' on empty stack." )
-            count = stack.remove_last
-            nextIteration
           case TokenizerOpcode.SET_CH_TO_INT32
             ch = code[ ip ]
             result = ch

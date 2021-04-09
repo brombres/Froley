@@ -105,17 +105,6 @@ class FroleyParser : Parser
       rule.on( "integer value", <<TokenizerCmdLiteralInt32>> )
       rule.on( "literal string",<<TokenizerCmdLiteralString>> )
       rule.on( "read",          <<TokenizerCmdRead>> )
-      rule.on( "pop",
-        function(parser:FroleyParser)->Cmd
-          local t = parser.read  # 'pop'
-          if (parser.consume(TokenType.SYMBOL_PLUS))
-            parser.must_consume( TokenType.KEYWORD_BUFFER )
-            return TokenizerCmdPopPlusBuffer( t )
-          else
-            return TokenizerCmdPop( t );
-          endIf
-        endFunction
-      )
       rule.on( "identifier",
         function(parser:FroleyParser)->Cmd
           local t = parser.read  # (identifier)
@@ -548,18 +537,6 @@ class FroleyParser : Parser
       elseIf (consume(TokenType.SYMBOL_PLUS_PLUS))
         local target = parse_register
         statements.add( TokenizerCmdAdd(t,target,TokenizerCmdLiteralInt32(t,1)) )
-        return
-
-      elseIf (consume(TokenType.KEYWORD_PUSH))
-        if (consume(TokenType.KEYWORD_BUFFER))
-          statements.add( TokenizerCmdOp(t,"push buffer",TokenizerOpcode.PUSH_BUFFER) )
-        elseIf (consume(TokenType.KEYWORD_CH))
-          statements.add( TokenizerCmdOp(t,"push ch",TokenizerOpcode.PUSH_CH) )
-        elseIf (consume(TokenType.KEYWORD_COUNT))
-          statements.add( TokenizerCmdOp(t,"push count",TokenizerOpcode.PUSH_COUNT) )
-        else
-          throw peek.error( "Expected 'buffer,', 'ch', or 'count'." )
-        endIf
         return
 
       else

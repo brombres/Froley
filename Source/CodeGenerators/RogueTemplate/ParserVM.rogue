@@ -253,7 +253,7 @@ augment RogueTemplate
        |            local st = strings[code[ip]]
        |            ++ip
        |            if (content and content == st ) read
-       |            else throw_expected_input_error( "'$'" (st) )
+       |            else throw_expected_input_error( "$" (st) )
        |            nextIteration
        |
        |          case ParserOpcode.SAVE_POSITION
@@ -431,13 +431,13 @@ augment RogueTemplate
        |    method throw_expected_input_error( expected:String )
        |      throw peek.error(
        |        "Expected '$', found $." ...
-       |        (expected,?:{next_token_type!=-1:"'$'"(peek->String) || "end of input"})
+       |        (expected,?:{next_token_type!=-1:"$"(peek->String) || "end of input"})
        |      )
        |
        |    method throw_expected_token_type_error( token_type:TokenType )
        |      local expected = token_type.symbol
-       |      if (expected == "'") expected = ''"'"''
-       |      elseIf (not (token_type.attributes & TokenTypeAttribute.CONTENT)) expected = "'$'"(expected)
+       |      if (expected == "'") expected = ''(')''
+       |      elseIf (not (token_type.attributes & TokenTypeAttribute.CONTENT)) expected = "$"(expected)
        |      throw_expected_input_error( expected )
        |
        |    method throw_syntax_error

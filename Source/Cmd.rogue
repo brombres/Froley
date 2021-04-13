@@ -1003,6 +1003,12 @@ class ParserCmdCreateList( t, list_type:CmdType ) : Cmd
       assembler.write( ParserOpcode.CREATE_LIST, list_type.index )
 endClass
 
+class ParserCmdDiscardList( t ) : Cmd
+  METHODS
+    method write( assembler:ParserAssembler )
+      assembler.write( ParserOpcode.DISCARD_LIST )
+endClass
+
 class ParserCmdPrintlnString( t, value:String ) : Cmd
   METHODS
     method write( assembler:ParserAssembler )

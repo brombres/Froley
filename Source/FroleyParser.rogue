@@ -742,6 +742,11 @@ class FroleyParser : Parser
         statements.add( ParserCmdCreateList(t,list_type) )
         return
 
+      elseIf (consume(TokenType.KEYWORD_DISCARD_LIST))
+        statements.add( ParserCmdDiscardList(t) )
+        statements.add( ParserCmdReturn(t,null) )
+        return
+
       elseIf (consume(TokenType.KEYWORD_PRODUCE))
         statements.add( ParserCmdCreate(t,parse_cmd_type) )
         statements.add( ParserCmdReturn(t,null) )

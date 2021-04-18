@@ -5,6 +5,9 @@
 
 $requireRogue "1.8.1"
 
+$include "Tokenizer.rogue"
+uses Froley
+
 uses Utility/CommandLineParser
 
 try
@@ -27,6 +30,7 @@ class Froley
         # option( "--setting=",  &alias="-s" )
       ].parse( System.command_line_arguments )
 
-      trace command
+      #trace command
       # has //options and possibly //args
+      println Tokenizer( File("Source/Froley.f2") ).tokenize
 endClass

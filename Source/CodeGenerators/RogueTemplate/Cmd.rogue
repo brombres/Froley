@@ -13,18 +13,6 @@ augment RogueTemplate
        |
        |    method dispatch( visitor:Visitor )->Cmd [propagated]
        |      return visitor.visit( this )
-       |
-       |    method to->String
-       |      local result = StringBuilder()
-       |      write( result )
-       |      return result->String
-       |
-       |    method write( builder:StringBuilder )
-       |      builder.print( type_name.after_any("Cmd") )
-       |
-       |    method write( cmd:Cmd, builder:StringBuilder )
-       |      if (cmd) cmd.write( builder )
-       |      else      builder.print( "null" )
        |endClass
        |
        |class CmdList : Cmd
@@ -38,6 +26,9 @@ augment RogueTemplate
        |    method init( t, args:CmdInitArgs )
        |      list = Cmd[]( args.count )
        |      list.add( forEach in args )
+       |
+       |    method add( cmd:Cmd )
+       |      list.add( cmd )
        |
        |    method count->Int32
        |      return list.count
@@ -55,13 +46,8 @@ augment RogueTemplate
        |      list[ index ] = value
        |      return this
        |
-       |    method write( builder:StringBuilder )
-       |      builder.print( '[' )
-       |      forEach (arg at index in list)
-       |        if (index > 0) builder.print( ',' )
-       |        write( arg, builder )
-       |      endForEach
-       |      builder.print( ']' )
+       |    method to->String
+       |      return list->String
        |endClass
        |
        |class Unary( t, operand:Cmd ) : Cmd
@@ -73,18 +59,18 @@ augment RogueTemplate
        |    method op->String
        |      throw UnsupportedOperationError()
        |
-       |    method write( builder:StringBuilder )
-       |      builder.print( '(' ).print( op )
-       |      write( operand, builder )
-       |      builder.print( ')' )
+       |    method to->String
+       |      local op = this.op
+       |      local space = which{ op.count and op[op.count-1].is_letter:" " || "" }
+       |      return "($$)" (op,operand)
        |endClass
        |
        |class PostUnary : Unary
        |  METHODS
-       |    method write( builder:StringBuilder )
-       |      builder.print( '(' )
-       |      write( operand, builder )
-       |      builder.print( op ).print( ')' )
+       |    method to->String
+       |      local op = this.op
+       |      local space = which{ op.count and op[0].is_letter:" " || "" }
+       |      return "($$)" (operand,op)
        |endClass
        |
        |class Binary( t, left:Cmd, right:Cmd ) : Cmd
@@ -97,12 +83,8 @@ augment RogueTemplate
        |    method op->String
        |      throw UnsupportedOperationError()
        |
-       |    method write( builder:StringBuilder )
-       |      builder.print( '(' )
-       |      write( left, builder )
-       |      builder.print( ' ' ).print( op ).print( ' ' )
-       |      write( right, builder )
-       |      builder.print( ')' )
+       |    method to->String
+       |      return "($ $ $)" (left,op,right)
        |endClass
 endAugment
 

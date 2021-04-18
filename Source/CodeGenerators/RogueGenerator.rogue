@@ -167,34 +167,29 @@ class GenerateRogue : CodeGenerator
             others
               which (type)
                 case ParseRuleType.LIST
-                  builder.println @|    method write( builder:StringBuilder )
-                                   |      builder.print( '[' )
-                                   |      forEach (element at index in this)
-                                   |        if (index > 0) builder.print( ',' )
-                                   |        write( element, builder )
-                                   |      endForEach
-                                   |      builder.print( ']' )
+                  noAction
                 others
-                  builder.println "    method write( builder:StringBuilder )"
+                  builder.println "    method to->String"
                   which (cmd_properties.count)
                     case 0
-                      builder.println ''      builder.print( "$" )'' (escaped_symbol)
+                      builder.println ''      return "$"'' (escaped_symbol)
                     others
                       local print_cmd_name = (cmd_properties.count > 1 or cmd_properties.first//value == "")
-                      if (print_cmd_name) builder.println ''      builder.print( "$(" )'' (escaped_symbol)
+                      builder.print ''      return "''
+                      if (print_cmd_name) builder.print "$("(escaped_symbol)
                       forEach (p at index in cmd_properties)
-                        if (index > 0) builder.println ''      builder.print( ',' )''
-                        if (p//value != "")
-                          if (p//type == "String")
-                            builder.println ''      builder.print( $ )'' (p//name)
-                          else
-                            builder.println ''      builder.print( ""+$ )'' (p//name)
-                          endIf
-                        else
-                          builder.println ''      write( $, builder )'' (p//name)
-                        endIf
+                        if (index > 0) builder.print ","
+                        builder.print "$"
                       endForEach
-                      if (print_cmd_name) builder.println ''      builder.print( ')' )''
+                      if (print_cmd_name) builder.print ")"
+                      builder.print '"'
+                      builder.print '('
+                      forEach (p at index in cmd_properties)
+                        if (index > 0) builder.print ","
+                        builder.print p//name
+                      endForEach
+                      builder.print ')'
+                      builder.println
                   endWhich
               endWhich
           endWhich

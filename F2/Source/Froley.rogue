@@ -1,0 +1,32 @@
+#================================================================================
+# Froley.rogue
+# April 17, 2021
+#================================================================================
+
+$requireRogue "1.8.1"
+
+uses Utility/CommandLineParser
+
+try
+  Froley( System.command_line_arguments )
+catch (error:Error)
+  local w = Console.width.or_smaller( 80 )
+  Console.error.println "="*w
+  Console.error.println "ERROR"
+  Console.error.println error->String.word_wrapped(w-2).indented(2)
+  Console.error.println "="*w
+  System.exit 1
+endTry
+
+class Froley
+  METHODS
+    method init( args:String[] )
+      local command = CommandLineParser().
+      [
+        # option( "--flag", &alias="-f" )
+        # option( "--setting=",  &alias="-s" )
+      ].parse( System.command_line_arguments )
+
+      trace command
+      # has //options and possibly //args
+endClass

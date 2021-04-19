@@ -25,7 +25,7 @@ enum TokenizerOpcode( size=1:Int32 )
   CONSUME_CHARACTER(2)  # if consume(character:ARG1) then RESULT=1 else RESULT=0
   CONSUME_STRING(2)     # if consume(strings[index:ARG1]) then RESULT=1 else RESULT=0
   MUST_CONSUME_CHARACTER(2)
-  NEXT_IS_CHARACTER(2)
+  NEXT_IS_CHARACTER(3)  # result = (peek >= ARG1 and peek <= ARG2)
   SCAN_IDENTIFIER
   CLEAR_BUFFER          # BUFFER.clear
   COLLECT_CH            # BUFFER.print(ch)

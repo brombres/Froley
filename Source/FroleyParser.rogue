@@ -127,13 +127,14 @@ class FroleyParser : Parser
       rule.on( "nextIs",
         function(parser:FroleyParser)->Cmd
         local t = parser.read  # 'nextIs'
-          if (parser.consume(TokenType.SYMBOL_OPEN_PAREN))
-            local expr = parser.parse_tokenizer_expression()
-            parser.must_consume( TokenType.SYMBOL_CLOSE_PAREN )
-            t = expr.t
-            if (expr.is_integer) return TokenizerCmdNextIsCharacter( t, expr->Int32 )
-          endIf
-          throw t.error( "Expected 'nextIs(<character>)'." )
+        if (parser.consume(TokenType.SYMBOL_OPEN_PAREN))
+          local low = parser.parse_tokenizer_term()->Int32
+          local high = low
+          if (parser.consume(TokenType.SYMBOL_DOT_DOT)) high = parser.parse_tokenizer_term()->Int32
+          parser.must_consume( TokenType.SYMBOL_CLOSE_PAREN )
+          return TokenizerCmdNextIsCharacter( t, low, high )
+        endIf
+        throw t.error( "Expected 'nextIs('ch1' [.. 'ch2'])'." )
         endFunction
       )
       rule.on( "modeIs",

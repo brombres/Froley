@@ -672,16 +672,18 @@ class TokenizerCmdMustConsumeCharacter( t, value:Int32 ) : Cmd
       assembler.write( TokenizerOpcode.MUST_CONSUME_CHARACTER, value )
 endClass
 
-class TokenizerCmdNextIsCharacter( t, value:Int32 ) : Cmd
+class TokenizerCmdNextIsCharacter( t, low:Int32, high:Int32 ) : Cmd
   METHODS
     method jump_if_true->TokenizerOpcode
       return TokenizerOpcode.JUMP_NE
 
     method to->String
-      return "nextIs($)" (value->Character.to_escaped_ascii)
+      return "nextIs($..$)" (low->Character.to_escaped_ascii,high->Character.to_escaped_ascii)
 
     method write( assembler:TokenizerAssembler )
-      assembler.write( TokenizerOpcode.NEXT_IS_CHARACTER, value )
+      assembler.write( TokenizerOpcode.NEXT_IS_CHARACTER )
+      assembler.write( low )
+      assembler.write( high )
 endClass
 
 class TokenizerCmdLiteralString( t, value:String ) : Cmd

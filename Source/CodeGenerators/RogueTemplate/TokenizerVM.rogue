@@ -191,9 +191,18 @@ augment RogueTemplate
        |            if (scanner.consume(ch)) nextIteration
        |            throw_expected_character_error( ch )
        |          case TokenizerOpcode.NEXT_IS_CHARACTER
-       |            local value = code[ip]->Character
-       |            result = (scanner.has_another and scanner.peek == value)
-       |            ++ip
+       |            contingent
+       |              necessary (scanner.has_another)
+       |              local peek_ch = scanner.peek
+       |              local low  = code[ip]->Character
+       |              necessary (peek_ch >= low)
+       |              local high = code[ip+1]->Character
+       |              necessary (peek_ch >= high)
+       |              result = 1
+       |            unsatisfied
+       |              result = 0
+       |            endContingent
+       |            ip += 2
        |            nextIteration
        |          case TokenizerOpcode.SCAN_IDENTIFIER
        |            result = scan_identifier->Int32

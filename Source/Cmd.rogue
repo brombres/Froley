@@ -24,6 +24,9 @@ augment Cmd
     method is_string->Logical
       return false
 
+    method is_var->Logical
+      return false
+
     method jump_if_true->TokenizerOpcode
       throw t.error( "Value expected." )
 
@@ -133,6 +136,16 @@ class TokenizerCmdOp( t, name:String, opcode:TokenizerOpcode ) : Cmd
 
     method write( assembler:TokenizerAssembler )
       assembler.write( opcode )
+endClass
+
+class TokenizerCmdVarOp( t, name:String, opcode:TokenizerOpcode, varname:String ) : Cmd
+  METHODS
+    method to->String
+      return name
+
+    method write( assembler:TokenizerAssembler )
+      assembler.write( opcode )
+      assembler.write_var( varname )
 endClass
 
 class TokenizerCmdGoto( t, label_name:String ) : Cmd
@@ -895,6 +908,33 @@ class TokenizerCmdTrace : Cmd
   METHODS
     method write( assembler:TokenizerAssembler )
       assembler.write( TokenizerOpcode.TRACE, t.line )
+endClass
+
+class TokenizerCmdVarAccess( t, name:String ) : Cmd
+  METHODS
+    method is_var->Logical
+      return true
+
+    method to->String
+      return name
+
+    method write( assembler:TokenizerAssembler )
+      throw t.error( "TODO: @$"(name) )
+      #assembler.write( TokenizerOpcode.TRACE, t.line )
+
+    method write_add( assembler:TokenizerAssembler, expression:Cmd )
+      local cmd_int = expression as TokenizerCmdLiteralInt32
+      if (cmd_int)
+        assembler.write( TokenizerOpcode.ADD_VAR_INT32 )
+        assembler.write_var( name )
+        assembler.write( cmd_int.value )
+      elseIf (expression.is_var)
+        assembler.write( TokenizerOpcode.ADD_VAR_VAR )
+        assembler.write_var( name )
+        assembler.write_var( expression->String )
+      else
+        throw expression.error( "Illegal operation value; integer or variable expected." )
+      endIf
 endClass
 
 class ParserCmdOnType( t, token_type_def:TokenDef ) : Cmd

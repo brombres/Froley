@@ -33,11 +33,12 @@ enum TokenizerOpcode( size=1:Int32 )
   COLLECT_CHARACTER(2)  # BUFFER.print(character:ARG1)
   COLLECT_STRING(2)     # BUFFER.print(strings[index:ARG1])
   BUFFER_TO_LOWERCASE
-  PRINT_BUFFER          # println buffer
-  PRINT_CH              # println ch->Character
-  PRINT_COUNT           # println count->Int32
-  PRINT_CHARACTER(2)    # println ARG1->Character
-  PRINT_STRING(2)       # println strings[index:ARG1]
+  PRINT_BUFFER          # print buffer
+  PRINT_CH              # print ch->Character
+  PRINT_COUNT           # print count->Int32
+  PRINT_CHARACTER(2)    # print ARG1->Character
+  PRINT_STRING(2)       # print strings[index:ARG1]
+  PRINT_VAR(2)          # print variables[index:ARG1]
   COMPARE_BUFFER_STRING # RESULT = buffer.compare_to(strings[index:ARG1])
   COMPARE_CH_INT32      # RESULT = ch - ARG1
   COMPARE_COUNT_INT32   # RESULT = count - ARG1
@@ -54,6 +55,8 @@ enum TokenizerOpcode( size=1:Int32 )
   ADD_CH_COUNT          # ch    += count
   ADD_CH_INT32(2)       # ch    += ARG1
   ADD_COUNT_INT32(2)    # count += ARG1
+  ADD_VAR_INT32(3)      # variables[index:ARG1] += ARG2
+  ADD_VAR_VAR(3)        # variables[index:ARG1] += variables[index:ARG2]
   SUBTRACT_CH_COUNT     # ch    += count
   TRIM_BUFFER           # BUFFER = BUFFER->String.trimmed
   WHICH_INPUT           # (complex)

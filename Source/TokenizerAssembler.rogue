@@ -25,6 +25,8 @@ class TokenizerAssembler : Assembler
 
       writer.write_int32x( VERSION )
 
+      writer.write_int32x( variables.count )
+
       writer.write_int32x( strings.count )
       forEach (value in strings)
         writer.write_string( value )

@@ -16,6 +16,7 @@ augment RogueTemplate
        |  PROPERTIES
        |    code         = Int32[]
        |    stack        = Int32[]
+       |    variables    = Int32[]
        |    strings      = String[]
        |    entry_points = EntryPoint[]
        |    ch           : Int32
@@ -252,6 +253,10 @@ augment RogueTemplate
        |            print strings[ code[ip] ]
        |            ++ip
        |            nextIteration
+       |          case TokenizerOpcode.PRINT_VAR
+       |            print variables[ code[ip] ]
+       |            ++ip
+       |            nextIteration
        |          case TokenizerOpcode.TRIM_BUFFER
        |            local trimmed = buffer->String.trimmed
        |            buffer.[ clear, print trimmed ]
@@ -319,6 +324,14 @@ augment RogueTemplate
        |          case TokenizerOpcode.ADD_COUNT_INT32
        |            count += code[ ip ]
        |            ++ip
+       |            nextIteration
+       |          case TokenizerOpcode.ADD_VAR_INT32
+       |            variables[code[ip]] += code[ip+1]
+       |            ip += 2
+       |            nextIteration
+       |          case TokenizerOpcode.ADD_VAR_VAR
+       |            variables[code[ip]] += variables[code[ip+1]]
+       |            ip += 2
        |            nextIteration
        |          case TokenizerOpcode.SUBTRACT_CH_COUNT
        |            ch -= count
@@ -409,7 +422,12 @@ augment RogueTemplate
        |    method load( reader:DataReader )
        |      local version = reader.read_int32x
        |      require version >= MIN_VERSION
+       |
        |      local n = reader.read_int32x
+       |      variables.resize( n )
+       |      variables[ forEach of variables ] = 0
+       |
+       |      n = reader.read_int32x
        |      strings.reserve( n )
        |      loop (n) strings.add( reader.read_string )
        |

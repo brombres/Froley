@@ -7,6 +7,7 @@ class Assembler [abstract]
     unresolved_labels = Label[]
     labels            = StringTable<<Label>>()
     strings           = StringLookupList()
+    variables         = StringLookupList()
 
   METHODS
     method define( label:Label )
@@ -44,6 +45,10 @@ class Assembler [abstract]
 
     method write_address( label_name:String )
       write_address( label(label_name) )
+
+    method write_var( varname:String )
+      variables.add( varname )  # redundant adds are okay
+      write( variables.locate(varname).value )
 
 endClass
 

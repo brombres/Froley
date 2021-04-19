@@ -98,6 +98,12 @@ class FroleyParser : Parser
           return result
         endFunction
       )
+      rule.on( "@",  
+        function(parser:FroleyParser)->Cmd
+          local t = parser.read  # '@'
+          return TokenizerCmdVarAccess( t, parser.read_identifier )
+        endFunction
+      )
       rule.on( "buffer",        <<TokenizerCmdRegisterBuffer>> )
       rule.on( "ch",            <<TokenizerCmdRegisterCh>> )
       rule.on( "count",         <<TokenizerCmdRegisterCount>> )
@@ -467,12 +473,15 @@ class FroleyParser : Parser
             elseIf (expr.is_count)
               statements.add( TokenizerCmdOp(t,"print count",TokenizerOpcode.PRINT_COUNT) )
               return
+            elseIf (expr.is_var)
+              statements.add( TokenizerCmdVarOp(t,"print @$"(expr),TokenizerOpcode.PRINT_VAR,expr->String) )
+              return
             elseIf (expr.is_integer)
               statements.add( TokenizerCmdPrintCharacter(t,expr->Int32) )
               return
             endIf
           endIf
-          throw t.error( "Syntax error - valid 'print' arguments are  'ch', 'count', and '<string>'." )
+          throw t.error( "Syntax error - valid 'print' arguments are  'ch', 'count', 'var', and '<string>'." )
         endIf
 
       elseIf (consume(TokenType.KEYWORD_RESTART))

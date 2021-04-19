@@ -34,12 +34,7 @@ endWhich
 markSourcePosition
 if (not hasAnother) halt
 
-if (scanIdentifier)
-  which (buffer)
-    produceAny [keywords]
-    others: produce IDENTIFIER
-  endWhich
-endIf
+scan_identifier
 
 which (input)
   produceAny [symbols]
@@ -57,6 +52,23 @@ which (input)
 endWhich
 
 syntaxError
+
+<scan_identifier>
+ch = peek
+if (ch is 'a'..'z' or ch is 'A'..'Z' or ch == '_')
+  clear buffer
+  while (ch is 'a'..'z' or ch is 'A'..'Z' or ch is '0'..'9' or ch == '_')
+    ch = read
+    collect ch
+    ch = peek
+  endWhile
+
+  which (buffer)
+    produceAny [keywords]
+    others: produce IDENTIFIER
+  endWhich
+endIf
+return
 
 <scan_integer>
 while (ch is '0'..'9' or ch == '_')

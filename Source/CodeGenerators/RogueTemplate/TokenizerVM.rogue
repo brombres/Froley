@@ -204,9 +204,6 @@ augment RogueTemplate
        |            endContingent
        |            ip += 2
        |            nextIteration
-       |          case TokenizerOpcode.SCAN_IDENTIFIER
-       |            result = scan_identifier->Int32
-       |            nextIteration
        |          case TokenizerOpcode.CLEAR_BUFFER
        |            buffer.clear
        |            nextIteration
@@ -417,18 +414,6 @@ augment RogueTemplate
        |      n = reader.read_int32x
        |      code.reserve( n )
        |      loop (n) code.add( reader.read_int32x )
-       |
-       |    method scan_identifier->Logical
-       |      if (scanner.has_another and id_characters[scanner.peek&0x7F] == 1)
-       |        buffer.clear
-       |        buffer.print( scanner.read )
-       |        while (scanner.has_another and id_characters[scanner.peek&0x7f])
-       |          buffer.print( scanner.read )
-       |        endWhile
-       |        return true
-       |      else
-       |        return false
-       |      endIf
        |
        |    method throw_buffer_error
        |      throw Error( filepath, scanner.source, scanner.line, scanner.column, buffer->String )

@@ -285,19 +285,6 @@ class TokenizerCmdRead( t ) : Cmd
       return "read"
 endClass
 
-class TokenizerCmdScanIdentfier( t ) : Cmd
-  METHODS
-    method jump_if_true->TokenizerOpcode
-      return TokenizerOpcode.JUMP_GT
-
-    method to->String
-      return "scanIdentifier"
-
-    method write( assembler:TokenizerAssembler )
-      assembler.write( TokenizerOpcode.SCAN_IDENTIFIER )
-endClass
-
-
 class TokenizerCmdWhile( t, condition:Cmd ) : Cmd
   PROPERTIES
     statements = CmdStatements()

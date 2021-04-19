@@ -70,7 +70,6 @@ augment TokenType
   KEYWORD_RESTORE_POSITION  ( "restorePosition",      &is_keyword )
   KEYWORD_RETURN            ( "return",               &is_keyword )
   KEYWORD_SAVE_POSITION     ( "savePosition",         &is_keyword )
-  KEYWORD_SCAN_IDENTIFIER   ( "scanIdentifier",       &is_keyword )
   KEYWORD_SWAP              ( "swap",                 &is_keyword )
   KEYWORD_SYNTAX_ERROR      ( "syntaxError",          &is_keyword )
   KEYWORD_TRACE             ( "trace",                &is_keyword )

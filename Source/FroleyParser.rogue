@@ -97,7 +97,6 @@ class FroleyParser : Parser
           endIf
         endFunction
       )
-      rule.on( "scanIdentifier", <<TokenizerCmdScanIdentfier>> )
       rule.on( "peek",
         function(parser:FroleyParser)->Cmd
           local t = parser.read  # 'peek'

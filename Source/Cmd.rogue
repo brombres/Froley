@@ -857,6 +857,15 @@ class TokenizerCmdVarAccess( t, name:String ) : Cmd
       endIf
 endClass
 
+class TokenizerCmdCustom( t, name:String ) : Cmd
+  METHODS
+    method to->String
+      return "custom($)"(name)
+
+    method write( assembler:TokenizerAssembler )
+      assembler.write( TokenizerOpcode.CUSTOM, name )
+endClass
+
 class ParserCmdOnType( t, token_type_def:TokenDef ) : Cmd
   PROPERTIES
     statements = CmdStatements()

@@ -147,6 +147,12 @@ class FroleyParser : Parser
           throw t.error( "Expected 'modeIs(<label>)'." )
         endFunction
       )
+      rule.on( "custom",
+        function(parser:FroleyParser)->Cmd
+          local t = parser.read  # 'custom'
+          return TokenizerCmdCustom( t, parser.read_string )
+        endFunction
+      )
 
       # parser expression
       rule = add( ParseRule("parser_expression") )

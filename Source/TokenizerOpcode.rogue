@@ -30,6 +30,7 @@ enum TokenizerOpcode( size=1:Int32 )
   COLLECT_CH            # BUFFER.print(ch)
   COLLECT_CHARACTER(2)  # BUFFER.print(character:ARG1)
   COLLECT_STRING(2)     # BUFFER.print(strings[index:ARG1])
+  CUSTOM(2)             # call custom command with string index of name
   BUFFER_TO_LOWERCASE
   PRINT_BUFFER          # print buffer
   PRINT_CH              # print ch->Character

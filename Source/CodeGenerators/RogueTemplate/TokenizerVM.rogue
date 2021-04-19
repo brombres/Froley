@@ -42,6 +42,16 @@ augment RogueTemplate
        |      forEach (ch in id_continue) id_characters[ch->Int32] = 2  # '2' = can be start or continue
        |      forEach (ch in id_start)    id_characters[ch->Int32] = 1  # '1' = can be start only
        |
+       |    method on_custom( name_index:Int32 )
+       |      # Can override this instead of on_custom(String) for higher efficiency vs string compares.
+       |      # name_index can change when the .froley code is updated so don't rely on specific values.
+       |      # But one could set up an array of custom function handlers when the tokenizer is constructed
+       |      # and then index into that.
+       |      on_custom( strings[name_index] )
+       |
+       |    method on_custom( name:String )
+       |      println "*** Unhandled custom operation:$ ***" (name)
+       |
        |    method set_mode( new_mode_name:String )
        |      forEach (entry_point in entry_points)
        |        if (entry_point.name == new_mode_name)
@@ -217,6 +227,10 @@ augment RogueTemplate
        |          case TokenizerOpcode.COLLECT_STRING
        |            buffer.print( strings[code[ip]] )
        |            ++ip
+       |            nextIteration
+       |          case TokenizerOpcode.CUSTOM
+       |            ++ip
+       |            on_custom( code[ip-1] )
        |            nextIteration
        |          case TokenizerOpcode.BUFFER_TO_LOWERCASE
        |            local lowercase_buffer = StringBuilder.pool.on_use

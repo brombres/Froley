@@ -20,13 +20,12 @@ enum TokenizerOpcode( size=1:Int32 )
   RETURN                # IP = STACK.remove_last
   HAS_ANOTHER           # if another character of input is available then RESULT=1 else RESULT=0
   PEEK_CH_INT32(2)      # CH = peek(lookahead:ARG1)
-  PEEK_CH_COUNT         # CH = peek(lookahead=COUNT)
+  PEEK_CH_VAR           # CH = peek(lookahead=COUNT)
   READ_CH               # CH = read
   CONSUME_CHARACTER(2)  # if consume(character:ARG1) then RESULT=1 else RESULT=0
   CONSUME_STRING(2)     # if consume(strings[index:ARG1]) then RESULT=1 else RESULT=0
   MUST_CONSUME_CHARACTER(2)
   NEXT_IS_CHARACTER(2)
-  SCAN_DIGITS(4)        # min..max:ARG1..ARG2, base:ARG3; RESULT = n_read - min_digits
   SCAN_IDENTIFIER
   CLEAR_BUFFER          # BUFFER.clear
   COLLECT_CH            # BUFFER.print(ch)
@@ -35,29 +34,25 @@ enum TokenizerOpcode( size=1:Int32 )
   BUFFER_TO_LOWERCASE
   PRINT_BUFFER          # print buffer
   PRINT_CH              # print ch->Character
-  PRINT_COUNT           # print count->Int32
   PRINT_CHARACTER(2)    # print ARG1->Character
   PRINT_STRING(2)       # print strings[index:ARG1]
   PRINT_VAR(2)          # print variables[index:ARG1]
   COMPARE_BUFFER_STRING # RESULT = buffer.compare_to(strings[index:ARG1])
   COMPARE_CH_INT32      # RESULT = ch - ARG1
-  COMPARE_COUNT_INT32   # RESULT = count - ARG1
+  COMPARE_VAR_INT32(3)  # RESULT = variables[index:ARG1] - ARG2
   CH_IS_DIGIT_BASE_INT32(2)  # RESULT = which{ ch.is_digit(base:ARG1):1 || 0 }
-  CH_IS_DIGIT_BASE_COUNT     # RESULT = which{ ch.is_digit(base:count):1 || 0 }
   CH_IS_LETTER          # RESULT = which{ ch.is_letter:1 || 0 }
   SET_CH_TO_INT32(2)    # ch = ARG1
-  SET_CH_TO_COUNT       # ch = count
-  SET_COUNT_TO_INT32(2) # count = ARG1
-  SET_COUNT_TO_CH       # count = ch
+  SET_CH_TO_VAR         # ch = variables[index:ARG1]
+  SET_VAR_TO_INT32(3)   # variables[index:ARG1] = ARG2
+  SET_VAR_TO_CH(2)      # variables[index:ARG1] = ch
   SET_RESULT_TO_CH      # RESULT = ch
-  SET_RESULT_TO_COUNT   # RESULT = count
+  SET_RESULT_TO_VAR(2)  # RESULT = variables[index:ARG1]
   SET_RESULT_TO_INT32(2)# RESULT = ARG1
-  ADD_CH_COUNT          # ch    += count
   ADD_CH_INT32(2)       # ch    += ARG1
-  ADD_COUNT_INT32(2)    # count += ARG1
   ADD_VAR_INT32(3)      # variables[index:ARG1] += ARG2
   ADD_VAR_VAR(3)        # variables[index:ARG1] += variables[index:ARG2]
-  SUBTRACT_CH_COUNT     # ch    += count
+  SUBTRACT_VAR_VAR(3)   # variables[index:ARG1] -= variables[index:ARG2]
   TRIM_BUFFER           # BUFFER = BUFFER->String.trimmed
   WHICH_INPUT           # (complex)
   WHICH_BUFFER          # (complex)

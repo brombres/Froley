@@ -15,9 +15,6 @@ augment Cmd
     method is_ch->Logical
       return false
 
-    method is_count->Logical
-      return false
-
     method is_integer->Logical
       return false
 
@@ -56,9 +53,6 @@ augment Cmd
 
     method to_is_digit( base:Int32 )->Cmd
       throw t.error( "Syntax error; expected 'ch is digit' or 'ch is digit(10)'." )
-
-    method to_is_digit_count->Cmd
-      throw t.error( "Syntax error; expected 'ch is digit(count)." )
 
     method to_is_letter->Cmd
       throw t.error( "Syntax error; expected 'ch is letter'." )
@@ -294,29 +288,6 @@ class TokenizerCmdRead( t ) : Cmd
       return "read"
 endClass
 
-class TokenizerCmdScanDigits( t, min_digits:Int32, max_digits:Int32, base:Int32 ) : Cmd
-  PROPERTIES
-    is_resolved : Logical
-
-  METHODS
-    method jump_if_true->TokenizerOpcode
-      return TokenizerOpcode.JUMP_GE
-
-    method to->String
-      return "scanDigits $..$ base $" (min_digits,max_digits,base)
-
-    method write( assembler:TokenizerAssembler )
-      if (is_resolved)
-        assembler.write( TokenizerOpcode.SCAN_DIGITS )
-        assembler.write( min_digits )
-        assembler.write( max_digits )
-        assembler.write( base )
-      else
-        throw t.error( "Syntax error. Expected 'ch = scanDigits <min-digits>[..<max-digits>] [base <number-base>]'." )
-      endIf
-endClass
-
-
 class TokenizerCmdScanIdentfier( t ) : Cmd
   METHODS
     method jump_if_true->TokenizerOpcode
@@ -417,13 +388,14 @@ class TokenizerCmdSetChToInt32( t, value:Int32 ) : Cmd
       assembler.write( TokenizerOpcode.SET_CH_TO_INT32, value )
 endClass
 
-class TokenizerCmdSetChToCount( t ) : Cmd
+class TokenizerCmdSetChToVar( t, name:String ) : Cmd
   METHODS
     method jump_if_true->TokenizerOpcode
       return TokenizerOpcode.JUMP_NE
 
     method write( assembler:TokenizerAssembler )
-      assembler.write( TokenizerOpcode.SET_CH_TO_COUNT )
+      assembler.write( TokenizerOpcode.SET_CH_TO_VAR )
+      assembler.write_var( name )
 endClass
 
 class TokenizerCmdReadCh( t ) : Cmd
@@ -443,16 +415,6 @@ class TokenizerCmdChIsDigit( t, base:Int32 ) : Cmd
     method write( assembler:TokenizerAssembler )
       assembler.write( TokenizerOpcode.CH_IS_DIGIT_BASE_INT32, base )
 endClass
-
-class TokenizerCmdChIsDigitCount( t ) : Cmd
-  METHODS
-    method jump_if_true->TokenizerOpcode
-      return TokenizerOpcode.JUMP_NE
-
-    method write( assembler:TokenizerAssembler )
-      assembler.write( TokenizerOpcode.CH_IS_DIGIT_BASE_COUNT )
-endClass
-
 
 class TokenizerCmdChIsLetter( t ) : Cmd
   METHODS
@@ -500,21 +462,18 @@ class TokenizerCmdRegisterCh( t ) : Cmd
     method resolve_assignment( new_value:Cmd )->Cmd
       if (new_value.is_integer)
         return TokenizerCmdSetChToInt32( t, new_value->Int32 )
-      elseIf (new_value instanceOf TokenizerCmdRegisterCount)
-        return TokenizerCmdSetChToCount( t )
+      elseIf (new_value.is_var)
+        return TokenizerCmdSetChToVar( t, new_value->String )
       elseIf (new_value instanceOf TokenizerCmdRead)
         return TokenizerCmdReadCh( t )
       elseIf (new_value instanceOf TokenizerCmdPeek)
         return TokenizerCmdPeekChInt32( t, 0 )
       elseIf (new_value instanceOf TokenizerCmdPeekInt32)
         return TokenizerCmdPeekChInt32( t, (new_value as TokenizerCmdPeekInt32).lookahead )
-      elseIf (new_value instanceOf TokenizerCmdPeekCount)
-        return TokenizerCmdPeekChCount( t )
-      elseIf (new_value instanceOf TokenizerCmdScanDigits)
-        (new_value as TokenizerCmdScanDigits).is_resolved = true
-        return new_value
+      elseIf (new_value instanceOf TokenizerCmdPeekVar)
+        return TokenizerCmdPeekChVar( t, (new_value as TokenizerCmdPeekVar).name )
       else
-        throw t.error( "Illegal 'ch' assignment. Expected 'count', 'read', 'scanDigits', or an integer." )
+        throw t.error( "Illegal 'ch' assignment. Expected 'count', 'read', '@varname', or an integer." )
       endIf
 
     method to->String
@@ -522,9 +481,6 @@ class TokenizerCmdRegisterCh( t ) : Cmd
 
     method to_is_digit( base:Int32 )->Cmd
       return TokenizerCmdChIsDigit( t, base )
-
-    method to_is_digit_count->Cmd
-      return TokenizerCmdChIsDigitCount( t )
 
     method to_is_letter->Cmd
       return TokenizerCmdChIsLetter( t )
@@ -536,81 +492,40 @@ class TokenizerCmdRegisterCh( t ) : Cmd
       local cmd_int = expression as TokenizerCmdLiteralInt32
       if (cmd_int)
         assembler.write( TokenizerOpcode.ADD_CH_INT32, cmd_int.value )
-      elseIf (expression instanceOf TokenizerCmdRegisterCount)
-        assembler.write( TokenizerOpcode.ADD_CH_COUNT )
       else
-        throw expression.error( "Illegal operation value; integer or 'count' expected." )
+        throw expression.error( "Illegal operation value; integer expected." )
       endIf
 
     method write_subtract( assembler:TokenizerAssembler, expression:Cmd )
       local cmd_int = expression as TokenizerCmdLiteralInt32
       if (cmd_int)
         assembler.write( TokenizerOpcode.ADD_CH_INT32, -cmd_int.value )
-      elseIf (expression instanceOf TokenizerCmdRegisterCount)
-        assembler.write( TokenizerOpcode.SUBTRACT_CH_COUNT )
       else
-        throw expression.error( "Illegal operation value; integer or 'count' expected." )
+        throw expression.error( "Illegal operation value; integer expected." )
       endIf
 endClass
 
-class TokenizerCmdSetCountToInt32( t, value:Int32 ) : Cmd
+class TokenizerCmdSetVarToInt32( t, name:String, value:Int32 ) : Cmd
   METHODS
     method jump_if_true->TokenizerOpcode
       return TokenizerOpcode.JUMP_NE
 
     method write( assembler:TokenizerAssembler )
-      assembler.write( TokenizerOpcode.SET_COUNT_TO_INT32, value )
+      assembler.write( TokenizerOpcode.SET_VAR_TO_INT32 )
+      assembler.write_var( name )
+      assembler.write( value )
 endClass
 
-class TokenizerCmdSetCountToCh( t ) : Cmd
+class TokenizerCmdSetVarToCh( t, name:String ) : Cmd
   METHODS
     method jump_if_true->TokenizerOpcode
       return TokenizerOpcode.JUMP_NE
 
     method write( assembler:TokenizerAssembler )
-      assembler.write( TokenizerOpcode.SET_COUNT_TO_CH )
+      assembler.write( TokenizerOpcode.SET_VAR_TO_CH )
+      assembler.write_var( name )
 endClass
 
-
-class TokenizerCmdRegisterCount( t ) : Cmd
-  METHODS
-    method is_count->Logical
-      return true
-
-    method jump_if_true->TokenizerOpcode
-      return TokenizerOpcode.JUMP_GT
-
-    method resolve_assignment( new_value:Cmd )->Cmd
-      if (new_value.is_integer)
-        return TokenizerCmdSetCountToInt32( t, new_value->Int32 )
-      elseIf (new_value.is_ch)
-        return TokenizerCmdSetCountToCh( t )
-      else
-        throw t.error( "Illegal 'count' assignment. Expected 'ch' or an integer." )
-      endIf
-
-    method to->String
-      return "count"
-
-    method write( assembler:TokenizerAssembler )
-      assembler.write( TokenizerOpcode.SET_RESULT_TO_COUNT )
-
-    method write_add( assembler:TokenizerAssembler, expression:Cmd )
-      local cmd_int32 = expression as TokenizerCmdLiteralInt32
-      if (cmd_int32)
-        assembler.write( TokenizerOpcode.ADD_COUNT_INT32, cmd_int32.value )
-      else
-        throw expression.error( "Illegal operation value; integer expected." )
-      endIf
-
-    method write_subtract( assembler:TokenizerAssembler, expression:Cmd )
-      local cmd_int32 = expression as TokenizerCmdLiteralInt32
-      if (cmd_int32)
-        assembler.write( TokenizerOpcode.ADD_COUNT_INT32, -cmd_int32.value )
-      else
-        throw expression.error( "Illegal operation value; integer expected." )
-      endIf
-endClass
 
 class TokenizerCmdCompare<<$OPCODE>> : CmdBinary
   METHODS
@@ -636,9 +551,11 @@ class TokenizerCmdCompare<<$OPCODE>> : CmdBinary
           return
         endIf
       endIf
-      if (left.is_count)
+      if (left.is_var)
         if (right.is_integer)
-          assembler.write( TokenizerOpcode.COMPARE_COUNT_INT32, right->Int32 )
+          assembler.write( TokenizerOpcode.COMPARE_VAR_INT32 )
+          assembler.write_var( left->String )
+          assembler.write( right->Int32 )
           return
         endIf
       endIf
@@ -695,13 +612,13 @@ class TokenizerCmdPeek( t ) : Cmd
       throw t.error( "Syntax error - expected 'ch = peek'." )
 endClass
 
-class TokenizerCmdPeekCount( t ) : Cmd
+class TokenizerCmdPeekVar( t, name:String ) : Cmd
   METHODS
     method to->String
-      return "peek(count)"
+      return "peek(@$)"(name)
 
     method write( assembler:TokenizerAssembler )
-      throw t.error( "Syntax error - expected 'ch = peek(count)'." )
+      throw t.error( "Syntax error - expected 'ch = peek(@$)'."(name) )
 endClass
 
 class TokenizerCmdPeekInt32( t, lookahead:Int32 ) : Cmd
@@ -713,13 +630,14 @@ class TokenizerCmdPeekInt32( t, lookahead:Int32 ) : Cmd
       throw t.error( "Syntax error - expected 'ch = peek($)'." (lookahead) )
 endClass
 
-class TokenizerCmdPeekChCount( t ) : Cmd
+class TokenizerCmdPeekChVar( t, name:String ) : Cmd
   METHODS
     method to->String
-      return "ch = peek(count)"
+      return "ch = peek(@varname)"
 
     method write( assembler:TokenizerAssembler )
-      assembler.write( TokenizerOpcode.PEEK_CH_COUNT )
+      assembler.write( TokenizerOpcode.PEEK_CH_VAR )
+      assembler.write_var( name )
 endClass
 
 class TokenizerCmdPeekChInt32( t, lookahead:Int32 ) : Cmd
@@ -915,12 +833,24 @@ class TokenizerCmdVarAccess( t, name:String ) : Cmd
     method is_var->Logical
       return true
 
+    method jump_if_true->TokenizerOpcode
+      return TokenizerOpcode.JUMP_NE
+
     method to->String
       return name
 
+    method resolve_assignment( new_value:Cmd )->Cmd
+      if (new_value.is_integer)
+        return TokenizerCmdSetVarToInt32( t, name, new_value->Int32 )
+      elseIf (new_value.is_ch)
+        return TokenizerCmdSetVarToCh( t, name )
+      else
+        throw t.error( "Illegal variable assignment. Expected 'ch' or an integer." )
+      endIf
+
     method write( assembler:TokenizerAssembler )
-      throw t.error( "TODO: @$"(name) )
-      #assembler.write( TokenizerOpcode.TRACE, t.line )
+      assembler.write( TokenizerOpcode.SET_RESULT_TO_VAR )
+      assembler.write_var( name )
 
     method write_add( assembler:TokenizerAssembler, expression:Cmd )
       local cmd_int = expression as TokenizerCmdLiteralInt32
@@ -930,6 +860,20 @@ class TokenizerCmdVarAccess( t, name:String ) : Cmd
         assembler.write( cmd_int.value )
       elseIf (expression.is_var)
         assembler.write( TokenizerOpcode.ADD_VAR_VAR )
+        assembler.write_var( name )
+        assembler.write_var( expression->String )
+      else
+        throw expression.error( "Illegal operation value; integer or variable expected." )
+      endIf
+
+    method write_subtract( assembler:TokenizerAssembler, expression:Cmd )
+      local cmd_int = expression as TokenizerCmdLiteralInt32
+      if (cmd_int)
+        assembler.write( TokenizerOpcode.ADD_VAR_INT32 )
+        assembler.write_var( name )
+        assembler.write( -cmd_int.value )
+      elseIf (expression.is_var)
+        assembler.write( TokenizerOpcode.SUBTRACT_VAR_VAR )
         assembler.write_var( name )
         assembler.write_var( expression->String )
       else

@@ -50,10 +50,8 @@ class FroleyParser : Parser
                 if (parser.consume(TokenType.KEYWORD_DIGIT))
                   local base = 10
                   if (parser.consume(TokenType.KEYWORD_BASE))
-                    if (parser.consume(TokenType.KEYWORD_COUNT))
-                      return TokenizerCmdNot( t, term.to_is_digit_count )
-                    elseIf (not parser.next_is(TokenType.INTEGER))
-                      throw parser.peek.error( "Base '2'..'16' or 'count' expected." )
+                    if (not parser.next_is(TokenType.INTEGER))
+                      throw parser.peek.error( "Base '2'..'16' expected." )
                     endIf
                     base = parser.read->Int32
                   endIf
@@ -67,10 +65,8 @@ class FroleyParser : Parser
                 if (parser.consume(TokenType.KEYWORD_DIGIT))
                   local base = 10
                   if (parser.consume(TokenType.KEYWORD_BASE))
-                    if (parser.consume(TokenType.KEYWORD_COUNT))
-                      return term.to_is_digit_count
-                    elseIf (not parser.next_is(TokenType.INTEGER))
-                      throw parser.peek.error( "Base '2'..'16' or 'count' expected." )
+                    if (not parser.next_is(TokenType.INTEGER))
+                      throw parser.peek.error( "Base '2'..'16' expected." )
                     endIf
                     base = parser.read->Int32
                   endIf
@@ -106,7 +102,6 @@ class FroleyParser : Parser
       )
       rule.on( "buffer",        <<TokenizerCmdRegisterBuffer>> )
       rule.on( "ch",            <<TokenizerCmdRegisterCh>> )
-      rule.on( "count",         <<TokenizerCmdRegisterCount>> )
       rule.on( "hasAnother",    <<TokenizerCmdHasAnother>> )
       rule.on( "integer value", <<TokenizerCmdLiteralInt32>> )
       rule.on( "literal string",<<TokenizerCmdLiteralString>> )
@@ -122,19 +117,6 @@ class FroleyParser : Parser
           endIf
         endFunction
       )
-      rule.on( "scanDigits",
-        function(parser:FroleyParser)->Cmd
-          local t = parser.read  # 'scanDigits'
-          local min_digits = parser.read_integer
-          local max_digits = min_digits
-          if (parser.consume(TokenType.SYMBOL_DOT_DOT)) max_digits = parser.read_integer
-          local base = 10
-          if (parser.consume(TokenType.KEYWORD_BASE))
-            base = parser.read_integer
-          endIf
-          return TokenizerCmdScanDigits(t,min_digits,max_digits,base)
-        endFunction
-      )
       rule.on( "scanIdentifier", <<TokenizerCmdScanIdentfier>> )
       rule.on( "peek",
         function(parser:FroleyParser)->Cmd
@@ -142,8 +124,8 @@ class FroleyParser : Parser
           if (parser.next_is(TokenType.SYMBOL_OPEN_PAREN))
             local expr = parser.parse_tokenizer_expression()
             if (expr.is_integer) return TokenizerCmdPeekInt32( t, expr->Int32 )
-            if (expr.is_count)   return TokenizerCmdPeekCount( t )
-            throw expr.t.error( "Expected 'peek', 'peek(<integer>)', or 'peek(count)'." )
+            if (expr.is_var)     return TokenizerCmdPeekVar( t, expr->String )
+            throw expr.t.error( "Expected 'peek', 'peek(<integer>)', or 'peek(@varname)'." )
           else
             return TokenizerCmdPeek( t )
           endIf
@@ -470,9 +452,6 @@ class FroleyParser : Parser
             if (expr.is_ch)
               statements.add( TokenizerCmdOp(t,"print ch",TokenizerOpcode.PRINT_CH) )
               return
-            elseIf (expr.is_count)
-              statements.add( TokenizerCmdOp(t,"print count",TokenizerOpcode.PRINT_COUNT) )
-              return
             elseIf (expr.is_var)
               statements.add( TokenizerCmdVarOp(t,"print @$"(expr),TokenizerOpcode.PRINT_VAR,expr->String) )
               return
@@ -495,9 +474,6 @@ class FroleyParser : Parser
       elseIf (consume(TokenType.KEYWORD_RETURN))
         statements.add( TokenizerCmdOp(t,"return",TokenizerOpcode.RETURN) )
         return
-
-      elseIf (consume(TokenType.KEYWORD_SCAN_DIGITS))
-        throw t.error( "Syntax error. Expected 'ch = scanDigits <min-digits>[..<max-digits>] [base <number-base>]'." )
 
       elseIf (consume(TokenType.KEYWORD_TRACE))
         statements.add( TokenizerCmdTrace(t) )
@@ -960,11 +936,6 @@ class FroleyParser : Parser
       if (consume(TokenType.KEYWORD_CH)) return
       throw t.error( "Register 'ch' expected." )
 
-    method must_consume_register_count
-      local t = peek
-      if (consume(TokenType.KEYWORD_COUNT)) return
-      throw t.error( "Register 'count' expected." )
-
     method next_is_tokenizer_end_if( &single_line, &multi_line )->Logical
       local original_pos = reader.position
       consume_eols
@@ -1033,8 +1004,8 @@ class FroleyParser : Parser
     method parse_register->Cmd
       local t = peek
       if (consume(TokenType.KEYWORD_CH)) return TokenizerCmdRegisterCh( t )
-      if (consume(TokenType.KEYWORD_COUNT)) return TokenizerCmdRegisterCount( t )
-      throw t.error( "Register 'ch' or 'count' expected." )
+      if (consume(TokenType.SYMBOL_AT)) return TokenizerCmdVarAccess( t, read_identifier )
+      throw t.error( "Register 'ch' or variable '@varname' expected." )
 
     method parse_which_input( cmd_which_input:TokenizerCmdWhichInput )
       consume_eols

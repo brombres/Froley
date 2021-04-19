@@ -40,42 +40,22 @@ class FroleyParser : Parser
 
       # tokenizer is digit, is letter
       rule = add_nested(
-        PostUnaryParseRule( "is_digit_is_letter",
+        PostUnaryParseRule( "is_range",
           function (rule:ParseRule)->Cmd
             local t = rule.parser.peek
             local term = rule.parser.parse_tokenizer_term()
             local parser = rule.parser
             if (parser.consume(TokenType.KEYWORD_IS))
               if (parser.consume(TokenType.KEYWORD_NOT))
-                if (parser.consume(TokenType.KEYWORD_DIGIT))
-                  local base = 10
-                  if (parser.consume(TokenType.KEYWORD_BASE))
-                    if (not parser.next_is(TokenType.INTEGER))
-                      throw parser.peek.error( "Base '2'..'16' expected." )
-                    endIf
-                    base = parser.read->Int32
-                  endIf
-                  return TokenizerCmdNot( t, term.to_is_digit(base) )
-                elseIf (parser.consume(TokenType.KEYWORD_LETTER))
-                  return TokenizerCmdNot( t, term.to_is_letter )
-                else
-                  throw parser.peek.error( "'is not digit' or 'is not letter' expected." )
-                endIf
+                local low = parser.parse_tokenizer_term()->Int32
+                parser.must_consume(TokenType.SYMBOL_DOT_DOT)
+                local high = parser.parse_tokenizer_term()->Int32
+                return TokenizerCmdNot( t, term.to_is_range(low,high) )
               else
-                if (parser.consume(TokenType.KEYWORD_DIGIT))
-                  local base = 10
-                  if (parser.consume(TokenType.KEYWORD_BASE))
-                    if (not parser.next_is(TokenType.INTEGER))
-                      throw parser.peek.error( "Base '2'..'16' expected." )
-                    endIf
-                    base = parser.read->Int32
-                  endIf
-                  return term.to_is_digit( base )
-                elseIf (parser.consume(TokenType.KEYWORD_LETTER))
-                  return term.to_is_letter
-                else
-                  throw parser.peek.error( "'is digit' or 'is letter' expected." )
-                endIf
+                local low = parser.parse_tokenizer_term()->Int32
+                parser.must_consume(TokenType.SYMBOL_DOT_DOT)
+                local high = parser.parse_tokenizer_term()->Int32
+                return term.to_is_range( low, high )
               endIf
             else
               return term

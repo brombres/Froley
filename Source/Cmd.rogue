@@ -51,11 +51,8 @@ augment Cmd
     method to->Int32
       throw UnsupportedOperationError()
 
-    method to_is_digit( base:Int32 )->Cmd
-      throw t.error( "Syntax error; expected 'ch is digit' or 'ch is digit(10)'." )
-
-    method to_is_letter->Cmd
-      throw t.error( "Syntax error; expected 'ch is letter'." )
+    method to_is_range( low:Int32, high:Int32 )->Cmd
+      throw t.error( "Syntax error; expected \"ch is 'a'..'z'\" etc." )
 
     method type->ValueType?
       return null
@@ -407,22 +404,15 @@ class TokenizerCmdReadCh( t ) : Cmd
       assembler.write( TokenizerOpcode.READ_CH )
 endClass
 
-class TokenizerCmdChIsDigit( t, base:Int32 ) : Cmd
+class TokenizerCmdChIsRange( t, low:Int32, high:Int32 ) : Cmd
   METHODS
     method jump_if_true->TokenizerOpcode
       return TokenizerOpcode.JUMP_NE
 
     method write( assembler:TokenizerAssembler )
-      assembler.write( TokenizerOpcode.CH_IS_DIGIT_BASE_INT32, base )
-endClass
-
-class TokenizerCmdChIsLetter( t ) : Cmd
-  METHODS
-    method jump_if_true->TokenizerOpcode
-      return TokenizerOpcode.JUMP_NE
-
-    method write( assembler:TokenizerAssembler )
-      assembler.write( TokenizerOpcode.CH_IS_LETTER )
+      assembler.write( TokenizerOpcode.CH_IS_RANGE )
+      assembler.write( low )
+      assembler.write( high )
 endClass
 
 class TokenizerCmdSetBufferToString( t, value:String ) : Cmd
@@ -479,11 +469,8 @@ class TokenizerCmdRegisterCh( t ) : Cmd
     method to->String
       return "ch"
 
-    method to_is_digit( base:Int32 )->Cmd
-      return TokenizerCmdChIsDigit( t, base )
-
-    method to_is_letter->Cmd
-      return TokenizerCmdChIsLetter( t )
+    method to_is_range( low:Int32, high:Int32 )->Cmd
+      return TokenizerCmdChIsRange( t, low, high )
 
     method write( assembler:TokenizerAssembler )
       assembler.write( TokenizerOpcode.SET_RESULT_TO_CH )

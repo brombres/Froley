@@ -40,8 +40,7 @@ enum TokenizerOpcode( size=1:Int32 )
   COMPARE_BUFFER_STRING # RESULT = buffer.compare_to(strings[index:ARG1])
   COMPARE_CH_INT32      # RESULT = ch - ARG1
   COMPARE_VAR_INT32(3)  # RESULT = variables[index:ARG1] - ARG2
-  CH_IS_DIGIT_BASE_INT32(2)  # RESULT = which{ ch.is_digit(base:ARG1):1 || 0 }
-  CH_IS_LETTER          # RESULT = which{ ch.is_letter:1 || 0 }
+  CH_IS_RANGE(3)  # RESULT = (ch >= ARG1 and ch <= ARG2)
   SET_CH_TO_INT32(2)    # ch = ARG1
   SET_CH_TO_VAR         # ch = variables[index:ARG1]
   SET_VAR_TO_INT32(3)   # variables[index:ARG1] = ARG2

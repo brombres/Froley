@@ -50,7 +50,7 @@ which (input)
     discard
   others
     ch = peek
-    if (ch is digit)
+    if (ch is '0'..'9')
       scan_integer
       produce INTEGER
     endIf
@@ -59,7 +59,7 @@ endWhich
 syntaxError
 
 <scan_integer>
-while (ch is digit or ch == '_')
+while (ch is '0'..'9' or ch == '_')
   ch = read
   if (ch != '_') collect ch
   if (not hasAnother) return

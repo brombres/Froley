@@ -252,14 +252,9 @@ augment RogueTemplate
        |            result = variables[code[ip]] - code[ip+1]
        |            ip += 2
        |            nextIteration
-       |          case TokenizerOpcode.CH_IS_DIGIT_BASE_INT32
-       |            local base = code[ip]
-       |            ++ip
-       |            local n = (ch->Character).to_number( base )
-       |            result = which{ (n>=0 and n<base):1 || 0 }
-       |            nextIteration
-       |          case TokenizerOpcode.CH_IS_LETTER
-       |            result = which{ ((ch>='a' and ch<='z') or (ch>='A' and ch<='Z')):1 || 0 }
+       |          case TokenizerOpcode.CH_IS_RANGE
+       |            result = (ch >= code[ip] and ch <= code[ip+1])
+       |            ip += 2
        |            nextIteration
        |          case TokenizerOpcode.SET_CH_TO_INT32
        |            ch = code[ ip ]

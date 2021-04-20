@@ -68,9 +68,11 @@ augment RogueTemplate
        |        try
        |          local args = System.command_line_arguments.join( " " )
        |          if (File.exists(args))
-       |            display( tokenizer.tokenize(File(args)) )
+       |            tokenizer.open( File(args) )
+       |            display( tokenizer.tokenize )
        |          else
-       |            display( tokenizer.tokenize("[Command Line]", args) )
+       |            tokenizer.open( "[Command Line]", args )
+       |            display( tokenizer.tokenize )
        |          endIf
        |        catch (err:Error)
        |          Console.error.println err
@@ -81,7 +83,8 @@ augment RogueTemplate
        |        loop
        |          try
        |            local input = Console.input( "> " )
-       |            display( tokenizer.tokenize("[Command Line]", input) )
+       |            tokenizer.open( "[Command Line]", input )
+       |            display( tokenizer.tokenize )
        |          catch (err:Error)
        |            Console.error.println err
        |          endTry

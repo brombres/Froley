@@ -11,17 +11,7 @@
 $define LANGUAGE "Simple"
 
 routine rogo_default
-  rogo_json
   rogo_rogue
-endRoutine
-
-routine rogo_json
-  println "-" * 79
-  println "Compiling $.froley targeting JSON" (LANGUAGE)
-  println "-" * 79
-  execute "froley $.froley --target=json" (LANGUAGE)
-  println "$.json: $ bytes" (LANGUAGE,File.size(LANGUAGE+".json"))
-  println
 endRoutine
 
 routine rogo_rogue
@@ -36,19 +26,6 @@ routine rogo_rogue
   execute "Build/Rogue/$ a=b=3+4*5" (LANGUAGE)
 endRoutine
 
-routine rogo_java
-  println "-" * 79
-  println "Compiling $.froley targeting Java" (LANGUAGE)
-  println "-" * 79
-  local package = "froley.demo.$" (LANGUAGE.to_lowercase)
-  execute( "froley $.froley --target=java --main --output=Source/Java --package=$"(LANGUAGE,package) )
-  println "Compiling .java files to create $ parser" (LANGUAGE)
-  File.create_folder( "Build/Java" )
-  execute "javac -d Build/Java Source/Java/$/*.java" (package.replacing('.','/'))
-  println "Executing $ parser (run 'java -cp Build/Java $.$' with no additional arguments for interactive mode)" (LANGUAGE,package,LANGUAGE)
-  execute "java -cp Build/Java $.$ a=b=3+4*5" (package,LANGUAGE)
-endRoutine
-
 routine rogo_clean
   println "Deleting Build/"
   File.delete( "Build" )
@@ -58,8 +35,7 @@ routine rogo_xclean
   # For demo purposes, deletes more files than one might normally care to.
   # Normally one does not need to delete any generated source files.
   rogo_clean
-  println "Deleting generated .json and .rogue files"
-  File.delete( LANGUAGE+".json" )
+  println "Deleting generated .rogue files"
   File.delete( "Source" )
 endRoutine
 

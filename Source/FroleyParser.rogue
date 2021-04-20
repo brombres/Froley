@@ -475,7 +475,7 @@ class FroleyParser : Parser
         must_consume( TokenType.KEYWORD_END_WHICH )
         return
 
-      elseIf (next_is(TokenType.SYMBOL_LT))
+      elseIf (next_is(TokenType.SYMBOL_MINUS) or next_is(TokenType.SYMBOL_PLUS))
         local name = read_label_name
         must_consume( TokenType.EOL )
         statements.add( TokenizerCmdLabel(t,name) )
@@ -1129,16 +1129,16 @@ class FroleyParser : Parser
       endIf
 
     method read_label_name->String
-      if (next_is(TokenType.IDENTIFIER)) return read_identifier
-      must_consume( TokenType.SYMBOL_LT )
-      local is_entry_point = consume( TokenType.SYMBOL_LT )
-      local name = read->String
-      must_consume( TokenType.SYMBOL_GT )
-      if (is_entry_point)
-        must_consume( TokenType.SYMBOL_GT )
+      if (consume(TokenType.SYMBOL_MINUS))
+        # Entry point
+        local name = read_identifier
         Froley.entry_points.add( name )
+        return name
+      elseIf (consume(TokenType.SYMBOL_PLUS))
+        return read_identifier
+      else
+        return read_identifier
       endIf
-      return name
 
     method parse_parser_methods
       local top_level_method : ParserMethod

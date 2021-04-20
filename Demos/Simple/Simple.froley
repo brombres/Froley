@@ -1,7 +1,3 @@
-[settings]
-id_start    alpha '_'
-id_continue alpha numeric '_'
-
 [whitespace]
 SPACE ' '
 TAB   '\t'
@@ -25,59 +21,59 @@ SYMBOL_PLUS                 +
 SYMBOL_SLASH                /
 
 [tokenizer]
-<<tokenize>>
-which (input)
-  discardAny [whitespace]
-endWhich
+- tokenize
+  which (input)
+    discardAny [whitespace]
+  endWhich
 
-<whitespace_consumed>
-markSourcePosition
-if (not hasAnother) halt
++ whitespace_consumed
+  markSourcePosition
+  if (not hasAnother) halt
 
-scan_identifier
+  scan_identifier
 
-which (input)
-  produceAny [symbols]
-  case '#'
-    # Single-line comment
+  which (input)
+    produceAny [symbols]
+    case '#'
+      # Single-line comment
+      ch = read
+      while (ch != '\n') ch = read
+      discard
+    others
+      ch = peek
+      if (ch is '0'..'9')
+        scan_integer
+        produce INTEGER
+      endIf
+  endWhich
+
+  syntaxError
+
++ scan_identifier
+  ch = peek
+  if (ch is 'a'..'z' or ch is 'A'..'Z' or ch == '_')
+    clear buffer
+    while (ch is 'a'..'z' or ch is 'A'..'Z' or ch is '0'..'9' or ch == '_')
+      ch = read
+      collect ch
+      ch = peek
+    endWhile
+
+    which (buffer)
+      produceAny [keywords]
+      others: produce IDENTIFIER
+    endWhich
+  endIf
+  return
+
++ scan_integer
+  while (ch is '0'..'9' or ch == '_')
     ch = read
-    while (ch != '\n') ch = read
-    discard
-  others
-    ch = peek
-    if (ch is '0'..'9')
-      scan_integer
-      produce INTEGER
-    endIf
-endWhich
-
-syntaxError
-
-<scan_identifier>
-ch = peek
-if (ch is 'a'..'z' or ch is 'A'..'Z' or ch == '_')
-  clear buffer
-  while (ch is 'a'..'z' or ch is 'A'..'Z' or ch is '0'..'9' or ch == '_')
-    ch = read
-    collect ch
+    if (ch != '_') collect ch
+    if (not hasAnother) return
     ch = peek
   endWhile
-
-  which (buffer)
-    produceAny [keywords]
-    others: produce IDENTIFIER
-  endWhich
-endIf
-return
-
-<scan_integer>
-while (ch is '0'..'9' or ch == '_')
-  ch = read
-  if (ch != '_') collect ch
-  if (not hasAnother) return
-  ch = peek
-endWhile
-return
+  return
 
 [parser]
 - expression

@@ -20,7 +20,7 @@ $include "TokenizerAssembler.rogue"
 $include "TokenizerOpcode.rogue"
 $include "TokenizerVM.rogue"
 
-$includeFolder "CodeGenerators"
+$includeFolder "Generators"
 
 Launcher( System.command_line_arguments )
 
@@ -79,14 +79,14 @@ class Launcher
           local name = option.before_first('=')
           local value = option.after_first('=')
           if (name == "target")
-            local gen = Froley.code_generators[ value ]
+            local gen = Froley.generators[ value ]
             if (gen)
               # Switching host language
               cur_gen = gen
               active_generators.add( cur_gen )
               if (language_override) cur_gen.language = language_override
             else
-              local valid_names = Froley.code_generators.keys.to_list
+              local valid_names = Froley.generators.keys.to_list
               throw FroleyError( "Invalid target '$'. Valid targets: $." (value,valid_names.join(", ")) )
             endIf
           elseIf (cur_gen is null)
@@ -125,7 +125,7 @@ class Launcher
                |
                |TARGET LANGUAGES
                |  Froley can generate code for the following target languages:
-      writer.print( "    " ).println( forEach in Froley.code_generators.keys )
+      writer.print( "    " ).println( forEach in Froley.generators.keys )
       writer.println
       writer.println @|Use '--target=<language>' to include output for that language. Any successive
                       |options will apply only to that language until another `--target` is specified.
@@ -140,10 +140,10 @@ class Launcher
                       |    is used as the language name.
                       |
                       |OPTIONS
-      forEach (key in Froley.code_generators.keys)
+      forEach (key in Froley.generators.keys)
         writer.print  "  --target="
         writer.println key
-        writer.println(forEach in Froley.code_generators[ key ].usage_options.sort((a,b)=>a<b)).println
+        writer.println(forEach in Froley.generators[ key ].usage_options.sort((a,b)=>a<b)).println
       endForEach
 
       writer.println
@@ -169,7 +169,7 @@ class Froley [singleton]
     source                : String
     scanner               : Scanner
 
-    code_generators       = StringTable<<CodeGenerator>>()
+    generators       = StringTable<<CodeGenerator>>()
 
     token_defs_by_name    = LookupList<<TokenDef>>()
     token_defs_by_type    = Table<<Int32,TokenDef>>()

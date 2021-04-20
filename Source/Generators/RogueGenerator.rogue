@@ -2,7 +2,7 @@ $includeFolder "RogueTemplate"
 
 module Froley
 
-Froley.code_generators//rogue = GenerateRogue()
+Froley.generators//rogue = GenerateRogue()
 
 class GenerateRogue : CodeGenerator
   PROPERTIES

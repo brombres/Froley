@@ -1,6 +1,6 @@
 module Froley
 
-Froley.code_generators//json = GenerateJSON()
+Froley.generators//json = GenerateJSON()
 
 class GenerateJSON : CodeGenerator
   PROPERTIES

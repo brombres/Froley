@@ -4,7 +4,6 @@ enum TokenizerOpcode( size=1:Int32 )
   HALT                  # Tokenization complete; VM.tokenize() returns
   RESTART               # BUFFER.clear, IP = START_IP
   MODE_INT32(2)         # START_IP = ARG1
-  MODE_IS(2)            # result = (START_IP == ARG1) ? 1 : 0
   SYNTAX_ERROR          # Throws "Syntax error - unexpected '(next character)'." using current line and column.
   SYNTAX_ERROR_BUFFER   # Throws error using current line, column, and message in BUFFER
   MARK_SOURCE_POS       # Implementation-dependent; usually records scanner line and column for later token creation

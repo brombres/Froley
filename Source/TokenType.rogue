@@ -48,7 +48,6 @@ augment TokenType
   KEYWORD_LETTER            ( "letter",               &is_keyword )
   KEYWORD_MARK_SRC_POS      ( "markSourcePosition",   &is_keyword )
   KEYWORD_MODE              ( "mode",                 &is_keyword )
-  KEYWORD_MODE_IS           ( "modeIs",               &is_keyword )
   KEYWORD_MUST_CONSUME      ( "mustConsume",          &is_keyword )
   KEYWORD_NEXT_HAS_ATTRIBUTE( "nextHasAttribute",     &is_keyword )
   KEYWORD_NEXT_IS           ( "nextIs",               &is_keyword )

@@ -112,10 +112,6 @@ augment RogueTemplate
        |            start_ip = code[ ip ]
        |            ++ip
        |            nextIteration
-       |          case TokenizerOpcode.MODE_IS
-       |            result = which{ start_ip==code[ip]:1 || 0 }
-       |            ++ip
-       |            nextIteration
        |          case TokenizerOpcode.SYNTAX_ERROR
        |            throw_syntax_error
        |          case TokenizerOpcode.SYNTAX_ERROR_BUFFER

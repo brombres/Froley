@@ -175,15 +175,6 @@ class TokenizerCmdMode( t, label_name:String) : Cmd
       return "mode " + label_name
 endClass
 
-class TokenizerCmdModeIs( t, label_name:String) : Cmd
-  METHODS
-    method write( assembler:TokenizerAssembler )
-      assembler.[ write(TokenizerOpcode.MODE_IS), write_address(label_name) ]
-
-    method to->String
-      return "modeIs " + label_name
-endClass
-
 class TokenizerCmdLabel( t, name:String ) : Cmd
   METHODS
     method write( assembler:TokenizerAssembler )

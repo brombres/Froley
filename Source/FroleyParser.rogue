@@ -136,17 +136,6 @@ class FroleyParser : Parser
         throw t.error( "Expected 'nextIs('ch1' [.. 'ch2'])'." )
         endFunction
       )
-      rule.on( "modeIs",
-        function(parser:FroleyParser)->Cmd
-        local t = parser.read  # 'modeIs'
-          if (parser.consume(TokenType.SYMBOL_OPEN_PAREN))
-            local label_name = parser.read_label_name
-            parser.must_consume( TokenType.SYMBOL_CLOSE_PAREN )
-            return TokenizerCmdModeIs( t, label_name )
-          endIf
-          throw t.error( "Expected 'modeIs(<label>)'." )
-        endFunction
-      )
       rule.on( "custom",
         function(parser:FroleyParser)->Cmd
           local t = parser.read  # 'custom'

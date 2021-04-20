@@ -330,7 +330,9 @@ augment RogueTemplate
        |            # The start cmd is always acceptable and either contains the
        |            # 'others' case or jumps to the end of the scan table.
        |            ip = last_acceptable_cmd + last_acceptable_link_count * 2 + 2
-       |            loop (last_acceptable_lookahead) buffer.print( scanner.read )
+       |
+       |            # Discard the matched input (we know what it is by what case is called)
+       |            loop (last_acceptable_lookahead) scanner.read
        |            nextIteration
        |
        |          case TokenizerOpcode.WHICH_BUFFER
@@ -363,6 +365,7 @@ augment RogueTemplate
        |            endIf
        |            ip = cur_cmd + code[cur_cmd+1] * 2 + 2
        |            nextIteration
+       |
        |          case TokenizerOpcode.TRACE
        |            print( "Line " ).print( code[ip] ).print( " peek:" )
        |            if (scanner.has_another) print( scanner.peek->Character.to_escaped_ascii )

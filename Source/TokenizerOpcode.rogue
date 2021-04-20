@@ -51,7 +51,6 @@ enum TokenizerOpcode( size=1:Int32 )
   ADD_VAR_INT32(3)      # variables[index:ARG1] += ARG2
   ADD_VAR_VAR(3)        # variables[index:ARG1] += variables[index:ARG2]
   SUBTRACT_VAR_VAR(3)   # variables[index:ARG1] -= variables[index:ARG2]
-  TRIM_BUFFER           # BUFFER = BUFFER->String.trimmed
   WHICH_INPUT           # (complex)
   WHICH_BUFFER          # (complex)
   TRACE                 #

@@ -1043,7 +1043,7 @@ class ParserCmdNextHasAttribute( t, name:String ) : Cmd
       return ValueType.LOGICAL
 
     method write( assembler:ParserAssembler )
-      assembler.write( ParserOpcode.NEXT_HAS_ATTRIBUTE, Froley.token_attributes[name] )
+      assembler.write( ParserOpcode.NEXT_HAS_ATTRIBUTE, Froley.token_attribute(name) )
 endClass
 
 class ParserCmdLogicalAnd : CmdBinary

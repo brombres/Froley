@@ -189,11 +189,7 @@ class FroleyParser : Parser
           else
             name = parser.read_identifier
           endIf
-          if (Froley.token_attributes.contains(name))
-            return ParserCmdNextHasAttribute( t, name )
-          else
-            throw t.error( "No such token attribute '$' (attributes are be defined in an [attributes] section of the .froley file)." (name) )
-          endIf
+          return ParserCmdNextHasAttribute( t, name )
         endFunction
       )
       rule.on( "nextIs",

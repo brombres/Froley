@@ -178,6 +178,7 @@ class Froley [singleton]
 
     token_defs_by_section = StringTable<<TokenDef[]>>()
     token_attributes      = LookupList<<Int32>>()
+    next_attribute_value  = 1
 
     entry_points          = StringLookupList()
 
@@ -272,6 +273,17 @@ class Froley [singleton]
 
       return output
 
+    method token_attribute( name:String, value=0:Int32 )->Int32
+      if (token_attributes.contains(name))
+        return token_attributes[ name ]
+      endIf
+
+      if (value == 0) value = next_attribute_value
+      token_attributes[ name ] = value
+      next_attribute_value = 1
+      while (next_attribute_value <= value) next_attribute_value = next_attribute_value :<<: 1
+      return value
+
     method constructor( t:Token, name:String, type:ParseRuleType, symbol=null:String, args=null:ConstructorArg[], base_type=null:String )->Constructor
       local constructor = Constructor( t, name, type, constructor_lookup.count, symbol, args, base_type )
       constructor_lookup[ constructor.signature ] = constructor
@@ -285,7 +297,7 @@ class Froley [singleton]
       $localDefine PARSING_PARSER      4
 
       token_attributes.clear
-      token_attributes[ "content" ] = 1
+      token_attribute( "content", 1 )
 
       tokenizer_code.clear
       parser_code.clear
@@ -293,7 +305,6 @@ class Froley [singleton]
       local cur_section_defs : TokenDef[]
       local parse_type = PARSING_TOKENIZER
       local buffer = StringBuilder()
-      local next_attribute_value = 2   # [content] is 1
       local comment_level = 0
       forEach (line at index in LineReader(source))
         local trimmed = line.trimmed
@@ -370,8 +381,7 @@ class Froley [singleton]
               next_attribute_value = scanner.scan_int64
             endIf
 
-            token_attributes[ name ] = next_attribute_value
-            next_attribute_value *= 2
+            token_attribute( name, next_attribute_value )
 
           endIf
         else
@@ -415,10 +425,7 @@ class Froley [singleton]
                 if (attribute_name is null)
                   throw FroleyError( filepath, source, scanner.line, scanner.column, "Attribute name expected." )
                 endIf
-                if (not token_attributes.contains(attribute_name))
-                  throw FroleyError( filepath, source, scanner.line, scanner.column, "Undefined attribute '$'." (attribute_name) )
-                endIf
-                attributes |= token_attributes[ attribute_name ]
+                attributes |= token_attribute( attribute_name )
               endWhile
               if (not scanner.consume(']'))
                 throw FroleyError( filepath, source, scanner.line, scanner.column, "Closing ']' expected." )

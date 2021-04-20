@@ -1,0 +1,68 @@
+module Froley
+  uses ParseKit<<Froley>>
+
+enum ParseRuleType
+  GENERAL
+  PRE_UNARY
+  POST_UNARY
+  BINARY
+  LIST
+endEnum
+
+class ConstructorArg( name:String, type:String, value=null:String )
+  METHODS
+    method to->String
+      return "$=$:$" (name,value,type)
+
+    method to->Value
+      return @{ :name, :type, :value }
+endClass
+
+class Constructor( t:Token, name:String, type:ParseRuleType, index:Int32, symbol:String, args:ConstructorArg[], base_type:String )
+  PROPERTIES
+    _signature : String
+
+  METHODS
+    method signature->String
+      # e.g. Access(name=t:String,args:CmdList):BaseType
+      if (_signature) return _signature
+      use builder = StringBuilder.pool
+        builder.print name
+        builder.print '('
+        if (args)
+          forEach (arg at i in args)
+            if (i > 0) builder.print ','
+            builder.print arg.name
+            if (arg.value)
+              builder.print '='
+              builder.print arg.value
+            endIf
+            builder.print ':'
+            builder.print arg.type
+          endForEach
+        endIf
+        builder.print ')'
+        if (base_type)
+          builder.print "->"
+          builder.print base_type
+        endIf
+        _signature = builder->String
+      endUse
+      return _signature
+
+    method subcommand_count->Int32
+      if (args is null) return 0
+      local n = 0
+      if ((forEach in args).value is null) ++n
+      return n
+
+    method to->String
+      return name
+
+    method to->Value
+      local arg_list = @[]
+      if (args) arg_list.add( (forEach in args)->Value )
+      return @{ :name, :index, :type, :symbol, args:arg_list, :base_type }
+
+endClass
+

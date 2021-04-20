@@ -54,7 +54,7 @@ class MethodTypeParseRule : MethodType [singleton]
       if (cmd.peek) assembler.write( ParserOpcode.ON_PEEK_TOKEN_TYPE, def.type )
       else          assembler.write( ParserOpcode.ON_TOKEN_TYPE, def.type )
       assembler.write_address( label_no_match )
-      assembler.write( ParserOpcode.CREATE_CMD, cmd.cmd_type.index )
+      assembler.write( ParserOpcode.CREATE_CMD, cmd.constructor.index )
       assembler.write( 0 )  # 0 Cmd args
       assembler.write( ParserOpcode.RETURN )
       assembler.define( label_no_match )
@@ -79,7 +79,7 @@ class MethodTypePreUnaryParseRule : MethodType [singleton]
 
       assembler.write( ParserOpcode.CONSUME_EOLS )
       assembler.write( ParserOpcode.CALL, m.start_label )
-      assembler.write( ParserOpcode.CREATE_CMD, cmd.cmd_type.index )
+      assembler.write( ParserOpcode.CREATE_CMD, cmd.constructor.index )
       assembler.write( 1 ) # 1 Cmd arg
       assembler.write( ParserOpcode.RETURN )
 
@@ -105,7 +105,7 @@ class MethodTypePostUnaryParseRule : MethodType [singleton]
       assembler.write( ParserOpcode.ON_TOKEN_TYPE, def.type )
       assembler.write_address( label_no_match )
 
-      assembler.write( ParserOpcode.CREATE_CMD, cmd.cmd_type.index )
+      assembler.write( ParserOpcode.CREATE_CMD, cmd.constructor.index )
       assembler.write( 1 ) # 1 Cmd arg
       assembler.write( ParserOpcode.POP_CUR_TOKEN )
       assembler.write( ParserOpcode.JUMP, m.recurse_label )
@@ -134,7 +134,7 @@ class MethodTypeBinaryParseRule : MethodType [singleton]
 
       assembler.write( ParserOpcode.CONSUME_EOLS )
       assembler.write( ParserOpcode.CALL, m.nested_method.start_label )
-      assembler.write( ParserOpcode.CREATE_CMD, cmd.cmd_type.index )
+      assembler.write( ParserOpcode.CREATE_CMD, cmd.constructor.index )
       assembler.write( 2 ) # 2 Cmd args
       assembler.write( ParserOpcode.POP_CUR_TOKEN )
       assembler.write( ParserOpcode.JUMP, m.recurse_label )
@@ -163,7 +163,7 @@ class MethodTypeRightAssociativeBinaryParseRule : MethodType [singleton]
 
       assembler.write( ParserOpcode.CONSUME_EOLS )
       assembler.write( ParserOpcode.CALL, m.start_label )
-      assembler.write( ParserOpcode.CREATE_CMD, cmd.cmd_type.index )
+      assembler.write( ParserOpcode.CREATE_CMD, cmd.constructor.index )
       assembler.write( 2 ) # 2 Cmd args
       assembler.write( ParserOpcode.RETURN )
       assembler.define( label_no_match )

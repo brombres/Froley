@@ -69,6 +69,17 @@ augment RogueTemplate
        |      code.reserve( n )
        |      loop (n) code.add( reader.read_int32x )
        |
+       |    method on_custom( name_index:Int32 )
+       |      # Can override this instead of on_custom(String) for higher efficiency vs string compares.
+       |      # name_index can change when the .froley code is updated so don't rely on specific values.
+       |      # But one could set up an array of custom function handlers when the tokenizer is constructed
+       |      # and then index into that. Note: the tokenizer and parser can each have different name_index
+       |      # values for the same custom operation name.
+       |      on_custom( strings[name_index] )
+       |
+       |    method on_custom( name:String )
+       |      println "*** Unhandled custom operation:$ ***" (name)
+       |
        |    method open( filepath, content:String, start_line=1:Int32, start_column=1:Int32 )
        |      require tokenizer
        |      tokenizer.open( filepath, content, start_line, start_column )
@@ -176,7 +187,7 @@ augment RogueTemplate
        |            list_start_pos.add( cmd_stack.count )
        |            nextIteration
        |          case ParserOpcode.CREATE_CMD
-       |            local cmd_type_index = code[ ip ]
+       |            local constructor_index = code[ ip ]
        |            local arg_count = code[ ip+1 ]
        |            ip += 2
        |            cmd_args.clear
@@ -185,12 +196,12 @@ augment RogueTemplate
        |              local i1 = cmd_stack.count - arg_count
        |              if (i1 < 0)
        |                print_trace( ip-2, 0 )
-       |                throw cur_token.error( "[INTERNAL] Command queue too small for new cmd." )
+       |                throw cur_token.error( "[INTERNAL] Command queue too small to create new Cmd." )
        |              endIf
        |              cmd_args.add( forEach in cmd_stack from i1 )
        |              cmd_stack.discard_from( i1 )
        |            endIf
-       |            cmd_stack.add( CmdFactory.create_cmd(cmd_type_index,cur_token,cmd_args) )
+       |            cmd_stack.add( CmdFactory.create_cmd(constructor_index,cmd_args) )
        |            nextIteration
        |
        |          case ParserOpcode.CREATE_NULL_CMD
@@ -199,7 +210,7 @@ augment RogueTemplate
        |
        |          case ParserOpcode.CREATE_LIST
        |            if (list_start_t.is_empty) throw peek.error( "[INTERNAL] No prior beginList before calling createList/produceList." )
-       |            local cmd_type_index = code[ ip ]
+       |            local constructor_index = code[ ip ]
        |            ++ip
        |            local t  = list_start_t.remove_last
        |            local i1 = list_start_pos.remove_last
@@ -207,7 +218,7 @@ augment RogueTemplate
        |            cmd_args.t = cur_token
        |            cmd_args.add( forEach in cmd_stack from i1 )
        |            cmd_stack.discard_from( i1 )
-       |            cmd_stack.add( CmdFactory.create_cmd(cmd_type_index,t,cmd_args) )
+       |            cmd_stack.add( CmdFactory.create_cmd(constructor_index,cmd_args) )
        |            nextIteration
        |
        |          case ParserOpcode.DISCARD_LIST
@@ -362,6 +373,10 @@ augment RogueTemplate
        |            number_stack.add( number_stack.remove_last >= b )
        |            nextIteration
        |
+       |          case ParserOpcode.CUSTOM
+       |            ++ip
+       |            on_custom( code[ip] )
+       |            nextIteration
        |          others
        |            throw Error( "[INTERNAL]", "Unhandled parser opcode: " + ParserOpcode(opcode) )
        |        endWhich

@@ -5,7 +5,7 @@ module Froley
 
 $include "Assembler.rogue"
 $include "Cmd.rogue"
-$include "CmdType.rogue"
+$include "Constructor.rogue"
 $include "FroleyError.rogue"
 $include "FroleyParser.rogue"
 $include "FroleyTokenizer.rogue"
@@ -184,8 +184,8 @@ class Froley [singleton]
     tokenizer_code = StringBuilder( 2048 )
     parser_code    = StringBuilder( 2048 )
 
-    parser_methods = LookupList<<ParserMethod>>()
-    cmd_type_lookup = LookupList<<CmdType>>()
+    parser_methods     = LookupList<<ParserMethod>>()
+    constructor_lookup = LookupList<<Constructor>>()
 
     id_start    = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_"
     id_continue = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_0123456789"
@@ -238,8 +238,8 @@ class Froley [singleton]
         tokenizer_opcodes.add( @{ :name, value:TokenizerOpcode(name)->Int32 } )
       endForEach
 
-      local cmd_types = @[]
-      cmd_types.add( (forEach in Froley.cmd_type_lookup)->Value )
+      local constructors = @[]
+      constructors.add( (forEach in Froley.constructor_lookup)->Value )
 
       local parser_opcodes = @[]
       forEach (name in ParserOpcode.names)
@@ -265,22 +265,17 @@ class Froley [singleton]
         :token_types,
         :tokenizer_opcodes,
         tokenizer_code:tokenizer_bytes.to_base64,
-        :cmd_types,
+        :constructors,
         :parser_opcodes,
         parser_code:parser_bytes.to_base64
       }
 
       return output
 
-    method cmd_type( t:Token, name:String, type:ParseRuleType, symbol=null:String, args=null:CmdTypeProperty[], base_type=null:String )->CmdType
-      local cmd_type = cmd_type_lookup[ name ]
-      if (cmd_type)
-        cmd_type.verify_args( args )
-        return cmd_type
-      endIf
-      cmd_type = CmdType( t, name, type, cmd_type_lookup.count, symbol, args, base_type )
-      cmd_type_lookup[ name ] = cmd_type
-      return cmd_type
+    method constructor( t:Token, name:String, type:ParseRuleType, symbol=null:String, args=null:ConstructorArg[], base_type=null:String )->Constructor
+      local constructor = Constructor( t, name, type, constructor_lookup.count, symbol, args, base_type )
+      constructor_lookup[ constructor.signature ] = constructor
+      return constructor
 
     method collect_definitions_and_extract_code
       $localDefine PARSING_SETTINGS    0

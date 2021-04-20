@@ -88,8 +88,17 @@ class GenerateRogue : CodeGenerator
       local filepath = output_filepath( "Cmd.rogue", &for_reading )
       local content = File.load_as_string( filepath )
       local builder : StringBuilder
-      forEach (cmd_type in info//cmd_types)
-        local base_name = (cmd_type//name)->String
+
+      # 'constructors' may have many variations using the same class,
+      # e.g. LiteralLogical(value=true:Logical) / LiteralLogical(false:Logical).
+      # Gather one definition of each diffent type to generate classes from.
+      local types = @{}
+      forEach (constructor in info//constructors)
+        types[ constructor//name ] = constructor
+      endForEach
+
+      forEach (constructor in types)
+        local base_name = (constructor//name)->String
         local class_name = base_name
         local class_class_name = "class " + class_name
         if (not content.contains(class_class_name))
@@ -98,11 +107,11 @@ class GenerateRogue : CodeGenerator
             builder = StringBuilder( content.count * 1.5 )
             builder.println( content )
           endIf
-          local type = ParseRuleType( cmd_type//type )
+          local type = ParseRuleType( constructor//type )
           print( "  " ).println( class_class_name )
           builder.println.print( class_class_name )
 
-          local cmd_properties = cmd_type//properties
+          local cmd_properties = constructor//args
           if (cmd_properties.count)
             builder.print( "( t" )
             forEach (p in cmd_properties)
@@ -118,8 +127,8 @@ class GenerateRogue : CodeGenerator
             builder.print( " )" )
           endIf
 
-          if (cmd_type//base_type)
-            builder.print( " : " ).println( cmd_type//base_type )
+          if (constructor//base_type)
+            builder.print( " : " ).println( constructor//base_type )
           else
             which (type)
               case ParseRuleType.PRE_UNARY:  builder.println " : Unary"
@@ -130,36 +139,8 @@ class GenerateRogue : CodeGenerator
             endWhich
           endIf
           builder.println "  METHODS"
-          if (cmd_properties.count)
-            builder.println(   "    method init( t, args:CmdInitArgs )" )
-            builder.print(   "      args.require_count( " ).print( cmd_type//properties.count(not ($//value->String.begins_with("t."))) ).println( " )" )
-            local index = 0
-            forEach (p in cmd_properties)
-              builder.print( "      this." )
-              builder.print( p//name )
-              builder.print( " = " )
-              if (p//value != "")
-                local initializer = p//value->String
-                if (initializer.begins_with("t.") or not initializer.contains("."))
-                  builder.print( initializer )
-                  if (p//type != "String") builder.print( "->" ).print( p//type )
-                else
-                  local init_type     = initializer.before_first('.')
-                  local init_property = initializer.after_first('.')
-                  builder.print( "(args[$] as $).$"(index,init_type,init_property) )
-                  ++index
-                endIf
-              else
-                builder.print( "args[ " ).print( index ).print( " ]" )
-                if (p//type != "Cmd") builder.print( " as " ).print( p//type )
-                ++index
-              endIf
-              builder.println
-            endForEach
-            builder.println
-          endIf
 
-          local escaped_symbol = cmd_type//symbol->String.to_escaped_ascii("\"")
+          local escaped_symbol = constructor//symbol->String.to_escaped_ascii("\"")
           which (type)
             case ParseRuleType.PRE_UNARY, ParseRuleType.POST_UNARY, ParseRuleType.BINARY
               builder.println "    method op->String"
@@ -207,8 +188,8 @@ class GenerateRogue : CodeGenerator
       local filepath = output_filepath( "Visitor.rogue", &for_reading )
       local content = File.load_as_string( filepath )
       local builder : StringBuilder
-      forEach (cmd_type in info//cmd_types)
-        local base_name = (cmd_type//name)->String
+      forEach (constructor in info//constructors)
+        local base_name = (constructor//name)->String
         local visit_method_name = "method visit( cmd:$ )->Cmd" (base_name)
         if (not content.contains(visit_method_name))
           if (not builder)
@@ -224,7 +205,7 @@ class GenerateRogue : CodeGenerator
           print( "  " ).println( visit_method_name )
           builder.println.print( "    " ).println( visit_method_name )
 
-          local type = ParseRuleType( cmd_type//type )
+          local type = ParseRuleType( constructor//type )
           which (type)
             case ParseRuleType.PRE_UNARY
               builder.println "      if (cmd.operand)  cmd.operand = cmd.operand.dispatch( this )"
@@ -242,9 +223,9 @@ class GenerateRogue : CodeGenerator
               builder.println "      endForEach"
               builder.println "      return cmd"
             others
-              local cmd_properties = cmd_type//properties
+              local cmd_properties = constructor//args
               forEach (p in cmd_properties)
-                if (p//value.count == 0)
+                if (not p//value)
                   # Not a primitive
                   local p_name = p//name
                   builder.print "      if (cmd.$) cmd.$ = cmd.$.dispatch( this )" (p_name,p_name,p_name)
@@ -303,15 +284,44 @@ class GenerateRogue : CodeGenerator
 
       writer.print  ("module ").println( language )
       writer.println
-      writer.println( "class CmdFactory" )
-      writer.println( "  GLOBAL METHODS" )
-      writer.println( "    method create_cmd( index:Int32, t:Token, args:CmdInitArgs )->Cmd" )
-      writer.println("      which (index)")
-      forEach (cmd_type in info//cmd_types)
-        writer.println "        case $ : return $( t, args )" (cmd_type//index,cmd_type//name)
+      writer.println @|class CmdFactory
+                      |  GLOBAL METHODS
+                      |    method create_cmd( constructor_index:Int32, args:CmdInitArgs )->Cmd
+                      |      local t = args.t
+                      |      which (constructor_index)
+      forEach (constructor in info//constructors)
+        writer.print "        case $: return $( t" (constructor//index,constructor//name)
+        if (constructor//args.count == 0)
+          local type = ParseRuleType( constructor//type )
+          which (type)
+            case ParseRuleType.PRE_UNARY
+              writer.print ", args[0]"
+            case ParseRuleType.POST_UNARY
+              writer.print ", args[0]"
+            case ParseRuleType.BINARY
+              writer.print ", args[0], args[1]"
+          endWhich
+        else
+          local index = 0
+          forEach (arg in constructor//args)
+            writer.print ", "
+            if (arg.contains("value"))
+              writer.print arg//value->String  # use this literal value instead of next arg from args()
+            else
+              writer.print "args"
+              if (arg//type == "" or arg//type == "Cmd")
+                writer.[ print '[', print index, print ']' ]
+              else
+                writer.[ print "cmd_to<<", print arg//type, print ">>(", print index, print ")" ]
+              endIf
+              ++index
+            endIf
+          endForEach
+        endIf
+        writer.println " )"
       endForEach
       writer.println @|        others
-      writer.println(''          throw Error( "[INTERNAL] CmdFactory.create_cmd() index out of bounds: " + index )'' )
+      writer.println(''          throw Error( "[INTERNAL] CmdFactory.create_cmd() constructor index out of bounds: " + constructor_index )'' )
       writer.println @|      endWhich
                       |endClass
       writer.close

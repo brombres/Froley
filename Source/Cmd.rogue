@@ -864,7 +864,7 @@ class ParserCmdOnType( t, token_type_def:TokenDef ) : Cmd
       endIf
 endClass
 
-class ParserCmdOnTypeProduce( t, token_type_def:TokenDef, cmd_type:CmdType ) : Cmd
+class ParserCmdOnTypeProduce( t, token_type_def:TokenDef, constructor:Constructor ) : Cmd
   PROPERTIES
     statements = CmdStatements()
     peek : Logical
@@ -922,14 +922,14 @@ class ParserCmdMustConsumeString( t, content:String ) : Cmd
       assembler.write( ParserOpcode.MUST_CONSUME_STRING, content )
 endClass
 
-class ParserCmdCreate( t, cmd_type:CmdType ) : Cmd
+class ParserCmdCreate( t, constructor:Constructor ) : Cmd
   PROPERTIES
-    args = CmdTypeProperty[]
+    args = ConstructorArg[]
 
   METHODS
     method write( assembler:ParserAssembler )
-      assembler.write( ParserOpcode.CREATE_CMD, cmd_type.index )
-      assembler.write( cmd_type.subcommand_count )
+      assembler.write( ParserOpcode.CREATE_CMD, constructor.index )
+      assembler.write( constructor.subcommand_count )
 endClass
 
 class ParserCmdCreateNull( t ) : Cmd
@@ -938,7 +938,7 @@ class ParserCmdCreateNull( t ) : Cmd
       assembler.write( ParserOpcode.CREATE_NULL_CMD )
 endClass
 
-class ParserCmdCreateList( t, list_type:CmdType ) : Cmd
+class ParserCmdCreateList( t, list_type:Constructor ) : Cmd
   METHODS
     method write( assembler:ParserAssembler )
       assembler.write( ParserOpcode.CREATE_LIST, list_type.index )
@@ -1222,5 +1222,11 @@ class ParserCmdOp( t, name:String, opcode:ParserOpcode ) : Cmd
 
     method write( assembler:ParserAssembler )
       assembler.write( opcode )
+endClass
+
+class ParserCmdCustom( t, name:String ) : Cmd
+  METHODS
+    method write( assembler:ParserAssembler )
+      assembler.write( ParserOpcode.CUSTOM, name )
 endClass
 

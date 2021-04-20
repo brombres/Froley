@@ -8,9 +8,6 @@ augment RogueTemplate
        |    t : Token
        |
        |  METHODS
-       |    method init( t, args:CmdInitArgs )
-       |      args.require_count( 0 )
-       |
        |    method dispatch( visitor:Visitor )->Cmd [propagated]
        |      return visitor.visit( this )
        |
@@ -24,7 +21,7 @@ augment RogueTemplate
        |      return this->Int32
        |
        |    method to->CmdList
-       |      return CmdList(t).[ add(this ]
+       |      return CmdList(t).[ add(this) ]
        |endClass
        |
        |class CmdList : Cmd
@@ -70,7 +67,7 @@ augment RogueTemplate
        |
        |class LiteralInt32( t, value:Int32 ) : Literal
        |  METHODS
-       |    method init( t, string_value:Int32 )
+       |    method init( t, string_value:String )
        |      value = string_value->Int32
        |
        |    method to->Int32
@@ -121,10 +118,6 @@ augment RogueTemplate
        |
        |class Unary( t, operand:Cmd ) : Cmd
        |  METHODS
-       |    method init( t, args:CmdInitArgs )
-       |      args.require_count( 1 )
-       |      operand = args.first
-       |
        |    method op->String
        |      throw UnsupportedOperationError()
        |
@@ -144,11 +137,6 @@ augment RogueTemplate
        |
        |class Binary( t, left:Cmd, right:Cmd ) : Cmd
        |  METHODS
-       |    method init( t, args:CmdInitArgs )
-       |      args.require_count( 2 )
-       |      left = args.first
-       |      right = args.last
-       |
        |    method op->String
        |      throw UnsupportedOperationError()
        |

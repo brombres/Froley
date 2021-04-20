@@ -8,10 +8,10 @@ augment RogueTemplate
        |    t : Token
        |
        |  METHODS
-       |    method require_count( required_count:Int32 )
-       |      if (count != required_count)
-       |        throw Error( "[FroleyLanguage]", "init(t,args) got $, expected $." ("# arg".pluralized(count),required_count) )
-       |      endIf
+       |    method cmd_to<<$ToType>>( index:Int32 )->$ToType
+       |      local cmd = this[ index ]
+       |      if (not cmd) return null
+       |      return cmd->$ToType
        |endClass
        |
 endAugment

@@ -78,21 +78,21 @@ SYMBOL_SLASH                /
 [parser]
 - expression
 
-+ assign : RightAssociativeBinaryParseRule
++ assign : RightBinary
   on "=" -> Assign
 
-+ add_subtract : BinaryParseRule
++ add_subtract : Binary
   on "+" -> Add
   on "-" -> Subtract
 
-+ multiply_divide : BinaryParseRule
++ multiply_divide : Binary
   on "*" -> Multiply
   on "/" -> Divide
 
-+ power : BinaryParseRule
++ power : Binary
   on "^" -> Power
 
-+ pre_unary : PreUnaryParseRule
++ pre_unary : PreUnary
   on "-" -> Negate
 
 + term

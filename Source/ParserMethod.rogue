@@ -64,7 +64,7 @@ class MethodTypePreUnaryParseRule : MethodType [singleton]
   METHODS
     method on_begin_method( m:ParserMethod, assembler:ParserAssembler )
       if (not m.nested_method)
-        throw m.t.error( "No nested method for PreUnaryParseRule." )
+        throw m.t.error( "No nested method for PreUnary parse rule." )
       endIf
 
     method on_end_method( m:ParserMethod, assembler:ParserAssembler )
@@ -73,7 +73,7 @@ class MethodTypePreUnaryParseRule : MethodType [singleton]
     method write( m:ParserMethod, cmd:ParserCmdOnTypeProduce, assembler:ParserAssembler )
       local label_no_match = Label()
       local def = cmd.token_type_def
-      if (cmd.peek) throw cmd.t.error( "onPeek and elseOnPeek can only be used in regular rules of type ParseRule." )
+      if (cmd.peek) throw cmd.t.error( "onPeek and elseOnPeek can only be used in regular parse rules." )
       assembler.write( ParserOpcode.ON_TOKEN_TYPE, def.type )
       assembler.write_address( label_no_match )
 
@@ -92,7 +92,7 @@ class MethodTypePostUnaryParseRule : MethodType [singleton]
       if (m.nested_method)
         assembler.write( ParserOpcode.CALL, m.nested_method.start_label )
       else
-        throw m.t.error( "No nested method for PostUnaryParseRule." )
+        throw m.t.error( "No nested method for PostUnary parse rule." )
       endIf
 
     method on_end_method( m:ParserMethod, assembler:ParserAssembler )
@@ -101,7 +101,7 @@ class MethodTypePostUnaryParseRule : MethodType [singleton]
     method write( m:ParserMethod, cmd:ParserCmdOnTypeProduce, assembler:ParserAssembler )
       local label_no_match = Label()
       local def = cmd.token_type_def
-      if (cmd.peek) throw cmd.t.error( "onPeek and elseOnPeek can only be used in regular rules of type ParseRule." )
+      if (cmd.peek) throw cmd.t.error( "onPeek and elseOnPeek can only be used in regular parse rules." )
       assembler.write( ParserOpcode.ON_TOKEN_TYPE, def.type )
       assembler.write_address( label_no_match )
 
@@ -119,7 +119,7 @@ class MethodTypeBinaryParseRule : MethodType [singleton]
       if (m.nested_method)
         assembler.write( ParserOpcode.CALL, m.nested_method.start_label )
       else
-        throw m.t.error( "No nested method for BinaryParseRule." )
+        throw m.t.error( "No nested method for Binary parse rule." )
       endIf
 
     method on_end_method( m:ParserMethod, assembler:ParserAssembler )
@@ -128,7 +128,7 @@ class MethodTypeBinaryParseRule : MethodType [singleton]
     method write( m:ParserMethod, cmd:ParserCmdOnTypeProduce, assembler:ParserAssembler )
       local label_no_match = Label()
       local def = cmd.token_type_def
-      if (cmd.peek) throw cmd.t.error( "onPeek and elseOnPeek can only be used in regular rules of type ParseRule." )
+      if (cmd.peek) throw cmd.t.error( "onPeek and elseOnPeek can only be used in regular parse rules." )
       assembler.write( ParserOpcode.ON_TOKEN_TYPE, def.type )
       assembler.write_address( label_no_match )
 
@@ -148,7 +148,7 @@ class MethodTypeRightAssociativeBinaryParseRule : MethodType [singleton]
       if (m.nested_method)
         assembler.write( ParserOpcode.CALL, m.nested_method.start_label )
       else
-        throw m.t.error( "No nested method for RightAssociativeBinaryParseRule." )
+        throw m.t.error( "No nested method for RightBinary." )
       endIf
 
     method on_end_method( m:ParserMethod, assembler:ParserAssembler )
@@ -157,7 +157,7 @@ class MethodTypeRightAssociativeBinaryParseRule : MethodType [singleton]
     method write( m:ParserMethod, cmd:ParserCmdOnTypeProduce, assembler:ParserAssembler )
       local label_no_match = Label()
       local def = cmd.token_type_def
-      if (cmd.peek) throw cmd.t.error( "onPeek and elseOnPeek can only be used in regular rules of type ParseRule." )
+      if (cmd.peek) throw cmd.t.error( "onPeek and elseOnPeek can only be used in regular parse rules." )
       assembler.write( ParserOpcode.ON_TOKEN_TYPE, def.type )
       assembler.write_address( label_no_match )
 

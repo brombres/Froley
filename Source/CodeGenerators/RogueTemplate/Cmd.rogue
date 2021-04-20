@@ -13,6 +13,18 @@ augment RogueTemplate
        |
        |    method dispatch( visitor:Visitor )->Cmd [propagated]
        |      return visitor.visit( this )
+       |
+       |    method to->Int32
+       |      return this->String->Int32
+       |
+       |    method to->Logical
+       |      return this->Int32 != 0
+       |
+       |    method to->Real64
+       |      return this->Int32
+       |
+       |    method to->CmdList
+       |      return CmdList(t).[ add(this ]
        |endClass
        |
        |class CmdList : Cmd
@@ -46,8 +58,65 @@ augment RogueTemplate
        |      list[ index ] = value
        |      return this
        |
+       |    method to->CmdList
+       |      return this
+       |
        |    method to->String
        |      return list->String
+       |endClass
+       |
+       |class Literal : Cmd
+       |endClass
+       |
+       |class LiteralInt32( t, value:Int32 ) : Literal
+       |  METHODS
+       |    method init( t, string_value:Int32 )
+       |      value = string_value->Int32
+       |
+       |    method to->Int32
+       |      return value
+       |
+       |    method to->Real64
+       |      return value
+       |
+       |    method to->String
+       |      return value->String
+       |endClass
+       |
+       |class LiteralLogical( t, value:Logical ) : Literal
+       |  METHODS
+       |    method to->Int32
+       |      return which{ value:1 || 0 }
+       |
+       |    method to->Logical
+       |      return value
+       |
+       |    method to->Real64
+       |      return which{ value:1 || 0 }
+       |
+       |    method to->String
+       |      return which{ value:"true" || "false" }
+       |endClass
+       |
+       |class LiteralReal64( t, value:Real64 ) : Literal
+       |  METHODS
+       |    method to->Int32
+       |      return this->Real64.floor->Int32
+       |
+       |    method to->Logical
+       |      return value != 0
+       |
+       |    method to->Real64
+       |      return value
+       |
+       |    method to->String
+       |      return value->String
+       |endClass
+       |
+       |class LiteralString( t, value:String ) : Literal
+       |  METHODS
+       |    method to->String
+       |      return value
        |endClass
        |
        |class Unary( t, operand:Cmd ) : Cmd

@@ -234,24 +234,6 @@ augment RogueTemplate
        |            StringBuilder.pool.on_end_use( buffer )
        |            buffer = lowercase_buffer
        |            nextIteration
-       |          case TokenizerOpcode.PRINT_BUFFER
-       |            print (forEach in buffer)
-       |            nextIteration
-       |          case TokenizerOpcode.PRINT_CH
-       |            print ch->Character
-       |            nextIteration
-       |          case TokenizerOpcode.PRINT_CHARACTER
-       |            print code[ip]->Character
-       |            ++ip
-       |            nextIteration
-       |          case TokenizerOpcode.PRINT_STRING
-       |            print strings[ code[ip] ]
-       |            ++ip
-       |            nextIteration
-       |          case TokenizerOpcode.PRINT_VAR
-       |            print variables[ code[ip] ]
-       |            ++ip
-       |            nextIteration
        |          case TokenizerOpcode.COMPARE_BUFFER_STRING
        |            result = buffer.compare_to( strings[code[ip]] )
        |            ++ip
@@ -383,11 +365,11 @@ augment RogueTemplate
        |            nextIteration
        |          case TokenizerOpcode.TRACE
        |            print( "Line " ).print( code[ip] ).print( " peek:" )
-       |            if (scanner.has_another) print( scanner.peek )
-       |            else                     print( "end of input" )
+       |            if (scanner.has_another) print( scanner.peek->Character.to_escaped_ascii )
+       |            else                     print( "EOI" )
        |            ++ip
-       |            print( " opcode:" ).print( TokenizerOpcode(code[ip]) )
-       |            println( " ch:$ ($) result:$ vars:$" (Character(ch),ch,result,variables) )
+       |            print( " ch:$ ($) result:$ vars:$" (Character(ch).to_escaped_ascii,ch,result,variables) )
+       |            print( " opcode:" ).println( TokenizerOpcode(code[ip]) )
        |            println( "buffer:" + buffer )
        |            nextIteration
        |          others

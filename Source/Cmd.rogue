@@ -187,25 +187,6 @@ class TokenizerCmdLabel( t, name:String ) : Cmd
       return "<$>" (name)
 endClass
 
-class TokenizerCmdPrintCharacter( t, code:Int32 ) : Cmd
-  METHODS
-    method write( assembler:TokenizerAssembler )
-      assembler.write( TokenizerOpcode.PRINT_CHARACTER, code )
-
-    method to->String
-      return "print '$'" (code->Character.to_escaped_ascii)
-endClass
-
-
-class TokenizerCmdPrintString( t, value:String ) : Cmd
-  METHODS
-    method write( assembler:TokenizerAssembler )
-      assembler.write( TokenizerOpcode.PRINT_STRING, value )
-
-    method to->String
-      return ''print "$"'' (value.to_escaped_ascii)
-endClass
-
 class TokenizerCmdAccess( t, name:String ) : Cmd
   METHODS
     method init( t )
@@ -397,7 +378,7 @@ class TokenizerCmdSetBufferToString( t, value:String ) : Cmd
   METHODS
     method write( assembler:TokenizerAssembler )
       assembler.write( TokenizerOpcode.CLEAR_BUFFER )
-      assembler.write( TokenizerOpcode.PRINT_STRING, value )
+      assembler.write( TokenizerOpcode.COLLECT_STRING, value )
 
     method to->String
       return ''buffer = "$"'' (value.to_escaped_ascii)

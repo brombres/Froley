@@ -26,6 +26,9 @@ SYMBOL_SLASH                /
     discardAny [whitespace]
   endWhich
 
+trace
+++@x
+
 + whitespace_consumed
   markSourcePosition
   if (not hasAnother) halt

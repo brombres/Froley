@@ -31,11 +31,6 @@ enum TokenizerOpcode( size=1:Int32 )
   COLLECT_STRING(2)     # BUFFER.print(strings[index:ARG1])
   CUSTOM(2)             # call custom command with string index of name
   BUFFER_TO_LOWERCASE
-  PRINT_BUFFER          # print buffer
-  PRINT_CH              # print ch->Character
-  PRINT_CHARACTER(2)    # print ARG1->Character
-  PRINT_STRING(2)       # print strings[index:ARG1]
-  PRINT_VAR(2)          # print variables[index:ARG1]
   COMPARE_BUFFER_STRING # RESULT = buffer.compare_to(strings[index:ARG1])
   COMPARE_CH_INT32      # RESULT = ch - ARG1
   COMPARE_VAR_INT32(3)  # RESULT = variables[index:ARG1] - ARG2

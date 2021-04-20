@@ -414,30 +414,6 @@ class FroleyParser : Parser
       elseIf (consume(TokenType.KEYWORD_NO_ACTION))
         return
 
-      elseIf (consume(TokenType.KEYWORD_PRINT))
-        if (consume(TokenType.KEYWORD_BUFFER))
-          statements.add( TokenizerCmdOp(t,"print buffer",TokenizerOpcode.PRINT_BUFFER) )
-          return
-        elseIf (next_is(TokenType.STRING))
-          statements.add( TokenizerCmdPrintString(t,read.text) )
-          return
-        else
-          if (not (next_is(TokenType.EOL) or next_is(TokenType.SYMBOL_SEMICOLON)))
-            local expr = parse_tokenizer_expression()
-            if (expr.is_ch)
-              statements.add( TokenizerCmdOp(t,"print ch",TokenizerOpcode.PRINT_CH) )
-              return
-            elseIf (expr.is_var)
-              statements.add( TokenizerCmdVarOp(t,"print @$"(expr),TokenizerOpcode.PRINT_VAR,expr->String) )
-              return
-            elseIf (expr.is_integer)
-              statements.add( TokenizerCmdPrintCharacter(t,expr->Int32) )
-              return
-            endIf
-          endIf
-          throw t.error( "Syntax error - valid 'print' arguments are  'ch', 'count', 'var', and '<string>'." )
-        endIf
-
       elseIf (consume(TokenType.KEYWORD_RESTART))
         if (next_is(TokenType.IDENTIFIER))
           local t2 = peek

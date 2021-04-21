@@ -286,7 +286,11 @@ class Froley [singleton]
 
     method constructor( t:Token, name:String, type:ParseRuleType, symbol=null:String, args=null:ConstructorArg[], base_type=null:String )->Constructor
       local constructor = Constructor( t, name, type, constructor_lookup.count, symbol, args, base_type )
-      constructor_lookup[ constructor.signature ] = constructor
+      if (constructor_lookup.contains(constructor.signature))
+        constructor.index = constructor_lookup[constructor.signature].index
+      else
+        constructor_lookup[ constructor.signature ] = constructor
+      endIf
       return constructor
 
     method collect_definitions_and_extract_code

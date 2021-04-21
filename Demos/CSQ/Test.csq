@@ -1,8 +1,0 @@
-for (int a=5; b<10; c++, a+=2)
-{
-  d;  // a comment
-  e;
-  if (a) for (;;){}
-  else f;
-  for (;;);
-}

@@ -96,14 +96,8 @@ endRoutine
 
 routine rogo_demos
   rogo_simple
-  rogo_csq
   rogo_json
   rogo_asm
-endRoutine
-
-routine rogo_csq
-  rogo_build
-  execute( "cd Demos/CSQ && rogo" )
 endRoutine
 
 routine rogo_simple
@@ -170,7 +164,6 @@ endRoutine
 
 routine rogo_clean_demos
   execute( "cd Demos/Simple && rogo xclean" )
-  execute( "cd Demos/CSQ && rogo xclean" )
   execute( "cd Demos/JSON && rogo xclean" )
   execute( "cd Demos/ASM && rogo xclean" )
 endRoutine

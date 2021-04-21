@@ -798,7 +798,16 @@ class FroleyParser : Parser
       local commands : CmdStatements
       local work_list = CmdStatements()
 
-      while (consume(TokenType.SYMBOL_COMMA))
+      while (has_another)
+        contingent
+          sufficient consume(TokenType.SYMBOL_COMMA)
+          necessary  not next_is(TokenType.EOL) 
+          necessary  not next_is(TokenType.SYMBOL_ARROW)
+          necessary  not next_is(TokenType.SYMBOL_COLON)
+        unsatisfied
+          escapeWhile
+        endContingent
+
         ensure commands
         if (next_is(TokenType.STRING))
           local t = peek

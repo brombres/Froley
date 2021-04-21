@@ -98,6 +98,6 @@ SYMBOL_SLASH                /
 + term
   on IDENTIFIER -> Access( name=t.content:String )
   on INTEGER    -> LiteralInt32( value=t.content:String )
-  on '(', expression, ')': return
+  on '(' expression ')': return
   syntaxError
 

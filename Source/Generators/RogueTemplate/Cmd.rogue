@@ -3,10 +3,7 @@ augment RogueTemplate
     cmd =
       @|module FroleyLanguage
        |
-       |class Cmd
-       |  PROPERTIES
-       |    t : Token
-       |
+       |class Cmd( t:Token )
        |  METHODS
        |    method dispatch( visitor:Visitor )->Cmd [propagated]
        |      return visitor.visit( this )

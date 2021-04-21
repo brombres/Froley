@@ -15,7 +15,8 @@ class ConstructorArg( name:String, type:String, value=null:String )
       return "$=$:$" (name,value,type)
 
     method to->Value
-      return @{ :name, :type, :value }
+      if (value)  return @{ :name, :type, :value }
+      else        return @{ :name, :type }
 endClass
 
 class Constructor( t:Token, name:String, type:ParseRuleType, index:Int32, symbol:String, args:ConstructorArg[], base_type:String )
@@ -53,7 +54,7 @@ class Constructor( t:Token, name:String, type:ParseRuleType, index:Int32, symbol
     method subcommand_count->Int32
       if (args is null) return 0
       local n = 0
-      if ((forEach in args).value is null) ++n
+      if (not String.exists((forEach in args).value)) ++n
       return n
 
     method to->String
@@ -62,7 +63,8 @@ class Constructor( t:Token, name:String, type:ParseRuleType, index:Int32, symbol
     method to->Value
       local arg_list = @[]
       if (args) arg_list.add( (forEach in args)->Value )
-      return @{ :name, :index, :type, :symbol, args:arg_list, :base_type }
+      local result = @{ :name, :index, :type, :symbol, args:arg_list, :base_type }
+      return result
 
 endClass
 

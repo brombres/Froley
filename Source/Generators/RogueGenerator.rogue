@@ -300,19 +300,21 @@ class GenerateRogue : CodeGenerator
               writer.print ", args[0]"
             case ParseRuleType.BINARY
               writer.print ", args[0], args[1]"
+            case ParseRuleType.LIST
+              writer.print ", args"
           endWhich
         else
           local index = 0
           forEach (arg in constructor//args)
             writer.print ", "
-            if (arg.contains("value"))
+            if (String.exists(arg//value->String))
               writer.print arg//value->String  # use this literal value instead of next arg from args()
             else
               writer.print "args"
               if (arg//type == "" or arg//type == "Cmd")
                 writer.[ print '[', print index, print ']' ]
               else
-                writer.[ print "cmd_to<<", print arg//type, print ">>(", print index, print ")" ]
+                writer.[ print ".cmd_to<<", print arg//type, print ">>(", print index, print ")" ]
               endIf
               ++index
             endIf

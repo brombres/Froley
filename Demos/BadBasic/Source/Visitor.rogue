@@ -1,0 +1,186 @@
+module BadBasic
+
+class Visitor
+  GLOBAL PROPERTIES
+    type_Cmd = <<Cmd>>
+
+  METHODS
+    method visit( cmd:Cmd )->Cmd
+      if (cmd.type_info is type_Cmd) return cmd
+      return cmd.dispatch( this )
+
+    method visit( cmd:CmdList )->Cmd
+      forEach (item at index in cmd)
+        if (item) cmd[ index ] = item.dispatch( this )
+      endForEach
+      return cmd
+
+    method visit( cmd:Unary )->Cmd
+      if (cmd.operand) cmd.operand = cmd.operand.dispatch( this )
+      return cmd
+
+    method visit( cmd:PostUnary )->Cmd
+      if (cmd.operand) cmd.operand = cmd.operand.dispatch( this )
+      return cmd
+
+    method visit( cmd:Binary )->Cmd
+      if (cmd.left)  cmd.left  = cmd.left.dispatch( this )
+      if (cmd.right) cmd.right = cmd.right.dispatch( this )
+      return cmd
+
+    method visit( cmd:LogicalOr )->Cmd
+      if (cmd.left)  cmd.left  = cmd.left.dispatch( this )
+      if (cmd.right) cmd.right = cmd.right.dispatch( this )
+      return cmd
+
+    method visit( cmd:LogicalAnd )->Cmd
+      if (cmd.left)  cmd.left  = cmd.left.dispatch( this )
+      if (cmd.right) cmd.right = cmd.right.dispatch( this )
+      return cmd
+
+    method visit( cmd:CompareEQ )->Cmd
+      if (cmd.left)  cmd.left  = cmd.left.dispatch( this )
+      if (cmd.right) cmd.right = cmd.right.dispatch( this )
+      return cmd
+
+    method visit( cmd:CompareNE )->Cmd
+      if (cmd.left)  cmd.left  = cmd.left.dispatch( this )
+      if (cmd.right) cmd.right = cmd.right.dispatch( this )
+      return cmd
+
+    method visit( cmd:CompareLT )->Cmd
+      if (cmd.left)  cmd.left  = cmd.left.dispatch( this )
+      if (cmd.right) cmd.right = cmd.right.dispatch( this )
+      return cmd
+
+    method visit( cmd:CompareGT )->Cmd
+      if (cmd.left)  cmd.left  = cmd.left.dispatch( this )
+      if (cmd.right) cmd.right = cmd.right.dispatch( this )
+      return cmd
+
+    method visit( cmd:CompareLE )->Cmd
+      if (cmd.left)  cmd.left  = cmd.left.dispatch( this )
+      if (cmd.right) cmd.right = cmd.right.dispatch( this )
+      return cmd
+
+    method visit( cmd:CompareGE )->Cmd
+      if (cmd.left)  cmd.left  = cmd.left.dispatch( this )
+      if (cmd.right) cmd.right = cmd.right.dispatch( this )
+      return cmd
+
+    method visit( cmd:Add )->Cmd
+      if (cmd.left)  cmd.left  = cmd.left.dispatch( this )
+      if (cmd.right) cmd.right = cmd.right.dispatch( this )
+      return cmd
+
+    method visit( cmd:Subtract )->Cmd
+      if (cmd.left)  cmd.left  = cmd.left.dispatch( this )
+      if (cmd.right) cmd.right = cmd.right.dispatch( this )
+      return cmd
+
+    method visit( cmd:Multiply )->Cmd
+      if (cmd.left)  cmd.left  = cmd.left.dispatch( this )
+      if (cmd.right) cmd.right = cmd.right.dispatch( this )
+      return cmd
+
+    method visit( cmd:RealDivide )->Cmd
+      if (cmd.left)  cmd.left  = cmd.left.dispatch( this )
+      if (cmd.right) cmd.right = cmd.right.dispatch( this )
+      return cmd
+
+    method visit( cmd:IntegerDivide )->Cmd
+      if (cmd.left)  cmd.left  = cmd.left.dispatch( this )
+      if (cmd.right) cmd.right = cmd.right.dispatch( this )
+      return cmd
+
+    method visit( cmd:Negate )->Cmd
+      if (cmd.operand)  cmd.operand = cmd.operand.dispatch( this )
+      return cmd
+
+    method visit( cmd:FnAtan )->Cmd
+      return cmd
+
+    method visit( cmd:FnAtan2 )->Cmd
+      return cmd
+
+    method visit( cmd:FnCos )->Cmd
+      return cmd
+
+    method visit( cmd:FnDim )->Cmd
+      return cmd
+
+    method visit( cmd:FnExp )->Cmd
+      return cmd
+
+    method visit( cmd:FnFloat )->Cmd
+      return cmd
+
+    method visit( cmd:FnInput )->Cmd
+      return cmd
+
+    method visit( cmd:FnInt )->Cmd
+      return cmd
+
+    method visit( cmd:FnJoin )->Cmd
+      return cmd
+
+    method visit( cmd:FnLen )->Cmd
+      return cmd
+
+    method visit( cmd:FnList )->Cmd
+      return cmd
+
+    method visit( cmd:FnMax )->Cmd
+      return cmd
+
+    method visit( cmd:FnMin )->Cmd
+      return cmd
+
+    method visit( cmd:FnRandFloat )->Cmd
+      return cmd
+
+    method visit( cmd:FnRandInt )->Cmd
+      return cmd
+
+    method visit( cmd:FnSin )->Cmd
+      return cmd
+
+    method visit( cmd:FnStr )->Cmd
+      return cmd
+
+    method visit( cmd:FnTan )->Cmd
+      return cmd
+
+    method visit( cmd:Access )->Cmd
+      return cmd
+
+    method visit( cmd:LiteralInt32 )->Cmd
+      return cmd
+
+    method visit( cmd:LiteralString )->Cmd
+      return cmd
+
+    method visit( cmd:Print )->Cmd
+      return cmd
+
+    method visit( cmd:While )->Cmd
+      return cmd
+
+    method visit( cmd:Echo )->Cmd
+      return cmd
+
+    method visit( cmd:If )->Cmd
+      return cmd
+
+    method visit( cmd:Assign )->Cmd
+      return cmd
+
+    method visit( cmd:Let )->Cmd
+      return cmd
+
+    method visit( cmd:For )->Cmd
+      return cmd
+
+    method visit( cmd:IndexedAccess )->Cmd
+      return cmd
+endClass

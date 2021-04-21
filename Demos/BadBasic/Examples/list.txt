@@ -1,0 +1,7 @@
+l = list(11,22,33,44,55,66)
+
+for i = 0 to len(l)-1
+  l[i] = l[i] * 10
+next
+
+print l

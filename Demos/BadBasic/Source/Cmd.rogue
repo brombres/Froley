@@ -1,0 +1,393 @@
+module BadBasic
+
+class Cmd( t:Token )
+  METHODS
+    method dispatch( visitor:Visitor )->Cmd [propagated]
+      return visitor.visit( this )
+
+    method to->Int32
+      return this->String->Int32
+
+    method to->Logical
+      return this->Int32 != 0
+
+    method to->Real64
+      return this->Int32
+
+    method to->CmdList
+      return CmdList(t).[ add(this) ]
+endClass
+
+class CmdList : Cmd
+  PROPERTIES
+    list : Cmd[]
+
+  METHODS
+    method init( t )
+      list = Cmd[](5)
+
+    method init( t, args:CmdInitArgs )
+      list = Cmd[]( args.count )
+      list.add( forEach in args )
+
+    method add( cmd:Cmd )
+      list.add( cmd )
+
+    method count->Int32
+      return list.count
+
+    method first->Cmd
+      return list.first
+
+    method get( index:Int32 )->Cmd
+      return list[ index ]
+
+    method last->Cmd
+      return list.last
+
+    method set( index:Int32, value:Cmd )->this
+      list[ index ] = value
+      return this
+
+    method to->CmdList
+      return this
+
+    method to->String
+      return list->String
+endClass
+
+class Literal : Cmd
+endClass
+
+class LiteralInt32( t, value:Int32 ) : Literal
+  METHODS
+    method init( t, string_value:String )
+      value = string_value->Int32
+
+    method to->Int32
+      return value
+
+    method to->Real64
+      return value
+
+    method to->String
+      return value->String
+endClass
+
+class LiteralLogical( t, value:Logical ) : Literal
+  METHODS
+    method to->Int32
+      return which{ value:1 || 0 }
+
+    method to->Logical
+      return value
+
+    method to->Real64
+      return which{ value:1 || 0 }
+
+    method to->String
+      return which{ value:"true" || "false" }
+endClass
+
+class LiteralReal64( t, value:Real64 ) : Literal
+  METHODS
+    method to->Int32
+      return this->Real64.floor->Int32
+
+    method to->Logical
+      return value != 0
+
+    method to->Real64
+      return value
+
+    method to->String
+      return value->String
+endClass
+
+class LiteralString( t, value:String ) : Literal
+  METHODS
+    method to->String
+      return value
+endClass
+
+class Unary( t, operand:Cmd ) : Cmd
+  METHODS
+    method op->String
+      throw UnsupportedOperationError()
+
+    method to->String
+      local op = this.op
+      local space = which{ op.count and op[op.count-1].is_letter:" " || "" }
+      return "($$)" (op,operand)
+endClass
+
+class PostUnary : Unary
+  METHODS
+    method to->String
+      local op = this.op
+      local space = which{ op.count and op[0].is_letter:" " || "" }
+      return "($$)" (operand,op)
+endClass
+
+class Binary( t, left:Cmd, right:Cmd ) : Cmd
+  METHODS
+    method op->String
+      throw UnsupportedOperationError()
+
+    method to->String
+      return "($ $ $)" (left,op,right)
+endClass
+
+
+class LogicalOr : Binary
+  METHODS
+    method op->String
+      return "or"
+endClass
+
+class LogicalAnd : Binary
+  METHODS
+    method op->String
+      return "and"
+endClass
+
+class CompareEQ : Binary
+  METHODS
+    method op->String
+      return "=="
+endClass
+
+class CompareNE : Binary
+  METHODS
+    method op->String
+      return "!="
+endClass
+
+class CompareLT : Binary
+  METHODS
+    method op->String
+      return "<"
+endClass
+
+class CompareGT : Binary
+  METHODS
+    method op->String
+      return ">"
+endClass
+
+class CompareLE : Binary
+  METHODS
+    method op->String
+      return "<="
+endClass
+
+class CompareGE : Binary
+  METHODS
+    method op->String
+      return ">="
+endClass
+
+class Add : Binary
+  METHODS
+    method op->String
+      return "+"
+endClass
+
+class Subtract : Binary
+  METHODS
+    method op->String
+      return "-"
+endClass
+
+class Multiply : Binary
+  METHODS
+    method op->String
+      return "*"
+endClass
+
+class RealDivide : Binary
+  METHODS
+    method op->String
+      return "/"
+endClass
+
+class IntegerDivide : Binary
+  METHODS
+    method op->String
+      return "//"
+endClass
+
+class Negate : Unary
+  METHODS
+    method op->String
+      return "-"
+endClass
+
+class FnAtan( t, args:Cmd ) : Cmd
+  METHODS
+    method to->String
+      return "FnAtan($)"(args)
+endClass
+
+class FnAtan2( t, args:Cmd ) : Cmd
+  METHODS
+    method to->String
+      return "FnAtan2($)"(args)
+endClass
+
+class FnCos( t, args:Cmd ) : Cmd
+  METHODS
+    method to->String
+      return "FnCos($)"(args)
+endClass
+
+class FnDim( t, args:Cmd ) : Cmd
+  METHODS
+    method to->String
+      return "FnDim($)"(args)
+endClass
+
+class FnExp( t, args:Cmd ) : Cmd
+  METHODS
+    method to->String
+      return "FnExp($)"(args)
+endClass
+
+class FnFloat( t, args:Cmd ) : Cmd
+  METHODS
+    method to->String
+      return "FnFloat($)"(args)
+endClass
+
+class FnInput( t, args:Cmd ) : Cmd
+  METHODS
+    method to->String
+      return "FnInput($)"(args)
+endClass
+
+class FnInt( t, args:Cmd ) : Cmd
+  METHODS
+    method to->String
+      return "FnInt($)"(args)
+endClass
+
+class FnJoin( t, args:Cmd ) : Cmd
+  METHODS
+    method to->String
+      return "FnJoin($)"(args)
+endClass
+
+class FnLen( t, args:Cmd ) : Cmd
+  METHODS
+    method to->String
+      return "FnLen($)"(args)
+endClass
+
+class FnList( t, args:Cmd ) : Cmd
+  METHODS
+    method to->String
+      return "FnList($)"(args)
+endClass
+
+class FnMax( t, args:Cmd ) : Cmd
+  METHODS
+    method to->String
+      return "FnMax($)"(args)
+endClass
+
+class FnMin( t, args:Cmd ) : Cmd
+  METHODS
+    method to->String
+      return "FnMin($)"(args)
+endClass
+
+class FnRandFloat( t, args:Cmd ) : Cmd
+  METHODS
+    method to->String
+      return "FnRandFloat($)"(args)
+endClass
+
+class FnRandInt( t, args:Cmd ) : Cmd
+  METHODS
+    method to->String
+      return "FnRandInt($)"(args)
+endClass
+
+class FnSin( t, args:Cmd ) : Cmd
+  METHODS
+    method to->String
+      return "FnSin($)"(args)
+endClass
+
+class FnStr( t, args:Cmd ) : Cmd
+  METHODS
+    method to->String
+      return "FnStr($)"(args)
+endClass
+
+class FnTan( t, args:Cmd ) : Cmd
+  METHODS
+    method to->String
+      return "FnTan($)"(args)
+endClass
+
+class Access( t, name:String ) : Cmd
+  METHODS
+    method to->String
+      return "$"(name)
+endClass
+
+
+class Print( t, expression:Cmd ) : Cmd
+  METHODS
+    method to->String
+      return "Print($)"(expression)
+endClass
+
+
+class While( t, condition:Cmd, statements:Cmd ) : Cmd
+  METHODS
+    method to->String
+      return "While($,$)"(condition,statements)
+endClass
+
+
+class Echo( t, expression:Cmd ) : Cmd
+  METHODS
+    method to->String
+      return "Echo($)"(expression)
+endClass
+
+
+class If( t, condition:Cmd, statements:Cmd, else_statements:Cmd ) : Cmd
+  METHODS
+    method to->String
+      return "If($,$,$)"(condition,statements,else_statements)
+endClass
+
+
+class Assign( t, target:Cmd, new_value:Cmd ) : Cmd
+  METHODS
+    method to->String
+      return "Assign($,$)"(target,new_value)
+endClass
+
+
+class Let( t, target:String, expression:Cmd ) : Cmd
+  METHODS
+    method to->String
+      return "Let($,$)"(target,expression)
+endClass
+
+
+class For( t, control:String, first:Cmd, last:Cmd, statements:Cmd ) : Cmd
+  METHODS
+    method to->String
+      return "For($,$,$,$)"(control,first,last,statements)
+endClass
+
+class IndexedAccess( t, context:Cmd, index:Cmd ) : Cmd
+  METHODS
+    method to->String
+      return "IndexedAccess($,$)"(context,index)
+endClass

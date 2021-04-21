@@ -1,0 +1,319 @@
+[whitespace]
+SPACE ' '
+TAB   '\t'
+CR    '\r'
+
+[tokens]
+# The [content] attribute signals that the contents of 'buffer' are stored
+# as a token's content:String when the token is created.
+EOL        '\n'
+IDENTIFIER identifier [content]
+INTEGER    integer    [content]
+STRING     string     [content]
+
+[keywords]
+KEYWORD_AND       and
+KEYWORD_ECHO      echo  
+KEYWORD_ELSE      else     [endStructure]  # endStructure is arbitrary; can
+KEYWORD_END       end      [endStructure]  # create your own attributes.
+KEYWORD_ENDFOR    endfor   [endStructure]  # Only 'content' has special meaning.
+KEYWORD_ENDIF     endif    [endStructure]
+KEYWORD_ENDWHILE  endwhile [endStructure]
+KEYWORD_FOR       for
+KEYWORD_GOTO      goto  
+KEYWORD_IF        if
+KEYWORD_LABEL     label  
+KEYWORD_LET       let  
+KEYWORD_NEXT      next     [endStructure]
+KEYWORD_OR        or
+KEYWORD_PRINT     print
+KEYWORD_STEP      step
+KEYWORD_THEN      then
+KEYWORD_TO        to
+KEYWORD_WHILE     while
+
+KEYWORD_ATAN      atan
+KEYWORD_ATAN2     atan2
+KEYWORD_COS       cos
+KEYWORD_DIM       dim
+KEYWORD_EXP       exp
+KEYWORD_FLOAT     float
+KEYWORD_INPUT     input
+KEYWORD_INT       int
+KEYWORD_JOIN      join
+KEYWORD_LEN       len
+KEYWORD_LIST      list
+KEYWORD_MAX       max
+KEYWORD_MIN       min
+KEYWORD_RANDFLOAT randfloat
+KEYWORD_RANDINT   randint
+KEYWORD_SIN       sin
+KEYWORD_STR       str
+KEYWORD_TAN       tan
+
+[symbols]
+SYMBOL_ASTERISK             *
+SYMBOL_CLOSE_PAREN          )   [endStructure]
+SYMBOL_CLOSE_SQUARE         ]   [endStructure]
+SYMBOL_EQ                   ==
+SYMBOL_COMMA                ,
+SYMBOL_EQUALS               =
+SYMBOL_GE                   >=
+SYMBOL_GT                   >
+SYMBOL_LE                   <=
+SYMBOL_LT                   <
+SYMBOL_MINUS                -
+SYMBOL_NE                   !=
+SYMBOL_OPEN_PAREN           (
+SYMBOL_OPEN_SQUARE          [
+SYMBOL_PLUS                 +
+SYMBOL_SLASH                /
+SYMBOL_SLASH_SLASH          //
+
+#===============================================================================
+
+[tokenizer]
+# In the tokenizer a "global routine" starting with minus (`- global_routine`) can be
+# the entry point # to the program - e.g. you can call into the tokenizer starting at
+# that routine. A "local routine" starting with plus (`+ local_routine`) can only be
+# called from within the tokenizer.
+
+- tokenize
+  which (input)
+    discardAny [whitespace]
+  endWhich
+
+  markSourcePosition
+  if (not hasAnother) halt
+
+  scan_identifier_or_keyword
+
+  which (input)
+    produceAny [symbols]
+    case '\n'
+      produce EOL  # 'produce' halts execution which will restart at the top for the next token
+    case '"'
+      scan_string
+    case '#'
+      discard_comment
+    others
+      ch = peek
+      if (ch is '0'..'9')
+        scan_integer
+        produce INTEGER
+      endIf
+  endWhich
+
+  syntaxError
+
++ scan_identifier_or_keyword
+  ch = peek
+  if (ch is 'a'..'z' or ch is 'A'..'Z' or ch == '_')
+    clear buffer
+    while (ch is 'a'..'z' or ch is 'A'..'Z' or ch is '0'..'9' or ch == '_')
+      ch = read
+      collect ch
+      ch = peek
+    endWhile
+
+    which (buffer)
+      produceAny [keywords]
+      case "rem": discard_comment
+      others:     produce IDENTIFIER
+    endWhich
+  endIf
+  return
+
++ scan_string
+  while (hasAnother)
+    ch = read
+    if (ch == '"') produce STRING
+    collect ch  # add ch to the internal string 'buffer'
+  endWhile
+  syntaxError "Unterminated string literal."
+
++ discard_comment
+  while (hasAnother)
+    ch = read
+    if (ch == '\n') discard  # restarts tokenizer
+  endWhile
+  discard
+
++ scan_integer
+  while (ch is '0'..'9' or ch == '_')
+    ch = read
+    if (ch != '_') collect ch
+    if (not hasAnother) return
+    ch = peek
+  endWhile
+  return
+
+#===============================================================================
+[parser]
+# In the parser a "top-level rule" starting with minus (`- top_level_rule`) can be
+# the entry point # to the program - e.g. you can call into the parser starting at
+# that rule. A "nested rule" starting with plus (`+ nested_rule`) is logically
+# linked to the rules above and below it. So `- expression` is a top-level rule
+# which automatically calls `+ logical_or` etc. all the way down to the final
+# `+ term` rule using recursive descent.
+
+- program
+  statements
+
+- statements
+  beginList
+
+  consume_eols
+  while (hasAnother and not nextHasAttribute(endStructure))
+    statement
+    consume_eols
+  endWhile
+
+  produceList
+
+- statement
+  on "echo"   expression                -> Echo(expression)
+  on "let"    identifier "=" expression -> Let(target:String,expression)
+
+  on "for"
+    identifier
+    mustConsume( "=" )
+    expression
+    mustConsume( "to" )
+    expression
+
+    statements
+
+    if (not consume("endfor")) mustConsume( "next" )
+    produce For(control:String,first,last,statements)
+
+  elseOn "if"
+    expression
+    if (consume("then"))
+      beginList
+      statement
+      endList
+      createNull # else statements
+    else
+      statements
+      if (consume("else"))
+        statements
+      else
+        createNull # else statements
+      endIf
+      mustConsume( "endif" )
+    endIf
+    produce If(condition,statements,else_statements)
+
+  elseOn "print"
+    if (consume(EOL)) createNull
+    else              expression
+    produce Print(expression)
+
+  elseOn "while"
+    expression
+    mustConsume( EOL )
+    statements
+    mustConsume( "endwhile" )
+    produce While(condition,statements)
+  endOn
+
+  expression
+  on "="
+    expression
+    produce Assign(target,new_value)
+  endOn
+
+  # we'll leave the expression as a statement
+
+- expression
+
++ logical_or   : Binary
+  on "or" -> LogicalOr
+
++ logical_and  : Binary
+  on "and" -> LogicalAnd
+
++ comparison : Binary
+  on "==" -> CompareEQ
+  on "!=" -> CompareNE
+  on "<"  -> CompareLT
+  on ">"  -> CompareGT
+  on "<=" -> CompareLE
+  on ">=" -> CompareGE
+
++ add_subtract : Binary
+  on "+" -> Add
+  on "-" -> Subtract
+
++ multiply_divide : Binary
+  on "*"  -> Multiply
+  on "/"  -> RealDivide
+  on "//" -> IntegerDivide
+
++ pre_unary : PreUnary
+  on "-" -> Negate
+
++ indexed_access
+  access
+  while (consume('['))
+    expression
+    mustConsume(']')
+    create IndexedAccess(context,index)
+  endWhile
+  return
+
++ access
+
++ term
+  on "atan", args      -> FnAtan( args )
+  on "atan2", args     -> FnAtan2( args )
+  on "cos", args       -> FnCos( args )
+  on "dim", args       -> FnDim( args )
+  on "exp", args       -> FnExp( args )
+  on "float", args     -> FnFloat( args )
+  on "input", args     -> FnInput( args )
+  on "int", args       -> FnInt( args )
+  on "join", args      -> FnJoin( args )
+  on "len", args       -> FnLen( args )
+  on "list", args      -> FnList( args )
+  on "max", args       -> FnMax( args )
+  on "min", args       -> FnMin( args )
+  on "randfloat", args -> FnRandFloat( args )
+  on "randint", args   -> FnRandInt( args )
+  on "sin", args       -> FnSin( args )
+  on "str", args       -> FnStr( args )
+  on "tan", args       -> FnTan( args )
+
+  on '(', expression, ')': return
+  on IDENTIFIER -> Access( name=t.content:String )
+  on INTEGER    -> LiteralInt32( value=t.content:String )
+  on STRING     -> LiteralString( value=t.content:String )
+  syntaxError
+
+- identifier
+  on IDENTIFIER -> LiteralString( name=t.content:String )
+  syntaxError "Identifier expected."
+
+- args
+  beginList
+
+  mustConsume( '(' )
+  consume_eols
+  if (consume( ')' )) produceList  # empty list
+
+  expression
+  consume_eols
+
+  while (consume(','))
+    consume_eols
+    expression
+    consume_eols
+  endWhile
+
+  mustConsume( ')' )
+  produceList
+
+- consume_eols
+  while (consume('\n')) noAction
+ 

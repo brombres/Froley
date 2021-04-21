@@ -1,0 +1,13 @@
+module BadBasic
+
+class CmdInitArgs : Cmd[]
+  PROPERTIES
+    t : Token
+
+  METHODS
+    method cmd_to<<$ToType>>( index:Int32 )->$ToType
+      local cmd = this[ index ]
+      if (not cmd) return null
+      return cmd->$ToType
+endClass
+

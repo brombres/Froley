@@ -1,0 +1,15 @@
+print "On a Mac, try changing your Terminal font to Monaco, 13 point,"
+print "and then setting the Character Spacing to 0.77 and the Line"
+print "Spacing to 0.56."
+for h = 1 to 20
+  for w = 1 to 78
+    # Pick a random 0 or 1
+    let r = randint(0, 1)
+    if r
+      echo "/"
+    else
+      echo "\"
+    endif
+  endfor
+  print
+endfor

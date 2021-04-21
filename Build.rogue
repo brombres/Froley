@@ -95,9 +95,15 @@ routine rogo_run
 endRoutine
 
 routine rogo_demos
+  rogo_bad_basic
   rogo_simple
   rogo_json
   rogo_asm
+endRoutine
+
+routine rogo_bad_basic
+  rogo_build
+  execute( "cd Demos/BadBasic && rogo" )
 endRoutine
 
 routine rogo_simple
@@ -163,6 +169,7 @@ routine rogo_clean
 endRoutine
 
 routine rogo_clean_demos
+  execute( "cd Demos/BadBasic && rogo xclean" )
   execute( "cd Demos/Simple && rogo xclean" )
   execute( "cd Demos/JSON && rogo xclean" )
   execute( "cd Demos/ASM && rogo xclean" )

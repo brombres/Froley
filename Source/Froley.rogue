@@ -75,6 +75,9 @@ class Launcher
         local default_language = File.filename(input_filepath).before_last( ".froley", &ignore_case )
         local language_override : String
 
+        # Default to Rogue target
+        options.insert( "target=rogue" )
+
         forEach (option in options)
           local name = option.before_first('=')
           local value = option.after_first('=')
@@ -116,38 +119,65 @@ class Launcher
 
       endTry
 
-    method print_usage( writer=Console:PrintWriter )->PrintWriter
-      writer.println VERSION_INFO
-      writer.println
+      method print_usage( writer=Console:PrintWriter )->PrintWriter
+        writer.println VERSION_INFO
+        writer.println
 
-      writer.println @|USAGE
-                      |  froley filename.froley [--target=<target-language>] [options]
-               |
-               |TARGET LANGUAGES
-               |  Froley can generate code for the following target languages:
-      writer.print( "    " ).println( forEach in Froley.generators.keys )
-      writer.println
-      writer.println @|Use '--target=<language>' to include output for that language. Any successive
-                      |options will apply only to that language until another `--target` is specified.
-                      |
-                      |GENERAL OPTIONS
-                      |  --language=<name>
-                      |    Specifies the name of the language that the Froley-generated Tokenizer and
-                      |    Parser will parse. For example, to generate Rogue source code that will
-                      |    parse a language called Simple you would write:
-                      |      froley --language=Simple --target=rogue
-                      |    If no --language is specified then the base name of the '.froley' filename
-                      |    is used as the language name.
-                      |
-                      |OPTIONS
-      forEach (key in Froley.generators.keys)
-        writer.print  "  --target="
-        writer.println key
-        writer.println(forEach in Froley.generators[ key ].usage_options.sort((a,b)=>a<b)).println
-      endForEach
+        writer.println @|USAGE
+                        |  froley filename.froley [options]
+                        |
+                        |OPTIONS
+                        |  --language=<name>
+                        |    Specifies the name of the language that the Froley-generated Tokenizer and
+                        |    Parser will work with. For example, to generate Rogue source code that will
+                        |    parse a language called Simple you would write:
+                        |      froley --language=Simple
+                        |    If no --language is specified then the base name of the '.froley' filename
+                        |    is used as the language name.
+                        |
+                        |  --main
+                        |    Creates a main file (if it does not yet exist) to test out the parser
+                        |    and tokenizer.
+                        |
+                        |  --output=<folder>
+                        |    Specifies the output folder for generated code.
+                        |
+                        |REFERENCE
+                        |  github.com/AbePralle/Froley
+        return writer
 
-      writer.println
-      return writer
+      #method print_usage( writer=Console:PrintWriter )->PrintWriter
+      #  writer.println VERSION_INFO
+      #  writer.println
+
+      #  writer.println @|USAGE
+      #                  |  froley filename.froley [--target=<target-language>] [options]
+      #           |
+      #           |TARGET LANGUAGES
+      #           |  Froley can generate code for the following target languages:
+      #  writer.print( "    " ).println( forEach in Froley.generators.keys )
+      #  writer.println
+      #  writer.println @|Use '--target=<language>' to include output for that language. Any successive
+      #                  |options will apply only to that language until another `--target` is specified.
+      #                  |
+      #                  |GENERAL OPTIONS
+      #                  |  --language=<name>
+      #                  |    Specifies the name of the language that the Froley-generated Tokenizer and
+      #                  |    Parser will parse. For example, to generate Rogue source code that will
+      #                  |    parse a language called Simple you would write:
+      #                  |      froley --language=Simple --target=rogue
+      #                  |    If no --language is specified then the base name of the '.froley' filename
+      #                  |    is used as the language name.
+      #                  |
+      #                  |OPTIONS
+      #  forEach (key in Froley.generators.keys)
+      #    writer.print  "  --target="
+      #    writer.println key
+      #    writer.println(forEach in Froley.generators[ key ].usage_options.sort((a,b)=>a<b)).println
+      #  endForEach
+
+      #  writer.println
+      #  return writer
 endClass
 
 class TokenDef( name:String, type:Int32, symbol=null:String, attributes=0:Int32 )

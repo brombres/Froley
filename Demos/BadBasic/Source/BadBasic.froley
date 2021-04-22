@@ -131,7 +131,7 @@ SYMBOL_SLASH_SLASH          //
 + discard_comment
   while (hasAnother)
     ch = read
-    if (ch == '\n') discard  # restarts tokenizer
+    if (ch == '\n') produce EOL
   endWhile
   discard
 

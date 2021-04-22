@@ -28,6 +28,24 @@ class Visitor
       if (cmd.right) cmd.right = cmd.right.dispatch( this )
       return cmd
 
+    method visit( cmd:Echo )->Cmd
+      return cmd
+
+    method visit( cmd:Assign )->Cmd
+      return cmd
+
+    method visit( cmd:For )->Cmd
+      return cmd
+
+    method visit( cmd:If )->Cmd
+      return cmd
+
+    method visit( cmd:Print )->Cmd
+      return cmd
+
+    method visit( cmd:While )->Cmd
+      return cmd
+
     method visit( cmd:LogicalOr )->Cmd
       if (cmd.left)  cmd.left  = cmd.left.dispatch( this )
       if (cmd.right) cmd.right = cmd.right.dispatch( this )
@@ -97,6 +115,9 @@ class Visitor
       if (cmd.operand)  cmd.operand = cmd.operand.dispatch( this )
       return cmd
 
+    method visit( cmd:IndexedAccess )->Cmd
+      return cmd
+
     method visit( cmd:FnAtan )->Cmd
       return cmd
 
@@ -158,29 +179,5 @@ class Visitor
       return cmd
 
     method visit( cmd:LiteralString )->Cmd
-      return cmd
-
-    method visit( cmd:Print )->Cmd
-      return cmd
-
-    method visit( cmd:While )->Cmd
-      return cmd
-
-    method visit( cmd:Echo )->Cmd
-      return cmd
-
-    method visit( cmd:If )->Cmd
-      return cmd
-
-    method visit( cmd:Assign )->Cmd
-      return cmd
-
-    method visit( cmd:Let )->Cmd
-      return cmd
-
-    method visit( cmd:For )->Cmd
-      return cmd
-
-    method visit( cmd:IndexedAccess )->Cmd
       return cmd
 endClass

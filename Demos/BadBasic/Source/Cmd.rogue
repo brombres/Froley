@@ -139,6 +139,42 @@ class Binary( t, left:Cmd, right:Cmd ) : Cmd
 endClass
 
 
+class Echo( t, expression:Cmd ) : Cmd
+  METHODS
+    method to->String
+      return "Echo($)"(expression)
+endClass
+
+class Assign( t, target:Cmd, new_value:Cmd ) : Cmd
+  METHODS
+    method to->String
+      return "Assign($,$)"(target,new_value)
+endClass
+
+class For( t, control:String, first:Cmd, last:Cmd, step_size:Cmd, statements:CmdList ) : Cmd
+  METHODS
+    method to->String
+      return "For($,$,$,$,$)"(control,first,last,step_size,statements)
+endClass
+
+class If( t, condition:Cmd, statements:CmdList, else_statements:CmdList ) : Cmd
+  METHODS
+    method to->String
+      return "If($,$,$)"(condition,statements,else_statements)
+endClass
+
+class Print( t, expression:Cmd ) : Cmd
+  METHODS
+    method to->String
+      return "Print($)"(expression)
+endClass
+
+class While( t, condition:Cmd, statements:CmdList ) : Cmd
+  METHODS
+    method to->String
+      return "While($,$)"(condition,statements)
+endClass
+
 class LogicalOr : Binary
   METHODS
     method op->String
@@ -223,109 +259,115 @@ class Negate : Unary
       return "-"
 endClass
 
-class FnAtan( t, args:Cmd ) : Cmd
+class IndexedAccess( t, context:Cmd, index:Cmd ) : Cmd
+  METHODS
+    method to->String
+      return "IndexedAccess($,$)"(context,index)
+endClass
+
+class FnAtan( t, args:CmdList ) : Cmd
   METHODS
     method to->String
       return "FnAtan($)"(args)
 endClass
 
-class FnAtan2( t, args:Cmd ) : Cmd
+class FnAtan2( t, args:CmdList ) : Cmd
   METHODS
     method to->String
       return "FnAtan2($)"(args)
 endClass
 
-class FnCos( t, args:Cmd ) : Cmd
+class FnCos( t, args:CmdList ) : Cmd
   METHODS
     method to->String
       return "FnCos($)"(args)
 endClass
 
-class FnDim( t, args:Cmd ) : Cmd
+class FnDim( t, args:CmdList ) : Cmd
   METHODS
     method to->String
       return "FnDim($)"(args)
 endClass
 
-class FnExp( t, args:Cmd ) : Cmd
+class FnExp( t, args:CmdList ) : Cmd
   METHODS
     method to->String
       return "FnExp($)"(args)
 endClass
 
-class FnFloat( t, args:Cmd ) : Cmd
+class FnFloat( t, args:CmdList ) : Cmd
   METHODS
     method to->String
       return "FnFloat($)"(args)
 endClass
 
-class FnInput( t, args:Cmd ) : Cmd
+class FnInput( t, args:CmdList ) : Cmd
   METHODS
     method to->String
       return "FnInput($)"(args)
 endClass
 
-class FnInt( t, args:Cmd ) : Cmd
+class FnInt( t, args:CmdList ) : Cmd
   METHODS
     method to->String
       return "FnInt($)"(args)
 endClass
 
-class FnJoin( t, args:Cmd ) : Cmd
+class FnJoin( t, args:CmdList ) : Cmd
   METHODS
     method to->String
       return "FnJoin($)"(args)
 endClass
 
-class FnLen( t, args:Cmd ) : Cmd
+class FnLen( t, args:CmdList ) : Cmd
   METHODS
     method to->String
       return "FnLen($)"(args)
 endClass
 
-class FnList( t, args:Cmd ) : Cmd
+class FnList( t, args:CmdList ) : Cmd
   METHODS
     method to->String
       return "FnList($)"(args)
 endClass
 
-class FnMax( t, args:Cmd ) : Cmd
+class FnMax( t, args:CmdList ) : Cmd
   METHODS
     method to->String
       return "FnMax($)"(args)
 endClass
 
-class FnMin( t, args:Cmd ) : Cmd
+class FnMin( t, args:CmdList ) : Cmd
   METHODS
     method to->String
       return "FnMin($)"(args)
 endClass
 
-class FnRandFloat( t, args:Cmd ) : Cmd
+class FnRandFloat( t, args:CmdList ) : Cmd
   METHODS
     method to->String
       return "FnRandFloat($)"(args)
 endClass
 
-class FnRandInt( t, args:Cmd ) : Cmd
+class FnRandInt( t, args:CmdList ) : Cmd
   METHODS
     method to->String
       return "FnRandInt($)"(args)
 endClass
 
-class FnSin( t, args:Cmd ) : Cmd
+class FnSin( t, args:CmdList ) : Cmd
   METHODS
     method to->String
       return "FnSin($)"(args)
 endClass
 
-class FnStr( t, args:Cmd ) : Cmd
+class FnStr( t, args:CmdList ) : Cmd
   METHODS
     method to->String
       return "FnStr($)"(args)
 endClass
 
-class FnTan( t, args:Cmd ) : Cmd
+class FnTan( t, args:CmdList ) : Cmd
   METHODS
     method to->String
       return "FnTan($)"(args)
@@ -335,59 +377,4 @@ class Access( t, name:String ) : Cmd
   METHODS
     method to->String
       return "$"(name)
-endClass
-
-
-class Print( t, expression:Cmd ) : Cmd
-  METHODS
-    method to->String
-      return "Print($)"(expression)
-endClass
-
-
-class While( t, condition:Cmd, statements:Cmd ) : Cmd
-  METHODS
-    method to->String
-      return "While($,$)"(condition,statements)
-endClass
-
-
-class Echo( t, expression:Cmd ) : Cmd
-  METHODS
-    method to->String
-      return "Echo($)"(expression)
-endClass
-
-
-class If( t, condition:Cmd, statements:Cmd, else_statements:Cmd ) : Cmd
-  METHODS
-    method to->String
-      return "If($,$,$)"(condition,statements,else_statements)
-endClass
-
-
-class Assign( t, target:Cmd, new_value:Cmd ) : Cmd
-  METHODS
-    method to->String
-      return "Assign($,$)"(target,new_value)
-endClass
-
-
-class Let( t, target:String, expression:Cmd ) : Cmd
-  METHODS
-    method to->String
-      return "Let($,$)"(target,expression)
-endClass
-
-
-class For( t, control:String, first:Cmd, last:Cmd, statements:Cmd ) : Cmd
-  METHODS
-    method to->String
-      return "For($,$,$,$)"(control,first,last,statements)
-endClass
-
-class IndexedAccess( t, context:Cmd, index:Cmd ) : Cmd
-  METHODS
-    method to->String
-      return "IndexedAccess($,$)"(context,index)
 endClass

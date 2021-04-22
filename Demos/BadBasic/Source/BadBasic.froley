@@ -73,10 +73,6 @@ SYMBOL_SLASH_SLASH          //
 #===============================================================================
 
 [tokenizer]
-# In the tokenizer a "global routine" starting with minus (`- global_routine`) can be
-# the entry point # to the program - e.g. you can call into the tokenizer starting at
-# that routine. A "local routine" starting with plus (`+ local_routine`) can only be
-# called from within the tokenizer.
 
 - tokenize
   which (input)
@@ -150,12 +146,6 @@ SYMBOL_SLASH_SLASH          //
 
 #===============================================================================
 [parser]
-# In the parser a "top-level rule" starting with minus (`- top_level_rule`) can be
-# the entry point # to the program - e.g. you can call into the parser starting at
-# that rule. A "nested rule" starting with plus (`+ nested_rule`) is logically
-# linked to the rules above and below it. So `- expression` is a top-level rule
-# which automatically calls `+ logical_or` etc. all the way down to the final
-# `+ term` rule using recursive descent.
 
 - program
   statements
@@ -173,7 +163,7 @@ SYMBOL_SLASH_SLASH          //
 
 - statement
   on "echo"   expression                -> Echo(expression)
-  on "let"    identifier "=" expression -> Let(target:String,expression)
+  on "let"    identifier "=" expression -> Assign(target,new_value)
 
   on "for"
     identifier
@@ -181,11 +171,12 @@ SYMBOL_SLASH_SLASH          //
     expression
     mustConsume( "to" )
     expression
-
+    if (consume("step")) expression
+    else                 createNull
     statements
 
     if (not consume("endfor")) mustConsume( "next" )
-    produce For(control:String,first,last,statements)
+    produce For(control:String,first,last,step_size,statements:CmdList)
 
   elseOn "if"
     expression
@@ -203,7 +194,7 @@ SYMBOL_SLASH_SLASH          //
       endIf
       mustConsume( "endif" )
     endIf
-    produce If(condition,statements,else_statements)
+    produce If(condition,statements:CmdList,else_statements:CmdList)
 
   elseOn "print"
     if (consume(EOL)) createNull
@@ -215,7 +206,7 @@ SYMBOL_SLASH_SLASH          //
     mustConsume( EOL )
     statements
     mustConsume( "endwhile" )
-    produce While(condition,statements)
+    produce While(condition,statements:CmdList)
   endOn
 
   expression
@@ -266,24 +257,24 @@ SYMBOL_SLASH_SLASH          //
 + access
 
 + term
-  on "atan", args      -> FnAtan( args )
-  on "atan2", args     -> FnAtan2( args )
-  on "cos", args       -> FnCos( args )
-  on "dim", args       -> FnDim( args )
-  on "exp", args       -> FnExp( args )
-  on "float", args     -> FnFloat( args )
-  on "input", args     -> FnInput( args )
-  on "int", args       -> FnInt( args )
-  on "join", args      -> FnJoin( args )
-  on "len", args       -> FnLen( args )
-  on "list", args      -> FnList( args )
-  on "max", args       -> FnMax( args )
-  on "min", args       -> FnMin( args )
-  on "randfloat", args -> FnRandFloat( args )
-  on "randint", args   -> FnRandInt( args )
-  on "sin", args       -> FnSin( args )
-  on "str", args       -> FnStr( args )
-  on "tan", args       -> FnTan( args )
+  on "atan", args      -> FnAtan( args:CmdList )
+  on "atan2", args     -> FnAtan2( args:CmdList )
+  on "cos", args       -> FnCos( args:CmdList )
+  on "dim", args       -> FnDim( args:CmdList )
+  on "exp", args       -> FnExp( args:CmdList )
+  on "float", args     -> FnFloat( args:CmdList )
+  on "input", args     -> FnInput( args:CmdList )
+  on "int", args       -> FnInt( args:CmdList )
+  on "join", args      -> FnJoin( args:CmdList )
+  on "len", args       -> FnLen( args:CmdList )
+  on "list", args      -> FnList( args:CmdList )
+  on "max", args       -> FnMax( args:CmdList )
+  on "min", args       -> FnMin( args:CmdList )
+  on "randfloat", args -> FnRandFloat( args:CmdList )
+  on "randint", args   -> FnRandInt( args:CmdList )
+  on "sin", args       -> FnSin( args:CmdList )
+  on "str", args       -> FnStr( args:CmdList )
+  on "tan", args       -> FnTan( args:CmdList )
 
   on '(', expression, ')': return
   on IDENTIFIER -> Access( name=t.content:String )
@@ -292,7 +283,7 @@ SYMBOL_SLASH_SLASH          //
   syntaxError
 
 - identifier
-  on IDENTIFIER -> LiteralString( name=t.content:String )
+  on IDENTIFIER -> Access( name=t.content:String )
   syntaxError "Identifier expected."
 
 - args

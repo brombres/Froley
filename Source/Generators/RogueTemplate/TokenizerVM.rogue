@@ -293,8 +293,17 @@ augment RogueTemplate
        |            variables[code[ip]] += variables[code[ip+1]]
        |            ip += 2
        |            nextIteration
-       |          case TokenizerOpcode.SUBTRACT_VAR_VAR
+       |          case TokenizerOpcode.SUB_VAR_VAR
        |            variables[code[ip]] -= variables[code[ip+1]]
+       |            ip += 2
+       |            nextIteration
+       |          case TokenizerOpcode.MUL_VAR_INT32
+       |            variables[code[ip]] *= code[ip+1]
+       |            ip += 2
+       |            nextIteration
+       |          case TokenizerOpcode.DIV_VAR_INT32
+       |            local d = code[ip+1]
+       |            if (d) variables[code[ip]] /= d
        |            ip += 2
        |            nextIteration
        |          case TokenizerOpcode.WHICH_INPUT

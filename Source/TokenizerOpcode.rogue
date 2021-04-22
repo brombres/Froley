@@ -45,7 +45,9 @@ enum TokenizerOpcode( size=1:Int32 )
   ADD_CH_INT32(2)       # ch    += ARG1
   ADD_VAR_INT32(3)      # variables[index:ARG1] += ARG2
   ADD_VAR_VAR(3)        # variables[index:ARG1] += variables[index:ARG2]
-  SUBTRACT_VAR_VAR(3)   # variables[index:ARG1] -= variables[index:ARG2]
+  SUB_VAR_VAR(3)        # variables[index:ARG1] -= variables[index:ARG2]
+  MUL_VAR_INT32(3)      # variables[index:ARG1] += ARG2
+  DIV_VAR_INT32(3)      # variables[index:ARG1] += ARG2
   WHICH_INPUT           # (complex)
   WHICH_BUFFER          # (complex)
   TRACE                 #

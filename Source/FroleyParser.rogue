@@ -481,6 +481,10 @@ class FroleyParser : Parser
           statements.add( TokenizerCmdAdd(t,expr,parse_tokenizer_expression()) )
         elseIf (consume(TokenType.SYMBOL_MINUS_EQUALS))
           statements.add( TokenizerCmdSubtract(t,expr,parse_tokenizer_expression()) )
+        elseIf (consume(TokenType.SYMBOL_TIMES_EQUALS))
+          statements.add( TokenizerCmdMultiply(t,expr,parse_tokenizer_expression()) )
+        elseIf (consume(TokenType.SYMBOL_DIVIDE_EQUALS))
+          statements.add( TokenizerCmdDivide(t,expr,parse_tokenizer_expression()) )
         else
           statements.add( expr )
         endIf

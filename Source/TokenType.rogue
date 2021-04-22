@@ -24,7 +24,6 @@ augment TokenType
   KEYWORD_CREATE_NULL       ( "createNull",           &is_keyword )
   KEYWORD_CREATE_LIST       ( "createList",           &is_keyword )
   KEYWORD_CUSTOM            ( "custom",               &is_keyword )
-  KEYWORD_DIGIT             ( "digit",                &is_keyword )
   KEYWORD_DISCARD           ( "discard",              &is_keyword )
   KEYWORD_DISCARD_ANY       ( "discardAny",           &is_keyword, &is_structural )
   KEYWORD_DISCARD_LIST      ( "discardList",          &is_keyword )
@@ -45,7 +44,6 @@ augment TokenType
   KEYWORD_IF                ( "if",                   &is_keyword )
   KEYWORD_INPUT             ( "input",                &is_keyword )
   KEYWORD_IS                ( "is",                   &is_keyword )
-  KEYWORD_LETTER            ( "letter",               &is_keyword )
   KEYWORD_MARK_SRC_POS      ( "markSourcePosition",   &is_keyword )
   KEYWORD_MODE              ( "mode",                 &is_keyword )
   KEYWORD_MUST_CONSUME      ( "mustConsume",          &is_keyword )
@@ -87,6 +85,7 @@ augment TokenType
   SYMBOL_CLOSE_PAREN        ( ")",   &is_symbol, &is_structural )
   SYMBOL_COLON              ( ":",   &is_symbol )
   SYMBOL_COMMA              ( ",",   &is_symbol )
+  SYMBOL_DIVIDE_EQUALS      ( "/=",  &is_symbol )
   SYMBOL_DOT                ( ".",   &is_symbol )
   SYMBOL_DOT_DOT            ( "..",  &is_symbol )
   SYMBOL_EQUALS             ( "=",   &is_symbol )
@@ -107,6 +106,7 @@ augment TokenType
   SYMBOL_PLUS_PLUS          ( "++",  &is_symbol )
   SYMBOL_SEMICOLON          ( ";",   &is_symbol )
   SYMBOL_TILDE              ( "~",   &is_symbol )
+  SYMBOL_TIMES_EQUALS       ( "*=",  &is_symbol )
   SYMBOL_VERTICAL_BAR       ( "|",   &is_symbol )
 endAugment
 

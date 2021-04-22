@@ -1,4 +1,4 @@
-$define VERSION_INFO "Froley v2.0 - April 8, 2021 by Abe Pralle"
+$define VERSION_INFO "Froley v2.0 - April 21, 2021"
 
 module Froley
   uses ParseKit<<Froley>>
@@ -121,6 +121,8 @@ class Launcher
 
       method print_usage( writer=Console:PrintWriter )->PrintWriter
         writer.println VERSION_INFO
+        writer.println @|By Abe Pralle
+                        |github.com/AbePralle/Froley
         writer.println
 
         writer.println @|USAGE
@@ -141,9 +143,6 @@ class Launcher
                         |
                         |  --output=<folder>
                         |    Specifies the output folder for generated code.
-                        |
-                        |REFERENCE
-                        |  github.com/AbePralle/Froley
         return writer
 
       #method print_usage( writer=Console:PrintWriter )->PrintWriter

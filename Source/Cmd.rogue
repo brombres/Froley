@@ -64,7 +64,10 @@ augment Cmd
       throw UnsupportedOperationError()
 
     method write_add( assembler:TokenizerAssembler, expression:Cmd )
-      throw t.error( "Illegal operation target - target must be 'ch' or 'count'." )
+      throw t.error( "Illegal operation target - target must be 'ch', 'count', or @varname." )
+
+    method write_divide( assembler:TokenizerAssembler, expression:Cmd )
+      throw t.error( "Illegal operation target - target must be @varname." )
 
     method write_logical_ands( assembler:TokenizerAssembler, target_if_false:Label )
       write( assembler )
@@ -74,8 +77,11 @@ augment Cmd
       write( assembler )
       assembler.write( jump_if_true, target_if_true )
 
+    method write_multiply( assembler:TokenizerAssembler, expression:Cmd )
+      throw t.error( "Illegal operation target - target must be @varname." )
+
     method write_subtract( assembler:TokenizerAssembler, expression:Cmd )
-      throw t.error( "Illegal operation target - target must be 'ch' or 'count'." )
+      throw t.error( "Illegal operation target - target must be 'ch' or @varname." )
 
     method error( message:String )->Error
       return t.error( message )
@@ -240,6 +246,19 @@ class TokenizerCmdSubtract( t, target:Cmd, value:Cmd ) : Cmd
     method write( assembler:TokenizerAssembler )
       target.write_subtract( assembler, value )
 endClass
+
+class TokenizerCmdMultiply( t, target:Cmd, value:Cmd ) : Cmd
+  METHODS
+    method write( assembler:TokenizerAssembler )
+      target.write_multiply( assembler, value )
+endClass
+
+class TokenizerCmdDivide( t, target:Cmd, value:Cmd ) : Cmd
+  METHODS
+    method write( assembler:TokenizerAssembler )
+      target.write_divide( assembler, value )
+endClass
+
 
 class TokenizerCmdCall( t, label_name:String ) : Cmd
   METHODS
@@ -814,6 +833,26 @@ class TokenizerCmdVarAccess( t, name:String ) : Cmd
         throw expression.error( "Illegal operation value; integer or variable expected." )
       endIf
 
+    method write_divide( assembler:TokenizerAssembler, expression:Cmd )
+      local cmd_int = expression as TokenizerCmdLiteralInt32
+      if (cmd_int)
+        assembler.write( TokenizerOpcode.DIV_VAR_INT32 )
+        assembler.write_var( name )
+        assembler.write( cmd_int.value )
+      else
+        throw expression.error( "Illegal operation value; integer expected." )
+      endIf
+
+    method write_multiply( assembler:TokenizerAssembler, expression:Cmd )
+      local cmd_int = expression as TokenizerCmdLiteralInt32
+      if (cmd_int)
+        assembler.write( TokenizerOpcode.MUL_VAR_INT32 )
+        assembler.write_var( name )
+        assembler.write( cmd_int.value )
+      else
+        throw expression.error( "Illegal operation value; integer expected." )
+      endIf
+
     method write_subtract( assembler:TokenizerAssembler, expression:Cmd )
       local cmd_int = expression as TokenizerCmdLiteralInt32
       if (cmd_int)
@@ -821,7 +860,7 @@ class TokenizerCmdVarAccess( t, name:String ) : Cmd
         assembler.write_var( name )
         assembler.write( -cmd_int.value )
       elseIf (expression.is_var)
-        assembler.write( TokenizerOpcode.SUBTRACT_VAR_VAR )
+        assembler.write( TokenizerOpcode.SUB_VAR_VAR )
         assembler.write_var( name )
         assembler.write_var( expression->String )
       else

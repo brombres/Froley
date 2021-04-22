@@ -8,6 +8,9 @@ augment RogueTemplate
        |    t : Token
        |
        |  METHODS
+       |    method cmd_as<<$AsType>>( index:Int32 )->$AsType
+       |      return this[ index ] as $AsType
+       |
        |    method cmd_to<<$ToType>>( index:Int32 )->$ToType
        |      local cmd = this[ index ]
        |      if (not cmd) return null

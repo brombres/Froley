@@ -314,7 +314,12 @@ class GenerateRogue : CodeGenerator
               if (arg//type == "" or arg//type == "Cmd")
                 writer.[ print '[', print index, print ']' ]
               else
-                writer.[ print ".cmd_to<<", print arg//type, print ">>(", print index, print ")" ]
+                which (arg//type->String)
+                  case "Int32", "Logical", "Real64", "String"
+                    writer.[ print ".cmd_to<<", print arg//type, print ">>(", print index, print ")" ]
+                  others
+                    writer.[ print ".cmd_as<<", print arg//type, print ">>(", print index, print ")" ]
+                endWhich
               endIf
               ++index
             endIf

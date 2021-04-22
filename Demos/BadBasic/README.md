@@ -149,7 +149,7 @@ Spacing to 0.56.
 ```
 
 # Development Process
-If you run `rogo xclean` it will delete all the Froley-generated `.rogue` files in the `Source/` folder except for `BadBasic.rogue`, which has a bit of custom code versus the originally-generated version. The `Source/` folder will then contain [`BadBasic.froley`](Source/BadBasic.froley), [`BadBasic.rogue`](Source/BadBasic.rogue), and [`Execute.rogue`](Source/Execute.rogue) - the latter contains the executution logic for the BadBasic runtime. You can then re-run `rogo ex` to have Froley regenerate all the necessary source files to tokenize and parse Bad Basic programs. 
+If you run `rogo xclean` it will delete all the Froley-generated `.rogue` files in the `Source/` folder except for `BadBasic.rogue`, which has a bit of custom code versus the originally-generated version. The `Source/` folder will then contain [`BadBasic.froley`](Source/BadBasic.froley), [`BadBasic.rogue`](Source/BadBasic.rogue), and [`Execute.rogue`](Source/Execute.rogue) - the latter contains the execution logic for the BadBasic runtime. You can then re-run `rogo ex` to have Froley regenerate all the necessary source files to tokenize and parse Bad Basic programs. 
 
 Here's a guide to how this Froley-based Bad Basic interpreter was developed from scratch that can assist in developing custom compilers.
 

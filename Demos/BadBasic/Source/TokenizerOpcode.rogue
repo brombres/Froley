@@ -46,8 +46,10 @@ enum TokenizerOpcode
   ADD_CH_INT32           = 41
   ADD_VAR_INT32          = 42
   ADD_VAR_VAR            = 43
-  SUBTRACT_VAR_VAR       = 44
-  WHICH_INPUT            = 45
-  WHICH_BUFFER           = 46
-  TRACE                  = 47
+  SUB_VAR_VAR            = 44
+  MUL_VAR_INT32          = 45
+  DIV_VAR_INT32          = 46
+  WHICH_INPUT            = 47
+  WHICH_BUFFER           = 48
+  TRACE                  = 49
 endEnum

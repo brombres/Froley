@@ -1,5 +1,5 @@
 # Bad Basic
-A Rogue-based Froley compiler and executor (AKA interpreter) for [Murphy McCauley's](https://github.com/MurphyMc/) "Bad Basic" language (as of April 21, 2021).
+A Rogue-based Froley compiler and executor (AKA interpreter) for [Murphy McCauley's](https://github.com/MurphyMc/) "Bad Basic" language (as of April 20, 2021).
 
 To build, install & build [Rogue](https://github.com/AbePralle/Rogue) and Froley (this repo), then CD to `Demos/BadBasic` and type `rogo ex` to see a list of example programs to run. Here's the output of each example:
 
@@ -162,7 +162,7 @@ rm Source/BadBasic.rogue  # delete this so Froley will generate a BadBasic.rogue
 ```
 
 ## 2. Add a Froley compile step to `Build.rogue`.
-Edit Build.rogue and adjust the code around the `rogo_build` routine to be as follows:
+Edit `Build.rogue` and adjust the code around the `rogo_build` routine to be as follows:
 
 ```
 routine rogo_build
@@ -237,7 +237,7 @@ EOL
 Edit `Source/BadBasic.froley` and add the parser section of [`BadBasic.froley`](Source/BadBasic.froley) (your version should now contain the entire content of the file).
 
 ## 6. Test the Parser
-Start by deleting your `Source/BadBasic.rogue`. Froley created it as a tokenizer only in Step 4 and Froley will not overwrite it. When you delete it, Froley will recreate it as a parser framework, which tokenizes as well.
+Start by deleting your `Source/BadBasic.rogue`. In Step 4 Froley created it to only handle tokenization and Froley will not overwrite it. When you delete it, Froley will recreate it to handle both tokenization and parsing.
 
 ```
 rm Source/BadBasic.rogue

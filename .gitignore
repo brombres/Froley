@@ -4,15 +4,9 @@ Build
 *.swn
 *.swo
 *.swp
-*.class
 .DS_Store
-Demos/*/*.json
-Demos/*/*.rogue
 Wiki
 
 Demos/ASM/Source
-Demos/CSQ/Source
-!Demos/CSQ/Source/Rogue/CSQ.rogue
-!Demos/CSQ/Source/Rogue/CSQCmd.rogue
 Demos/JSON/Source
 Demos/Simple/Source

@@ -1,34 +1,127 @@
-# To run this build file, install Rogue from github.com/AbePralle/Rogue and type "rogo" at the command line.
+# To run this build file, install Rogue from github.com/AbePralle/Rogue then cd
+# to this folder and type "rogo" at the command line.
 
-# Rogo is a "build your own build system" facilitator. At its core Rogo just recompiles build files if
-# needed and then runs the build executable while forwarding any command line arguments. This file contains
-# a default framework which uses introspection to turn command line arguments into parameterized routine calls.
+# description()s are optional - Rogo uses introspection to determine which
+# commands are available. 'rogo help default' displays the description for
+# "default", etc.
+description( "default", "The default action is performed when no other actions are specified. Use 'rogo default' to explicitly perform the default option." )
+description( "help",    "Displays a list of all actions that can be performed by Rogo." )
 
-# Example: to handle the command "rogo abc xyz 5", define "routine rogo_abc_xyz( n:Int32 )".
+augment Build
+  # You can create a Local.mk file with overrides for these values, e.g.:
+  # LAUNCHER_FOLDER = "~/bin"
+  PROPERTIES
+    PROJECT           = "Simple"
+    LAUNCHER_NAME     = "simple"
+    LAUNCHER_FOLDER   = "/usr/local/bin"
+    ROGUEC_FLAGS      = "--debug"
+    CPP_FLAGS_UNIX    = "-O0"
+                        # /O3 to optimize
+    CPP_FLAGS_WINDOWS = "/Od"
+                        # /Ob2ity /GF /Gy to optimize
+endAugment
 
-# "rogo_default" will run in the absence of any other command line argument.
-
-$define LANGUAGE "Simple"
-
-routine rogo_default
-  rogo_rogue
+routine exe_filepath->String
+  if (System.is_windows) return "Build/$.exe" (Build.LAUNCHER_NAME)
+  return "Build/$-$" (Build.PROJECT,System.os)
 endRoutine
 
-routine rogo_rogue
-  println "-" * 79
-  println "Compiling $.froley targeting Rogue" (LANGUAGE)
-  println "-" * 79
-  execute "froley $.froley --target=rogue --main --output=Source/Rogue" (LANGUAGE)
-  println "Compiling .rogue files to create $ parser" (LANGUAGE)
-  File.create_folder( "Build/Rogue" )
-  execute "roguec --debug --compile Source/Rogue/$.rogue --output=Build/Rogue/$" (LANGUAGE,LANGUAGE)
-  println "Executing $ parser (run 'Build/Rogue/$' with no arguments for interactive mode)" (LANGUAGE,LANGUAGE)
-  execute "Build/Rogue/$ a=b=3+4*5" (LANGUAGE)
+routine launcher_folder->String
+  local result = Build.LAUNCHER_FOLDER
+  result = File.expand_path( result )
+  return File.without_trailing_separator( result )
+endRoutine
+
+routine rogo_default
+  rogo_build
+  #rogo_install_launcher  # Uncomment to automatically install a /usr/local/bin/simple launcher
+  rogo_run
+endRoutine
+
+routine rogo_build
+  rogo_froley
+  block exe_filepath
+    local source_files = Files( "Source", "**/*.rogue" )
+    local src_filepath = "Source/$.rogue" (Build.PROJECT)
+    if (source_files.any_newer_than(exe_filepath))
+      local cpp_filepath = "Build/$-$.cpp" (Build.PROJECT,System.os)
+      if (source_files.any_newer_than(cpp_filepath))
+        execute "roguec $ $ --main --output=$ --target=Console,C++,$"...
+                (File.esc(src_filepath),Build.ROGUEC_FLAGS,File.esc(cpp_filepath),System.os)
+      endIf
+      if (System.is_windows)
+        local libs = ""
+        local cc = "cl $ /EHsc /nologo $ /Fe$ $" (Build.CPP_FLAGS_WINDOWS,File.esc(cpp_filepath),File.esc(exe_filepath),libs)
+        #cc += " /link /LTCG"   # uncomment this if there are errors linking libraries
+        execute cc
+      else
+        local libs = ""
+        local cc = "c++ -Wall -std=gnu++11 -fno-strict-aliasing -Wno-invalid-offsetof $ $ -o $$"...
+          (Build.CPP_FLAGS_UNIX,File.esc(cpp_filepath),File.esc(exe_filepath),libs)
+        execute cc
+      endIf
+    endIf
+  endBlock
+endRoutine
+
+routine rogo_froley( rebuild=false:Logical )
+  # Recompiles the .froley language definition if necessary
+  local def = File( "Source/$.froley"(Build.PROJECT) )
+  if (def.is_newer_than("Source/TokenizerVM.rogue") or rebuild)
+    println "Compiling Simple language parser"
+    execute "froley $ --main --output=Source" (def.esc)
+  endIf
+endRoutine
+
+routine rogo_run
+  println "Executing $ parser (run '$' with no arguments for interactive mode)" (Build.PROJECT,exe_filepath)
+  execute "$ a=b=3+4*5" (File.esc(exe_filepath))
+endRoutine
+
+routine rogo_install_launcher
+  local exe_filepath = File.absolute_filepath( exe_filepath )
+  if (System.is_windows)
+    local exe_folder = File.conventional_filepath( File.folder(exe_filepath) )
+    local path = System.environment//PATH
+    if (not path.to_lowercase.contains(exe_folder.to_lowercase))
+      println
+      println ''Add the following to your system PATH then reopen this command prompt to be able''
+      println ''to launch $ by typing "$":'' (Build.PROJECT,Build.LAUNCHER_NAME)
+      println
+      println "  ADD THIS TO YOUR PATH"
+      println "  " + exe_folder
+    endIf
+  else
+    contingent
+      local result = Process.run( "which " + Build.LAUNCHER_NAME, &env )
+      necessary (result.success)
+      local launcher_filepath = result->String.trimmed
+      necessary launcher_filepath
+      necessary File.load_as_string( launcher_filepath ).contains( exe_filepath )
+
+    unsatisfied
+      local launcher_filepath = "$/$" (launcher_folder,Build.LAUNCHER_NAME)
+      println "Creating launcher " + launcher_filepath
+      local sudo = ""
+      loop
+        try
+          if (not File.exists(launcher_folder)) execute( "$mkdir $"(sudo,launcher_folder) )
+          File.save( "$.launcher"(Build.LAUNCHER_NAME), ''#!/bin/sh\nexec "$" "$@"\n''(exe_filepath,'$') )
+          execute( "$mv $.launcher $"(sudo,Build.LAUNCHER_NAME,launcher_filepath) )
+          execute( "$chmod a+x $"(sudo,launcher_filepath) )
+          escapeLoop
+        catch (err:Error)
+          if (sudo != "") throw err
+          sudo = "sudo "
+        endTry
+      endLoop
+    endContingent
+  endIf
 endRoutine
 
 routine rogo_clean
-  println "Deleting Build/"
-  File.delete( "Build" )
+  verbose_delete( "Build" )
+  if (not System.is_windows) verbose_delete( "$/$"(launcher_folder,Build.LAUNCHER_NAME) )
 endRoutine
 
 routine rogo_xclean
@@ -36,7 +129,19 @@ routine rogo_xclean
   # Normally one does not need to delete any generated source files.
   rogo_clean
   println "Deleting generated .rogue files"
-  File.delete( "Source" )
+  local files = Files( ".", "Source/**.rogue" )
+  files.delete( &verbose )
+endRoutine
+
+routine verbose_delete( filepath:String )
+  if (File.exists(filepath))
+    println "> Delete " + filepath
+    if (not File.delete(filepath))
+      println "*** Failed to delete - retrying with sudo"
+      local cmd = ''sudo rm -rf $'' (File.shell_escaped(filepath))
+      execute cmd
+    endIf
+  endIf
 endRoutine
 
 routine execute( commands:String, &suppress_error )->Logical
@@ -50,9 +155,58 @@ routine execute( commands:String, &suppress_error )->Logical
   return true
 endRoutine
 
-#------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 # Introspection-based Launcher Framework
-#------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+# Rogo is a "build your own build system" facilitator. At its core Rogo just
+# recompiles build files if needed and then runs the build executable while
+# forwarding any command line arguments. This file contains a default framework
+# which uses introspection to turn command line arguments into parameterized
+# routine calls.
+
+# Example: to handle the command "rogo abc xyz 5", define
+# "routine rogo_abc_xyz( n:Int32 )".
+
+# "rogo_default" will run in the absence of any other command line argument.
+
+# The following "comment directives" can be used in this file to control how
+# RogueC compiles it and to manage automatic dependency installation and
+# linking.
+
+# Each of the following should be on a line beginning with the characters #$
+# (preceding whitespace is fine). Sample args are given.
+
+#   ROGUEC       = roguec       # Path to roguec to compile this file with
+#   ROGUEC_ARGS  = --whatever   # Additional options to pass to RogueC
+#   CPP          = g++ -Wall -std=gnu++11 -fno-strict-aliasing
+#                  -Wno-invalid-offsetof   # C++ compiler path and/or invocation
+#   CPP_ARGS     = -a -b -c          # Additional C++ args
+#   LINK         = true              # Links following LIBRARIES with this Build
+#                                    # file (otherwise just installs them)
+#   LINK         = -lalpha -lbeta    # Links following LIBRARIES and includes
+#                                    # these additional flags
+#   LINK         = false             # Linking turned off for following
+#                                    # LIBRARIES - info can still be obtained
+#                                    # from $LIBRARY_FLAGS()
+#   LINK(macOS)  = ...               # Options applying only to
+#                                    # System.os=="macOS" (use with any OS and
+#                                    # any comment directive)
+#   LIBRARIES    = libalpha
+#   LIBRARIES    = libbeta(library-name)
+#   LIBRARIES    = libfreetype6-dev(freetype2)
+#   DEPENDENCIES = Library/Rogue/**/*.rogue
+#
+#   LIBRARIES    = name(package)
+#   LIBRARIES    = name(package:<package> install:<install-cmd>
+#                  link:<link-flags> which:<which-name>)
+#
+# The following macro is replaced within this file (Build.rogue) - the libraries
+# should normally also be declared in #$ LIBRARIES:
+#
+#   $LIBRARY_FLAGS(lib1,lib2)                              # sample macro
+#     ->
+#   -Ipath/to/lib1/include -Lpath/to/lib1/library -I ...   # sample replacement
+
 routine syntax( command:String, text:String )
   Build.rogo_syntax[ command ] = text
 endRoutine
@@ -112,7 +266,10 @@ class Build [singleton]
       return <<Global>>.find_global_method( rogo_prefix + name )
 
     method on_error
+      local w = Console.width.or_smaller( 80 )
+      Console.error.println "=" * w
       Console.error.println rogo_error
+      Console.error.println "=" * w
       on_exit
       System.exit 1
 
@@ -120,9 +277,10 @@ class Build [singleton]
       noAction
 
     method on_command_not_found
-      println "=" * 79
+      local w = Console.width.or_smaller( 80 )
+      println "=" * w
       println "ERROR: No such command '$'." (rogo_args.first)
-      println "=" * 79
+      println "=" * w
       println
       rogo_command = "help"
       rogo_args.clear
@@ -211,9 +369,10 @@ routine rogo_help( command="":String )
     if (success)
       return
     else
-      println "=" * 79
+      local w = Console.width.or_smaller( 80 )
+      println "=" * w
       println "ERROR: No such command '$'." (command)
-      println "=" * 79
+      println "=" * w
       println
     endIf
   endIf

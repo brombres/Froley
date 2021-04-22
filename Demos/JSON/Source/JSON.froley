@@ -1,0 +1,199 @@
+[settings]
+language    JSON
+
+[whitespace]
+SPACE ' '
+TAB   '\t'
+EOL   '\n'
+CR    '\r'
+
+[tokens]
+STRING   string  [content]
+NUMBER   number  [content]
+
+[keywords]
+KEYWORD_FALSE false
+KEYWORD_NULL  null
+KEYWORD_TRUE  true
+
+[symbols]
+SYMBOL_CLOSE_SQUARE  ]
+SYMBOL_CLOSE_CURLY   }
+SYMBOL_COLON         :
+SYMBOL_COMMA         ,
+SYMBOL_OPEN_SQUARE   [
+SYMBOL_OPEN_CURLY    {
+
+#-------------------------------------------------------------------------------
+
+[tokenizer]
+- tokenize
+  which (input)
+    discardAny [whitespace]
+  endWhich
+
+  markSourcePosition
+  if (not hasAnother) halt
+
+  scan_identifier
+
+  which (input)
+    produceAny [symbols]
+    case '"'
+      scan_string
+    others
+      ch = peek
+      if (ch is '0'..'9' or ch == '-')
+        scan_number
+      endIf
+  endWhich
+
+  syntaxError
+
++ scan_identifier
+  ch = peek
+  if (ch is 'a'..'z' or ch is 'A'..'Z' or ch == '_')
+    clear buffer
+    while (ch is 'a'..'z' or ch is 'A'..'Z' or ch is '0'..'9' or ch == '_')
+      ch = read
+      collect ch
+      ch = peek
+    endWhile
+
+    which (buffer)
+      produceAny [keywords]
+      others
+        syntaxError "Syntax error - unrecognized identifier."
+    endWhich
+  endIf
+  return
+
++ scan_number
+  clear buffer
+
+  # Optional negative sign
+  if (consume('-')) collect '-'
+
+  # Whole portion of number
+  if (consume('0'))
+    collect '0'
+  else
+    collect_digits
+  endIf
+
+  # Optional fractional part
+  if (consume('.'))
+    collect '.'
+    collect_digits
+  endIf
+
+  # Optional exponent
+  if (consume('e') or consume('E'))
+    collect 'E'
+    ch = peek
+    if (consume('+') or consume('-')) collect ch
+    collect_digits
+  endIf
+
+  produce NUMBER
+
++ collect_digits
+  ch = peek
+  if (ch is not '0'..'9') syntaxError "Digit expected."
+  while (ch is '0'..'9')
+    ch = read
+    collect ch
+    ch = peek
+  endWhile
+  return
+
++ scan_string
+  clear buffer
+  ch = peek
+  while (hasAnother and ch!='"' and ch>=' ' and ch != 127)
+    ch = read
+    if (ch == '\\')
+      which (input)
+        case '"':  collect '"'
+        case '\\': collect '\\'
+        case '/':  collect '/'
+        case 'b':  collect 8
+        case 'f':  collect 12
+        case 'n':  collect '\n'
+        case 'r':  collect '\r'
+        case 't':  collect '\t'
+        case 'u':  scan_4_hex_digits; collect ch
+        others
+          clear buffer
+          collect "Syntax error - unrecognized escape sequence '\\"
+          ch = peek
+          collect ch
+          collect "'."
+          syntaxError buffer
+      endWhich
+    else
+      collect ch
+    endIf
+    ch = peek
+  endWhile
+  if (not consume('"')) syntaxError "Closing \" expected."
+  produce STRING
+
++ scan_4_hex_digits
+  @result = 0
+  scan_hex_digit
+  scan_hex_digit
+  scan_hex_digit
+  scan_hex_digit
+  ch = @result
+  return
+
++ scan_hex_digit
+  ch = read
+  if (ch is '0'..'9')     ch -= 48
+  elseIf (ch is 'a'..'f') ch -= 87
+  elseIf (ch is 'A'..'F') ch -= 55
+  else                    ch = 0
+  @digit  = ch
+  @result *= 16
+  @result += @digit
+  return
+
+
+#-------------------------------------------------------------------------------
+
+[parser]
+- value
+  on '{', definitions, '}' -> ObjectValue(definitions:CmdList)
+  on '[', array, ']'       -> ArrayValue(array:CmdList)
+  on STRING                -> StringValue( value=t.content:String )
+  on NUMBER                -> NumberValue( value=t.content:Real64 )
+  on "true"                -> TrueValue
+  on "false"               -> FalseValue
+  on "null"                -> NullValue
+  syntaxError
+
+- definitions
+  beginList
+    if (not nextIs('}'))
+      definition
+      while (consume(','))
+        definition
+      endWhile
+    endIf
+  createList
+
+- definition
+  on STRING, ':', value -> Member(name=t.content:String,value)
+  syntaxError
+
+- array
+  beginList
+    if (not nextIs(']'))
+      value
+      while (consume(','))
+        value
+      endWhile
+    endIf
+  createList
+

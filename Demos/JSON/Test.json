@@ -1,0 +1,30 @@
+{
+  "numbers":
+  [
+    {
+      "name":"one",
+      "value":1,
+      "prime":false
+    },
+    {
+      "name":"two",
+      "value":2,
+      "prime":true
+    },
+    {
+      "name":"three",
+      "value":3,
+      "prime":true
+    },
+    {
+      "name":"pi",
+      "value":3.141592653589793,
+      "prime":false
+    },
+    {
+      "name":"\u0058",
+      "value":null,
+      "prime":false
+    }
+  ]
+}

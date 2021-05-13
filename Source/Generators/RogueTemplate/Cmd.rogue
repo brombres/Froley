@@ -121,7 +121,7 @@ augment RogueTemplate
        |    method to->String
        |      local op = this.op
        |      local space = which{ op.count and op[op.count-1].is_letter:" " || "" }
-       |      return "($$)" (op,operand)
+       |      return "($$$)" (op,space,operand)
        |endClass
        |
        |class PostUnary : Unary
@@ -129,7 +129,7 @@ augment RogueTemplate
        |    method to->String
        |      local op = this.op
        |      local space = which{ op.count and op[0].is_letter:" " || "" }
-       |      return "($$)" (operand,op)
+       |      return "($$$)" (operand,space,op)
        |endClass
        |
        |class Binary( t, left:Cmd, right:Cmd ) : Cmd

@@ -212,7 +212,7 @@ augment RogueTemplate
        |            if (list_start_t.is_empty) throw peek.error( "[INTERNAL] No prior beginList before calling createList/produceList." )
        |            local constructor_index = code[ ip ]
        |            ++ip
-       |            local t  = list_start_t.remove_last
+       |            list_start_t.remove_last
        |            local i1 = list_start_pos.remove_last
        |            cmd_args.clear
        |            cmd_args.t = cur_token

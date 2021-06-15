@@ -225,13 +225,16 @@ class GenerateRogue : CodeGenerator
             others
               local cmd_properties = constructor//args
               forEach (p in cmd_properties)
-                if (not p//value)
-                  # Not a primitive
-                  local p_name = p//name
-                  builder.print "      if (cmd.$) cmd.$ = cmd.$.dispatch( this )" (p_name,p_name,p_name)
-                  if (p//type != "Cmd") builder.println " as " + p//type
-                  builder.println
-                endIf
+                which (p//type->String)
+                  case "String", "Int64", "Int32", "Real64", "Real32", "Logical", "Byte", "Character"
+                    noAction
+                  others
+                    # Not a primitive
+                    local p_name = p//name
+                    builder.print "      if (cmd.$) cmd.$ = cmd.$.dispatch( this )" (p_name,p_name,p_name)
+                    if (p//type != "Cmd") builder.println " as " + p//type
+                    builder.println
+                endWhich
               endForEach
               builder.println( "      return cmd" )
           endWhich

@@ -29,21 +29,38 @@ class Visitor
       return cmd
 
     method visit( cmd:Echo )->Cmd
+      if (cmd.expression) cmd.expression = cmd.expression.dispatch( this )
       return cmd
 
     method visit( cmd:Assign )->Cmd
+      if (cmd.target) cmd.target = cmd.target.dispatch( this )
+      if (cmd.new_value) cmd.new_value = cmd.new_value.dispatch( this )
       return cmd
 
     method visit( cmd:For )->Cmd
+      if (cmd.first) cmd.first = cmd.first.dispatch( this )
+      if (cmd.last) cmd.last = cmd.last.dispatch( this )
+      if (cmd.step_size) cmd.step_size = cmd.step_size.dispatch( this )
+      if (cmd.statements) cmd.statements = cmd.statements.dispatch( this ) as CmdList
+
       return cmd
 
     method visit( cmd:If )->Cmd
+      if (cmd.condition) cmd.condition = cmd.condition.dispatch( this )
+      if (cmd.statements) cmd.statements = cmd.statements.dispatch( this ) as CmdList
+
+      if (cmd.else_statements) cmd.else_statements = cmd.else_statements.dispatch( this ) as CmdList
+
       return cmd
 
     method visit( cmd:Print )->Cmd
+      if (cmd.expression) cmd.expression = cmd.expression.dispatch( this )
       return cmd
 
     method visit( cmd:While )->Cmd
+      if (cmd.condition) cmd.condition = cmd.condition.dispatch( this )
+      if (cmd.statements) cmd.statements = cmd.statements.dispatch( this ) as CmdList
+
       return cmd
 
     method visit( cmd:LogicalOr )->Cmd
@@ -116,60 +133,98 @@ class Visitor
       return cmd
 
     method visit( cmd:IndexedAccess )->Cmd
+      if (cmd.context) cmd.context = cmd.context.dispatch( this )
+      if (cmd.index) cmd.index = cmd.index.dispatch( this )
       return cmd
 
     method visit( cmd:FnAtan )->Cmd
+      if (cmd.args) cmd.args = cmd.args.dispatch( this ) as CmdList
+
       return cmd
 
     method visit( cmd:FnAtan2 )->Cmd
+      if (cmd.args) cmd.args = cmd.args.dispatch( this ) as CmdList
+
       return cmd
 
     method visit( cmd:FnCos )->Cmd
+      if (cmd.args) cmd.args = cmd.args.dispatch( this ) as CmdList
+
       return cmd
 
     method visit( cmd:FnDim )->Cmd
+      if (cmd.args) cmd.args = cmd.args.dispatch( this ) as CmdList
+
       return cmd
 
     method visit( cmd:FnExp )->Cmd
+      if (cmd.args) cmd.args = cmd.args.dispatch( this ) as CmdList
+
       return cmd
 
     method visit( cmd:FnFloat )->Cmd
+      if (cmd.args) cmd.args = cmd.args.dispatch( this ) as CmdList
+
       return cmd
 
     method visit( cmd:FnInput )->Cmd
+      if (cmd.args) cmd.args = cmd.args.dispatch( this ) as CmdList
+
       return cmd
 
     method visit( cmd:FnInt )->Cmd
+      if (cmd.args) cmd.args = cmd.args.dispatch( this ) as CmdList
+
       return cmd
 
     method visit( cmd:FnJoin )->Cmd
+      if (cmd.args) cmd.args = cmd.args.dispatch( this ) as CmdList
+
       return cmd
 
     method visit( cmd:FnLen )->Cmd
+      if (cmd.args) cmd.args = cmd.args.dispatch( this ) as CmdList
+
       return cmd
 
     method visit( cmd:FnList )->Cmd
+      if (cmd.args) cmd.args = cmd.args.dispatch( this ) as CmdList
+
       return cmd
 
     method visit( cmd:FnMax )->Cmd
+      if (cmd.args) cmd.args = cmd.args.dispatch( this ) as CmdList
+
       return cmd
 
     method visit( cmd:FnMin )->Cmd
+      if (cmd.args) cmd.args = cmd.args.dispatch( this ) as CmdList
+
       return cmd
 
     method visit( cmd:FnRandFloat )->Cmd
+      if (cmd.args) cmd.args = cmd.args.dispatch( this ) as CmdList
+
       return cmd
 
     method visit( cmd:FnRandInt )->Cmd
+      if (cmd.args) cmd.args = cmd.args.dispatch( this ) as CmdList
+
       return cmd
 
     method visit( cmd:FnSin )->Cmd
+      if (cmd.args) cmd.args = cmd.args.dispatch( this ) as CmdList
+
       return cmd
 
     method visit( cmd:FnStr )->Cmd
+      if (cmd.args) cmd.args = cmd.args.dispatch( this ) as CmdList
+
       return cmd
 
     method visit( cmd:FnTan )->Cmd
+      if (cmd.args) cmd.args = cmd.args.dispatch( this ) as CmdList
+
       return cmd
 
     method visit( cmd:Access )->Cmd

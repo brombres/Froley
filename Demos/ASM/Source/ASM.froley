@@ -42,12 +42,12 @@ SQRT       sqrt
 COLON      ':'
 
 [tokenizer]
-- tokenize
++ tokenize
 which (input)
   discardAny [whitespace]
 endWhich
 
-+ whitespace_consumed
+- whitespace_consumed
   markSourcePosition
   if (not hasAnother)
     create EOL
@@ -78,7 +78,7 @@ endWhich
 
   syntaxError
 
-+ scan_integer
+- scan_integer
   while (ch is '0'..'9' or ch == '_')
     ch = read
     if (ch != '_') collect ch
@@ -87,7 +87,7 @@ endWhich
   endWhile
   return
 
-+ scan_string
+- scan_string
   clear buffer
   ch = peek
   while (hasAnother and ch != '"' and ch != '\n')
@@ -98,7 +98,7 @@ endWhich
   if (not consume('"')) syntaxError "Closing \" expected."
   return
 
-+ scan_identifier
+- scan_identifier
   ch = peek
   if (ch is 'a'..'z' or ch is 'A'..'Z' or ch == '_')
     clear buffer
@@ -116,7 +116,7 @@ endWhich
   return
 
 [parser]
-- statements
++ statements
   beginList
     while (consume(EOL)) noAction
     while (hasAnother)
@@ -125,7 +125,7 @@ endWhich
     endWhile
   createList Statements
 
-- statement
++ statement
   if (nextHasAttribute(idArg))
     cmd_with_id_arg
     mustConsume EOL
@@ -140,7 +140,7 @@ endWhich
     mustConsume EOL
   endIf
 
-- cmd_with_id_arg
++ cmd_with_id_arg
   on "jmp",     identifier -> JMP(label)
   on "jeq",     identifier -> JEQ(label)
   on "jne",     identifier -> JNE(label)
@@ -154,7 +154,7 @@ endWhich
   on "write_b", identifier -> WriteB(label)
   syntaxError
 
-- cmd_with_int_arg
++ cmd_with_int_arg
   on "literal_a"
     integer
     create LiteralA(name)
@@ -166,11 +166,11 @@ endWhich
   endOn
   return
 
-- cmd_with_string_arg
++ cmd_with_string_arg
   on "print_text", string -> PrintText(value)
   syntaxError
 
-- cmd_with_no_arg_or_label
++ cmd_with_no_arg_or_label
   on "halt"    -> Halt
   on "input_a" -> InputA
   on "input_b" -> InputB
@@ -191,15 +191,15 @@ endWhich
   endOn
   syntaxError
 
-- identifier
++ identifier
   on "identifier" -> Identifier( name=t.content:String )
   syntaxError
 
-- string
++ string
   on "string" -> LiteralString( value=t.content:String )
   syntaxError
 
-- integer
++ integer
   on "integer" -> Integer( value=t.content:Int32 )
   syntaxError
 

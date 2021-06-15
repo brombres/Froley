@@ -74,7 +74,7 @@ class FroleyParser : Parser
           return result
         endFunction
       )
-      rule.on( "@",  
+      rule.on( "@",
         function(parser:FroleyParser)->Cmd
           local t = parser.read  # '@'
           return TokenizerCmdVarAccess( t, parser.read_identifier )
@@ -453,7 +453,7 @@ class FroleyParser : Parser
         must_consume( TokenType.KEYWORD_END_WHICH )
         return
 
-      elseIf (next_is(TokenType.SYMBOL_MINUS) or next_is(TokenType.SYMBOL_PLUS))
+      elseIf (next_is(TokenType.SYMBOL_PLUS) or next_is(TokenType.SYMBOL_MINUS))
         local name = read_label_name
         must_consume( TokenType.EOL )
         statements.add( TokenizerCmdLabel(t,name) )
@@ -507,7 +507,7 @@ class FroleyParser : Parser
       consume_eols
       while (reader.has_another and not reader.peek.type.is_structural)
         local t = peek
-        if (t.type == TokenType.SYMBOL_MINUS or t.type == TokenType.SYMBOL_PLUS) return
+        if (t.type == TokenType.SYMBOL_PLUS or t.type == TokenType.SYMBOL_MINUS) return
         parse_parser_statement( statements, &allow_control_structures )
         while (consume_eols or consume(TokenType.SYMBOL_SEMICOLON)) noAction
       endWhile
@@ -695,6 +695,11 @@ class FroleyParser : Parser
         local list_type : Constructor
         if (next_is(TokenType.IDENTIFIER)) list_type = parse_cmd_type( &base_type="CmdList", &parse_rule_type=ParseRuleType.LIST )
         else                               list_type = Froley.constructor( t, "CmdList", ParseRuleType.LIST )
+
+        if (not Froley.list_types.contains(list_type.name))
+          Froley.list_types.add( list_type.name )
+        endIf
+
         statements.add( ParserCmdCreateList(t,list_type) )
         statements.add( ParserCmdReturn(t,null) )
         return
@@ -805,7 +810,7 @@ class FroleyParser : Parser
       while (has_another)
         contingent
           sufficient consume(TokenType.SYMBOL_COMMA)
-          necessary  not next_is(TokenType.EOL) 
+          necessary  not next_is(TokenType.EOL)
           necessary  not next_is(TokenType.SYMBOL_ARROW)
           necessary  not next_is(TokenType.SYMBOL_COLON)
         unsatisfied
@@ -1120,12 +1125,12 @@ class FroleyParser : Parser
       endIf
 
     method read_label_name->String
-      if (consume(TokenType.SYMBOL_MINUS))
+      if (consume(TokenType.SYMBOL_PLUS))
         # Entry point
         local name = read_identifier
         Froley.entry_points.add( name )
         return name
-      elseIf (consume(TokenType.SYMBOL_PLUS))
+      elseIf (consume(TokenType.SYMBOL_MINUS))
         return read_identifier
       else
         return read_identifier
@@ -1137,9 +1142,9 @@ class FroleyParser : Parser
         consume_eols
         if (not has_another) return
         local t = peek
-        if (consume(TokenType.SYMBOL_MINUS))
+        if (consume(TokenType.SYMBOL_PLUS))
           top_level_method = parse_parser_method( t )
-        elseIf (consume(TokenType.SYMBOL_PLUS))
+        elseIf (consume(TokenType.SYMBOL_MINUS))
           if (top_level_method is null)
             throw t.error( "Must define a top-level method ('- ...') before defining a nested method." )
           endIf

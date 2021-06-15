@@ -13,17 +13,17 @@ STRING     string     [content]
 
 [keywords]
 KEYWORD_AND       and
-KEYWORD_ECHO      echo  
+KEYWORD_ECHO      echo
 KEYWORD_ELSE      else     [endStructure]  # endStructure is arbitrary; can
 KEYWORD_END       end      [endStructure]  # create your own attributes.
 KEYWORD_ENDFOR    endfor   [endStructure]  # Only 'content' has special meaning.
 KEYWORD_ENDIF     endif    [endStructure]
 KEYWORD_ENDWHILE  endwhile [endStructure]
 KEYWORD_FOR       for
-KEYWORD_GOTO      goto  
+KEYWORD_GOTO      goto
 KEYWORD_IF        if
-KEYWORD_LABEL     label  
-KEYWORD_LET       let  
+KEYWORD_LABEL     label
+KEYWORD_LET       let
 KEYWORD_NEXT      next     [endStructure]
 KEYWORD_OR        or
 KEYWORD_PRINT     print
@@ -74,7 +74,7 @@ SYMBOL_SLASH_SLASH          //
 
 [tokenizer]
 
-- tokenize
++ tokenize
   which (input)
     discardAny [whitespace]
   endWhich
@@ -102,7 +102,7 @@ SYMBOL_SLASH_SLASH          //
 
   syntaxError
 
-+ scan_identifier_or_keyword
+- scan_identifier_or_keyword
   ch = peek
   if (ch is 'a'..'z' or ch is 'A'..'Z' or ch == '_')
     clear buffer
@@ -120,7 +120,7 @@ SYMBOL_SLASH_SLASH          //
   endIf
   return
 
-+ scan_string
+- scan_string
   while (hasAnother)
     ch = read
     if (ch == '"') produce STRING
@@ -128,14 +128,14 @@ SYMBOL_SLASH_SLASH          //
   endWhile
   syntaxError "Unterminated string literal."
 
-+ discard_comment
+- discard_comment
   while (hasAnother)
     ch = read
     if (ch == '\n') produce EOL
   endWhile
   discard
 
-+ scan_integer
+- scan_integer
   while (ch is '0'..'9' or ch == '_')
     ch = read
     if (ch != '_') collect ch
@@ -147,10 +147,10 @@ SYMBOL_SLASH_SLASH          //
 #===============================================================================
 [parser]
 
-- program
++ program
   statements
 
-- statements
++ statements
   beginList
 
   consume_eols
@@ -161,7 +161,7 @@ SYMBOL_SLASH_SLASH          //
 
   produceList
 
-- statement
++ statement
   on "echo"   expression                -> Echo(expression)
   on "let"    identifier "=" expression -> Assign(target,new_value)
 
@@ -217,15 +217,15 @@ SYMBOL_SLASH_SLASH          //
 
   # we'll leave the expression as a statement
 
-- expression
++ expression
 
-+ logical_or   : Binary
+- logical_or   : Binary
   on "or" -> LogicalOr
 
-+ logical_and  : Binary
+- logical_and  : Binary
   on "and" -> LogicalAnd
 
-+ comparison : Binary
+- comparison : Binary
   on "==" -> CompareEQ
   on "!=" -> CompareNE
   on "<"  -> CompareLT
@@ -233,19 +233,19 @@ SYMBOL_SLASH_SLASH          //
   on "<=" -> CompareLE
   on ">=" -> CompareGE
 
-+ add_subtract : Binary
+- add_subtract : Binary
   on "+" -> Add
   on "-" -> Subtract
 
-+ multiply_divide : Binary
+- multiply_divide : Binary
   on "*"  -> Multiply
   on "/"  -> RealDivide
   on "//" -> IntegerDivide
 
-+ pre_unary : PreUnary
+- pre_unary : PreUnary
   on "-" -> Negate
 
-+ indexed_access
+- indexed_access
   access
   while (consume('['))
     expression
@@ -254,9 +254,9 @@ SYMBOL_SLASH_SLASH          //
   endWhile
   return
 
-+ access
+- access
 
-+ term
+- term
   on "atan", args      -> FnAtan( args:CmdList )
   on "atan2", args     -> FnAtan2( args:CmdList )
   on "cos", args       -> FnCos( args:CmdList )
@@ -282,11 +282,11 @@ SYMBOL_SLASH_SLASH          //
   on STRING     -> LiteralString( value=t.content:String )
   syntaxError
 
-- identifier
++ identifier
   on IDENTIFIER -> Access( name=t.content:String )
   syntaxError "Identifier expected."
 
-- args
++ args
   beginList
 
   mustConsume( '(' )
@@ -305,6 +305,6 @@ SYMBOL_SLASH_SLASH          //
   mustConsume( ')' )
   produceList
 
-- consume_eols
++ consume_eols
   while (consume('\n')) noAction
- 
+

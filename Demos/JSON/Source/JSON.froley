@@ -27,7 +27,7 @@ SYMBOL_OPEN_CURLY    {
 #-------------------------------------------------------------------------------
 
 [tokenizer]
-- tokenize
++ tokenize
   which (input)
     discardAny [whitespace]
   endWhich
@@ -50,7 +50,7 @@ SYMBOL_OPEN_CURLY    {
 
   syntaxError
 
-+ scan_identifier
+- scan_identifier
   ch = peek
   if (ch is 'a'..'z' or ch is 'A'..'Z' or ch == '_')
     clear buffer
@@ -68,7 +68,7 @@ SYMBOL_OPEN_CURLY    {
   endIf
   return
 
-+ scan_number
+- scan_number
   clear buffer
 
   # Optional negative sign
@@ -97,7 +97,7 @@ SYMBOL_OPEN_CURLY    {
 
   produce NUMBER
 
-+ collect_digits
+- collect_digits
   ch = peek
   if (ch is not '0'..'9') syntaxError "Digit expected."
   while (ch is '0'..'9')
@@ -107,7 +107,7 @@ SYMBOL_OPEN_CURLY    {
   endWhile
   return
 
-+ scan_string
+- scan_string
   clear buffer
   ch = peek
   while (hasAnother and ch!='"' and ch>=' ' and ch != 127)
@@ -139,7 +139,7 @@ SYMBOL_OPEN_CURLY    {
   if (not consume('"')) syntaxError "Closing \" expected."
   produce STRING
 
-+ scan_4_hex_digits
+- scan_4_hex_digits
   @result = 0
   scan_hex_digit
   scan_hex_digit
@@ -148,7 +148,7 @@ SYMBOL_OPEN_CURLY    {
   ch = @result
   return
 
-+ scan_hex_digit
+- scan_hex_digit
   ch = read
   if (ch is '0'..'9')     ch -= 48
   elseIf (ch is 'a'..'f') ch -= 87
@@ -163,7 +163,7 @@ SYMBOL_OPEN_CURLY    {
 #-------------------------------------------------------------------------------
 
 [parser]
-- value
++ value
   on '{', definitions, '}' -> ObjectValue(definitions:CmdList)
   on '[', array, ']'       -> ArrayValue(array:CmdList)
   on STRING                -> StringValue( value=t.content:String )
@@ -173,7 +173,7 @@ SYMBOL_OPEN_CURLY    {
   on "null"                -> NullValue
   syntaxError
 
-- definitions
++ definitions
   beginList
     if (not nextIs('}'))
       definition
@@ -183,11 +183,11 @@ SYMBOL_OPEN_CURLY    {
     endIf
   createList
 
-- definition
++ definition
   on STRING, ':', value -> Member(name=t.content:String,value)
   syntaxError
 
-- array
++ array
   beginList
     if (not nextIs(']'))
       value

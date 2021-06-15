@@ -21,12 +21,12 @@ SYMBOL_PLUS                 +
 SYMBOL_SLASH                /
 
 [tokenizer]
-- tokenize
++ tokenize
   which (input)
     discardAny [whitespace]
   endWhich
 
-+ whitespace_consumed
+- whitespace_consumed
   markSourcePosition
   if (not hasAnother) halt
 
@@ -49,7 +49,7 @@ SYMBOL_SLASH                /
 
   syntaxError
 
-+ scan_identifier
+- scan_identifier
   ch = peek
   if (ch is 'a'..'z' or ch is 'A'..'Z' or ch == '_')
     clear buffer
@@ -66,7 +66,7 @@ SYMBOL_SLASH                /
   endIf
   return
 
-+ scan_integer
+- scan_integer
   while (ch is '0'..'9' or ch == '_')
     ch = read
     if (ch != '_') collect ch
@@ -76,26 +76,26 @@ SYMBOL_SLASH                /
   return
 
 [parser]
-- expression
++ expression
 
-+ assign : RightBinary
+- assign : RightBinary
   on "=" -> Assign
 
-+ add_subtract : Binary
+- add_subtract : Binary
   on "+" -> Add
   on "-" -> Subtract
 
-+ multiply_divide : Binary
+- multiply_divide : Binary
   on "*" -> Multiply
   on "/" -> Divide
 
-+ power : Binary
+- power : Binary
   on "^" -> Power
 
-+ pre_unary : PreUnary
+- pre_unary : PreUnary
   on "-" -> Negate
 
-+ term
+- term
   on IDENTIFIER -> Access( name=t.content:String )
   on INTEGER    -> LiteralInt32( value=t.content:String )
   on '(' expression ')': return

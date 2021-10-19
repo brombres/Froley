@@ -32,10 +32,10 @@ class CodeGenerator
       has_parser = (info//parser_code.count > 0)
 
     method usage_options->String[]
-      return String[].add(
+      return String[].[ add(
         @|    --output=<folder>
          |      Specifies the output folder.
-      )
+      ) ]
 
     method process( info )
       throw UnsupportedOperationError()

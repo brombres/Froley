@@ -10,11 +10,11 @@ class GenerateRogue : CodeGenerator
 
   METHODS
     method usage_options->String[]
-      return prior.usage_options.add(
+      return prior.usage_options.[ add(
         @|    --main
          |      Creates a main file (if it does not yet exist) to test out the parser
          |      and tokenizer.
-      )
+      ) ]
 
     method add_option( name:String, value:String )
       which (name)

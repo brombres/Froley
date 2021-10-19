@@ -11,8 +11,8 @@ augment Build
   # You can create a Local.mk file with overrides for these values, e.g.:
   # LAUNCHER_FOLDER = "~/bin"
   PROPERTIES
-    PROJECT           = "Froley"
-    LAUNCHER_NAME     = "froley"
+    PROJECT           = "F2"
+    LAUNCHER_NAME     = "f2"
     LAUNCHER_FOLDER   = "/usr/local/bin"
     ROGUEC_FLAGS      = "--debug"
     CPP_FLAGS_UNIX    = "-O0"
@@ -34,7 +34,7 @@ endRoutine
 
 routine rogo_default
   rogo_build
-  #rogo_install_launcher  # Uncomment to automatically install a /usr/local/bin/froley launcher
+  rogo_install_launcher  # Uncomment to automatically install a /usr/local/bin/f2 launcher
   rogo_run
 endRoutine
 
@@ -65,10 +65,10 @@ routine rogo_build
 endRoutine
 
 routine rogo_parser
-  # Updates the Froley language parser if necessary
-  local def = File( "Source/Froley.froley" )
+  # Updates the F2 language parser if necessary
+  local def = File( "Source/F2.froley" )
   if (def.is_newer_than("Source/TokenizerVM.rogue"))
-    println "Compiling Froley language parser"
+    println "Compiling F2 language parser"
     execute "froley $ --target=rogue --output=Source/" (def.esc)
   endIf
 endRoutine

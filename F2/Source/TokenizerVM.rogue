@@ -16,10 +16,10 @@ class TokenizerVM
   PROPERTIES
     code         = Int32[]
     stack        = Int32[]
+    variables    = Int32[]
     strings      = String[]
     entry_points = EntryPoint[]
     ch           : Int32
-    count        : Int32
     result       : Int32
     buffer       = StringBuilder()
     buffer_stack = StringBuilder[]
@@ -41,6 +41,16 @@ class TokenizerVM
     method init
       forEach (ch in id_continue) id_characters[ch->Int32] = 2  # '2' = can be start or continue
       forEach (ch in id_start)    id_characters[ch->Int32] = 1  # '1' = can be start only
+
+    method on_custom( name_index:Int32 )
+      # Can override this instead of on_custom(String) for higher efficiency vs string compares.
+      # name_index can change when the .froley code is updated so don't rely on specific values.
+      # But one could set up an array of custom function handlers when the tokenizer is constructed
+      # and then index into that.
+      on_custom( strings[name_index] )
+
+    method on_custom( name:String )
+      println "*** Unhandled custom operation:$ ***" (name)
 
     method set_mode( new_mode_name:String )
       forEach (entry_point in entry_points)
@@ -70,7 +80,6 @@ class TokenizerVM
     method reset
       stack.clear
       ch = 0
-      count = 0
       result = 0
       buffer.clear
       start_ip = 0
@@ -101,10 +110,6 @@ class TokenizerVM
             nextIteration
           case TokenizerOpcode.MODE_INT32
             start_ip = code[ ip ]
-            ++ip
-            nextIteration
-          case TokenizerOpcode.MODE_IS
-            result = which{ start_ip==code[ip]:1 || 0 }
             ++ip
             nextIteration
           case TokenizerOpcode.SYNTAX_ERROR
@@ -163,8 +168,9 @@ class TokenizerVM
             ch = scanner.peek( code[ip] )
             ++ip
             nextIteration
-          case TokenizerOpcode.PEEK_CH_COUNT
-            ch = scanner.peek( count )
+          case TokenizerOpcode.PEEK_CH_VAR
+            ch = scanner.peek( variables[code[ip]] )
+            ++ip
             nextIteration
           case TokenizerOpcode.READ_CH
             ch = scanner.read
@@ -191,29 +197,18 @@ class TokenizerVM
             if (scanner.consume(ch)) nextIteration
             throw_expected_character_error( ch )
           case TokenizerOpcode.NEXT_IS_CHARACTER
-            local value = code[ip]->Character
-            result = (scanner.has_another and scanner.peek == value)
-            ++ip
-            nextIteration
-          case TokenizerOpcode.SCAN_DIGITS
-            local min_digits = code[ ip ]
-            local max_digits = code[ ip+1 ]
-            local base = code[ ip+2 ]
-            ip += 3
-            ch = 0
-            local n = 0
-            loop (max_digits)
-              if (scanner.has_another and scanner.peek.is_number(base))
-                ch = ch * base + scanner.read.to_number(base)
-                ++n
-              else
-                escapeLoop
-              endIf
-            endLoop
-            result = n - min_digits
-            nextIteration
-          case TokenizerOpcode.SCAN_IDENTIFIER
-            result = scan_identifier->Int32
+            contingent
+              necessary (scanner.has_another)
+              local peek_ch = scanner.peek
+              local low  = code[ip]->Character
+              necessary (peek_ch >= low)
+              local high = code[ip+1]->Character
+              necessary (peek_ch >= high)
+              result = 1
+            unsatisfied
+              result = 0
+            endContingent
+            ip += 2
             nextIteration
           case TokenizerOpcode.CLEAR_BUFFER
             buffer.clear
@@ -229,32 +224,15 @@ class TokenizerVM
             buffer.print( strings[code[ip]] )
             ++ip
             nextIteration
+          case TokenizerOpcode.CUSTOM
+            ++ip
+            on_custom( code[ip-1] )
+            nextIteration
           case TokenizerOpcode.BUFFER_TO_LOWERCASE
             local lowercase_buffer = StringBuilder.pool.on_use
             lowercase_buffer.print( (forEach in buffer).to_lowercase )
             StringBuilder.pool.on_end_use( buffer )
             buffer = lowercase_buffer
-            nextIteration
-          case TokenizerOpcode.PRINT_BUFFER
-            print (forEach in buffer)
-            nextIteration
-          case TokenizerOpcode.PRINT_CH
-            print ch->Character
-            nextIteration
-          case TokenizerOpcode.PRINT_COUNT
-            print count
-            nextIteration
-          case TokenizerOpcode.PRINT_CHARACTER
-            print code[ip]->Character
-            ++ip
-            nextIteration
-          case TokenizerOpcode.PRINT_STRING
-            print strings[ code[ip] ]
-            ++ip
-            nextIteration
-          case TokenizerOpcode.TRIM_BUFFER
-            local trimmed = buffer->String.trimmed
-            buffer.[ clear, print trimmed ]
             nextIteration
           case TokenizerOpcode.COMPARE_BUFFER_STRING
             result = buffer.compare_to( strings[code[ip]] )
@@ -264,64 +242,69 @@ class TokenizerVM
             result = ch - code[ip]
             ++ip
             nextIteration
-          case TokenizerOpcode.COMPARE_COUNT_INT32
-            result = count - code[ip]
-            ++ip
+          case TokenizerOpcode.COMPARE_VAR_INT32
+            result = variables[code[ip]] - code[ip+1]
+            ip += 2
             nextIteration
-          case TokenizerOpcode.CH_IS_DIGIT_BASE_INT32
-            local base = code[ip]
-            ++ip
-            local n = (ch->Character).to_number( base )
-            result = which{ (n>=0 and n<base):1 || 0 }
-            nextIteration
-          case TokenizerOpcode.CH_IS_DIGIT_BASE_COUNT
-            local n = (ch->Character).to_number( count )
-            result = which{ (n>=0 and n<count):1 || 0 }
-            nextIteration
-          case TokenizerOpcode.CH_IS_LETTER
-            result = which{ ((ch>='a' and ch<='z') or (ch>='A' and ch<='Z')):1 || 0 }
+          case TokenizerOpcode.CH_IS_RANGE
+            result = (ch >= code[ip] and ch <= code[ip+1])
+            ip += 2
             nextIteration
           case TokenizerOpcode.SET_CH_TO_INT32
             ch = code[ ip ]
             result = ch
             ++ip
             nextIteration
-          case TokenizerOpcode.SET_CH_TO_COUNT
-            ch = count
+          case TokenizerOpcode.SET_CH_TO_VAR
+            ch = variables[code[ip]]
             result = ch
-            nextIteration
-          case TokenizerOpcode.SET_COUNT_TO_INT32
-            count = code[ ip ]
-            result = count
             ++ip
             nextIteration
-          case TokenizerOpcode.SET_COUNT_TO_CH
-            count = ch
-            result = count
+          case TokenizerOpcode.SET_VAR_TO_INT32
+            result = code[ip+1]
+            variables[code[ip]] = result
+            ip += 2
+            nextIteration
+          case TokenizerOpcode.SET_VAR_TO_CH
+            variables[code[ip]] = ch
+            result = ch
+            ++ip
             nextIteration
           case TokenizerOpcode.SET_RESULT_TO_CH
             result = ch
             nextIteration
-          case TokenizerOpcode.SET_RESULT_TO_COUNT
-            result = count
+          case TokenizerOpcode.SET_RESULT_TO_VAR
+            result = variables[code[ip]]
+            ++ip
             nextIteration
           case TokenizerOpcode.SET_RESULT_TO_INT32
             result = code[ ip ]
             ++ip
             nextIteration
-          case TokenizerOpcode.ADD_CH_COUNT
-            ch += count
-            nextIteration
           case TokenizerOpcode.ADD_CH_INT32
             ch += code[ ip ]
             ++ip
             nextIteration
-          case TokenizerOpcode.ADD_COUNT_INT32
-            count += code[ ip ]
-            ++ip
+          case TokenizerOpcode.ADD_VAR_INT32
+            variables[code[ip]] += code[ip+1]
+            ip += 2
             nextIteration
-          case TokenizerOpcode.SUBTRACT_CH_COUNT
-            ch -= count
+          case TokenizerOpcode.ADD_VAR_VAR
+            variables[code[ip]] += variables[code[ip+1]]
+            ip += 2
+            nextIteration
+          case TokenizerOpcode.SUB_VAR_VAR
+            variables[code[ip]] -= variables[code[ip+1]]
+            ip += 2
+            nextIteration
+          case TokenizerOpcode.MUL_VAR_INT32
+            variables[code[ip]] *= code[ip+1]
+            ip += 2
+            nextIteration
+          case TokenizerOpcode.DIV_VAR_INT32
+            local d = code[ip+1]
+            if (d) variables[code[ip]] /= d
+            ip += 2
             nextIteration
           case TokenizerOpcode.WHICH_INPUT
             local cur_cmd = ip
@@ -356,7 +339,9 @@ class TokenizerVM
             # The start cmd is always acceptable and either contains the
             # 'others' case or jumps to the end of the scan table.
             ip = last_acceptable_cmd + last_acceptable_link_count * 2 + 2
-            loop (last_acceptable_lookahead) buffer.print( scanner.read )
+
+            # Discard the matched input (we know what it is by what case is called)
+            loop (last_acceptable_lookahead) scanner.read
             nextIteration
 
           case TokenizerOpcode.WHICH_BUFFER
@@ -389,13 +374,14 @@ class TokenizerVM
             endIf
             ip = cur_cmd + code[cur_cmd+1] * 2 + 2
             nextIteration
+
           case TokenizerOpcode.TRACE
             print( "Line " ).print( code[ip] ).print( " peek:" )
-            if (scanner.has_another) print( scanner.peek )
-            else                     print( "end of input" )
+            if (scanner.has_another) print( scanner.peek->Character.to_escaped_ascii )
+            else                     print( "EOI" )
             ++ip
-            print( " opcode:" ).print( TokenizerOpcode(code[ip]) )
-            println( " ch:$ ($) count:$ result:$" (Character(ch),ch,count,result) )
+            print( " ch:$ ($) result:$ vars:$" (Character(ch).to_escaped_ascii,ch,result,variables) )
+            print( " opcode:" ).println( TokenizerOpcode(code[ip]) )
             println( "buffer:" + buffer )
             nextIteration
           others
@@ -409,7 +395,12 @@ class TokenizerVM
     method load( reader:DataReader )
       local version = reader.read_int32x
       require version >= MIN_VERSION
+
       local n = reader.read_int32x
+      variables.resize( n )
+      variables[ forEach of variables ] = 0
+
+      n = reader.read_int32x
       strings.reserve( n )
       loop (n) strings.add( reader.read_string )
 
@@ -423,18 +414,6 @@ class TokenizerVM
       n = reader.read_int32x
       code.reserve( n )
       loop (n) code.add( reader.read_int32x )
-
-    method scan_identifier->Logical
-      if (scanner.has_another and id_characters[scanner.peek&0x7F] == 1)
-        buffer.clear
-        buffer.print( scanner.read )
-        while (scanner.has_another and id_characters[scanner.peek&0x7f])
-          buffer.print( scanner.read )
-        endWhile
-        return true
-      else
-        return false
-      endIf
 
     method throw_buffer_error
       throw Error( filepath, scanner.source, scanner.line, scanner.column, buffer->String )

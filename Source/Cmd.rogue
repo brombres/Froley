@@ -201,6 +201,9 @@ class TokenizerCmdAccess( t, name:String ) : Cmd
     method jump_if_true->TokenizerOpcode
       return TokenizerOpcode.JUMP_NE
 
+    method to->Int32
+      throw t.error( "to->Int32 unsupported" )
+
     method to->String
       return name
 

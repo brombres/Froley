@@ -1,54 +1,78 @@
 [tokens]
-EOL        eol
+EOL        EOL
 IDENTIFIER identifier [content]
 INTEGER    integer    [content]
+STRING     string     [content]
 
 [attributes]
 structural
 
 [tokenizer_keywords]
-KEYWORD_COLLECT      collect
+KEYWORD_COLLECT         collect
 
 [common_keywords]
+KEYWORD_AND             and
+KEYWORD_CASE            case
+KEYWORD_ELSE            else        [structural]
+KEYWORD_ELSE_IF         elseIf      [structural]
+KEYWORD_END_IF          endIf       [structural]
 KEYWORD_END_WHICH       endWhich    [structural]
 KEYWORD_END_WHILE       endWhile    [structural]
 KEYWORD_ESCAPE_WHILE    escapeWhile
-KEYWORD_CASE            case
 KEYWORD_HALT            halt
-KEYWORD_HAS_ANOTHER     hasAnother
+KEYWORD_HAS_NEXT        hasNext
+KEYWORD_IF              if
+KEYWORD_NOT             not
+KEYWORD_OR              or
 KEYWORD_OTHERS          others
+KEYWORD_PARSER          parser      [structural]
+KEYWORD_PRINT           print
+KEYWORD_PRINTLN         println
 KEYWORD_PRODUCE         produce
+KEYWORD_READ            read
+KEYWORD_SCANNER         scanner     [structural]
 KEYWORD_WHICH           which
 KEYWORD_WHILE           while
 
 [symbols]
+SYMBOL_ASSIGN       =
+SYMBOL_CARET        ^
+SYMBOL_CLOSE_PAREN  )   [structural]
+SYMBOL_CLOSE_SQUARE ]   [structural]
 SYMBOL_COLON        :
 SYMBOL_COMMA        ,
 SYMBOL_DOT_DOT      ..
-SYMBOL_EQUALS       =
-SYMBOL_CLOSE_PAREN  )
-SYMBOL_CLOSE_SQUARE ]
+SYMBOL_EQ           ==
+SYMBOL_GE           >=
 SYMBOL_GT           >
+SYMBOL_LE           <=
 SYMBOL_LT           <
+SYMBOL_NE           !=
 SYMBOL_MINUS        -
+SYMBOL_MINUS_MINUS  --
 SYMBOL_OPEN_PAREN   (
 SYMBOL_OPEN_SQUARE  [
+SYMBOL_PLUS         +
+SYMBOL_PLUS_PLUS    ++
+SYMBOL_SEMICOLON    ;
 SYMBOL_SINGLE_QUOTE '\''
+SYMBOL_SLASH        /
+SYMBOL_STAR         *
 
 [tokenizer]
 + tokenize_froley
   if (not hasAnother) halt
 
-  while (consume(' ') or consume('\t')) noAction
+  consume_whitespace
+  consume_comment
+
   markSourcePosition
 
   if (consume('\n')) produce EOL
 
   scan_identifier
-
-  if (consume('\''))
-    scan_single_quoted_string
-  endIf
+  scan_single_quoted_string
+  scan_double_quoted_string
 
   which (input)
     produceAny [symbols]
@@ -61,6 +85,18 @@ SYMBOL_SINGLE_QUOTE '\''
   endWhich
 
   syntaxError
+
+- consume_whitespace
+  while (consume(' ') or consume('\t')) noAction
+  return
+
+- consume_comment
+  if (not consume('#')) return
+  while (hasAnother)
+    ch = read
+    if (ch == '\n') produce EOL
+  endWhile
+  restart
 
 - scan_identifier
   ch = peek
@@ -95,12 +131,293 @@ SYMBOL_SINGLE_QUOTE '\''
   return
 
 - scan_single_quoted_string
+  if (not consume('\'')) return
   while (hasAnother)
-    ch = read
-    if (ch == '\'') produce STRING
-    if (ch == '\n') syntaxError "Unterminated string."
-    if (ch == '\\') ch = read
-    collect ch
+    if (consume('\'')) produce STRING
+    scan_literal_character
   endWhile
   syntaxError "Unterminated string."
+
+- scan_double_quoted_string
+  if (not consume('"')) return
+  while (hasAnother)
+    if (consume('"')) produce STRING
+    scan_literal_character
+  endWhile
+  syntaxError "Unterminated string."
+
+- scan_literal_character
+  ch = read
+  if (ch == '\\')
+    ch = read
+    if (ch == 'n') ch = '\n'
+    if (ch == 'r') ch = '\r'
+    if (ch == 't') ch = '\t'
+  endIf
+  collect ch
+  return
+
+[parser]
++ program
+  beginList
+
+  while (consume(EOL)) noAction
+
+  while (hasAnother)
+    element
+    while (consume(EOL)) noAction
+  endWhile
+
+  produceList
+
++ element
+  on "scanner"
+    identifier
+    mustConsume EOL
+    while (consume(EOL)) noAction
+    routines
+    produce ScannerDef(name:String,code)
+  elseOn "parser"
+    identifier
+    mustConsume EOL
+    while (consume(EOL)) noAction
+    routines
+    produce ParserDef(name:String)
+  endOn
+  syntaxError
+
++ identifier
+  on IDENTIFIER -> Identifier(name=t.content:String)
+  syntaxError "Identifier expected."
+
++ routines
+
+  on "+"
+    routine_name_and_base_type
+    multi_line_statements
+    produce RoutineDef(name:String,base_type:String,statements)
+  elseOn "-"
+    routine_name_and_base_type
+    multi_line_statements
+    produce SubroutineDef(name:String,base_type:String,statements)
+  endOn
+
+  syntaxError
+
++ routine_name_and_base_type
+  identifier
+  if (consume(':'))
+    identifier
+  else
+    createNull
+  endIf
+  must_consume_eols
+
++ consume_eols
+  while (consume(EOL)) noAction
+
++ must_consume_eols
+  mustConsume(EOL)
+  while (consume(EOL)) noAction
+
++ multi_line_statements
+  consume_eols
+  if (not hasAnother) syntaxError
+  beginList
+  while (hasAnother and not (nextIs('+') or nextIs('-') or nextHasAttribute(structural)))
+    control_structure
+    consume_eols
+  endWhile
+  produceList Statements
+
++ single_line_statements
+  beginList
+
+  if (consume(EOL)) produceList Statements
+  statement
+  while (consume(';'))
+    consume_eols
+    statement
+  endWhile
+  must_consume_eols
+
+  produceList Statements
+
++ control_structure
+  on "if"
+    if (consume("("))
+      expression
+      mustConsume( ")" )
+    else
+      expression
+    endIf
+    if (consume(EOL))
+      multi_line_statements
+      multi_line_else_ifs
+      multi_line_else
+      mustConsume( "endIf" )
+    else
+      single_line_statements
+      single_line_else_ifs
+      single_line_else
+    endIf
+    produce If( condition, statements, else_ifs:CmdList, _else:Else )
+  endOn
+
+  on "while"
+    if (consume("("))
+      expression
+      mustConsume( ")" )
+    else
+      expression
+    endIf
+    if (consume(EOL))
+      multi_line_statements
+      mustConsume( "endWhile" )
+    else
+      single_line_statements
+    endIf
+    produce While( condition, statements )
+  endOn
+
+  #on "local"
+  #  identifier
+  #  if (consume("=")) expression
+  #  else              createNull
+  #  produce LocalDeclaration(name:String,initial_value)
+  #endOn
+
+  statement
+
++ multi_line_else_ifs
+  beginList
+
+  while (nextIs("elseIf"))
+    savePosition
+    on "elseIf"
+      if (consume("("))
+        expression
+        mustConsume( ")" )
+      else
+        expression
+      endIf
+      if (nextIs(EOL)) discardPosition
+      else             restorePosition; produceList
+      multi_line_statements
+      create ElseIf(condition,statements:Statements)
+    endOn
+  endWhile
+
+  produceList
+
++ multi_line_else
+  if (not nextIs("else")) produceNull
+  savePosition
+  on "else"
+    if (not consume(EOL)) restorePosition; produceNull
+    multi_line_statements
+    discardPosition
+    produce Else(statements:Statements)
+  endOn
+
++ single_line_else_ifs
+  beginList
+
+  while (nextIs("elseIf"))
+    savePosition
+    on "elseIf"
+      if (consume("("))
+        expression
+        mustConsume( ")" )
+      else
+        expression
+      endIf
+      if (nextIs(EOL)) restorePosition; produceList
+      else             discardPosition
+      single_line_statements
+      create ElseIf(condition,statements:Statements)
+    endOn
+  endWhile
+
+  produceList
+
++ single_line_else
+  if (not nextIs("else")) produceNull
+  savePosition
+  on "else"
+    if (consume(EOL)) restorePosition; produceNull
+    single_line_statements
+    discardPosition
+    produce Else(statements:Statements)
+  endOn
+
++ statement
+  on "print",   args -> Print(args)
+  on "println", args -> Println(args)
+  on "++", expression -> Increment(target)
+  on "--", expression -> Decrement(target)
+  expression
+  on "=", expression -> Assign(target,new_value)
+  on "++", expression -> Increment(target)
+  on "--", expression -> Decrement(target)
+
++ args
+  if (consume('('))
+    csv
+    mustConsume(')')
+  else
+    csv
+  endIf
+
++ csv
+  beginList
+  if (nextHasAttribute(structural)) produceList
+
+  expression
+  consume_eols
+  while (consume(','))
+    expression
+    consume_eols
+  endWhile
+
+  produceList
+
++ expression
+
+- logical_or : Binary
+  on "or" -> LogicalOr
+
+- logical_and : Binary
+  on "and" -> LogicalAnd
+
+- comparison : Binary
+  on "==" -> CompareEQ
+  on "!=" -> CompareNE
+  on "<"  -> CompareLT
+  on ">"  -> CompareGT
+  on "<=" -> CompareLE
+  on ">=" -> CompareGE
+
+- add_subtract : Binary
+  on "+" -> Add
+  on "-" -> Subtract
+
+- multiply_divide : Binary
+  on "*" -> Multiply
+  on "/" -> Divide
+
+- power : Binary
+  on "^" -> Power
+
+- pre_unary : PreUnary
+  on "-" -> Negate
+
+- term
+  on '(' expression ')': return
+  on "hasNext"  -> HasNext
+  on "read"     -> Read
+  on IDENTIFIER -> Access( name=t.content:String )
+  on INTEGER    -> LiteralInt32( value=t.content:Int32 )
+  on STRING     -> LiteralString( value=t.content:String )
+  syntaxError
 

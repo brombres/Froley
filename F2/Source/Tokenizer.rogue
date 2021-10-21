@@ -1,4 +1,4 @@
-module Froley
+module F2
 
 $include "TokenizerVM.rogue"
 

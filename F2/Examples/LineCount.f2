@@ -1,0 +1,9 @@
+scanner LineCountScanner
+
++ start
+  count = 0
+  while (hasNext)
+    if (read == '\n') ++count
+  endWhile
+  println "count:",count
+

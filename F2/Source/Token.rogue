@@ -1,4 +1,4 @@
-module Froley
+module F2
 
 class Token( type:TokenType, filepath:String, source:String, line:Int32, column:Int32, content=null:String )
   METHODS

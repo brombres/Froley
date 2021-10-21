@@ -5,8 +5,9 @@
 
 $requireRogue "1.8.1"
 
+$include "Parser.rogue"
 $include "Tokenizer.rogue"
-uses Froley
+uses F2
 
 uses Utility/CommandLineParser
 
@@ -32,5 +33,7 @@ class Froley
 
       #trace command
       # has //options and possibly //args
-      println Tokenizer( File("Source/Froley.f2") ).tokenize
+      #println( Tokenizer( File("Examples/LineCount.f2") ).tokenize )
+      println( Parser().[open(File("Examples/HelloWorld.f2"))].parse("program") )
+      #println( Parser().[open(File("Examples/LineCount.f2"))].parse("program") )
 endClass

@@ -1,4 +1,4 @@
-$define VERSION_INFO "Froley v2.2.0 - June 15, 2021"
+$define VERSION_INFO "Froley v2.2.1 - October 21, 2021"
 
 module Froley
   uses ParseKit<<Froley>>

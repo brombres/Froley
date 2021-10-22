@@ -2,8 +2,8 @@
 
 About          | Current Release
 ---------------|-----------------------
-Version        | v2.2.0
-Date           | June 15, 2021
+Version        | v2.2.1
+Date           | October 21, 2021
 Platforms      | macOS, Linux, Windows
 Output Targets | Rogue
 

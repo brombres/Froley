@@ -14,11 +14,7 @@ uses Utility/CommandLineParser
 try
   Froley( System.command_line_arguments )
 catch (error:Error)
-  local w = Console.width.or_smaller( 80 )
-  Console.error.println "="*w
-  Console.error.println "ERROR"
-  Console.error.println error->String.word_wrapped(w-2).indented(2)
-  Console.error.println "="*w
+  Console.error.println error
   System.exit 1
 endTry
 
@@ -34,6 +30,6 @@ class Froley
       #trace command
       # has //options and possibly //args
       #println( Tokenizer( File("Examples/LineCount.f2") ).tokenize )
-      println( Parser().[open(File("Examples/HelloWorld.f2"))].parse("program") )
+      local program = Parser().[open(File("Examples/HelloWorld.f2"))].parse("program")
       #println( Parser().[open(File("Examples/LineCount.f2"))].parse("program") )
 endClass

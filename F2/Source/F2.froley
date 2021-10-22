@@ -134,6 +134,7 @@ SYMBOL_STAR         *
   if (not consume('\'')) return
   while (hasAnother)
     if (consume('\'')) produce STRING
+    if (nextIs('\n')) syntaxError "Unterminated string."
     scan_literal_character
   endWhile
   syntaxError "Unterminated string."
@@ -142,6 +143,7 @@ SYMBOL_STAR         *
   if (not consume('"')) return
   while (hasAnother)
     if (consume('"')) produce STRING
+    if (nextIs('\n')) trace; syntaxError "Unterminated string."
     scan_literal_character
   endWhile
   syntaxError "Unterminated string."

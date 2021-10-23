@@ -203,7 +203,7 @@ class TokenizerVM
               local low  = code[ip]->Character
               necessary (peek_ch >= low)
               local high = code[ip+1]->Character
-              necessary (peek_ch >= high)
+              necessary (peek_ch <= high)
               result = 1
             unsatisfied
               result = 0

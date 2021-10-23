@@ -184,7 +184,7 @@ SYMBOL_STAR         *
     mustConsume EOL
     while (consume(EOL)) noAction
     routines
-    produce ParserDef(name:String)
+    produce ParserDef(name:String,code)
   endOn
   syntaxError
 
@@ -354,8 +354,8 @@ SYMBOL_STAR         *
   endOn
 
 + statement
-  on "print",   args -> Print(args)
-  on "println", args -> Println(args)
+  on "print",   args -> Print(args:CmdList)
+  on "println", args -> Println(args:CmdList)
   on "++", expression -> Increment(target)
   on "--", expression -> Decrement(target)
   expression

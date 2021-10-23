@@ -1,0 +1,21 @@
+module F2
+
+class Program
+  PROPERTIES
+    nodes      : Cmd
+    cur_module = ""
+    scanners   = StringTable<<ScannerDef>>()
+    parsers    = StringTable<<ParserDef>>()
+
+  METHODS
+    method init( nodes )
+      nodes.dispatch( Organizer(this) )
+
+    method description->String
+      return ""+nodes
+
+    method generate_rogue( folder:String )
+      GenerateRogue( this, folder )
+
+endClass
+

@@ -1,0 +1,164 @@
+module F2
+
+class GenerateRogue : Visitor
+  PROPERTIES
+    program    : Program
+    folder     : String
+    writer     : PrintWriter
+
+    cur_module = ""
+    class_name = ""
+
+  METHODS
+    method init( program, folder )
+      File.create_folder( folder )
+
+      program.nodes.dispatch( this )
+      #generate_scanner( forEach in scanners )
+      #generate_parser( forEach in parsers )
+      #nodes.dispatch( Organizer(this) )
+
+      # TokenType
+      create_file( cur_module+"TokenType" )
+      writeln @|enum $ClassName( symbol:String, attributes=0:Int32 )
+               |  ENUMERATE
+               |  CATEGORIES
+               |    EOI("end of input") = 1
+               |endEnum
+      writer.close
+
+      # Token
+      create_file( cur_module+"Token" )
+      writeln @|class $ClassName
+               |  PROPERTIES
+               |    type : Int32
+               |endClass
+      writer.close
+
+    method create_file( class_name, filename=null:String )
+
+      if (not filename) filename = class_name + ".rogue"
+
+      if (File.exists(filename)) print "Recreating "
+      else                       print "Creating "
+      println filename
+
+      writer = File(folder/filename).print_writer
+
+    method visit( cmd:Cmd )->Cmd
+      throw cmd.t.error( "Rogue code generation not defined for $."(cmd.type_name) )
+
+    method visit( cmd:Print )->Cmd
+      write "            buffer"
+      if (cmd.args.count == 0)
+        throw cmd.t.error( "Argument expected for 'print'." )
+      else
+        forEach (arg in cmd.args)
+          write ".print("
+          arg.require_value.dispatch( this )
+          write ")"
+        endForEach
+        writeln
+      endIf
+      return cmd
+
+    method visit( cmd:Println )->Cmd
+      write "            buffer"
+      if (cmd.args.count == 0)
+        throw cmd.t.error( "Argument expected for 'println'." )
+      else
+        forEach (arg in cmd.args)
+          write ".print("
+          #arg.require_value.dispatch( this )
+          write ''"test"'' # FIXME
+          write ")"
+        endForEach
+        writeln ".println"
+      endIf
+      return cmd
+
+    method visit( cmd:RoutineDef )->Cmd
+      writeln "          case $"(cmd.ip)
+
+      return prior.visit( cmd )
+
+    method visit( cmd:ScannerDef )->Cmd
+      # OutputFolder/XYZScanner.rogue
+      create_file( cmd.name )
+      writeln @|$module
+               |$include "$ClassNameCore.rogue"
+               |$include "$Token.rogue"
+               |$include "$TokenType.rogue"
+               |
+               |class $ClassName : $ClassNameCore
+               |endClass
+      writer.close
+
+      # OutputFolder/XYZScannerCore.rogue
+      create_file( cmd.name+"Core" )
+      write   @|$module
+               |class $ClassName
+               |  PROPERTIES
+               |    filepath : String
+               |    scanner  : Scanner
+               |
+               |    tokens   = $Token[]
+               |    buffer   = StringBuilder()
+               |
+               |    start_ip = 0
+               |    ip_map   = StringTable<<Int32>>()
+      local map = @{}
+      forEach (r in cmd.routines) map[r.name] = r.ip
+      writeln( map.to_json )
+
+      writeln @|
+               |  METHODS
+               |    method init( file:File )
+               |      init( file.filepath, Scanner(file) )
+               |
+               |    method init( filepath:String, content:String )
+               |      init( filepath, Scanner(content) )
+               |
+               |    method init( filepath, scanner )
+               |      noAction
+               |
+               |    method execute( start_ip )->$Token[]
+               |      return execute
+               |
+               |    method execute( label:String )->$Token[]
+               |      start_ip = ip_map[ label ]
+               |      return execute
+               |
+               |    method execute->$Token[]
+               |      local ip = start_ip
+               |      loop
+               |        ++ip
+               |        which (ip-1)
+
+      prior.visit( cmd )
+
+      writeln @|          others
+               |            escapeLoop
+               |        endWhich
+               |      endLoop
+               |      return tokens
+               |endClass
+      writer.close
+
+      return cmd
+
+    method write( content:String )
+      content .= replacing( "$Token",      "$Token"(cur_module) )
+      content .= replacing( "$ClassName",  class_name )
+      if (String.exists(cur_module))
+        content .= replacing( "$module", "module $\n"(cur_module) )
+      else
+        content .= replacing( "$module", "" )
+      endIf
+      writer.print( content )
+
+    method writeln( content="":String )
+      write( content )
+      writer.println
+
+endClass

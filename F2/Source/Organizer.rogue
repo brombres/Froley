@@ -1,0 +1,31 @@
+module F2
+
+class Organizer : Visitor
+  PROPERTIES
+    program  : Program
+    this_def : ElementDef
+
+  METHODS
+    method init( program )
+
+    method visit( cmd:ParserDef )->Cmd
+      program.parsers[cmd.name] = cmd
+      this_def = cmd
+      return prior.visit( cmd )
+
+    method visit( cmd:RoutineDef )->Cmd [override]
+      cmd.ip = this_def.routines.count
+      this_def.routines.add( cmd )
+      return prior.visit( cmd )
+
+    method visit( cmd:SubroutineDef )->Cmd
+      cmd.ip = this_def.routines.count
+      this_def.routines.add( cmd )
+      return prior.visit( cmd )
+
+    method visit( cmd:ScannerDef )->Cmd
+      this_def = cmd
+      program.scanners[cmd.name] = cmd
+      return prior.visit( cmd )
+endClass
+

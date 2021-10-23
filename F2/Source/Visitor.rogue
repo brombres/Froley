@@ -29,12 +29,14 @@ class Visitor
       return cmd
 
     method visit( cmd:ScannerDef )->Cmd
+      if (cmd.code) cmd.code = cmd.code.dispatch( this )
       return cmd
 
     method visit( cmd:Identifier )->Cmd
       return cmd
 
     method visit( cmd:ParserDef )->Cmd
+      if (cmd.code) cmd.code = cmd.code.dispatch( this )
       return cmd
 
     method visit( cmd:RoutineDef )->Cmd

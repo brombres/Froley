@@ -5,6 +5,9 @@ class Cmd( t:Token )
     method dispatch( visitor:Visitor )->Cmd [propagated]
       return visitor.visit( this )
 
+    method require_value->Cmd
+      return this # FIXME
+
     method to->Int32
       return this->String->Int32
 
@@ -16,6 +19,8 @@ class Cmd( t:Token )
 
     method to->CmdList
       return CmdList(t).[ add(this) ]
+
+      #method type->Type
 endClass
 
 class CmdList : Cmd
@@ -145,15 +150,18 @@ class Identifier( t, name:String ) : Cmd
       return "$"(name)
 endClass
 
+class ElementDef : Cmd
+  PROPERTIES
+    routines = RoutineDef[]
+endClass
 
-class ParserDef( t, name:String ) : Cmd
+class ParserDef( t, name:String, code:Cmd ) : ElementDef
   METHODS
     method to->String
       return "ParserDef($)"(name)
 endClass
 
-
-class ScannerDef( t, name:String, code:Cmd ) : Cmd
+class ScannerDef( t, name:String, code:Cmd ) : ElementDef
   METHODS
     method to->String
       return "ScannerDef($,$)"(name,code)
@@ -161,12 +169,15 @@ endClass
 
 
 class RoutineDef( t, name:String, base_type:String, statements:Cmd ) : Cmd
+  PROPERTIES
+    ip : Int32
+
   METHODS
     method to->String
       return "RoutineDef($,$,$)"(name,base_type,statements)
 endClass
 
-class SubroutineDef( t, name:String, base_type:String, statements:Cmd ) : Cmd
+class SubroutineDef : RoutineDef
   METHODS
     method to->String
       return "SubroutineDef($,$,$)"(name,base_type,statements)
@@ -314,14 +325,13 @@ class Decrement( t, target:Cmd ) : Cmd
       return "Decrement($)"(target)
 endClass
 
-
-class Print( t, args:Cmd ) : Cmd
+class Print( t, args:CmdList ) : Cmd
   METHODS
     method to->String
       return "Print($)"(args)
 endClass
 
-class Println( t, args:Cmd ) : Cmd
+class Println( t, args:CmdList ) : Cmd
   METHODS
     method to->String
       return "Println($)"(args)

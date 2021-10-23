@@ -75,6 +75,7 @@ endRoutine
 
 routine rogo_run
   execute File.esc( exe_filepath )
+  execute @|cat Build/HelloWorld/HelloWorldScannerCore.rogue && roguec Test.rogue --execute
 endRoutine
 
 routine rogo_install_launcher

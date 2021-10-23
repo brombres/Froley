@@ -1,0 +1,12 @@
+module F2
+
+class Type
+  GLOBAL PROPERTIES
+    type_String = Type("String")
+
+  PROPERTIES
+    name : String
+
+  METHODS
+    method init( name )
+endClass

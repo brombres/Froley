@@ -5,8 +5,14 @@ class Cmd( t:Token )
     method dispatch( visitor:Visitor )->Cmd [propagated]
       return visitor.visit( this )
 
+    method require_type->Type
+      localize type
+      if (type is null) throw t.error( "Value expected." )
+      return type
+
     method require_value->Cmd
-      return this # FIXME
+      require_type
+      return this
 
     method to->Int32
       return this->String->Int32
@@ -20,7 +26,8 @@ class Cmd( t:Token )
     method to->CmdList
       return CmdList(t).[ add(this) ]
 
-      #method type->Type
+    method type->Type
+      return null
 endClass
 
 class CmdList : Cmd
@@ -113,6 +120,9 @@ class LiteralString( t, value:String ) : Literal
   METHODS
     method to->String
       return value
+
+    method type->Type
+      return Type.type_String
 endClass
 
 class Unary( t, operand:Cmd ) : Cmd

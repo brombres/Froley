@@ -10,6 +10,7 @@ $include "Parser.rogue"
 $include "Program.rogue"
 $include "GenerateRogue.rogue"
 $include "Tokenizer.rogue"
+$include "Type.rogue"
 uses F2
 
 uses Utility/CommandLineParser

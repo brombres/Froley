@@ -48,6 +48,10 @@ class GenerateRogue : Visitor
     method visit( cmd:Cmd )->Cmd
       throw cmd.t.error( "Rogue code generation not defined for $."(cmd.type_name) )
 
+    method visit( cmd:LiteralString )->Cmd
+      writer.print( ''"$"''(cmd.value.to_escaped_ascii(''"'')) )
+      return cmd
+
     method visit( cmd:Print )->Cmd
       write "            buffer"
       if (cmd.args.count == 0)
@@ -69,8 +73,7 @@ class GenerateRogue : Visitor
       else
         forEach (arg in cmd.args)
           write ".print("
-          #arg.require_value.dispatch( this )
-          write ''"test"'' # FIXME
+          arg.require_value.dispatch( this )
           write ")"
         endForEach
         writeln ".println"
@@ -142,6 +145,9 @@ class GenerateRogue : Visitor
                |        endWhich
                |      endLoop
                |      return tokens
+               |
+               |    method output->String
+               |      return buffer->String
                |endClass
       writer.close
 

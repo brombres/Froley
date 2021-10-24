@@ -263,7 +263,7 @@ SYMBOL_STAR         *
       single_line_else_ifs
       single_line_else
     endIf
-    produce If( condition, statements, else_ifs:CmdList, _else:Else )
+    produce If( condition, statements:Statements, else_ifs:CmdList, _else:Statements )
   endOn
 
   on "while"
@@ -279,7 +279,7 @@ SYMBOL_STAR         *
     else
       single_line_statements
     endIf
-    produce While( condition, statements )
+    produce While( condition, statements:Statements )
   endOn
 
   #on "local"
@@ -319,7 +319,7 @@ SYMBOL_STAR         *
     if (not consume(EOL)) restorePosition; produceNull
     multi_line_statements
     discardPosition
-    produce Else(statements:Statements)
+    return
   endOn
 
 + single_line_else_ifs
@@ -350,10 +350,11 @@ SYMBOL_STAR         *
     if (consume(EOL)) restorePosition; produceNull
     single_line_statements
     discardPosition
-    produce Else(statements:Statements)
+    return
   endOn
 
 + statement
+  on "collect", args -> Collect(args:CmdList)
   on "print",   args -> Print(args:CmdList)
   on "println", args -> Println(args:CmdList)
   on "++", expression -> Increment(target)

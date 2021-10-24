@@ -1,0 +1,19 @@
+module F2
+
+class Resolver : FroleyVisitor
+  PROPERTIES
+
+  METHODS
+    method visit( cmd:Access )->Cmd [override]
+      if (cur_element.routines.contains(cmd.name))
+        trace "TODO"
+        throw cmd.t.error( "TODO" )
+      else
+        cur_element.vars.add( cmd.name )
+        return dispatch(ReadVar(cmd.t,cmd.name))
+      endIf
+
+    method visit( cmd:Assign )->Cmd [override]
+      return dispatch( cmd.target.resolve_assignment(cmd,this) )
+endClass
+

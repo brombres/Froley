@@ -5,12 +5,13 @@
 
 $requireRogue "1.8.1"
 
+$include "FroleyVisitor.rogue"
+$include "GenerateRogue.rogue"
 $include "Organizer.rogue"
 $include "Parser.rogue"
 $include "Program.rogue"
-$include "GenerateRogue.rogue"
+$include "Resolver.rogue"
 $include "Tokenizer.rogue"
-$include "Type.rogue"
 uses F2
 
 uses Utility/CommandLineParser
@@ -34,9 +35,8 @@ class Froley
       #trace command
       # has //options and possibly //args
       #println( Tokenizer( File("Examples/LineCount.f2") ).tokenize )
-      local nodes = Parser().[open(File("Examples/HelloWorld.f2"))].parse("program")
+      local nodes = Parser().[open(File("Examples/LineCount.f2"))].parse("program")
       local program = Program( nodes )
       println program
-      program.generate_rogue( "Build/HelloWorld" )
-      #println( Parser().[open(File("Examples/LineCount.f2"))].parse("program") )
+      program.generate_rogue( "Build/LineCount" )
 endClass

@@ -1,25 +1,30 @@
 module F2
 
-class Organizer : FroleyVisitor
+class FroleyVisitor : Visitor
   PROPERTIES
+    program     : Program
+
+    cur_module  = ""
+    cur_element : ElementDef
+    cur_routine : RoutineDef
 
   METHODS
+    method init( program )
+
     method visit( cmd:ParserDef )->Cmd [override]
-      program.parsers[cmd.name] = cmd
+      cur_element = cmd
       return prior.visit( cmd )
 
     method visit( cmd:RoutineDef )->Cmd [override]
-      cmd.ip = cur_element.routines.count
-      cur_element.routines[cmd.name] = cmd
+      cur_routine = cmd
       return prior.visit( cmd )
 
     method visit( cmd:SubroutineDef )->Cmd [override]
-      cmd.ip = cur_element.routines.count
-      cur_element.routines[cmd.name] = cmd
+      cur_routine = cmd
       return prior.visit( cmd )
 
     method visit( cmd:ScannerDef )->Cmd [override]
-      program.scanners[cmd.name] = cmd
+      cur_element = cmd
       return prior.visit( cmd )
 endClass
 

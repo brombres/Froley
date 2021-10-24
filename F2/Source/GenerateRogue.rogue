@@ -1,13 +1,13 @@
 module F2
 
-class GenerateRogue : Visitor
+class GenerateRogue : FroleyVisitor
   PROPERTIES
-    program    : Program
     folder     : String
     writer     : PrintWriter
-
-    cur_module = ""
     class_name = ""
+
+    indent     = 0
+    at_newline = true
 
   METHODS
     method init( program, folder )
@@ -45,15 +45,118 @@ class GenerateRogue : Visitor
 
       writer = File(folder/filename).print_writer
 
-    method visit( cmd:Cmd )->Cmd
+    method visit( cmd:Cmd )->Cmd  [override]
       throw cmd.t.error( "Rogue code generation not defined for $."(cmd.type_name) )
 
-    method visit( cmd:LiteralString )->Cmd
-      writer.print( ''"$"''(cmd.value.to_escaped_ascii(''"'')) )
+    method visit( cmd:CompareEQ )->Cmd  [override]
+      write "("
+      dispatch( cmd.left )
+      write "=="
+      dispatch( cmd.right )
+      write ")"
       return cmd
 
-    method visit( cmd:Print )->Cmd
-      write "            buffer"
+    method visit( cmd:CompareGE )->Cmd  [override]
+      write "("
+      dispatch( cmd.left )
+      write ">="
+      dispatch( cmd.right )
+      write ")"
+      return cmd
+
+    method visit( cmd:CompareGT )->Cmd  [override]
+      write "("
+      dispatch( cmd.left )
+      write ">"
+      dispatch( cmd.right )
+      write ")"
+      return cmd
+
+    method visit( cmd:CompareLE )->Cmd  [override]
+      write "("
+      dispatch( cmd.left )
+      write "<="
+      dispatch( cmd.right )
+      write ")"
+      return cmd
+
+    method visit( cmd:CompareLT )->Cmd  [override]
+      write "("
+      dispatch( cmd.left )
+      write "<"
+      dispatch( cmd.right )
+      write ")"
+      return cmd
+
+    method visit( cmd:CompareNE )->Cmd  [override]
+      write "("
+      dispatch( cmd.left )
+      write "!="
+      dispatch( cmd.right )
+      write ")"
+      return cmd
+
+    method visit( cmd:Decrement )->Cmd  [override]
+      write "--"
+      dispatch( cmd.target )
+      return cmd
+
+    method visit( cmd:If )->Cmd  [override]
+      write   "if ("
+      dispatch( cmd.condition )
+      writeln ")"
+      indent += 2
+      dispatch( cmd.statements )
+      indent -= 2
+
+      dispatch( cmd.else_ifs )
+
+      if (cmd._else)
+        writeln "else"
+        indent += 2
+        dispatch( cmd._else )
+        indent -= 2
+      endIf
+
+      write   "endIf"
+      return cmd
+
+    method visit( cmd:ElseIf )->Cmd  [override]
+      write   "elseIf ("
+      dispatch( cmd.condition )
+      writeln ")"
+      indent += 2
+      dispatch( cmd.statements )
+      indent -= 2
+      return cmd
+
+    method visit( cmd:Increment )->Cmd  [override]
+      write "++"
+      dispatch( cmd.target )
+      return cmd
+
+    method visit( cmd:HasNext )->Cmd  [override]
+      write "scanner.has_another"
+      return cmd
+
+    method visit( cmd:LiteralCharacter )->Cmd  [override]
+      writer.print( "'$'"(cmd.value.to_escaped_ascii("'")) )
+      return cmd
+
+    method visit( cmd:LiteralInt32 )->Cmd  [override]
+      writer.print( cmd.value )
+      return cmd
+
+    method visit( cmd:LiteralString )->Cmd  [override]
+      if (cmd.value.count == 1)
+        writer.print( "'$'"(cmd.value.to_escaped_ascii("'")) )
+      else
+        writer.print( ''"$"''(cmd.value.to_escaped_ascii(''"'')) )
+      endIf
+      return cmd
+
+    method visit( cmd:Print )->Cmd  [override]
+      write "output"
       if (cmd.args.count == 0)
         throw cmd.t.error( "Argument expected for 'print'." )
       else
@@ -62,12 +165,11 @@ class GenerateRogue : Visitor
           arg.require_value.dispatch( this )
           write ")"
         endForEach
-        writeln
       endIf
       return cmd
 
-    method visit( cmd:Println )->Cmd
-      write "            buffer"
+    method visit( cmd:Println )->Cmd  [override]
+      write "output"
       if (cmd.args.count == 0)
         throw cmd.t.error( "Argument expected for 'println'." )
       else
@@ -76,16 +178,28 @@ class GenerateRogue : Visitor
           arg.require_value.dispatch( this )
           write ")"
         endForEach
-        writeln ".println"
+        write ".println"
       endIf
       return cmd
 
-    method visit( cmd:RoutineDef )->Cmd
+    method visit( cmd:Read )->Cmd  [override]
+      write "scanner.read"
+      return cmd
+
+    method visit( cmd:ReadVar )->Cmd  [override]
+      write cmd.name
+      return cmd
+
+    method visit( cmd:RoutineDef )->Cmd  [override]
       writeln "          case $"(cmd.ip)
 
-      return prior.visit( cmd )
+      indent += 12
+      prior.visit( cmd )
+      indent -= 12
 
-    method visit( cmd:ScannerDef )->Cmd
+      return cmd
+
+    method visit( cmd:ScannerDef )->Cmd  [override]
       # OutputFolder/XYZScanner.rogue
       create_file( cmd.name )
       writeln @|$module
@@ -107,12 +221,19 @@ class GenerateRogue : Visitor
                |
                |    tokens   = $Token[]
                |    buffer   = StringBuilder()
+               |    output   = StringBuilder()
                |
                |    start_ip = 0
                |    ip_map   = StringTable<<Int32>>()
       local map = @{}
       forEach (r in cmd.routines) map[r.name] = r.ip
       writeln( map.to_json )
+
+      writeln @|
+               |    # Generated Properties
+      #forEach (var_name in cmd.vars)
+      #  writeln "    $ : Var"(var_name)
+      #endForEach
 
       writeln @|
                |  METHODS
@@ -146,25 +267,57 @@ class GenerateRogue : Visitor
                |      endLoop
                |      return tokens
                |
-               |    method output->String
-               |      return buffer->String
                |endClass
       writer.close
 
       return cmd
 
+    method visit( cmd:Statements )->Cmd  [override]
+      forEach (element in cmd)
+        if (element)
+          element.dispatch( this )
+          writeln
+        endIf
+      endForEach
+      return cmd
+
+    method visit( cmd:WriteVar )->Cmd  [override]
+      write "$ = " (cmd.name)
+      #write "[$]" (cmd.new_value.type_name)
+      dispatch( cmd.new_value )
+      return cmd
+
+    method visit( cmd:While )->Cmd  [override]
+      write   "while ("
+      dispatch( cmd.condition )
+      writeln ")"
+      indent += 2
+      dispatch( cmd.statements )
+      indent -= 2
+      write   "endWhile"
+      return cmd
+
     method write( content:String )
-      content .= replacing( "$Token",      "$Token"(cur_module) )
-      content .= replacing( "$ClassName",  class_name )
-      if (String.exists(cur_module))
-        content .= replacing( "$module", "module $\n"(cur_module) )
-      else
-        content .= replacing( "$module", "" )
+      if (at_newline and indent)
+        loop (indent) writer.print(' ')
+      endIf
+
+      if (content.contains('$'))
+        content .= replacing( "$Token",      "$Token"(cur_module) )
+        content .= replacing( "$ClassName",  class_name )
+        if (String.exists(cur_module))
+          content .= replacing( "$module", "module $\n"(cur_module) )
+        else
+          content .= replacing( "$module", "" )
+        endIf
       endIf
       writer.print( content )
 
+      at_newline = false
+
     method writeln( content="":String )
-      write( content )
+      if (String.exists(content)) write( content )
       writer.println
+      at_newline = true
 
 endClass

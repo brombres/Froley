@@ -10,6 +10,7 @@ class Program
   METHODS
     method init( nodes )
       nodes.dispatch( Organizer(this) )
+      nodes.dispatch( Resolver(this) )
 
     method description->String
       return ""+nodes

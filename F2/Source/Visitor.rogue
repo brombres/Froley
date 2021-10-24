@@ -5,6 +5,10 @@ class Visitor
     type_Cmd = <<Cmd>>
 
   METHODS
+    method dispatch( cmd:Cmd )->Cmd
+      if (not cmd) return null
+      return cmd.dispatch( this )
+
     method visit( cmd:Cmd )->Cmd
       if (cmd.type_info is type_Cmd) return cmd
       return cmd.dispatch( this )
@@ -95,27 +99,20 @@ class Visitor
 
     method visit( cmd:While )->Cmd
       if (cmd.condition) cmd.condition = cmd.condition.dispatch( this )
-      if (cmd.statements) cmd.statements = cmd.statements.dispatch( this )
+      if (cmd.statements) cmd.statements.dispatch( this )
       return cmd
 
     method visit( cmd:If )->Cmd
       if (cmd.condition) cmd.condition = cmd.condition.dispatch( this )
       if (cmd.statements) cmd.statements = cmd.statements.dispatch( this )
       if (cmd.else_ifs) cmd.else_ifs = cmd.else_ifs.dispatch( this ) as CmdList
-
-      if (cmd._else) cmd._else = cmd._else.dispatch( this ) as Else
+      if (cmd._else) cmd._else.dispatch( this )
 
       return cmd
 
     method visit( cmd:ElseIf )->Cmd
       if (cmd.condition) cmd.condition = cmd.condition.dispatch( this )
       if (cmd.statements) cmd.statements = cmd.statements.dispatch( this ) as Statements
-
-      return cmd
-
-    method visit( cmd:Else )->Cmd
-      if (cmd.statements) cmd.statements = cmd.statements.dispatch( this ) as Statements
-
       return cmd
 
     method visit( cmd:LogicalOr )->Cmd
@@ -158,6 +155,9 @@ class Visitor
       if (cmd.right) cmd.right = cmd.right.dispatch( this )
       return cmd
 
+    method visit( cmd:LiteralCharacter )->Cmd
+      return cmd
+
     method visit( cmd:LiteralString )->Cmd
       return cmd
 
@@ -182,4 +182,17 @@ class Visitor
 
     method visit( cmd:Read )->Cmd
       return cmd
+
+    method visit( cmd:Collect )->Cmd
+      if (cmd.args) cmd.args = cmd.args.dispatch( this ) as CmdList
+
+      return cmd
+
+    method visit( cmd:WriteVar )->Cmd
+      cmd.new_value = cmd.new_value.dispatch( this )
+      return cmd
+
+    method visit( cmd:ReadVar )->Cmd
+      return cmd
 endClass
+

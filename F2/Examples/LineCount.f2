@@ -5,5 +5,5 @@ scanner LineCountScanner
   while (hasNext)
     if (read == '\n') ++count
   endWhile
-  println "count:",count
+  println count
 

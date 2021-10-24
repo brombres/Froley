@@ -5,14 +5,15 @@ class Cmd( t:Token )
     method dispatch( visitor:Visitor )->Cmd [propagated]
       return visitor.visit( this )
 
-    method require_type->Type
-      localize type
-      if (type is null) throw t.error( "Value expected." )
-      return type
+    method is_value->Logical
+      return false
 
     method require_value->Cmd
-      require_type
+      if (not is_value) throw t.error( "Value expected." )
       return this
+
+    method resolve_assignment( cmd:Assign, resolver:Resolver )->Cmd
+      throw t.error( "Illegal assignment." )
 
     method to->Int32
       return this->String->Int32
@@ -25,9 +26,6 @@ class Cmd( t:Token )
 
     method to->CmdList
       return CmdList(t).[ add(this) ]
-
-    method type->Type
-      return null
 endClass
 
 class CmdList : Cmd
@@ -69,6 +67,9 @@ class CmdList : Cmd
 endClass
 
 class Literal : Cmd
+  METHODS
+    method is_value->Logical
+      return true
 endClass
 
 class LiteralInt32( t, value:Int32 ) : Literal
@@ -120,9 +121,12 @@ class LiteralString( t, value:String ) : Literal
   METHODS
     method to->String
       return value
+endClass
 
-    method type->Type
-      return Type.type_String
+class LiteralCharacter( t, value:Character ) : Literal
+  METHODS
+    method to->String
+      return value
 endClass
 
 class Unary( t, operand:Cmd ) : Cmd
@@ -162,7 +166,8 @@ endClass
 
 class ElementDef : Cmd
   PROPERTIES
-    routines = RoutineDef[]
+    routines = StringTable<<RoutineDef>>()
+    vars     = Set<<String>>()
 endClass
 
 class ParserDef( t, name:String, code:Cmd ) : ElementDef
@@ -232,6 +237,12 @@ endClass
 
 class Access( t, name:String ) : Cmd
   METHODS
+    method resolve_assignment( cmd:Assign, resolver:Resolver )->Cmd
+      local r = resolver.cur_element.routines[name]
+      if (r) throw t.error( "Illegal assignment to a routine." )
+      resolver.cur_element.vars.add( name )
+      return WriteVar( cmd.t, name, cmd.new_value )
+
     method to->String
       return "$"(name)
 endClass
@@ -255,7 +266,7 @@ class While( t, condition:Cmd, statements:Cmd ) : Cmd
 endClass
 
 
-class If( t, condition:Cmd, statements:Cmd, else_ifs:CmdList, _else:Else ) : Cmd
+class If( t, condition:Cmd, statements:Cmd, else_ifs:CmdList, _else:Statements ) : Cmd
   METHODS
     method to->String
       return "If($,$,$,$)"(condition,statements,else_ifs,_else)
@@ -266,13 +277,6 @@ class ElseIf( t, condition:Cmd, statements:Statements ) : Cmd
     method to->String
       return "ElseIf($,$)"(condition,statements)
 endClass
-
-class Else( t, statements:Statements ) : Cmd
-  METHODS
-    method to->String
-      return "Else($)"(statements)
-endClass
-
 
 class LogicalOr : Binary
   METHODS
@@ -360,3 +364,26 @@ class Read : Cmd
     method to->String
       return "read"
 endClass
+
+
+class Collect( t, args:CmdList ) : Cmd
+  METHODS
+    method to->String
+      return "Collect($)"(args)
+endClass
+
+class WriteVar( t, name:String, new_value:Cmd ) : Cmd
+  METHODS
+    method to->String
+      return "WriteVar($,$)"(name,new_value)
+endClass
+
+class ReadVar( t, name:String ) : Cmd
+  METHODS
+    method is_value->Logical
+      return true
+
+    method to->String
+      return "ReadVar($)"(name)
+endClass
+

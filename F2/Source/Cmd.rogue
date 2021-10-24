@@ -5,11 +5,13 @@ class Cmd( t:Token )
     method dispatch( visitor:Visitor )->Cmd [propagated]
       return visitor.visit( this )
 
-    method is_value->Logical
-      return false
+    method require_type->Type
+      localize type
+      if (not type.exists) throw t.error( "Value expected." )
+      return type
 
     method require_value->Cmd
-      if (not is_value) throw t.error( "Value expected." )
+      require_type
       return this
 
     method resolve_assignment( cmd:Assign, resolver:Resolver )->Cmd
@@ -26,6 +28,9 @@ class Cmd( t:Token )
 
     method to->CmdList
       return CmdList(t).[ add(this) ]
+
+    method type->Type
+      return Type.NONE
 endClass
 
 class CmdList : Cmd
@@ -68,8 +73,6 @@ endClass
 
 class Literal : Cmd
   METHODS
-    method is_value->Logical
-      return true
 endClass
 
 class LiteralInt32( t, value:Int32 ) : Literal
@@ -85,6 +88,9 @@ class LiteralInt32( t, value:Int32 ) : Literal
 
     method to->String
       return value->String
+
+    method type->Type
+      return Type.INTEGER
 endClass
 
 class LiteralLogical( t, value:Logical ) : Literal
@@ -100,33 +106,27 @@ class LiteralLogical( t, value:Logical ) : Literal
 
     method to->String
       return which{ value:"true" || "false" }
-endClass
 
-class LiteralReal64( t, value:Real64 ) : Literal
-  METHODS
-    method to->Int32
-      return this->Real64.floor->Int32
-
-    method to->Logical
-      return value != 0
-
-    method to->Real64
-      return value
-
-    method to->String
-      return value->String
+    method type->Type
+      return Type.LOGICAL
 endClass
 
 class LiteralString( t, value:String ) : Literal
   METHODS
     method to->String
       return value
+
+    method type->Type
+      return Type.STRING
 endClass
 
 class LiteralCharacter( t, value:Character ) : Literal
   METHODS
     method to->String
       return value
+
+    method type->Type
+      return Type.CHARACTER
 endClass
 
 class Unary( t, operand:Cmd ) : Cmd
@@ -167,7 +167,33 @@ endClass
 class ElementDef : Cmd
   PROPERTIES
     routines = StringTable<<RoutineDef>>()
-    vars     = Set<<String>>()
+    vars     = StringTable<<Var>>()
+
+  METHODS
+    method define_var( t:Token, name:String, type=Type.NONE:Type )->Var
+      local entry = vars.find( name )
+      if (not entry)
+        local v = Var( t, name, type )
+        vars[name] = v
+        return v
+      endIf
+
+      local existing = entry.value
+      if (type != existing.type)
+        if (not existing.type.exists)
+          existing.type = type
+        elseIf (type.exists)
+          throw t.error( "Conflicting implicit types $ and $ for variable '$'."...
+                         (existing.type,type,name) )
+        endIf
+      endIf
+
+      return existing
+
+    method var_type( name:String )->Type
+      local entry = vars.find( name )
+      if (not entry) return Type.NONE
+      return entry.value.type
 endClass
 
 class ParserDef( t, name:String, code:Cmd ) : ElementDef
@@ -240,8 +266,8 @@ class Access( t, name:String ) : Cmd
     method resolve_assignment( cmd:Assign, resolver:Resolver )->Cmd
       local r = resolver.cur_element.routines[name]
       if (r) throw t.error( "Illegal assignment to a routine." )
-      resolver.cur_element.vars.add( name )
-      return WriteVar( cmd.t, name, cmd.new_value )
+      local v = resolver.cur_element.define_var( t, name, cmd.new_value.type )
+      return WriteVar( v, cmd.new_value ).dispatch( resolver )
 
     method to->String
       return "$"(name)
@@ -356,6 +382,9 @@ class HasNext : Cmd
   METHODS
     method to->String
       return "hasNext"
+
+    method type->Type
+      return Type.LOGICAL
 endClass
 
 
@@ -363,8 +392,10 @@ class Read : Cmd
   METHODS
     method to->String
       return "read"
-endClass
 
+    method type->Type
+      return Type.CHARACTER
+endClass
 
 class Collect( t, args:CmdList ) : Cmd
   METHODS
@@ -372,18 +403,31 @@ class Collect( t, args:CmdList ) : Cmd
       return "Collect($)"(args)
 endClass
 
-class WriteVar( t, name:String, new_value:Cmd ) : Cmd
+class WriteVar : Cmd
+  PROPERTIES
+    var       : Var
+    new_value : Cmd
+
   METHODS
+    method init( var, new_value )
+      t = var.t
+
     method to->String
-      return "WriteVar($,$)"(name,new_value)
+      return "WriteVar($,$)"(var.name,new_value)
 endClass
 
-class ReadVar( t, name:String ) : Cmd
+class ReadVar : Cmd
+  PROPERTIES
+    var : Var
+
   METHODS
-    method is_value->Logical
-      return true
+    method init( var )
+      t = var.t
 
     method to->String
-      return "ReadVar($)"(name)
+      return "ReadVar($)"(var.name)
+
+    method type->Type
+      return var.type
 endClass
 

@@ -1,0 +1,15 @@
+module F2
+
+enum Type
+  CATEGORIES
+    NONE
+    LOGICAL
+    CHARACTER
+    INTEGER
+    STRING
+
+  METHODS
+    method exists->Logical
+      return this != NONE
+endEnum
+

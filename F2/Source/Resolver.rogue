@@ -9,11 +9,10 @@ class Resolver : FroleyVisitor
         trace "TODO"
         throw cmd.t.error( "TODO" )
       else
-        cur_element.vars.add( cmd.name )
-        return dispatch(ReadVar(cmd.t,cmd.name))
+        return ReadVar(cur_element.define_var(cmd.t,cmd.name)).dispatch(this)
       endIf
 
     method visit( cmd:Assign )->Cmd [override]
-      return dispatch( cmd.target.resolve_assignment(cmd,this) )
+      return cmd.target.resolve_assignment( cmd, this )
 endClass
 

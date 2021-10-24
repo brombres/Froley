@@ -187,7 +187,7 @@ class GenerateRogue : FroleyVisitor
       return cmd
 
     method visit( cmd:ReadVar )->Cmd  [override]
-      write cmd.name
+      write cmd.var.name
       return cmd
 
     method visit( cmd:RoutineDef )->Cmd  [override]
@@ -224,6 +224,7 @@ class GenerateRogue : FroleyVisitor
                |    output   = StringBuilder()
                |
                |    start_ip = 0
+               |    ip       : Int32
                |    ip_map   = StringTable<<Int32>>()
       local map = @{}
       forEach (r in cmd.routines) map[r.name] = r.ip
@@ -231,9 +232,26 @@ class GenerateRogue : FroleyVisitor
 
       writeln @|
                |    # Generated Properties
-      #forEach (var_name in cmd.vars)
-      #  writeln "    $ : Var"(var_name)
-      #endForEach
+      local max_w = 0
+      max_w .= or_larger( (forEach in cmd.vars).name.count )
+
+      forEach (v in cmd.vars)
+        write "    $ : "(v.name.left_justified(max_w))
+        which (v.type)
+          case Type.NONE
+            throw v.t.error( "Cannot determine variable type of '$'. Set to an initial value."(v.name) )
+          case Type.LOGICAL
+            writeln "Logical"
+          case Type.CHARACTER
+            writeln "Character"
+          case Type.INTEGER
+            writeln "Int32"
+          case Type.STRING
+            writeln "String"
+          others
+            throw v.t.error( "[INTERNAL] Unhandled type '$'."(v.type) )
+        endWhich
+      endForEach
 
       writeln @|
                |  METHODS
@@ -246,14 +264,14 @@ class GenerateRogue : FroleyVisitor
                |    method init( filepath, scanner )
                |      noAction
                |
-               |    method execute( start_ip )->$Token[]
-               |      return execute
+               |    method execute( start_ip )
+               |      execute
                |
-               |    method execute( label:String )->$Token[]
+               |    method execute( label:String )
                |      start_ip = ip_map[ label ]
-               |      return execute
+               |      execute
                |
-               |    method execute->$Token[]
+               |    method execute
                |      local ip = start_ip
                |      loop
                |        ++ip
@@ -265,7 +283,6 @@ class GenerateRogue : FroleyVisitor
                |            escapeLoop
                |        endWhich
                |      endLoop
-               |      return tokens
                |
                |endClass
       writer.close
@@ -282,7 +299,7 @@ class GenerateRogue : FroleyVisitor
       return cmd
 
     method visit( cmd:WriteVar )->Cmd  [override]
-      write "$ = " (cmd.name)
+      write "$ = " (cmd.var.name)
       #write "[$]" (cmd.new_value.type_name)
       dispatch( cmd.new_value )
       return cmd

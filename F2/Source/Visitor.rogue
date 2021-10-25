@@ -197,6 +197,26 @@ class Visitor
 
     method visit( cmd:SyntaxError )->Cmd
       if (cmd.args) cmd.args = cmd.args.dispatch( this ) as CmdList
+      return cmd
 
+    method visit( cmd:CastTo )->Cmd
+      cmd.operand = cmd.operand.dispatch( this )
+      return cmd
+
+    method visit( cmd:CastToLogical )->Cmd
+      cmd.operand = cmd.operand.dispatch( this )
+      return cmd
+
+    method visit( cmd:CastToCharacter )->Cmd
+      cmd.operand = cmd.operand.dispatch( this )
+      return cmd
+
+    method visit( cmd:CastToInteger )->Cmd
+      cmd.operand = cmd.operand.dispatch( this )
+      return cmd
+
+    method visit( cmd:CastToString )->Cmd
+      cmd.operand = cmd.operand.dispatch( this )
       return cmd
 endClass
+

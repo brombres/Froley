@@ -2,6 +2,23 @@ module F2
 
 class Cmd( t:Token )
   METHODS
+    method cast_to( to_type:Type )->Cmd
+      if (require_type == to_type) return this  # no change
+
+      which (to_type)
+        case Type.LOGICAL:   return CastToLogical( t, this )
+        case Type.CHARACTER: return CastToCharacter( t, this )
+        case Type.INTEGER:   return CastToInteger( t, this )
+        case Type.STRING:    return CastToString( t, this )
+        others
+          throw t.error( "[INTERNAL] Unhandled cast type: $."(type) )
+      endWhich
+
+    method common_type( other:Cmd )->Type
+      local a = require_type
+      local b = other.require_type
+      return Type( a->Int32.or_larger(b->Int32) )
+
     method dispatch( visitor:Visitor )->Cmd [propagated]
       return visitor.visit( this )
 
@@ -431,10 +448,24 @@ class ReadVar : Cmd
       return var.type
 endClass
 
-
-
 class SyntaxError( t, args:CmdList ) : Cmd
   METHODS
     method to->String
       return "SyntaxError($)"(args)
 endClass
+
+class CastTo( t, operand:Cmd ) : Cmd
+endClass
+
+class CastToLogical : CastTo
+endClass
+
+class CastToCharacter : CastTo
+endClass
+
+class CastToInteger : CastTo
+endClass
+
+class CastToString : CastTo
+endClass
+

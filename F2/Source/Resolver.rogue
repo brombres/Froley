@@ -14,5 +14,13 @@ class Resolver : FroleyVisitor
 
     method visit( cmd:Assign )->Cmd [override]
       return cmd.target.resolve_assignment( cmd, this )
+
+    method visit( cmd:SyntaxError )->Cmd [override]
+      if (cmd.args)
+        forEach (arg at i in cmd.args)
+          cmd.args[i] = arg.cast_to( Type.STRING ).dispatch( this )
+        endForEach
+      endIf
+      return cmd
 endClass
 

@@ -283,12 +283,40 @@ class RogueGenerator : FroleyVisitor
                |    method init( filepath, scanner )
                |      noAction
                |
+               |    method describe_character( c:Character )->String
+               |      if (c == 10 or c == 13)       return "end of line";
+               |      elseIf (c == '\'')            return ''"'"''
+               |      elseIf (c >= 32 and c != 127) return "'$'" (c)
+               |      else                          return "'$'" (c.to_escaped_ascii)
+               |
                |    method execute( start_ip )
                |      execute
                |
                |    method execute( label:String )
                |      start_ip = ip_map[ label ]
                |      execute
+               |
+               |    method t( type:$TokenType, content=null:String )->$Token
+               |      return $Token( type, filepath, scanner.source, line, column, content )
+               |
+               |    method throw_expected_character_error( ch:Character )
+               |      local message = "Syntax error - expected $, found " (describe_character(ch))
+               |      if (scanner.has_another) message += describe_character(scanner.peek) + "."
+               |      else                     message += "end of input."
+               |      throw $ModuleNameCompileError( filepath, scanner.source, scanner.line, scanner.column, message )
+               |
+               |    method throw_syntax_error( message=null:String )
+               |      if (not message)
+               |        local builder = StringBuilder()
+               |        builder.print "Syntax error - unexpected "
+               |        if (not scanner.has_another)
+               |          builder.println "end of input."
+               |        else
+               |          builder.print( describe_character(scanner.peek) ).print( '.' )
+               |        endIf
+               |        message = builder->String
+               |      endIf
+               |      throw $ModuleNameCompileError( filepath, scanner.source, scanner.line, scanner.column, message )
                |
                |    method execute
                |      local ip = start_ip
@@ -303,8 +331,6 @@ class RogueGenerator : FroleyVisitor
                |        endWhich
                |      endLoop
                |
-               |    method t( type:$TokenType, content=null:String )->$Token
-               |      return $Token( type, filepath, scanner.source, line, column, content )
                |endClass
       writer.close
 
@@ -319,15 +345,16 @@ class RogueGenerator : FroleyVisitor
       endForEach
       return cmd
 
-    method visit( cmd:SyntaxError )->Cmd  [override]
-      write "throw t($TokenType.COMPILE_ERROR).error("
+    method visit( cmd:ScanError )->Cmd  [override]
+      write "throw_syntax_error"
       if (cmd.args and cmd.args.count)
+        write "("
         forEach (arg at i in cmd.args)
           if (i > 0) write "+"
           cmd.args.dispatch( this )
         endForEach
+        write ")"
       endIf
-      write ")"
       return cmd
 
     method visit( cmd:WriteVar )->Cmd  [override]

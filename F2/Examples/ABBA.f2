@@ -2,4 +2,4 @@
 scanner ABBAScanner
 
 + start
-  syntaxError "TODO"
+  syntaxError

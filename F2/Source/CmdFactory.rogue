@@ -21,7 +21,7 @@ class CmdFactory
         case 10: return Collect( t, args.cmd_as<<CmdList>>(0) )
         case 11: return Print( t, args.cmd_as<<CmdList>>(0) )
         case 12: return Println( t, args.cmd_as<<CmdList>>(0) )
-        case 13: return SyntaxError( t, args.cmd_as<<CmdList>>(0) )
+        case 13: return ScanError( t, args.cmd_as<<CmdList>>(0) )
         case 14: return Increment( t, args[0] )
         case 15: return Decrement( t, args[0] )
         case 16: return Assign( t, args[0], args[1] )

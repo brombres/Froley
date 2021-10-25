@@ -448,10 +448,10 @@ class ReadVar : Cmd
       return var.type
 endClass
 
-class SyntaxError( t, args:CmdList ) : Cmd
+class ScanError( t, args:CmdList ) : Cmd
   METHODS
     method to->String
-      return "SyntaxError($)"(args)
+      return "ScanError($)"(args)
 endClass
 
 class CastTo( t, operand:Cmd ) : Cmd

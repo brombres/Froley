@@ -361,7 +361,7 @@ SYMBOL_STAR         *
   on "syntaxError"
     if (nextIs(EOL)) createNull
     else             args
-    produce SyntaxError(args:CmdList)
+    produce ScanError(args:CmdList)
   endOn
 
   on "++", expression -> Increment(target)

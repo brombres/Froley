@@ -195,7 +195,7 @@ class Visitor
     method visit( cmd:ReadVar )->Cmd
       return cmd
 
-    method visit( cmd:SyntaxError )->Cmd
+    method visit( cmd:ScanError )->Cmd
       if (cmd.args) cmd.args = cmd.args.dispatch( this ) as CmdList
       return cmd
 

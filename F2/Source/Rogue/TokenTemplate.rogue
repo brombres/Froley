@@ -11,8 +11,8 @@ augment RogueGenerator
        |      local result = $ClassName( new_type, filepath, source, line, column, content )
        |      return result
        |
-       |    method error( message:String )->CompileError
-       |      return CompileError( filepath, source, line, column, message )
+       |    method error( message:String )->$ModuleNameCompileError
+       |      return $ModuleNameCompileError( filepath, source, line, column, message )
        |
        |    method to->String
        |      if (content) return content

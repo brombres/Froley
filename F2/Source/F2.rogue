@@ -6,7 +6,7 @@
 $requireRogue "1.8.1"
 
 $include "FroleyVisitor.rogue"
-$include "GenerateRogue.rogue"
+$include "Rogue/RogueGenerator.rogue"
 $include "Organizer.rogue"
 $include "Parser.rogue"
 $include "Program.rogue"
@@ -37,8 +37,8 @@ class Froley
       #trace command
       # has //options and possibly //args
       #println( Tokenizer( File("Examples/LineCount.f2") ).tokenize )
-      local nodes = Parser().[open(File("Examples/LineCount.f2"))].parse("program")
+      local nodes = Parser().[open(File("Examples/ABBA.f2"))].parse("program")
       local program = Program( nodes )
       println program
-      program.generate_rogue( "Build/LineCount" )
+      program.generate_rogue( "Build/ABBA" )
 endClass

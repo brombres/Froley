@@ -35,29 +35,30 @@ enum TokenType( symbol:String, attributes=TokenTypeAttribute.NONE:TokenTypeAttri
   KEYWORD_PRODUCE("produce")                                  = 24
   KEYWORD_READ("read")                                        = 25
   KEYWORD_SCANNER("scanner",TokenTypeAttribute.STRUCTURAL)    = 26
-  KEYWORD_WHICH("which")                                      = 27
-  KEYWORD_WHILE("while")                                      = 28
-  SYMBOL_ASSIGN("=")                                          = 29
-  SYMBOL_CARET("^")                                           = 30
-  SYMBOL_CLOSE_PAREN(")",TokenTypeAttribute.STRUCTURAL)       = 31
-  SYMBOL_CLOSE_SQUARE("]",TokenTypeAttribute.STRUCTURAL)      = 32
-  SYMBOL_COLON(":")                                           = 33
-  SYMBOL_COMMA(",")                                           = 34
-  SYMBOL_DOT_DOT("..")                                        = 35
-  SYMBOL_EQ("==")                                             = 36
-  SYMBOL_GE(">=")                                             = 37
-  SYMBOL_GT(">")                                              = 38
-  SYMBOL_LE("<=")                                             = 39
-  SYMBOL_LT("<")                                              = 40
-  SYMBOL_NE("!=")                                             = 41
-  SYMBOL_MINUS("-")                                           = 42
-  SYMBOL_MINUS_MINUS("--")                                    = 43
-  SYMBOL_OPEN_PAREN("(")                                      = 44
-  SYMBOL_OPEN_SQUARE("[")                                     = 45
-  SYMBOL_PLUS("+")                                            = 46
-  SYMBOL_PLUS_PLUS("++")                                      = 47
-  SYMBOL_SEMICOLON(";")                                       = 48
-  SYMBOL_SINGLE_QUOTE("'")                                    = 49
-  SYMBOL_SLASH("/")                                           = 50
-  SYMBOL_STAR("*")                                            = 51
+  KEYWORD_SYNTAX_ERROR("syntaxError")                         = 27
+  KEYWORD_WHICH("which")                                      = 28
+  KEYWORD_WHILE("while")                                      = 29
+  SYMBOL_ASSIGN("=")                                          = 30
+  SYMBOL_CARET("^")                                           = 31
+  SYMBOL_CLOSE_PAREN(")",TokenTypeAttribute.STRUCTURAL)       = 32
+  SYMBOL_CLOSE_SQUARE("]",TokenTypeAttribute.STRUCTURAL)      = 33
+  SYMBOL_COLON(":")                                           = 34
+  SYMBOL_COMMA(",")                                           = 35
+  SYMBOL_DOT_DOT("..")                                        = 36
+  SYMBOL_EQ("==")                                             = 37
+  SYMBOL_GE(">=")                                             = 38
+  SYMBOL_GT(">")                                              = 39
+  SYMBOL_LE("<=")                                             = 40
+  SYMBOL_LT("<")                                              = 41
+  SYMBOL_NE("!=")                                             = 42
+  SYMBOL_MINUS("-")                                           = 43
+  SYMBOL_MINUS_MINUS("--")                                    = 44
+  SYMBOL_OPEN_PAREN("(")                                      = 45
+  SYMBOL_OPEN_SQUARE("[")                                     = 46
+  SYMBOL_PLUS("+")                                            = 47
+  SYMBOL_PLUS_PLUS("++")                                      = 48
+  SYMBOL_SEMICOLON(";")                                       = 49
+  SYMBOL_SINGLE_QUOTE("'")                                    = 50
+  SYMBOL_SLASH("/")                                           = 51
+  SYMBOL_STAR("*")                                            = 52
 endEnum

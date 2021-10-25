@@ -31,6 +31,7 @@ KEYWORD_PRINTLN         println
 KEYWORD_PRODUCE         produce
 KEYWORD_READ            read
 KEYWORD_SCANNER         scanner     [structural]
+KEYWORD_SYNTAX_ERROR    syntaxError
 KEYWORD_WHICH           which
 KEYWORD_WHILE           while
 
@@ -354,12 +355,20 @@ SYMBOL_STAR         *
   endOn
 
 + statement
-  on "collect", args -> Collect(args:CmdList)
-  on "print",   args -> Print(args:CmdList)
-  on "println", args -> Println(args:CmdList)
+  on "collect",      args -> Collect(args:CmdList)
+  on "print",        args -> Print(args:CmdList)
+  on "println",      args -> Println(args:CmdList)
+  on "syntaxError"
+    if (nextIs(EOL)) createNull
+    else             args
+    produce SyntaxError(args:CmdList)
+  endOn
+
   on "++", expression -> Increment(target)
   on "--", expression -> Decrement(target)
+
   expression
+
   on "=", expression -> Assign(target,new_value)
   on "++", expression -> Increment(target)
   on "--", expression -> Decrement(target)

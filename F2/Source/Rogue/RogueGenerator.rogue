@@ -1,6 +1,9 @@
 module F2
 
-class GenerateRogue : FroleyVisitor
+$include "CompileErrorTemplate.rogue"
+$include "ScannerTemplate.rogue"
+
+class RogueGenerator : FroleyVisitor
   PROPERTIES
     folder     : String
     writer     : PrintWriter
@@ -17,6 +20,8 @@ class GenerateRogue : FroleyVisitor
       #generate_scanner( forEach in scanners )
       #generate_parser( forEach in parsers )
       #nodes.dispatch( Organizer(this) )
+
+      create_file( cur_module+"CompileErrorTemplate", template_CompileError )
 
       # TokenType
       create_file( cur_module+"TokenType" )
@@ -35,7 +40,7 @@ class GenerateRogue : FroleyVisitor
                |endClass
       writer.close
 
-    method create_file( class_name, filename=null:String )
+    method create_file( class_name, template=null:String, filename=null:String )
 
       if (not filename) filename = class_name + ".rogue"
 
@@ -44,6 +49,10 @@ class GenerateRogue : FroleyVisitor
       println filename
 
       writer = File(folder/filename).print_writer
+      if (template)
+        write( template )
+        writer.close
+      endIf
 
     method visit( cmd:Cmd )->Cmd  [override]
       throw cmd.t.error( "Rogue code generation not defined for $."(cmd.type_name) )
@@ -201,15 +210,7 @@ class GenerateRogue : FroleyVisitor
 
     method visit( cmd:ScannerDef )->Cmd  [override]
       # OutputFolder/XYZScanner.rogue
-      create_file( cmd.name )
-      writeln @|$module
-               |$include "$ClassNameCore.rogue"
-               |$include "$Token.rogue"
-               |$include "$TokenType.rogue"
-               |
-               |class $ClassName : $ClassNameCore
-               |endClass
-      writer.close
+      create_file( cmd.name, template_Scanner )
 
       # OutputFolder/XYZScannerCore.rogue
       create_file( cmd.name+"Core" )
@@ -230,28 +231,30 @@ class GenerateRogue : FroleyVisitor
       forEach (r in cmd.routines) map[r.name] = r.ip
       writeln( map.to_json )
 
-      writeln @|
-               |    # Generated Properties
-      local max_w = 0
-      max_w .= or_larger( (forEach in cmd.vars).name.count )
+      if (cmd.vars.count)
+        writeln @|
+                 |    # Generated Properties
+        local max_w = 0
+        max_w .= or_larger( (forEach in cmd.vars).name.count )
 
-      forEach (v in cmd.vars)
-        write "    $ : "(v.name.left_justified(max_w))
-        which (v.type)
-          case Type.NONE
-            throw v.t.error( "Cannot determine variable type of '$'. Set to an initial value."(v.name) )
-          case Type.LOGICAL
-            writeln "Logical"
-          case Type.CHARACTER
-            writeln "Character"
-          case Type.INTEGER
-            writeln "Int32"
-          case Type.STRING
-            writeln "String"
-          others
-            throw v.t.error( "[INTERNAL] Unhandled type '$'."(v.type) )
-        endWhich
-      endForEach
+        forEach (v in cmd.vars)
+          write "    $ : "(v.name.left_justified(max_w))
+          which (v.type)
+            case Type.NONE
+              throw v.t.error( "Cannot determine variable type of '$'. Set to an initial value."(v.name) )
+            case Type.LOGICAL
+              writeln "Logical"
+            case Type.CHARACTER
+              writeln "Character"
+            case Type.INTEGER
+              writeln "Int32"
+            case Type.STRING
+              writeln "String"
+            others
+              throw v.t.error( "[INTERNAL] Unhandled type '$'."(v.type) )
+          endWhich
+        endForEach
+      endIf
 
       writeln @|
                |  METHODS
@@ -297,6 +300,9 @@ class GenerateRogue : FroleyVisitor
         endIf
       endForEach
       return cmd
+
+      #method visit( cmd:SyntaxError )->Cmd  [override]
+      #write
 
     method visit( cmd:WriteVar )->Cmd  [override]
       write "$ = " (cmd.var.name)

@@ -6,12 +6,13 @@ class Error( filepath:String, source:String, line:Int32, column:Int32, message:S
 
     method init( message )
 
-    method print
+    method describe
       Console.error.println this->String
 
-    method to->String
+    method description->String
+      local w = Console.width.or_smaller(80)
       local builder = StringBuilder()
-      builder.println( "=" * 79 )
+      builder.println( "=" * w )
       builder.print( "ERROR" )
       if (filepath)
         builder.print( '' in "$"'' (filepath) )
@@ -20,23 +21,23 @@ class Error( filepath:String, source:String, line:Int32, column:Int32, message:S
         endIf
       endIf
       builder.println.println
-      builder.println( message.word_wrapped(79) )
+      builder.println( message.word_wrapped(w) )
       builder.println
 
       if (line and column and source)
         builder.println
-        local skip = which{ column<=70:0 || column-70 }
+        local skip = which{ column<=(w-10):0 || column-(w-10) }
         forEach (line at index in LineReader(source))
           if (index+1 == this.line)
             if (skip) line = line.from( skip )
-            builder.println( line.leftmost(79) )
+            builder.println( line.leftmost(w) )
             escapeForEach
           endIf
         endForEach
         builder.print( " " * (column-(skip+1)) ).println( '^' )
       endIf
 
-      builder.println( "=" * 79 )
+      builder.println( "=" * w )
       return builder->String
 endClass
 

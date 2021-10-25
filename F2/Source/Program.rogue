@@ -16,7 +16,7 @@ class Program
       return ""+nodes
 
     method generate_rogue( folder:String )
-      GenerateRogue( this, folder )
+      RogueGenerator( this, folder )
 
 endClass
 

@@ -431,3 +431,10 @@ class ReadVar : Cmd
       return var.type
 endClass
 
+
+
+class SyntaxError( t, args:CmdList ) : Cmd
+  METHODS
+    method to->String
+      return "SyntaxError($)"(args)
+endClass

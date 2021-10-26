@@ -214,7 +214,7 @@ class RogueGenerator : FroleyVisitor
       return cmd
 
     method visit( cmd:RoutineDef )->Cmd  [override]
-      writeln "          case $"(cmd.ip)
+      writeln "          case ip_$"(cmd.name)
 
       indent += 12
       prior.visit( cmd )
@@ -228,8 +228,14 @@ class RogueGenerator : FroleyVisitor
 
       # OutputFolder/XYZScannerCore.rogue
       create_file( cmd.name+"Core" )
-      write   @|$module
+      writeln @|$module
                |class $ClassName
+               |  DEFINITIONS
+      forEach (r in cmd.routines)
+        writeln "    ip_$ = $" (r.name,r.ip)
+      endForEach
+
+      write   @|
                |  PROPERTIES
                |    filepath : String
                |    scanner  : Scanner
@@ -242,10 +248,6 @@ class RogueGenerator : FroleyVisitor
                |
                |    start_ip = 0
                |    ip       : Int32
-               |    ip_map   = StringTable<<Int32>>()
-      local map = @{}
-      forEach (r in cmd.routines) map[r.name] = r.ip
-      writeln( map.to_json )
 
       if (cmd.vars.count)
         writeln @|
@@ -290,10 +292,6 @@ class RogueGenerator : FroleyVisitor
                |      else                          return "'$'" (c.to_escaped_ascii)
                |
                |    method execute( start_ip )
-               |      execute
-               |
-               |    method execute( label:String )
-               |      start_ip = ip_map[ label ]
                |      execute
                |
                |    method t( type:$TokenType, content=null:String )->$Token

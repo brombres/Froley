@@ -1,5 +1,14 @@
 # Scans A,B tokens
+tokens AB
+SYMBOL_A A
+SYMBOL_A a
+SYMBOL_B B
+SYMBOL_B b
+
 scanner ABBAScanner
 
 + start
+  syntaxError
+
++ another
   syntaxError

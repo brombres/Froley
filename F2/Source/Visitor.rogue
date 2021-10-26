@@ -218,5 +218,17 @@ class Visitor
     method visit( cmd:CastToString )->Cmd
       cmd.operand = cmd.operand.dispatch( this )
       return cmd
-endClass
 
+    method visit( cmd:Tokens )->Cmd
+      if (cmd.definitions) cmd.definitions = cmd.definitions.dispatch( this ) as CmdList
+      return cmd
+
+    method visit( cmd:TokenDefinition )->Cmd
+      if (cmd.symbol) cmd.symbol = cmd.symbol.dispatch( this )
+      if (cmd.attributes) cmd.attributes = cmd.attributes.dispatch( this ) as CmdList
+
+      return cmd
+
+    method visit( cmd:Symbol )->Cmd
+      return cmd
+endClass

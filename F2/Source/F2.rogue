@@ -36,7 +36,11 @@ class Froley
 
       #trace command
       # has //options and possibly //args
-      #println( Tokenizer( File("Examples/LineCount.f2") ).tokenize )
+      #println( Tokenizer( File("Examples/ABBA.f2") ).tokenize )
+      #forEach (t in Tokenizer( File("Examples/ABBA.f2") ).tokenize)
+      #  println "[$] $"(t.type,t)
+      #endForEach
+
       local nodes = Parser().[open(File("Examples/ABBA.f2"))].parse("program")
       local program = Program( nodes )
       println program

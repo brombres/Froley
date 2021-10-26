@@ -469,3 +469,24 @@ endClass
 class CastToString : CastTo
 endClass
 
+
+
+class Tokens( t, name:String, definitions:CmdList ) : Cmd
+  METHODS
+    method to->String
+      return "Tokens($,$)"(name,definitions)
+endClass
+
+
+class TokenDefinition( t, name:String, symbol:Cmd, attributes:CmdList ) : Cmd
+  METHODS
+    method to->String
+      return "TokenDefinition($,$,$)"(name,symbol,attributes)
+endClass
+
+
+class Symbol( t, name:String ) : Cmd
+  METHODS
+    method to->String
+      return "$"(name)
+endClass

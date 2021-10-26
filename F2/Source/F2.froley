@@ -3,9 +3,16 @@ EOL        EOL
 IDENTIFIER identifier [content]
 INTEGER    integer    [content]
 STRING     string     [content]
+SYMBOL     symbol     [content]
 
 [attributes]
 structural
+
+[element_keywords]
+KEYWORD_PARSER          parser      [structural]
+KEYWORD_SCANNER         scanner     [structural]
+KEYWORD_TOKENS          tokens      [structural]
+# For changes here be sure to adjust scanning_token_defs logic
 
 [tokenizer_keywords]
 KEYWORD_COLLECT         collect
@@ -25,12 +32,10 @@ KEYWORD_IF              if
 KEYWORD_NOT             not
 KEYWORD_OR              or
 KEYWORD_OTHERS          others
-KEYWORD_PARSER          parser      [structural]
 KEYWORD_PRINT           print
 KEYWORD_PRINTLN         println
 KEYWORD_PRODUCE         produce
 KEYWORD_READ            read
-KEYWORD_SCANNER         scanner     [structural]
 KEYWORD_SYNTAX_ERROR    syntaxError
 KEYWORD_WHICH           which
 KEYWORD_WHILE           while
@@ -87,6 +92,26 @@ SYMBOL_STAR         *
 
   syntaxError
 
++ scan_token_def
+  if (not hasAnother) halt
+
+  consume_whitespace
+  markSourcePosition
+
+  if (consume('\n'))
+    mode tokenize_froley
+    produce EOL
+  endIf
+
+  # Scan everything to the next space; backslash escapes
+  while (hasAnother and not nextIs(' ') and not nextIs('\n'))
+    ch = read
+    if (ch == '\\' and hasAnother) ch = read
+    collect ch
+  endWhile
+
+  produce SYMBOL
+
 - consume_whitespace
   while (consume(' ') or consume('\t')) noAction
   return
@@ -113,6 +138,23 @@ SYMBOL_STAR         *
         ch = peek
       endIf
     endWhile
+
+    which (buffer)
+      case "parser"
+        @scanning_token_defs = 0
+        produce KEYWORD_PARSER
+      case "scanner"
+        @scanning_token_defs = 0
+        produce KEYWORD_SCANNER
+      case "tokens"
+        @scanning_token_defs = 1
+        produce KEYWORD_TOKENS
+      others
+        if (@scanning_token_defs)
+          mode scan_token_def
+          produce IDENTIFIER
+        endIf
+    endWhich
 
     which (buffer)
       produceAny [tokenizer_keywords]
@@ -176,16 +218,21 @@ SYMBOL_STAR         *
 + element
   on "scanner"
     identifier
-    mustConsume EOL
-    while (consume(EOL)) noAction
+    must_consume_eols
     routines
     produce ScannerDef(name:String,code)
+
   elseOn "parser"
     identifier
-    mustConsume EOL
-    while (consume(EOL)) noAction
+    must_consume_eols
     routines
     produce ParserDef(name:String,code)
+
+  elseOn "tokens"
+    if (consume(EOL)) createNull
+    else              identifier
+    token_definitions
+    produce Tokens(name:String,definitions:CmdList)
   endOn
   syntaxError
 
@@ -194,18 +241,23 @@ SYMBOL_STAR         *
   syntaxError "Identifier expected."
 
 + routines
+  beginList
 
-  on "+"
-    routine_name_and_base_type
-    multi_line_statements
-    produce RoutineDef(name:String,base_type:String,statements)
-  elseOn "-"
-    routine_name_and_base_type
-    multi_line_statements
-    produce SubroutineDef(name:String,base_type:String,statements)
-  endOn
+  consume_eols
+  while (nextIs('+') or nextIs('-'))
+    on "+"
+      routine_name_and_base_type
+      multi_line_statements
+      create RoutineDef(name:String,base_type:String,statements)
+    elseOn "-"
+      routine_name_and_base_type
+      multi_line_statements
+      create SubroutineDef(name:String,base_type:String,statements)
+    endOn
+    consume_eols
+  endWhile
 
-  syntaxError
+  produceList
 
 + routine_name_and_base_type
   identifier
@@ -215,6 +267,25 @@ SYMBOL_STAR         *
     createNull
   endIf
   must_consume_eols
+
++ token_definitions
+  beginList
+
+  consume_eols
+  while (hasAnother and not nextHasAttribute(structural))
+    identifier
+    if (nextIs(SYMBOL)) symbol
+    else                createNull
+    createNull  # [attributes] placeholder
+    create TokenDefinition(name:String,symbol,attributes:CmdList)
+    consume_eols
+  endWhile
+
+  produceList
+
++ symbol
+  on SYMBOL -> Symbol(name=t.content:String)
+  syntaxError "Symbol expected."
 
 + consume_eols
   while (consume(EOL)) noAction

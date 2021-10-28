@@ -525,8 +525,9 @@ SYMBOL_STAR         *
 - term
   on '(' expression ')': return
   on "consume", alternatives -> Consume(alternatives:CmdList)
-  on "hasNext"  -> HasNext
-  on "read"     -> Read
+  on "hasNext"               -> HasNext
+  on "produce", expression   -> ScannerProduce(token_type:Cmd)
+  on "read"                  -> Read
   on "return"
     if (nextIs(EOL)) createNull
     else             expression

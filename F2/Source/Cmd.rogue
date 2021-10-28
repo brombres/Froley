@@ -6,10 +6,11 @@ class Cmd( t:Token )
       if (type == to_type) return this  # no cast needed
 
       which (to_type)
-        case Type.LOGICAL:   return CastToLogical( t, this )
-        case Type.CHARACTER: return CastToCharacter( t, this )
-        case Type.INTEGER:   return CastToInteger( t, this )
-        case Type.STRING:    return CastToString( t, this )
+        case Type.LOGICAL:    return CastToLogical( t, this )
+        case Type.CHARACTER:  return CastToCharacter( t, this )
+        case Type.INTEGER:    return CastToInteger( t, this )
+        case Type.TOKEN_TYPE: return CastToTokenType( t, this )
+        case Type.STRING:     return CastToString( t, this )
         others
           throw t.error( "[INTERNAL] Unhandled cast type: $."(type) )
       endWhich
@@ -510,6 +511,15 @@ class CastToInteger : Unary
       return Type.INTEGER
 endClass
 
+class CastToTokenType : Unary
+  METHODS
+    method to->String [override]
+      return "$->TokenType"(operand->String)
+
+    method type->Type
+      return Type.TOKEN_TYPE
+endClass
+
 class CastToString : Unary
   METHODS
     method to->String [override]
@@ -578,5 +588,22 @@ class Return( t, value:Cmd ) : Cmd
   METHODS
     method to->String
       return "Return($)"(value)
+endClass
+
+
+
+class ScannerProduce( t, token_type:Cmd ) : Cmd
+  METHODS
+    method to->String
+      return "ScannerProduce($)"(token_type)
+endClass
+
+class LiteralTokenType( t, token_type:TokenDef ) : Literal
+  METHODS
+    method to->String
+      return "LiteralTokenType($)"(token_type.name)
+
+    method type->Type
+      return Type.TOKEN_TYPE
 endClass
 

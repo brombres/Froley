@@ -42,6 +42,7 @@ class Froley
       #endForEach
 
       local nodes = Parser().[open(File("Examples/ABBA.f2"))].parse("program")
+println nodes
       local program = Program( nodes )
       println program
       program.generate_rogue( "Build/ABBA" )

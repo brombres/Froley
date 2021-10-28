@@ -20,7 +20,12 @@ class Resolver : FroleyVisitor
       if (r)
         return Call(cmd.t,r).dispatch( this )
       else
-        return ReadVar(cur_element.define_var(cmd.t,cmd.name)).dispatch(this)
+        local t_def = program.tokens_by_name[ cmd.name ]
+        if (t_def)
+          return LiteralTokenType( cmd.t, t_def ).dispatch(this)
+        else
+          return ReadVar(cur_element.define_var(cmd.t,cmd.name)).dispatch(this)
+        endIf
       endIf
 
     method visit( cmd:Add )->Cmd  [override]
@@ -69,13 +74,18 @@ class Resolver : FroleyVisitor
 
       local t = cmd.t
       which (cmd.to_type)
-        case Type.LOGICAL:   return CastToLogical( t, operand )
-        case Type.CHARACTER: return CastToCharacter( t, operand )
-        case Type.INTEGER:   return CastToInteger( t, operand )
-        case Type.STRING:    return CastToString( t, operand )
+        case Type.LOGICAL:    return CastToLogical( t, operand )
+        case Type.CHARACTER:  return CastToCharacter( t, operand )
+        case Type.INTEGER:    return CastToInteger( t, operand )
+        case Type.TOKEN_TYPE: return CastToTokenType( t, operand )
+        case Type.STRING:     return CastToString( t, operand )
         others
           throw t.error( "[INTERNAL] Unhandled cast type: $."(cmd.to_type) )
       endWhich
+
+    method visit( cmd:ScannerProduce )->Cmd [override]
+      cmd.token_type = cmd.token_type.cast_to(Type.TOKEN_TYPE).dispatch(this)
+      return cmd
 
     method visit( cmd:ScanError )->Cmd [override]
       if (cmd.args)

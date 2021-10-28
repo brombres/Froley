@@ -205,6 +205,11 @@ class RogueGenerator : FroleyVisitor
       endIf
       return cmd
 
+    method visit( cmd:LiteralTokenType )->Cmd  [override]
+      write "$TokenType."
+      write cmd.token_type.name
+      return cmd
+
     method visit( cmd:LogicalAnd )->Cmd  [override]
       write "("
       cmd.left.dispatch( this )
@@ -252,6 +257,15 @@ class RogueGenerator : FroleyVisitor
         endForEach
         write ".println"
       endIf
+      return cmd
+
+    method visit( cmd:ScannerProduce )->Cmd  [override]
+      write "tokens.add( $Token("
+      cmd.token_type.dispatch( this )
+      write ",filepath,scanner.source,line,column"
+      # TODO: content string here
+      writeln ") )"
+      write "return"  # FIXME: figure out how to unwind execute() recursion on 'produce'.
       return cmd
 
     method visit( cmd:Read )->Cmd  [override]
@@ -302,6 +316,7 @@ class RogueGenerator : FroleyVisitor
                |
                |    start_ip   = 0
                |    ip         : Int32
+               |
 
       if (cmd.vars.count)
         writeln @|

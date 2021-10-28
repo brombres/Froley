@@ -7,7 +7,7 @@ class Organizer : FroleyVisitor
     method visit( cmd:Consume )->Cmd [override]
       if (cmd.alternatives)
         if (cmd.alternatives.count == 1)
-          return Consume( cmd.t, cmd.alternatives.first ).dispatch( this )
+          return ConsumeValue( cmd.t, cmd.alternatives.first ).dispatch( this )
         else
           local alts : Cmd
           forEach (alt in cmd.alternatives)

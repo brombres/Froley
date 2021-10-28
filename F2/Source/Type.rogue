@@ -6,6 +6,7 @@ enum Type
     LOGICAL
     CHARACTER
     INTEGER
+    TOKEN_TYPE
     STRING
 
   METHODS

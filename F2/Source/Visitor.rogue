@@ -218,6 +218,10 @@ class Visitor
       cmd.operand = cmd.operand.dispatch( this )
       return cmd
 
+    method visit( cmd:CastToTokenType )->Cmd
+      cmd.operand = cmd.operand.dispatch( this )
+      return cmd
+
     method visit( cmd:CastToString )->Cmd
       cmd.operand = cmd.operand.dispatch( this )
       return cmd
@@ -258,5 +262,12 @@ class Visitor
       return cmd
 
     method visit( cmd:LiteralStringOrCharacter )->Cmd
+      return cmd
+
+    method visit( cmd:ScannerProduce )->Cmd
+      if (cmd.token_type) cmd.token_type = cmd.token_type.dispatch( this )
+      return cmd
+
+    method visit( cmd:LiteralTokenType )->Cmd
       return cmd
 endClass

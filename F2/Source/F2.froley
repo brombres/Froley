@@ -1,9 +1,10 @@
 [tokens]
-EOL        EOL
-IDENTIFIER identifier [content]
-INTEGER    integer    [content]
-STRING     string     [content]
-SYMBOL     symbol     [content]
+EOL                 EOL
+IDENTIFIER          identifier [content]
+INTEGER             integer    [content]
+STRING              string     [content]
+STRING_OR_CHARACTER string     [content]
+SYMBOL              symbol     [content]
 
 [attributes]
 structural
@@ -20,6 +21,7 @@ KEYWORD_COLLECT         collect
 [common_keywords]
 KEYWORD_AND             and
 KEYWORD_CASE            case
+KEYWORD_CONSUME         consume
 KEYWORD_ELSE            else        [structural]
 KEYWORD_ELSE_IF         elseIf      [structural]
 KEYWORD_END_IF          endIf       [structural]
@@ -36,11 +38,13 @@ KEYWORD_PRINT           print
 KEYWORD_PRINTLN         println
 KEYWORD_PRODUCE         produce
 KEYWORD_READ            read
+KEYWORD_RETURN          return
 KEYWORD_SYNTAX_ERROR    syntaxError
 KEYWORD_WHICH           which
 KEYWORD_WHILE           while
 
 [symbols]
+SYMBOL_ALTERNATIVE  |
 SYMBOL_ASSIGN       =
 SYMBOL_CARET        ^
 SYMBOL_CLOSE_PAREN  )   [structural]
@@ -176,7 +180,9 @@ SYMBOL_STAR         *
 - scan_single_quoted_string
   if (not consume('\'')) return
   while (hasAnother)
-    if (consume('\'')) produce STRING
+    if (consume('\''))
+      produce STRING_OR_CHARACTER
+    endIf
     if (nextIs('\n')) syntaxError "Unterminated string."
     scan_literal_character
   endWhile
@@ -232,7 +238,7 @@ SYMBOL_STAR         *
     if (consume(EOL)) createNull
     else              identifier
     token_definitions
-    produce Tokens(name:String,definitions:CmdList)
+    produce TokenGroup(name:String,definitions:CmdList)
   endOn
   syntaxError
 
@@ -277,7 +283,7 @@ SYMBOL_STAR         *
     if (nextIs(SYMBOL)) symbol
     else                createNull
     createNull  # [attributes] placeholder
-    create TokenDefinition(name:String,symbol,attributes:CmdList)
+    create TokenDef(name:String,symbol:String,attributes:CmdList)
     consume_eols
   endWhile
 
@@ -446,7 +452,9 @@ SYMBOL_STAR         *
 
 + args
   if (consume('('))
+    consume_eols
     csv
+    consume_eols
     mustConsume(')')
   else
     csv
@@ -464,6 +472,24 @@ SYMBOL_STAR         *
   endWhile
 
   produceList
+
++ alternatives
+  mustConsume('(')
+
+  beginList
+  consume_eols
+  if (consume(')')) produceList
+
+  expression
+  consume_eols
+  while (consume("|"))
+    expression
+    consume_eols
+  endWhile
+
+  mustConsume(')')
+  produceList
+
 
 + expression
 
@@ -493,14 +519,22 @@ SYMBOL_STAR         *
   on "^" -> Power
 
 - pre_unary : PreUnary
-  on "-" -> Negate
+  on "-"   -> Negate
+  on "not" -> LogicalNot
 
 - term
   on '(' expression ')': return
+  on "consume", alternatives -> Consume(alternatives:CmdList)
   on "hasNext"  -> HasNext
   on "read"     -> Read
+  on "return"
+    if (nextIs(EOL)) createNull
+    else             expression
+    produce Return(value)
+  endOn
   on IDENTIFIER -> Access( name=t.content:String )
   on INTEGER    -> LiteralInt32( value=t.content:Int32 )
   on STRING     -> LiteralString( value=t.content:String )
+  on STRING_OR_CHARACTER -> LiteralStringOrCharacter( value=t.content:String )
   syntaxError
 

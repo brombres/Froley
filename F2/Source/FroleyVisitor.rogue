@@ -7,6 +7,7 @@ class FroleyVisitor : Visitor
     cur_module  = ""
     cur_element : ElementDef
     cur_routine : RoutineDef
+    cur_tokens  : TokenGroup
 
   METHODS
     method init( program )
@@ -25,6 +26,10 @@ class FroleyVisitor : Visitor
 
     method visit( cmd:ScannerDef )->Cmd [override]
       cur_element = cmd
+      return prior.visit( cmd )
+
+    method visit( cmd:TokenGroup )->Cmd [override]
+      cur_tokens = cmd
       return prior.visit( cmd )
 endClass
 

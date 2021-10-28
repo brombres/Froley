@@ -29,10 +29,13 @@ class RogueGenerator : FroleyVisitor
       create_file( cur_module+"TokenType" )
       writeln @|enum $ClassName( symbol:String, attributes=0:Int32 )
                |  ENUMERATE
+               |    # TODO: attributes
                |  CATEGORIES
-               |    EOI("end of input")
-               |    COMPILE_ERROR("compile error")
-               |endEnum
+      forEach (def in program.tokens_by_name)
+        write  ''    $("$"'' (def.name,def.symbol.to_escaped_ascii(''"''))
+        writeln ")"
+      endForEach
+      writeln @|endEnum
       writer.close
 
     method create_file( class_name, template=null:String, filename=null:String )
@@ -48,7 +51,7 @@ class RogueGenerator : FroleyVisitor
         writer.close
       endIf
 
-    method visit( cmd:CastTo )->Cmd  [override]
+    method visit( cmd:CastToLogical )->Cmd  [override]
       cmd.operand.dispatch( this )
       write "->Logical"
       return cmd
@@ -119,6 +122,17 @@ class RogueGenerator : FroleyVisitor
       write ")"
       return cmd
 
+    method visit( cmd:Consume )->Cmd  [override]
+      require cmd.candidates
+      if (cmd.candidates.type == Type.CHARACTER)
+        write "scanner.consume("
+      else
+        write "scanner.consume_any("
+      endIf
+      dispatch( cmd.candidates )
+      write ")"
+      return cmd
+
     method visit( cmd:Decrement )->Cmd  [override]
       write "--"
       dispatch( cmd.target )
@@ -163,7 +177,13 @@ class RogueGenerator : FroleyVisitor
       return cmd
 
     method visit( cmd:LiteralCharacter )->Cmd  [override]
-      writer.print( "'$'"(cmd.value.to_escaped_ascii("'")) )
+      which (cmd.value)
+        case '\n': write @|'\n'; trace cmd.value->Int32
+        case '\r': write @|'\r'; trace cmd.value->Int32
+        case '\t': write @|'\t'; trace cmd.value->Int32
+        others
+          write( "'$'"(cmd.value.to_escaped_ascii("'")) )
+      endWhich
       return cmd
 
     method visit( cmd:LiteralInt32 )->Cmd  [override]
@@ -176,6 +196,28 @@ class RogueGenerator : FroleyVisitor
       else
         writer.print( ''"$"''(cmd.value.to_escaped_ascii(''"'')) )
       endIf
+      return cmd
+
+    method visit( cmd:LogicalAnd )->Cmd  [override]
+      write "("
+      cmd.left.dispatch( this )
+      write " and "
+      cmd.right.dispatch( this )
+      write ")"
+      return cmd
+
+    method visit( cmd:LogicalNot )->Cmd  [override]
+      write "(not "
+      cmd.operand.dispatch( this )
+      write ")"
+      return cmd
+
+    method visit( cmd:LogicalOr )->Cmd  [override]
+      write "("
+      cmd.left.dispatch( this )
+      write " or "
+      cmd.right.dispatch( this )
+      write ")"
       return cmd
 
     method visit( cmd:Print )->Cmd  [override]
@@ -213,6 +255,11 @@ class RogueGenerator : FroleyVisitor
       write cmd.var.name
       return cmd
 
+    method visit( cmd:Return )->Cmd  [override]
+      # TODO: save return value first, if needed
+      write "return"
+      return cmd
+
     method visit( cmd:RoutineDef )->Cmd  [override]
       writeln "          case ip_$"(cmd.name)
 
@@ -237,17 +284,17 @@ class RogueGenerator : FroleyVisitor
 
       write   @|
                |  PROPERTIES
-               |    filepath : String
-               |    scanner  : Scanner
-               |    line     = 1
-               |    column   = 1
+               |    filepath   : String
+               |    scanner    : Scanner
+               |    line       = 1
+               |    column     = 1
                |
-               |    tokens   = $Token[]
-               |    buffer   = StringBuilder()
-               |    output   = StringBuilder()
+               |    tokens     = $Token[]
+               |    buffer     = StringBuilder()
+               |    output     = StringBuilder()
                |
-               |    start_ip = 0
-               |    ip       : Int32
+               |    start_ip   = 0
+               |    ip         : Int32
 
       if (cmd.vars.count)
         writeln @|
@@ -291,8 +338,8 @@ class RogueGenerator : FroleyVisitor
                |      elseIf (c >= 32 and c != 127) return "'$'" (c)
                |      else                          return "'$'" (c.to_escaped_ascii)
                |
-               |    method execute( start_ip )
-               |      execute
+               |    method execute
+               |      execute( start_ip )
                |
                |    method t( type:$TokenType, content=null:String )->$Token
                |      return $Token( type, filepath, scanner.source, line, column, content )
@@ -316,8 +363,7 @@ class RogueGenerator : FroleyVisitor
                |      endIf
                |      throw $ModuleNameCompileError( filepath, scanner.source, scanner.line, scanner.column, message )
                |
-               |    method execute
-               |      local ip = start_ip
+               |    method execute( ip:Int32 )
                |      loop
                |        ++ip
                |        which (ip-1)

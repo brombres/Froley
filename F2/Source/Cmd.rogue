@@ -3,7 +3,7 @@ module F2
 class Cmd( t:Token )
   METHODS
     method cast_to( to_type:Type )->Cmd
-      if (require_type == to_type) return this  # no change
+      if (type == to_type) return this  # no cast needed
 
       which (to_type)
         case Type.LOGICAL:   return CastToLogical( t, this )
@@ -131,7 +131,7 @@ endClass
 class LiteralString( t, value:String ) : Literal
   METHODS
     method to->String
-      return value
+      return value.to_escaped_ascii
 
     method type->Type
       return Type.STRING
@@ -140,10 +140,30 @@ endClass
 class LiteralCharacter( t, value:Character ) : Literal
   METHODS
     method to->String
-      return value
+      return value.to_escaped_ascii
 
     method type->Type
       return Type.CHARACTER
+endClass
+
+class LiteralStringOrCharacter( t, value:String ) : Literal
+  METHODS
+    method cast_to( to_type:Type )->Cmd
+      which (to_type)
+        case Type.CHARACTER
+          if (value.count == 0) return LiteralCharacter( t, 0 )
+          return LiteralCharacter( t, value[0] )
+        case Type.STRING
+          return LiteralString( t, value )
+        others
+          return prior.cast_to( to_type )
+      endWhich
+
+    method to->String
+      return value.to_escaped_ascii
+
+    method type->Type
+      return Type.STRING
 endClass
 
 class Unary( t, operand:Cmd ) : Cmd
@@ -454,34 +474,64 @@ class ScanError( t, args:CmdList ) : Cmd
       return "ScanError($)"(args)
 endClass
 
-class CastTo( t, operand:Cmd ) : Cmd
+class CastTo( t, operand, to_type:Type )  : Unary
+  METHODS
+    method to->String [override]
+      return "$->$"(operand,to_type)
+
+    method type->Type
+      return to_type
 endClass
 
-class CastToLogical : CastTo
+class CastToLogical : Unary
+  METHODS
+    method to->String [override]
+      return "$->Logical"(operand->String)
+
+    method type->Type
+      return Type.LOGICAL
 endClass
 
-class CastToCharacter : CastTo
+class CastToCharacter : Unary
+  METHODS
+    method to->String [override]
+      return "$->Character"(operand->String)
+
+    method type->Type
+      return Type.CHARACTER
 endClass
 
-class CastToInteger : CastTo
+class CastToInteger : Unary
+  METHODS
+    method to->String [override]
+      return "$->Integer"(operand->String)
+
+    method type->Type
+      return Type.INTEGER
 endClass
 
-class CastToString : CastTo
+class CastToString : Unary
+  METHODS
+    method to->String [override]
+      return "$->String"(operand->String)
+
+    method type->Type
+      return Type.STRING
 endClass
 
 
 
-class Tokens( t, name:String, definitions:CmdList ) : Cmd
+class TokenGroup( t, name:String, definitions:CmdList ) : Cmd
   METHODS
     method to->String
-      return "Tokens($,$)"(name,definitions)
+      return "TokenGroup($,$)"(name,definitions)
 endClass
 
 
-class TokenDefinition( t, name:String, symbol:Cmd, attributes:CmdList ) : Cmd
+class TokenDef( t, name:String, symbol:String, attributes:CmdList ) : Cmd
   METHODS
     method to->String
-      return "TokenDefinition($,$,$)"(name,symbol,attributes)
+      return "TokenDef($,$,$)"(name,symbol,attributes)
 endClass
 
 
@@ -490,3 +540,36 @@ class Symbol( t, name:String ) : Cmd
     method to->String
       return "$"(name)
 endClass
+
+
+class LogicalNot : Unary
+  METHODS
+    method op->String
+      return "not"
+endClass
+
+
+class Consume( t, alternatives:CmdList ) : Cmd
+  PROPERTIES
+    candidates : Cmd
+
+  METHODS
+    method init( t, candidates )
+
+    method to->String
+      return "Consume($)"(which{alternatives||candidates})
+endClass
+
+class Call( t, routine_def:RoutineDef ) : Cmd
+  METHODS
+    method to->String
+      return "Call($)"(routine_def.name)
+endClass
+
+
+class Return( t, value:Cmd ) : Cmd
+  METHODS
+    method to->String
+      return "Return($)"(value)
+endClass
+

@@ -4,16 +4,78 @@ class Resolver : FroleyVisitor
   PROPERTIES
 
   METHODS
+    method init( program:Program )
+      prior.init( program )
+      local t = program.nodes.t
+      local null_attr = null as CmdList
+      if (not program.tokens_by_name.contains("EOI"))
+        program.tokens_by_name//EOI = TokenDef( t, "EOI", "end of input", null_attr )
+      endIf
+      if (not program.tokens_by_name.contains("COMPILE_ERROR"))
+        program.tokens_by_name//COMPILE_ERROR = TokenDef( t, "COMPILE_ERROR", "compile error", null_attr )
+      endIf
+
     method visit( cmd:Access )->Cmd [override]
-      if (cur_element.routines.contains(cmd.name))
-        trace "TODO"
-        throw cmd.t.error( "TODO" )
+      local r = cur_element.routines[ cmd.name ]
+      if (r)
+        return Call(cmd.t,r).dispatch( this )
       else
         return ReadVar(cur_element.define_var(cmd.t,cmd.name)).dispatch(this)
       endIf
 
+    method visit( cmd:Add )->Cmd  [override]
+      cmd.left  .= dispatch( this )
+      cmd.right .= dispatch( this )
+      local common_type = cmd.left.common_type( cmd.right )
+      if (cmd.left.require_type != common_type)
+        cmd.left = cmd.left.cast_to( common_type ).dispatch( this )
+      endIf
+      if (cmd.right.require_type != common_type)
+        cmd.right = cmd.right.cast_to( common_type ).dispatch( this )
+      endIf
+      if (cmd.left instanceOf Literal and cmd.right instanceOf Literal)
+        which (common_type)
+          case Type.LOGICAL
+            local left  = (cmd.left as LiteralLogical).value
+            local right = (cmd.right as LiteralLogical).value
+            return LiteralLogical( cmd.t, left or right ).dispatch(this)
+          case Type.CHARACTER
+            local left  = (cmd.left as LiteralCharacter).value
+            local right = (cmd.right as LiteralCharacter).value
+            return LiteralCharacter( cmd.t, left+right ).dispatch(this)
+          case Type.INTEGER
+            local left  = (cmd.left as LiteralInt32).value
+            local right = (cmd.right as LiteralInt32).value
+            return LiteralInt32( cmd.t, left + right ).dispatch(this)
+          case Type.STRING
+            local left  = (cmd.left as LiteralString).value
+            local right = (cmd.right as LiteralString).value
+            return LiteralString( cmd.t, left + right ).dispatch(this)
+          others
+            throw UnsupportedOperationError()
+        endWhich
+      endIf
+      return cmd
+
     method visit( cmd:Assign )->Cmd [override]
       return cmd.target.resolve_assignment( cmd, this )
+
+    method visit( cmd:CastTo )->Cmd [override]
+      cmd.operand .= dispatch(this)
+      local operand = cmd.operand
+
+      local from_type = operand.require_type
+      if (from_type == cmd.to_type) return operand  # no cast needed
+
+      local t = cmd.t
+      which (cmd.to_type)
+        case Type.LOGICAL:   return CastToLogical( t, operand )
+        case Type.CHARACTER: return CastToCharacter( t, operand )
+        case Type.INTEGER:   return CastToInteger( t, operand )
+        case Type.STRING:    return CastToString( t, operand )
+        others
+          throw t.error( "[INTERNAL] Unhandled cast type: $."(cmd.to_type) )
+      endWhich
 
     method visit( cmd:ScanError )->Cmd [override]
       if (cmd.args)

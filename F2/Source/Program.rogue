@@ -2,10 +2,13 @@ module F2
 
 class Program
   PROPERTIES
-    nodes      : Cmd
-    cur_module = ""
-    scanners   = StringTable<<ScannerDef>>()
-    parsers    = StringTable<<ParserDef>>()
+    nodes            : Cmd
+    cur_module       = ""
+    scanners         = StringTable<<ScannerDef>>()
+    parsers          = StringTable<<ParserDef>>()
+    token_groups     = StringTable<<TokenGroup>>()
+    tokens_by_name   = StringTable<<TokenDef>>()
+    tokens_by_symbol = StringTable<<TokenDef>>()
 
   METHODS
     method init( nodes )

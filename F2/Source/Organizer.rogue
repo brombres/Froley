@@ -4,6 +4,26 @@ class Organizer : FroleyVisitor
   PROPERTIES
 
   METHODS
+    method visit( cmd:Consume )->Cmd [override]
+      if (cmd.alternatives)
+        local alts : Cmd
+        forEach (alt in cmd.alternatives)
+          alt .= cast_to(Type.STRING)
+          if (alts)
+            alts = Add( alt.t, alts, alt )
+          else
+            alts = alt
+          endIf
+        endForEach
+        return Consume( cmd.t, alts.dispatch(this) )
+      else
+        return prior.visit( cmd )
+      endIf
+
+    method visit( cmd:LiteralStringOrCharacter )->Cmd [override]
+      if (cmd.value.count == 1) return LiteralCharacter( cmd.t, cmd.value[0] ).dispatch( this )
+      else                      return LiteralString( cmd.t, cmd.value ).dispatch( this )
+
     method visit( cmd:ParserDef )->Cmd [override]
       program.parsers[cmd.name] = cmd
       return prior.visit( cmd )
@@ -21,5 +41,27 @@ class Organizer : FroleyVisitor
     method visit( cmd:ScannerDef )->Cmd [override]
       program.scanners[cmd.name] = cmd
       return prior.visit( cmd )
+
+    method visit( cmd:TokenGroup )->Cmd [override]
+      prior.visit( cmd )
+
+      local entry = program.token_groups.find( cmd.name )
+      if (entry)
+        if (entry is not cmd)
+          # Merge this token group's definitions into existing group with the same name
+          entry.value.definitions.list.add( cmd.definitions.list )
+          return null
+        endIf
+      else
+        program.token_groups[cmd.name] = cmd
+      endIf
+
+      return prior.visit( cmd )
+
+    method visit( cmd:TokenDef )->Cmd [override]
+      program.tokens_by_name[cmd.name] = cmd
+      program.tokens_by_symbol[cmd.symbol] = cmd
+      return prior.visit( cmd )
+
 endClass
 

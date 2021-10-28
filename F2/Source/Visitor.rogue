@@ -14,8 +14,11 @@ class Visitor
       return cmd.dispatch( this )
 
     method visit( cmd:CmdList )->Cmd
-      forEach (item at index in cmd)
-        if (item) cmd[ index ] = item.dispatch( this )
+      forEach (item in rewriter=cmd.list.rewriter)
+        if (item)
+          item .= dispatch( this )
+          if (item) rewriter.write( item )
+        endIf
       endForEach
       return cmd
 
@@ -219,16 +222,34 @@ class Visitor
       cmd.operand = cmd.operand.dispatch( this )
       return cmd
 
-    method visit( cmd:Tokens )->Cmd
+    method visit( cmd:TokenGroup )->Cmd
       if (cmd.definitions) cmd.definitions = cmd.definitions.dispatch( this ) as CmdList
       return cmd
 
-    method visit( cmd:TokenDefinition )->Cmd
-      if (cmd.symbol) cmd.symbol = cmd.symbol.dispatch( this )
+    method visit( cmd:TokenDef )->Cmd
       if (cmd.attributes) cmd.attributes = cmd.attributes.dispatch( this ) as CmdList
 
       return cmd
 
     method visit( cmd:Symbol )->Cmd
+      return cmd
+
+    method visit( cmd:LogicalNot )->Cmd
+      if (cmd.operand)  cmd.operand = cmd.operand.dispatch( this )
+      return cmd
+
+    method visit( cmd:Consume )->Cmd
+      if (cmd.alternatives) cmd.alternatives = cmd.alternatives.dispatch( this ) as CmdList
+      if (cmd.candidates)   cmd.candidates .= dispatch( this )
+      return cmd
+
+    method visit( cmd:Call )->Cmd
+      return cmd
+
+    method visit( cmd:Return )->Cmd
+      if (cmd.value) cmd.value = cmd.value.dispatch( this )
+      return cmd
+
+    method visit( cmd:LiteralStringOrCharacter )->Cmd
       return cmd
 endClass

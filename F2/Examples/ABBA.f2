@@ -2,13 +2,22 @@
 tokens AB
 SYMBOL_A A
 SYMBOL_A a
-SYMBOL_B B
-SYMBOL_B b
 
 scanner ABBAScanner
 
-+ start
++ scan_token
+  consume_whitespace
   syntaxError
 
-+ another
-  syntaxError
++ read_id
+
++ consume_whitespace
+  while (hasNext)
+    if (not (consume(' ' | '\r' | '\t'))) return
+  endWhile
+  return
+
+tokens AB
+SYMBOL_B B
+SYMBOL_B b
+

@@ -550,14 +550,21 @@ endClass
 
 
 class Consume( t, alternatives:CmdList ) : Cmd
-  PROPERTIES
-    candidates : Cmd
-
   METHODS
-    method init( t, candidates )
-
     method to->String
-      return "Consume($)"(which{alternatives||candidates})
+      return "Consume($)"(alternatives)
+endClass
+
+class ConsumeValue( t, value:Cmd ) : Cmd
+  METHODS
+    method to->String
+      return "ConsumeValue($)"(value)
+endClass
+
+class ConsumeAny( t, alternatives:Cmd ) : Cmd
+  METHODS
+    method to->String
+      return "ConsumeAny($)"(alternatives)
 endClass
 
 class Call( t, routine_def:RoutineDef ) : Cmd

@@ -239,8 +239,15 @@ class Visitor
       return cmd
 
     method visit( cmd:Consume )->Cmd
-      if (cmd.alternatives) cmd.alternatives = cmd.alternatives.dispatch( this ) as CmdList
-      if (cmd.candidates)   cmd.candidates .= dispatch( this )
+      cmd.alternatives = cmd.alternatives.dispatch( this ) as CmdList
+      return cmd
+
+    method visit( cmd:ConsumeValue )->Cmd
+      cmd.value .= dispatch( this )
+      return cmd
+
+    method visit( cmd:ConsumeAny )->Cmd
+      if (cmd.alternatives) cmd.alternatives .= dispatch( this )
       return cmd
 
     method visit( cmd:Call )->Cmd

@@ -6,16 +6,20 @@ class Organizer : FroleyVisitor
   METHODS
     method visit( cmd:Consume )->Cmd [override]
       if (cmd.alternatives)
-        local alts : Cmd
-        forEach (alt in cmd.alternatives)
-          alt .= cast_to(Type.STRING)
-          if (alts)
-            alts = Add( alt.t, alts, alt )
-          else
-            alts = alt
-          endIf
-        endForEach
-        return Consume( cmd.t, alts.dispatch(this) )
+        if (cmd.alternatives.count == 1)
+          return Consume( cmd.t, cmd.alternatives.first ).dispatch( this )
+        else
+          local alts : Cmd
+          forEach (alt in cmd.alternatives)
+            alt .= cast_to(Type.STRING)
+            if (alts)
+              alts = Add( alt.t, alts, alt )
+            else
+              alts = alt
+            endIf
+          endForEach
+          return ConsumeAny( cmd.t, alts.dispatch(this) )
+        endIf
       else
         return prior.visit( cmd )
       endIf

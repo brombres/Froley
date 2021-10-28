@@ -51,6 +51,12 @@ class RogueGenerator : FroleyVisitor
         writer.close
       endIf
 
+    method visit( cmd:Call )->Cmd  [override]
+      write "execute( ip_"
+      writer.print cmd.routine_def.name
+      write " )"
+      return cmd
+
     method visit( cmd:CastToLogical )->Cmd  [override]
       cmd.operand.dispatch( this )
       write "->Logical"

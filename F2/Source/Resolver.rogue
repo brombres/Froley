@@ -62,6 +62,12 @@ class Resolver : FroleyVisitor
       endIf
       return cmd
 
+    method visit( cmd:Args )->Cmd [override]
+      local result = prior.visit( cmd )
+      if (not result) return null
+      (forEach in cmd.list).require_value
+      return result
+
     method visit( cmd:Assign )->Cmd [override]
       return cmd.target.resolve_assignment( cmd, this )
 
@@ -93,6 +99,14 @@ class Resolver : FroleyVisitor
           cmd.args[i] = arg.cast_to( Type.STRING ).dispatch( this )
         endForEach
       endIf
+      return cmd
+
+    method visit( cmd:WriteBuffer )->Cmd [override]
+      cmd.new_value = cmd.new_value.dispatch(this).require_value
+      return cmd
+
+    method visit( cmd:WriteVar )->Cmd [override]
+      cmd.new_value = cmd.new_value.dispatch(this).require_value
       return cmd
 endClass
 

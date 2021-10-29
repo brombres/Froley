@@ -15,12 +15,14 @@ KEYWORD_SCANNER         scanner     [structural]
 KEYWORD_TOKENS          tokens      [structural]
 # For changes here be sure to adjust scanning_token_defs logic
 
-[tokenizer_keywords]
+[scanner_keywords]
+KEYWORD_BUFFER          buffer
 KEYWORD_COLLECT         collect
+KEYWORD_PRODUCE_ANY     produceAny
 
 [common_keywords]
 KEYWORD_AND             and
-KEYWORD_CASE            case
+KEYWORD_CASE            case        [structural]
 KEYWORD_CONSUME         consume
 KEYWORD_ELSE            else        [structural]
 KEYWORD_ELSE_IF         elseIf      [structural]
@@ -33,7 +35,7 @@ KEYWORD_HAS_NEXT        hasNext
 KEYWORD_IF              if
 KEYWORD_NOT             not
 KEYWORD_OR              or
-KEYWORD_OTHERS          others
+KEYWORD_OTHERS          others      [structural]
 KEYWORD_PRINT           print
 KEYWORD_PRINTLN         println
 KEYWORD_PRODUCE         produce
@@ -161,7 +163,7 @@ SYMBOL_STAR         *
     endWhich
 
     which (buffer)
-      produceAny [tokenizer_keywords]
+      produceAny [scanner_keywords]
       produceAny [common_keywords]
       others: produce IDENTIFIER
     endWhich
@@ -344,6 +346,14 @@ SYMBOL_STAR         *
     produce If( condition, statements:Statements, else_ifs:CmdList, _else:Statements )
   endOn
 
+  on "which"
+    expression
+    cases
+    _others
+    mustConsume "endWhich"
+    produce Which(expression,cases:CmdList,_others:Cmd)
+  endOn
+
   on "while"
     if (consume("("))
       expression
@@ -368,6 +378,32 @@ SYMBOL_STAR         *
   #endOn
 
   statement
+
++ cases
+  beginList
+    consume_eols
+    while (hasAnother)
+      consume_eols
+      on "case"
+        expression
+        consume(":")
+        consume_eols
+        multi_line_statements
+        create WhichCase(expression,statements:CmdList)
+      else
+        produceList
+      endOn
+    endWhile
+  produceList
+
++ _others
+  on "others"
+    consume(":")
+    consume_eols
+    multi_line_statements
+  else
+    createNull
+  endOn
 
 + multi_line_else_ifs
   beginList
@@ -462,23 +498,28 @@ SYMBOL_STAR         *
 
 + csv
   beginList
-  if (nextHasAttribute(structural)) produceList
+  if (nextHasAttribute(structural)) produceList Args
 
   expression
-  consume_eols
-  while (consume(','))
-    expression
-    consume_eols
+  while (hasAnother)
+    if (consume(','))
+      consume_eols
+      expression
+    elseIf (nextIs(EOL) or nextHasAttribute(structural))
+      produceList Args
+    else
+      expression
+    endIf
   endWhile
 
-  produceList
+  produceList Args
 
 + alternatives
   mustConsume('(')
 
   beginList
   consume_eols
-  if (consume(')')) produceList
+  if (consume(')')) produceList Args
 
   expression
   consume_eols
@@ -488,8 +529,7 @@ SYMBOL_STAR         *
   endWhile
 
   mustConsume(')')
-  produceList
-
+  produceList Args
 
 + expression
 
@@ -524,6 +564,7 @@ SYMBOL_STAR         *
 
 - term
   on '(' expression ')': return
+  on "buffer"                -> ReadBuffer
   on "consume", alternatives -> Consume(alternatives:CmdList)
   on "halt"                  -> Halt
   on "hasNext"               -> HasNext

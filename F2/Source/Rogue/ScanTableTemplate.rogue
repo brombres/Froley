@@ -1,0 +1,55 @@
+module F2
+
+augment RogueGenerator
+  PROPERTIES
+    template_ScanTable =
+      @|class ScanTable
+       |  PROPERTIES
+       |    data            : Int32[]
+       |    cursor          : Int32
+       |    last_acceptable = -1
+       |    match_count     = 0
+       |
+       |  METHODS
+       |    method init( base64:String )
+       |      local reader = DataReader( base64.decode_base64 )
+       |      local n = reader.read_int32x
+       |      data = Int32[]( n )
+       |      loop (n) data.add( reader.read_int32x )
+       |      if (data[0] != -1) last_acceptable = 0
+       |
+       |    method accept( symbol:String )->Logical
+       |      reset
+       |      if (not accept(forEach in symbol)) return false
+       |      return is_acceptable
+       |
+       |    method accept( ch:Character )->Logical
+       |      local i = cursor+2
+       |      local n = data[i-1]
+       |      loop (n)
+       |        if (data[i] == ch)
+       |          cursor = data[i+1]
+       |          if (data[cursor] != -1) last_acceptable = cursor
+       |          ++match_count
+       |          return true
+       |        else
+       |          i += 2
+       |        endIf
+       |      endLoop
+       |      return false
+       |
+       |    method command_list_index->Int32
+       |      return data[last_acceptable]
+       |
+       |    method is_acceptable->Logical
+       |      return (cursor == last_acceptable)
+       |
+       |    method reset
+       |      if (data[0] == -1) last_acceptable = -1
+       |      else               last_acceptable = 0
+       |      cursor = 0
+       |      match_count = 0
+       |
+       |endClass
+endAugment
+

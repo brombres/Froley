@@ -1,0 +1,98 @@
+module F2
+
+class ScanTree
+  PROPERTIES
+    root          = ScanState()
+    command_lists = String[]
+
+  METHODS
+    method set_default_statements( statements:String )
+      local index = command_lists.count
+      command_lists.add( statements )
+      root.statements = index
+
+    method build( symbol:String, statements:String, &ignore_case )
+      local index = command_lists.count
+      command_lists.add( statements )
+      root.link( symbol, index, &=ignore_case )
+
+    method to_base64_scan_table->String
+      #local builder = StringBuilder()
+      local table = Int32[]
+      root.mark_indices( table )
+      root.insert_links( table )
+
+      local writer = DataWriter()
+      writer.write_int32x( table.count )
+      writer.write_int32x( forEach in table )
+      return writer.output_bytes.to_base64
+
+    method to->String
+      return root->Value.to_json #(&formatted)
+endClass
+
+class ScanState
+  PROPERTIES
+    links      = Table<<Character,ScanState>>()
+    index      : Int32
+    statements = -1
+
+  METHODS
+    method insert_links( table:Int32[] )
+      local i = index + 2
+      forEach (entry in links.entries)
+        table[i] = entry.key
+        table[i+1] = entry.value.index
+        entry.value.insert_links( table )
+        i += 2
+      endForEach
+
+    method link( ch:Character )->ScanState
+      local entry = links.find( ch )
+      if (entry)
+        return entry.value
+      else
+        local next_state = ScanState()
+        links[ ch ] = next_state
+        return next_state
+      endIf
+
+    method link( symbol:String, command_list_index:Int32, &ignore_case )
+      if (symbol == "")
+        statements = command_list_index
+
+      elseIf (ignore_case)
+        local lc = symbol[0].to_lowercase
+        local uc = lc.to_uppercase
+        local remaining = symbol.rightmost(-1)
+        link(lc).link( remaining, command_list_index, &ignore_case )
+        if (uc != lc)
+          link(uc).link( remaining, command_list_index, &ignore_case )
+        endIf
+
+      else
+        local ch = symbol[0]
+        local remaining = symbol.rightmost(-1)
+        link(ch).link( remaining, command_list_index )
+
+      endIf
+
+    method mark_indices( table:Int32[] )
+      index = table.count
+      table.add( statements )
+      table.add( links.count )
+      loop (links.count) table.[add(0),add(0)]
+      (forEach in links).mark_indices( table )
+
+    method to->Value
+      local result = @{}
+      if (statements != -1) result//statements = statements
+      if (links.count)
+        local link_table = result.ensure_table("links")
+        forEach (entry in links.entries)
+          link_table[""+entry.key] = entry.value->Value
+        endForEach
+      endIf
+      return result
+endClass
+

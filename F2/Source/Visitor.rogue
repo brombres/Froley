@@ -273,4 +273,32 @@ class Visitor
 
     method visit( cmd:Halt )->Cmd
       return cmd
+
+    method visit( cmd:ReadBuffer )->Cmd
+      return cmd
+
+    method visit( cmd:WriteBuffer )->Cmd
+      cmd.new_value .= dispatch( this )
+      return cmd
+
+    method visit( cmd:Args )->Cmd
+      forEach (item in rewriter=cmd.list.rewriter)
+        if (item)
+          item .= dispatch( this )
+          if (item) rewriter.write( item )
+        endIf
+      endForEach
+      return cmd
+
+    method visit( cmd:Which )->Cmd
+      if (cmd.expression) cmd.expression = cmd.expression.dispatch( this )
+      if (cmd.cases) cmd.cases = cmd.cases.dispatch( this ) as CmdList
+      if (cmd._others) cmd._others = cmd._others.dispatch( this )
+      return cmd
+
+    method visit( cmd:WhichCase )->Cmd
+      if (cmd.expression) cmd.expression = cmd.expression.dispatch( this )
+      if (cmd.statements) cmd.statements = cmd.statements.dispatch( this ) as CmdList
+
+      return cmd
 endClass

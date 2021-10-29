@@ -80,6 +80,16 @@ class RogueGenerator : FroleyVisitor
     method visit( cmd:Cmd )->Cmd  [override]
       throw cmd.t.error( "Rogue code generation not defined for $."(cmd.type_name) )
 
+    method visit( cmd:Collect )->Cmd  [override]
+      if (cmd.args.count == 0) throw cmd.args.t.error( "One or more arguments expected." )
+      write "buffer"
+      forEach (arg in cmd.args)
+        write ".print("
+        arg.dispatch( this )
+        write ")"
+      endForEach
+      return cmd
+
     method visit( cmd:CompareEQ )->Cmd  [override]
       write "("
       dispatch( cmd.left )
@@ -277,6 +287,10 @@ class RogueGenerator : FroleyVisitor
       write "scanner.read"
       return cmd
 
+    method visit( cmd:ReadBuffer )->Cmd  [override]
+      write "buffer->String"
+      return cmd
+
     method visit( cmd:ReadVar )->Cmd  [override]
       write cmd.var.name
       return cmd
@@ -445,9 +459,18 @@ class RogueGenerator : FroleyVisitor
       endIf
       return cmd
 
+    #method visit( cmd:Which )->Cmd  [override]
+    #  write "buffer.clear.print "
+    #  dispatch( cmd.new_value )
+    #  return cmd
+
+    method visit( cmd:WriteBuffer )->Cmd  [override]
+      write "buffer.clear.print "
+      dispatch( cmd.new_value )
+      return cmd
+
     method visit( cmd:WriteVar )->Cmd  [override]
       write "$ = " (cmd.var.name)
-      #write "[$]" (cmd.new_value.type_name)
       dispatch( cmd.new_value )
       return cmd
 

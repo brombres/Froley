@@ -9,10 +9,18 @@ scanner ABBAScanner
   consume_whitespace
   if (not hasNext) halt
 
-  if (consume('A')) produce SYMBOL_A
-  if (consume('a')) produce SYMBOL_A
-  if (consume('B')) produce SYMBOL_B
-  if (consume('b')) produce SYMBOL_B
+  collect( read )
+  which (buffer)
+    #produceAny tokens
+    case 'A': produce SYMBOL_A
+    case 'a': produce SYMBOL_A
+    case 'B': produce SYMBOL_B
+    case 'b': produce SYMBOL_B
+  endWhich
+  #if (ch == 'A') produce SYMBOL_A
+  #if (ch == 'a') produce SYMBOL_A
+  #if (ch == 'B') produce SYMBOL_B
+  #if (ch == 'b') produce SYMBOL_B
   syntaxError
 
 + read_id

@@ -614,3 +614,42 @@ class Halt : Cmd
     method to->String
       return "halt"
 endClass
+
+
+class ReadBuffer : Cmd
+  METHODS
+    method to->String
+      return "ReadBuffer"
+
+    method resolve_assignment( cmd:Assign, resolver:Resolver )->Cmd
+      throw t.error( "Illegal assignment." )
+
+    method type->Type
+      return Type.STRING
+endClass
+
+
+class WriteBuffer( t, new_value:Cmd ) : Cmd
+  METHODS
+    method to->String
+      return "WriteBuffer($)"(new_value)
+endClass
+
+
+
+class Args : CmdList
+  METHODS
+endClass
+
+
+class Which( t, expression:Cmd, cases:CmdList, _others:Cmd ) : Cmd
+  METHODS
+    method to->String
+      return "Which($,$,$)"(expression,cases,_others)
+endClass
+
+class WhichCase( t, expression:Cmd, statements:CmdList ) : Cmd
+  METHODS
+    method to->String
+      return "WhichCase($,$)"(expression,statements)
+endClass

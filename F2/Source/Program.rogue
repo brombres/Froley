@@ -3,7 +3,7 @@ module F2
 class Program
   PROPERTIES
     nodes            : Cmd
-    cur_module       = ""
+    prefix       = ""
     scanners         = StringTable<<ScannerDef>>()
     parsers          = StringTable<<ParserDef>>()
     token_groups     = StringTable<<TokenGroup>>()
@@ -12,7 +12,7 @@ class Program
 
   METHODS
     method init( froley_file:File )
-      cur_module = froley_file.filename.before_last('.')
+      prefix = froley_file.filename.before_last('.')
       init( Parser().[open(froley_file)].parse("program") )
 
     method init( nodes )

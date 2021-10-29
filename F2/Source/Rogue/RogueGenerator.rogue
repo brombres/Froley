@@ -22,11 +22,11 @@ class RogueGenerator : FroleyVisitor
       #generate_parser( forEach in parsers )
       #nodes.dispatch( Organizer(this) )
 
-      create_file( program.cur_module+"CompileError", template_CompileError )
-      create_file( program.cur_module+"Token", template_Token )
+      create_file( program.prefix+"CompileError", template_CompileError )
+      create_file( program.prefix+"Token", template_Token )
 
       # TokenType
-      create_file( program.cur_module+"TokenType" )
+      create_file( program.prefix+"TokenType" )
       writeln @|enum $ClassName( symbol:String, attributes=0:Int32 )
                |  ENUMERATE
                |    # TODO: attributes
@@ -383,7 +383,7 @@ class RogueGenerator : FroleyVisitor
                |      local message = "Syntax error - expected $, found " (describe_character(ch))
                |      if (scanner.has_another) message += describe_character(scanner.peek) + "."
                |      else                     message += "end of input."
-               |      throw $ModuleNameCompileError( filepath, scanner.source, scanner.line, scanner.column, message )
+               |      throw $PrefixCompileError( filepath, scanner.source, scanner.line, scanner.column, message )
                |
                |    method throw_syntax_error( message=null:String )
                |      if (not message)
@@ -396,7 +396,7 @@ class RogueGenerator : FroleyVisitor
                |        endIf
                |        message = builder->String
                |      endIf
-               |      throw $ModuleNameCompileError( filepath, scanner.source, scanner.line, scanner.column, message )
+               |      throw $PrefixCompileError( filepath, scanner.source, scanner.line, scanner.column, message )
                |
                |    method tokenize( ip=null:Int32? )->$Token[]
                |      if (ip) start_ip = ip.value
@@ -467,14 +467,14 @@ class RogueGenerator : FroleyVisitor
       endIf
 
       if (content.contains('$'))
-        content .= replacing( "$Token",      "$Token"(program.cur_module) )
+        content .= replacing( "$Token",      "$Token"(program.prefix) )
         content .= replacing( "$ClassName",  class_name )
-        if (String.exists(program.cur_module))
-          content .= replacing( "$module", "module $\n"(program.cur_module) )
+        if (String.exists(program.prefix))
+          content .= replacing( "$module", "module $\n"(program.prefix) )
         else
           content .= replacing( "$module", "" )
         endIf
-        content .= replacing( "$ModuleName", program.cur_module )
+        content .= replacing( "$Prefix", program.prefix )
       endIf
       writer.print( content )
 

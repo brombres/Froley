@@ -3,7 +3,7 @@ tokens AB
 SYMBOL_A A
 SYMBOL_A a
 
-scanner ABBAScanner
+scanner Scanner
 
 + scan_token
   consume_whitespace

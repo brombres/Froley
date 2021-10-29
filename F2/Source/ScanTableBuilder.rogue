@@ -1,23 +1,22 @@
 module F2
 
-class ScanTree
+class ScanTableBuilder
   PROPERTIES
-    root          = ScanState()
-    command_lists = String[]
+    root          = ScanTableNode()
+    command_lists = CmdList[]
 
   METHODS
-    method set_default_statements( statements:String )
+    method set_default_statements( statements:CmdList )
       local index = command_lists.count
       command_lists.add( statements )
       root.statements = index
 
-    method build( symbol:String, statements:String, &ignore_case )
+    method build( symbol:String, statements:CmdList, &ignore_case )
       local index = command_lists.count
       command_lists.add( statements )
       root.link( symbol, index, &=ignore_case )
 
     method to_base64_scan_table->String
-      #local builder = StringBuilder()
       local table = Int32[]
       root.mark_indices( table )
       root.insert_links( table )
@@ -31,9 +30,9 @@ class ScanTree
       return root->Value.to_json #(&formatted)
 endClass
 
-class ScanState
+class ScanTableNode
   PROPERTIES
-    links      = Table<<Character,ScanState>>()
+    links      = Table<<Character,ScanTableNode>>()
     index      : Int32
     statements = -1
 
@@ -47,12 +46,12 @@ class ScanState
         i += 2
       endForEach
 
-    method link( ch:Character )->ScanState
+    method link( ch:Character )->ScanTableNode
       local entry = links.find( ch )
       if (entry)
         return entry.value
       else
-        local next_state = ScanState()
+        local next_state = ScanTableNode()
         links[ ch ] = next_state
         return next_state
       endIf

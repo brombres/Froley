@@ -41,9 +41,6 @@ class Froley
       #  println "[$] $"(t.type,t)
       #endForEach
 
-      local nodes = Parser().[open(File("Examples/ABBA.f2"))].parse("program")
-println nodes
-      local program = Program( nodes )
-      println program
+      local program = Program( File("Examples/ABBA.f2") )
       program.generate_rogue( "Build/ABBA" )
 endClass

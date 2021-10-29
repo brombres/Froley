@@ -270,4 +270,7 @@ class Visitor
 
     method visit( cmd:LiteralTokenType )->Cmd
       return cmd
+
+    method visit( cmd:Halt )->Cmd
+      return cmd
 endClass

@@ -4,7 +4,6 @@ class FroleyVisitor : Visitor
   PROPERTIES
     program     : Program
 
-    cur_module  = ""
     cur_element : ElementDef
     cur_routine : RoutineDef
     cur_tokens  : TokenGroup

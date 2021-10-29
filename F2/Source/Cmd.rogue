@@ -607,3 +607,10 @@ class LiteralTokenType( t, token_type:TokenDef ) : Literal
       return Type.TOKEN_TYPE
 endClass
 
+
+
+class Halt : Cmd
+  METHODS
+    method to->String
+      return "halt"
+endClass

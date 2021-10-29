@@ -11,6 +11,10 @@ class Program
     tokens_by_symbol = StringTable<<TokenDef>>()
 
   METHODS
+    method init( froley_file:File )
+      cur_module = froley_file.filename.before_last('.')
+      init( Parser().[open(froley_file)].parse("program") )
+
     method init( nodes )
       nodes.dispatch( Organizer(this) )
       nodes.dispatch( Resolver(this) )

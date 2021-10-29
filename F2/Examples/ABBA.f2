@@ -7,7 +7,12 @@ scanner ABBAScanner
 
 + scan_token
   consume_whitespace
+  if (not hasNext) halt
+
   if (consume('A')) produce SYMBOL_A
+  if (consume('a')) produce SYMBOL_A
+  if (consume('B')) produce SYMBOL_B
+  if (consume('b')) produce SYMBOL_B
   syntaxError
 
 + read_id

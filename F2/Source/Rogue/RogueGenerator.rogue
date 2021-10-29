@@ -22,11 +22,11 @@ class RogueGenerator : FroleyVisitor
       #generate_parser( forEach in parsers )
       #nodes.dispatch( Organizer(this) )
 
-      create_file( cur_module+"CompileError", template_CompileError )
-      create_file( cur_module+"Token", template_Token )
+      create_file( program.cur_module+"CompileError", template_CompileError )
+      create_file( program.cur_module+"Token", template_Token )
 
       # TokenType
-      create_file( cur_module+"TokenType" )
+      create_file( program.cur_module+"TokenType" )
       writeln @|enum $ClassName( symbol:String, attributes=0:Int32 )
                |  ENUMERATE
                |    # TODO: attributes
@@ -52,9 +52,9 @@ class RogueGenerator : FroleyVisitor
       endIf
 
     method visit( cmd:Call )->Cmd  [override]
-      write "execute( ip_"
-      writer.print cmd.routine_def.name
-      write " )"
+      write "if (not execute(ip_"
+      write cmd.routine_def.name
+      write ")) return false"
       return cmd
 
     method visit( cmd:CastToLogical )->Cmd  [override]
@@ -174,6 +174,11 @@ class RogueGenerator : FroleyVisitor
       indent -= 2
       return cmd
 
+    method visit( cmd:Halt )->Cmd  [override]
+      writeln "halt = true"
+      write   "return false"
+      return cmd
+
     method visit( cmd:Increment )->Cmd  [override]
       write "++"
       dispatch( cmd.target )
@@ -265,7 +270,7 @@ class RogueGenerator : FroleyVisitor
       write ",filepath,scanner.source,line,column"
       # TODO: content string here
       writeln ") )"
-      write "return"  # FIXME: figure out how to unwind execute() recursion on 'produce'.
+      write   "return false"
       return cmd
 
     method visit( cmd:Read )->Cmd  [override]
@@ -278,7 +283,7 @@ class RogueGenerator : FroleyVisitor
 
     method visit( cmd:Return )->Cmd  [override]
       # TODO: save return value first, if needed
-      write "return"
+      write   "return true"
       return cmd
 
     method visit( cmd:RoutineDef )->Cmd  [override]
@@ -316,6 +321,7 @@ class RogueGenerator : FroleyVisitor
                |
                |    start_ip   = 0
                |    ip         : Int32
+               |    halt       = false
                |
 
       if (cmd.vars.count)
@@ -354,13 +360,21 @@ class RogueGenerator : FroleyVisitor
                |    method init( filepath, scanner )
                |      noAction
                |
+               |    method clear
+               |      tokens = $Token[]
+               |      buffer.clear
+               |      output.clear
+               |      line = 1
+               |      column = 1
+               |      halt = false
+               |
                |    method describe_character( c:Character )->String
                |      if (c == 10 or c == 13)       return "end of line";
                |      elseIf (c >= 32 and c != 127) return "'$'" (c)
                |      else                          return "'$'" (c.to_escaped_ascii)
                |
-               |    method execute
-               |      execute( start_ip )
+               |    method execute->Logical
+               |      return execute( start_ip )
                |
                |    method t( type:$TokenType, content=null:String )->$Token
                |      return $Token( type, filepath, scanner.source, line, column, content )
@@ -384,7 +398,15 @@ class RogueGenerator : FroleyVisitor
                |      endIf
                |      throw $ModuleNameCompileError( filepath, scanner.source, scanner.line, scanner.column, message )
                |
-               |    method execute( ip:Int32 )
+               |    method tokenize( ip=null:Int32? )->$Token[]
+               |      if (ip) start_ip = ip.value
+               |      clear
+               |      while (execute(start_ip) or not halt)
+               |        buffer.clear
+               |      endWhile
+               |      return tokens
+               |
+               |    method execute( ip:Int32 )->Logical
                |      loop
                |        ++ip
                |        which (ip-1)
@@ -392,7 +414,8 @@ class RogueGenerator : FroleyVisitor
       prior.visit( cmd )
 
       writeln @|          others
-               |            escapeLoop
+               |            halt = true
+               |            return false
                |        endWhich
                |      endLoop
                |
@@ -444,14 +467,14 @@ class RogueGenerator : FroleyVisitor
       endIf
 
       if (content.contains('$'))
-        content .= replacing( "$Token",      "$Token"(cur_module) )
+        content .= replacing( "$Token",      "$Token"(program.cur_module) )
         content .= replacing( "$ClassName",  class_name )
-        if (String.exists(cur_module))
-          content .= replacing( "$module", "module $\n"(cur_module) )
+        if (String.exists(program.cur_module))
+          content .= replacing( "$module", "module $\n"(program.cur_module) )
         else
           content .= replacing( "$module", "" )
         endIf
-        content .= replacing( "$ModuleName", cur_module )
+        content .= replacing( "$ModuleName", program.cur_module )
       endIf
       writer.print( content )
 

@@ -78,8 +78,8 @@ routine rogo_run
   #execute @|cat Build/HelloWorld/HelloWorldScannerCore.rogue && roguec Test.rogue --execute
   #execute @|cat Build/LineCount/LineCountScannerCore.rogue && roguec Test.rogue --execute
   #execute @|cat Build/ABBA/TokenType.rogue && roguec Test.rogue --execute
-  execute @|cat Build/ABBA/ABBAScannerCore.rogue && roguec Test.rogue --execute
-  #execute @|roguec Test.rogue --execute
+  #execute @|cat Build/ABBA/ABBAScannerCore.rogue && roguec Test.rogue --execute
+  execute @|roguec Test.rogue --execute
 endRoutine
 
 routine rogo_install_launcher

@@ -2,6 +2,7 @@ module F2
 
 class Organizer : FroleyVisitor
   PROPERTIES
+    cur_scan : Scan
 
   METHODS
     method visit( cmd:Consume )->Cmd [override]
@@ -32,10 +33,31 @@ class Organizer : FroleyVisitor
       program.parsers[cmd.name] = cmd
       return prior.visit( cmd )
 
+    method visit( cmd:ProduceAny )->Cmd [override]
+      # Add a scan case for each token in the named group
+      local t = cmd.t
+      local group = program.token_groups[ cmd.token_group_name ]
+      if (not group)
+        throw t.error( ''No such token group "$".''(cmd.token_group_name) )
+      endIf
+      forEach (item in group.definitions)
+        local def = item as TokenDef
+        local expr = LiteralString( t, def.symbol )
+        local _case = ScanOn( t, expr, Statements(t,ScannerProduce(t,Access(t,def.name))) )
+        cur_scan.cases.add( _case )
+        _case.dispatch( this )
+      endForEach
+      return null
+
     method visit( cmd:RoutineDef )->Cmd [override]
       cmd.ip = cur_element.routines.count
       cur_element.routines[cmd.name] = cmd
       return prior.visit( cmd )
+
+    method visit( cmd:Scan )->Cmd [override]
+      temporarily cur_scan = cmd
+        return prior.visit( cmd )
+      endTemporarily
 
     method visit( cmd:SubroutineDef )->Cmd [override]
       cmd.ip = cur_element.routines.count
@@ -44,27 +66,6 @@ class Organizer : FroleyVisitor
 
     method visit( cmd:ScannerDef )->Cmd [override]
       program.scanners[cmd.name] = cmd
-      return prior.visit( cmd )
-
-    method visit( cmd:TokenGroup )->Cmd [override]
-      prior.visit( cmd )
-
-      local entry = program.token_groups.find( cmd.name )
-      if (entry)
-        if (entry is not cmd)
-          # Merge this token group's definitions into existing group with the same name
-          entry.value.definitions.list.add( cmd.definitions.list )
-          return null
-        endIf
-      else
-        program.token_groups[cmd.name] = cmd
-      endIf
-
-      return prior.visit( cmd )
-
-    method visit( cmd:TokenDef )->Cmd [override]
-      program.tokens_by_name[cmd.name] = cmd
-      program.tokens_by_symbol[cmd.symbol] = cmd
       return prior.visit( cmd )
 
 endClass

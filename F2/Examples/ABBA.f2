@@ -2,35 +2,25 @@
 tokens AB
 SYMBOL_A A
 SYMBOL_A a
+SYMBOL_B B
+SYMBOL_B b
 
 scanner Scanner
 
 + scan_token
   consume_whitespace
-  if (not hasNext) halt
+  if (not hasAnother) halt
 
   scan
-    #produceAny tokens
-    on 'A': produce SYMBOL_A
-    on 'a': produce SYMBOL_A
-    on 'B': produce SYMBOL_B
-    on 'b': produce SYMBOL_B
+    produceAny AB
   endScan
-  #if (ch == 'A') produce SYMBOL_A
-  #if (ch == 'a') produce SYMBOL_A
-  #if (ch == 'B') produce SYMBOL_B
-  #if (ch == 'b') produce SYMBOL_B
   syntaxError
 
 + read_id
 
 + consume_whitespace
-  while (hasNext)
+  while (hasAnother)
     if (not (consume(' ' | '\r' | '\t'))) return
   endWhile
   return
-
-tokens AB
-SYMBOL_B B
-SYMBOL_B b
 

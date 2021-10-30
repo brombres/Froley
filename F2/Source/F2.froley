@@ -29,7 +29,7 @@ KEYWORD_END_IF          endIf       [structural]
 KEYWORD_END_SCAN        endScan     [structural]
 KEYWORD_END_WHILE       endWhile    [structural]
 KEYWORD_HALT            halt
-KEYWORD_HAS_NEXT        hasNext
+KEYWORD_HAS_NEXT        hasAnother
 KEYWORD_IF              if
 KEYWORD_NOT             not
 KEYWORD_ON              on          [structural]
@@ -379,6 +379,11 @@ SYMBOL_STAR         *
 
   statement
 
+
++ cases
+  beginList
+  endList
+
 + cases
   beginList
     consume_eols
@@ -390,6 +395,9 @@ SYMBOL_STAR         *
         consume_eols
         multi_line_statements
         create ScanOn(expression,statements:CmdList)
+      elseOn "produceAny"
+        identifier
+        create ProduceAny(token_group_name:String)
       else
         produceList
       endOn
@@ -567,7 +575,7 @@ SYMBOL_STAR         *
   on "buffer"                -> ReadBuffer
   on "consume", alternatives -> Consume(alternatives:CmdList)
   on "halt"                  -> Halt
-  on "hasNext"               -> HasNext
+  on "hasAnother"               -> HasAnother
   on "produce", expression   -> ScannerProduce(token_type:Cmd)
   on "read"                  -> Read
   on "return"

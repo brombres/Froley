@@ -180,7 +180,7 @@ class Visitor
       if (cmd.args) cmd.args = cmd.args.dispatch( this )
       return cmd
 
-    method visit( cmd:HasNext )->Cmd
+    method visit( cmd:HasAnother )->Cmd
       return cmd
 
     method visit( cmd:Read )->Cmd
@@ -301,5 +301,8 @@ class Visitor
       if (cmd.expression) cmd.expression = cmd.expression.dispatch( this )
       if (cmd.statements) cmd.statements = cmd.statements.dispatch( this ) as CmdList
 
+      return cmd
+
+    method visit( cmd:ProduceAny )->Cmd
       return cmd
 endClass

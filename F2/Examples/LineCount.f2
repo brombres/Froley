@@ -2,7 +2,7 @@ scanner LineCountScanner
 
 + start
   count = 0
-  while (hasNext)
+  while (hasAnother)
     if (read == '\n') ++count
   endWhile
   println count

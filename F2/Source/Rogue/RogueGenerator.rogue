@@ -200,7 +200,7 @@ class RogueGenerator : FroleyVisitor
       dispatch( cmd.target )
       return cmd
 
-    method visit( cmd:HasNext )->Cmd  [override]
+    method visit( cmd:HasAnother )->Cmd  [override]
       write "scanner.has_another"
       return cmd
 

@@ -16,6 +16,7 @@ class Program
       init( Parser().[open(froley_file)].parse("program") )
 
     method init( nodes )
+      nodes.dispatch( TokenGroupOrganizer(this) )
       nodes.dispatch( Organizer(this) )
       nodes.dispatch( Resolver(this) )
 

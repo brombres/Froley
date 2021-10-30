@@ -1,0 +1,26 @@
+module F2
+
+class TokenGroupOrganizer : FroleyVisitor
+  METHODS
+    method visit( cmd:TokenGroup )->Cmd [override]
+      prior.visit( cmd )
+
+      local entry = program.token_groups.find( cmd.name )
+      if (entry)
+        if (entry is not cmd)
+          # Merge this token group's definitions into existing group with the same name
+          entry.value.definitions.list.add( cmd.definitions.list )
+          return null
+        endIf
+      else
+        program.token_groups[cmd.name] = cmd
+      endIf
+
+      return prior.visit( cmd )
+
+    method visit( cmd:TokenDef )->Cmd [override]
+      program.tokens_by_name[cmd.name] = cmd
+      program.tokens_by_symbol[cmd.symbol] = cmd
+      return prior.visit( cmd )
+endClass
+

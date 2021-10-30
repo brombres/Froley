@@ -63,6 +63,15 @@ class CmdList : Cmd
       list = Cmd[]( args.count )
       list.add( forEach in args )
 
+    method init( t, arg:Cmd )
+      init( t )
+      add( arg )
+
+    method init( t, arg1:Cmd, arg2:Cmd )
+      init( t )
+      add( arg1 )
+      add( arg2 )
+
     method add( cmd:Cmd )
       list.add( cmd )
 
@@ -459,10 +468,10 @@ class Println( t, args:CmdList ) : Cmd
 endClass
 
 
-class HasNext : Cmd
+class HasAnother : Cmd
   METHODS
     method to->String
-      return "hasNext"
+      return "hasAnother"
 
     method type->Type
       return Type.LOGICAL
@@ -702,3 +711,10 @@ class ScanOn( t, expression:Cmd, statements:CmdList ) : Cmd
       return "ScanOn($,$)"(expression,statements)
 endClass
 
+
+
+class ProduceAny( t, token_group_name:String ) : Cmd
+  METHODS
+    method to->String
+      return "ProduceAny($)"(token_group_name)
+endClass

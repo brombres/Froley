@@ -2,10 +2,8 @@
 tokens AB
 SYMBOL_A A
 SYMBOL_A a
-#{
 SYMBOL_B B
 SYMBOL_B b
-}#
 
 scanner
 

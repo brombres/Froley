@@ -19,6 +19,7 @@ class Program
       nodes.dispatch( TokenGroupOrganizer(this) )
       nodes.dispatch( Organizer(this) )
       nodes.dispatch( Resolver(this) )
+      nodes.dispatch( Validator(this) )
 
     method description->String
       return ""+nodes

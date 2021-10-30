@@ -15,6 +15,7 @@ $include "ScanTableBuilder.rogue"
 $include "TokenGroupOrganizer.rogue"
 $include "Tokenizer.rogue"
 $include "Type.rogue"
+$include "Validator.rogue"
 $include "Var.rogue"
 uses F2
 

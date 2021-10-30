@@ -83,11 +83,7 @@ class RogueGenerator : FroleyVisitor
       write "->String"
       return cmd
 
-    method visit( cmd:Cmd )->Cmd  [override]
-      throw cmd.t.error( "Rogue code generation not defined for $."(cmd.type_name) )
-
     method visit( cmd:Collect )->Cmd  [override]
-      if (cmd.args.count == 0) throw cmd.args.t.error( "One or more arguments expected." )
       write "buffer"
       forEach (arg in cmd.args)
         write ".print("
@@ -255,29 +251,21 @@ class RogueGenerator : FroleyVisitor
 
     method visit( cmd:Print )->Cmd  [override]
       write "output"
-      if (cmd.args.count == 0)
-        throw cmd.t.error( "Argument expected for 'print'." )
-      else
-        forEach (arg in cmd.args)
-          write ".print("
-          arg.require_value.dispatch( this )
-          write ")"
-        endForEach
-      endIf
+      forEach (arg in cmd.args)
+        write ".print("
+        arg.require_value.dispatch( this )
+        write ")"
+      endForEach
       return cmd
 
     method visit( cmd:Println )->Cmd  [override]
       write "output"
-      if (cmd.args.count == 0)
-        throw cmd.t.error( "Argument expected for 'println'." )
-      else
-        forEach (arg in cmd.args)
-          write ".print("
-          arg.require_value.dispatch( this )
-          write ")"
-        endForEach
-        write ".println"
-      endIf
+      forEach (arg in cmd.args)
+        write ".print("
+        arg.require_value.dispatch( this )
+        write ")"
+      endForEach
+      write ".println"
       return cmd
 
     method visit( cmd:ScannerProduce )->Cmd  [override]
@@ -352,8 +340,6 @@ class RogueGenerator : FroleyVisitor
         forEach (v in cmd.vars)
           write "$ : "(v.name.left_justified(max_w))
           which (v.type)
-            case Type.NONE
-              throw v.t.error( "Cannot determine variable type of '$'. Set to an initial value."(v.name) )
             case Type.LOGICAL
               writeln "Logical"
             case Type.CHARACTER

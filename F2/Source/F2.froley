@@ -123,11 +123,30 @@ SYMBOL_STAR         *
 
 - consume_comment
   if (not consume('#')) return
-  while (hasAnother)
-    ch = read
-    if (ch == '\n') produce EOL
-  endWhile
-  restart
+  if (consume('{'))
+    @count = 1
+    while (hasAnother)
+      ch = read
+      if (ch == '\n')
+        create EOL
+      elseIf (ch == '#')
+        if (consume('{')) @count += 1
+      elseIf (ch == '}')
+        if (consume('#'))
+          @count -= 1
+          if (@count == 0) restart
+        endIf
+      endIf
+    endWhile
+    halt
+  else
+    # Single line comment
+    while (hasAnother)
+      ch = read
+      if (ch == '\n') produce EOL
+    endWhile
+    restart
+  endIf
 
 - scan_identifier
   ch = peek

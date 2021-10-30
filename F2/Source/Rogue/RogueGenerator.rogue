@@ -2,6 +2,7 @@ module F2
 
 $include "CompileErrorTemplate.rogue"
 $include "ScannerTemplate.rogue"
+$include "ScanTableTemplate.rogue"
 $include "ScanTableDeclarationWriter.rogue"
 $include "TokenTemplate.rogue"
 
@@ -25,6 +26,7 @@ class RogueGenerator : FroleyVisitor
 
       create_file( "CompileError", template_CompileError )
       create_file( "Token", template_Token )
+      create_file( "ScanTable", template_ScanTable )
 
       # TokenType
       create_file( "TokenType" )
@@ -211,7 +213,7 @@ class RogueGenerator : FroleyVisitor
       endWhich
       return cmd
 
-    method visit( cmd:LiteralInt32 )->Cmd  [override]
+    method visit( cmd:LiteralInteger )->Cmd  [override]
       writer.print( cmd.value )
       return cmd
 
@@ -326,7 +328,7 @@ class RogueGenerator : FroleyVisitor
         writeln "    ip_$ = $" (r.name,r.ip)
       endForEach
 
-      write   @|
+      writeln @|
                |  PROPERTIES
                |    filepath   : String
                |    scanner    : ::Scanner
@@ -343,12 +345,13 @@ class RogueGenerator : FroleyVisitor
                |
                |    # GENERATED PROPERTIES
 
+      indent += 4
       if (cmd.vars.count)
         local max_w = 0
         max_w .= or_larger( (forEach in cmd.vars).name.count )
 
         forEach (v in cmd.vars)
-          write "    $ : "(v.name.left_justified(max_w))
+          write "$ : "(v.name.left_justified(max_w))
           which (v.type)
             case Type.NONE
               throw v.t.error( "Cannot determine variable type of '$'. Set to an initial value."(v.name) )
@@ -366,7 +369,8 @@ class RogueGenerator : FroleyVisitor
         endForEach
       endIf
 
-      cmd.dispatch( ScanTableDeclarationWriter(program) )
+      cmd.dispatch( ScanTableDeclarationWriter(program,this) )
+      indent -= 4
 
       writeln @|
                |  METHODS

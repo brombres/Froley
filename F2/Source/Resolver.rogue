@@ -2,6 +2,8 @@ module F2
 
 class Resolver : FroleyVisitor
   PROPERTIES
+    cur_scan           : Scan
+    next_scan_table_id = 0
 
   METHODS
     method init( program:Program )
@@ -49,9 +51,9 @@ class Resolver : FroleyVisitor
             local right = (cmd.right as LiteralCharacter).value
             return LiteralCharacter( cmd.t, left+right ).dispatch(this)
           case Type.INTEGER
-            local left  = (cmd.left as LiteralInt32).value
-            local right = (cmd.right as LiteralInt32).value
-            return LiteralInt32( cmd.t, left + right ).dispatch(this)
+            local left  = (cmd.left as LiteralInteger).value
+            local right = (cmd.right as LiteralInteger).value
+            return LiteralInteger( cmd.t, left + right ).dispatch(this)
           case Type.STRING
             local left  = (cmd.left as LiteralString).value
             local right = (cmd.right as LiteralString).value
@@ -91,6 +93,38 @@ class Resolver : FroleyVisitor
 
     method visit( cmd:ScannerProduce )->Cmd [override]
       cmd.token_type = cmd.token_type.cast_to(Type.TOKEN_TYPE).dispatch(this)
+      return cmd
+
+    method visit( cmd:Scan )->Cmd [override]
+      temporarily cur_scan = cmd
+        if (not cmd.id)
+          cmd.id = "scan_table_" + next_scan_table_id
+          ++next_scan_table_id
+        endIf
+        cmd.expression = cmd.expression.dispatch( this ).require_value
+        if (cmd._others and cmd.statement_lists.is_empty)
+          cmd.table_builder.default = 0  # index 0 in statement_lists
+          cmd.statement_lists.add( cmd._others )
+        endIf
+        return prior.visit( cmd )
+      endTemporarily
+
+    method visit( cmd:ScanOn )->Cmd [override]
+      if (not cmd.is_resolved)
+        cmd.is_resolved = true
+
+        cmd.expression = cmd.expression.dispatch( this )
+        if (cmd.expression.type == Type.INTEGER) cmd.expression .= cast_to( Type.CHARACTER )
+        cmd.expression = cmd.expression.cast_to(Type.STRING).dispatch(this)
+        if (cmd.expression not instanceOf LiteralString)
+          throw cmd.t.error( "Literal string, character, or character code expected." )
+        endIf
+
+        cmd.statements = cmd.statements.dispatch(this)
+
+        cur_scan.table_builder.add( (cmd.expression as LiteralString).value, cur_scan.statement_lists.count )
+        cur_scan.statement_lists.add( cmd.statements )
+      endIf
       return cmd
 
     method visit( cmd:ScanError )->Cmd [override]

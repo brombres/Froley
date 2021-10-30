@@ -86,7 +86,7 @@ class Visitor
     method visit( cmd:Access )->Cmd
       return cmd
 
-    method visit( cmd:LiteralInt32 )->Cmd
+    method visit( cmd:LiteralInteger )->Cmd
       return cmd
 
     method visit( cmd:Assign )->Cmd
@@ -294,6 +294,7 @@ class Visitor
       if (cmd.expression) cmd.expression = cmd.expression.dispatch( this )
       if (cmd.cases) cmd.cases = cmd.cases.dispatch( this ) as CmdList
       if (cmd._others) cmd._others = cmd._others.dispatch( this )
+      (forEach in cmd.statement_lists).dispatch( this )
       return cmd
 
     method visit( cmd:ScanOn )->Cmd

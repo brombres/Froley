@@ -2,21 +2,16 @@ module F2
 
 class ScanTableBuilder
   PROPERTIES
-    root          = ScanTableNode()
-    command_lists = CmdList[]
+    root = ScanTableNode()
 
   METHODS
-    method set_default_statements( statements:CmdList )
-      local index = command_lists.count
-      command_lists.add( statements )
-      root.statements = index
+    method set_default( product:Int32 )
+      root.product = product
 
-    method build( symbol:String, statements:CmdList, &ignore_case )
-      local index = command_lists.count
-      command_lists.add( statements )
-      root.link( symbol, index, &=ignore_case )
+    method add( symbol:String, product:Int32, &ignore_case )
+      root.link( symbol, product, &=ignore_case )
 
-    method to_base64_scan_table->String
+    method to_encoded_scan_table->String
       local table = Int32[]
       root.mark_indices( table )
       root.insert_links( table )
@@ -32,9 +27,9 @@ endClass
 
 class ScanTableNode
   PROPERTIES
-    links      = Table<<Character,ScanTableNode>>()
-    index      : Int32
-    statements = -1
+    links   = Table<<Character,ScanTableNode>>()
+    index   : Int32
+    product = -1
 
   METHODS
     method insert_links( table:Int32[] )
@@ -56,36 +51,36 @@ class ScanTableNode
         return next_state
       endIf
 
-    method link( symbol:String, command_list_index:Int32, &ignore_case )
+    method link( symbol:String, product:Int32, &ignore_case )
       if (symbol == "")
-        statements = command_list_index
+        this.product = product
 
       elseIf (ignore_case)
         local lc = symbol[0].to_lowercase
         local uc = lc.to_uppercase
         local remaining = symbol.rightmost(-1)
-        link(lc).link( remaining, command_list_index, &ignore_case )
+        link(lc).link( remaining, product, &ignore_case )
         if (uc != lc)
-          link(uc).link( remaining, command_list_index, &ignore_case )
+          link(uc).link( remaining, product, &ignore_case )
         endIf
 
       else
         local ch = symbol[0]
         local remaining = symbol.rightmost(-1)
-        link(ch).link( remaining, command_list_index )
+        link(ch).link( remaining, product )
 
       endIf
 
     method mark_indices( table:Int32[] )
       index = table.count
-      table.add( statements )
+      table.add( product )
       table.add( links.count )
       loop (links.count) table.[add(0),add(0)]
       (forEach in links).mark_indices( table )
 
     method to->Value
       local result = @{}
-      if (statements != -1) result//statements = statements
+      if (product != -1) result//product = product
       if (links.count)
         local link_table = result.ensure_table("links")
         forEach (entry in links.entries)

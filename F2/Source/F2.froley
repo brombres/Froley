@@ -575,7 +575,7 @@ SYMBOL_STAR         *
     produce Return(value)
   endOn
   on IDENTIFIER -> Access( name=t.content:String )
-  on INTEGER    -> LiteralInt32( value=t.content:Int32 )
+  on INTEGER    -> LiteralInteger( value=t.content:Int32 )
   on STRING     -> LiteralString( value=t.content:String )
   on STRING_OR_CHARACTER -> LiteralStringOrCharacter( value=t.content:String )
   syntaxError

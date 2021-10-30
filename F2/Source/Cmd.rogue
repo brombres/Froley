@@ -12,7 +12,7 @@ class Cmd( t:Token )
         case Type.TOKEN_TYPE: return CastToTokenType( t, this )
         case Type.STRING:     return CastToString( t, this )
         others
-          throw t.error( "[INTERNAL] Unhandled cast type: $."(type) )
+          throw t.error( "Cannot cast type $ to type: $."(type,to_type) )
       endWhich
 
     method common_type( other:Cmd )->Type
@@ -93,10 +93,20 @@ class Literal : Cmd
   METHODS
 endClass
 
-class LiteralInt32( t, value:Int32 ) : Literal
+class LiteralInteger( t, value:Int32 ) : Literal
   METHODS
     method init( t, string_value:String )
       value = string_value->Int32
+
+    method cast_to( to_type:Type )->Cmd
+      if (to_type == Type.INTEGER) return this
+      which (to_type)
+        case Type.LOGICAL:    return LiteralLogical( t, value->Logical )
+        case Type.CHARACTER:  return LiteralCharacter( t, value->Character )
+        case Type.STRING:     return LiteralString( t, value->String )
+        others
+          return prior.cast_to( to_type )
+      endWhich
 
     method to->Int32
       return value
@@ -113,6 +123,17 @@ endClass
 
 class LiteralLogical( t, value:Logical ) : Literal
   METHODS
+    method cast_to( to_type:Type )->Cmd
+      if (to_type == Type.LOGICAL) return this
+
+      which (to_type)
+        case Type.CHARACTER:  return LiteralCharacter( t, which{value:'1'||'0'} )
+        case Type.INTEGER:    return LiteralInteger( t, which{value:1||0} )
+        case Type.STRING:     return LiteralString( t, which{value:"true"||"false"} )
+        others
+          return prior.cast_to( to_type )
+      endWhich
+
     method to->Int32
       return which{ value:1 || 0 }
 
@@ -131,6 +152,17 @@ endClass
 
 class LiteralString( t, value:String ) : Literal
   METHODS
+    method cast_to( to_type:Type )->Cmd
+      if (to_type == Type.STRING) return this
+
+      which (to_type)
+        case Type.LOGICAL:    return LiteralLogical( t, value->Logical )
+        case Type.CHARACTER:  return LiteralCharacter( t, value[0] )
+        case Type.INTEGER:    return LiteralInteger( t, value->Int32 )
+        others
+          return prior.cast_to( to_type )
+      endWhich
+
     method to->String
       return value.to_escaped_ascii
 
@@ -140,6 +172,17 @@ endClass
 
 class LiteralCharacter( t, value:Character ) : Literal
   METHODS
+    method cast_to( to_type:Type )->Cmd
+      if (to_type == Type.CHARACTER) return this
+
+      which (to_type)
+        case Type.LOGICAL:    return LiteralLogical( t, value->Logical )
+        case Type.INTEGER:    return LiteralInteger( t, value->Int32 )
+        case Type.STRING:     return LiteralString( t, value->String )
+        others
+          return prior.cast_to( to_type )
+      endWhich
+
     method to->String
       return value.to_escaped_ascii
 
@@ -505,7 +548,7 @@ endClass
 class CastToInteger : Unary
   METHODS
     method to->String [override]
-      return "$->Integer"(operand->String)
+      return "$->Int32"(operand->String)
 
     method type->Type
       return Type.INTEGER
@@ -635,21 +678,27 @@ class WriteBuffer( t, new_value:Cmd ) : Cmd
       return "WriteBuffer($)"(new_value)
 endClass
 
-
-
 class Args : CmdList
   METHODS
 endClass
 
-
 class Scan( t, expression:Cmd, cases:CmdList, _others:Cmd ) : Cmd
+  PROPERTIES
+    id              : String
+    table_builder   = ScanTableBuilder()
+    statement_lists = CmdList[]
+
   METHODS
     method to->String
       return "Scan($,$,$)"(expression,cases,_others)
 endClass
 
 class ScanOn( t, expression:Cmd, statements:CmdList ) : Cmd
+  PROPERTIES
+    is_resolved : Logical
+
   METHODS
     method to->String
       return "ScanOn($,$)"(expression,statements)
 endClass
+

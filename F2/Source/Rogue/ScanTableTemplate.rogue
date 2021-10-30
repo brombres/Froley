@@ -40,7 +40,7 @@ augment RogueGenerator
        |      endLoop
        |      return false
        |
-       |    method command_list_index->Int32
+       |    method product->Int32
        |      return data[last_acceptable]
        |
        |    method is_acceptable->Logical

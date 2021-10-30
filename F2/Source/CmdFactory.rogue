@@ -54,7 +54,7 @@ class CmdFactory
         case 43: return Read( t )
         case 44: return Return( t, args[0] )
         case 45: return Access( t, t.content )
-        case 46: return LiteralInt32( t, t.content )
+        case 46: return LiteralInteger( t, t.content )
         case 47: return LiteralString( t, t.content )
         case 48: return LiteralStringOrCharacter( t, t.content )
         others

@@ -14,6 +14,7 @@ class RogueGenerator : FroleyVisitor
 
     indent     = 0
     at_newline = true
+    write_replacements = StringTable<<String>>()
 
   METHODS
     method init( program, folder )
@@ -280,11 +281,9 @@ class RogueGenerator : FroleyVisitor
       return cmd
 
     method visit( cmd:ScannerProduce )->Cmd  [override]
-      write "tokens.add( Token("
+      write   "add( "
       cmd.token_type.dispatch( this )
-      write ",filepath,scanner.source,line,column"
-      # TODO: content string here
-      writeln ") )"
+      writeln " )"
       write   "return false"
       return cmd
 
@@ -293,7 +292,7 @@ class RogueGenerator : FroleyVisitor
       return cmd
 
     method visit( cmd:ReadBuffer )->Cmd  [override]
-      write "buffer->String"
+      write "buffer"
       return cmd
 
     method visit( cmd:ReadVar )->Cmd  [override]
@@ -383,6 +382,9 @@ class RogueGenerator : FroleyVisitor
                |    method init( filepath, scanner )
                |      noAction
                |
+               |    method add( type:TokenType )
+               |      tokens.add( t(type) )
+               |
                |    method clear
                |      tokens = Token[]
                |      buffer.clear
@@ -456,6 +458,32 @@ class RogueGenerator : FroleyVisitor
       endForEach
       return cmd
 
+    method visit( cmd:Scan )->Cmd  [override]
+      write_replacements["$scan_table"] = cmd.id
+
+      write @|$scan_table.reset
+             |contingent
+             |  necessary ($scan_table.accept(forEach in
+      write " "
+trace cmd.expression
+trace cmd.expression.type_name
+      cmd.expression.dispatch(this)
+      writeln @|))
+               |  which ($scan_table.product)
+      indent += 4
+      forEach (statements at i in cmd.statement_lists)
+        writeln "case "+i
+        indent += 2
+        statements.dispatch(this)
+        indent -= 2
+      endForEach
+      indent -= 4
+      write @|  endWhich
+             |endContingent
+
+      write_replacements.remove( "$scan_table" )
+      return cmd
+
     method visit( cmd:ScanError )->Cmd  [override]
       write "throw_syntax_error"
       if (cmd.args and cmd.args.count)
@@ -467,11 +495,6 @@ class RogueGenerator : FroleyVisitor
         write ")"
       endIf
       return cmd
-
-    #method visit( cmd:Scan )->Cmd  [override]
-    #  write "buffer.clear.print "
-    #  dispatch( cmd.new_value )
-    #  return cmd
 
     method visit( cmd:WriteBuffer )->Cmd  [override]
       write "buffer.clear.print "
@@ -494,6 +517,14 @@ class RogueGenerator : FroleyVisitor
       return cmd
 
     method write( content:String )
+      if (content.contains('\n'))
+        forEach (line at i in content.split('\n'))
+          if (i > 0) writeln
+          write( line )
+        endForEach
+        return
+      endIf
+
       if (at_newline and indent)
         loop (indent) writer.print(' ')
       endIf
@@ -506,6 +537,9 @@ class RogueGenerator : FroleyVisitor
           content .= replacing( "$module", "" )
         endIf
         content .= replacing( "$Prefix", program.prefix )
+        forEach (entry in write_replacements.entries)
+          content .= replacing( entry.key, entry.value )
+        endForEach
       endIf
       writer.print( content )
 

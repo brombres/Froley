@@ -3,7 +3,7 @@ module F2
 class Cmd( t:Token )
   METHODS
     method cast_to( to_type:Type )->Cmd
-      if (type == to_type) return this  # no cast needed
+      if (require_type == to_type) return this  # no cast needed
 
       which (to_type)
         case Type.LOGICAL:    return CastToLogical( t, this )

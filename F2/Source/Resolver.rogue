@@ -17,6 +17,11 @@ class Resolver : FroleyVisitor
         program.tokens_by_name//COMPILE_ERROR = TokenDef( t, "COMPILE_ERROR", "compile error", null_attr )
       endIf
 
+    method cast_to( cmd:Cmd, to_type:Type )->Cmd
+      cmd = cmd.dispatch( this )
+      if (cmd.type == to_type) return cmd
+      return cmd.cast_to( to_type ).dispatch( this )
+
     method visit( cmd:Access )->Cmd [override]
       local r = cur_element.routines[ cmd.name ]
       if (r)
@@ -92,7 +97,7 @@ class Resolver : FroleyVisitor
       endWhich
 
     method visit( cmd:ScannerProduce )->Cmd [override]
-      cmd.token_type = cmd.token_type.cast_to(Type.TOKEN_TYPE).dispatch(this)
+      cmd.token_type = cast_to( cmd.token_type, Type.TOKEN_TYPE )
       return cmd
 
     method visit( cmd:Scan )->Cmd [override]
@@ -101,7 +106,9 @@ class Resolver : FroleyVisitor
           cmd.id = "scan_table_" + next_scan_table_id
           ++next_scan_table_id
         endIf
-        cmd.expression = cmd.expression.dispatch( this ).require_value
+        if (cmd.expression)
+          cmd.expression = cast_to( cmd.expression.dispatch(this), Type.STRING )
+        endIf
         if (cmd._others and cmd.statement_lists.is_empty)
           cmd.table_builder.default = 0  # index 0 in statement_lists
           cmd.statement_lists.add( cmd._others )

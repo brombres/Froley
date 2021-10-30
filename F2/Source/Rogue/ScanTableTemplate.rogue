@@ -9,7 +9,7 @@ augment RogueGenerator
        |  PROPERTIES
        |    data            : Int32[]
        |    cursor          : Int32
-       |    last_acceptable = -1
+       |    most_recent_acceptable = -1
        |    match_count     = 0
        |
        |  METHODS
@@ -18,7 +18,7 @@ augment RogueGenerator
        |      local n = reader.read_int32x
        |      data = Int32[]( n )
        |      loop (n) data.add( reader.read_int32x )
-       |      if (data[0] != -1) last_acceptable = 0
+       |      if (data[0] != -1) most_recent_acceptable = 0
        |
        |    method accept( symbol:String )->Logical
        |      reset
@@ -31,7 +31,7 @@ augment RogueGenerator
        |      loop (n)
        |        if (data[i] == ch)
        |          cursor = data[i+1]
-       |          if (data[cursor] != -1) last_acceptable = cursor
+       |          if (data[cursor] != -1) most_recent_acceptable = cursor
        |          ++match_count
        |          return true
        |        else
@@ -41,14 +41,14 @@ augment RogueGenerator
        |      return false
        |
        |    method product->Int32
-       |      return data[last_acceptable]
+       |      return data[most_recent_acceptable]
        |
        |    method is_acceptable->Logical
-       |      return (cursor == last_acceptable)
+       |      return (cursor == most_recent_acceptable)
        |
        |    method reset
-       |      if (data[0] == -1) last_acceptable = -1
-       |      else               last_acceptable = 0
+       |      if (data[0] == -1) most_recent_acceptable = -1
+       |      else               most_recent_acceptable = 0
        |      cursor = 0
        |      match_count = 0
        |

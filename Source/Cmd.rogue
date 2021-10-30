@@ -64,7 +64,7 @@ augment Cmd
       throw UnsupportedOperationError()
 
     method write_add( assembler:TokenizerAssembler, expression:Cmd )
-      throw t.error( "Illegal operation target - target must be 'ch', 'count', or @varname." )
+      throw t.error( "Illegal operation target - target must be 'ch' or @varname." )
 
     method write_divide( assembler:TokenizerAssembler, expression:Cmd )
       throw t.error( "Illegal operation target - target must be @varname." )
@@ -208,7 +208,7 @@ class TokenizerCmdAccess( t, name:String ) : Cmd
       return name
 
     method resolve_assignment( new_value:Cmd )->Cmd
-      throw t.error( "Illegal assignment target. Valid targets are 'ch' and 'count'." )
+      throw t.error( "Illegal assignment target. Valid targets are 'ch' and @varname." )
 
     method write( assembler:TokenizerAssembler )
       TokenizerCmdCall( t, name ).write( assembler )
@@ -444,7 +444,7 @@ class TokenizerCmdRegisterCh( t ) : Cmd
       elseIf (new_value instanceOf TokenizerCmdPeekVar)
         return TokenizerCmdPeekChVar( t, (new_value as TokenizerCmdPeekVar).name )
       else
-        throw t.error( "Illegal 'ch' assignment. Expected 'count', 'read', '@varname', or an integer." )
+        throw t.error( "Illegal 'ch' assignment. Expected 'read', '@varname', or an integer." )
       endIf
 
     method to->String

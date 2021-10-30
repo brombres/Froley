@@ -9,8 +9,7 @@ scanner Scanner
   consume_whitespace
   if (not hasNext) halt
 
-  collect( read )
-  scan (buffer)
+  scan
     #produceAny tokens
     on 'A': produce SYMBOL_A
     on 'a': produce SYMBOL_A

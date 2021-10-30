@@ -346,7 +346,8 @@ SYMBOL_STAR         *
   endOn
 
   on "scan"
-    expression
+    if (consume(EOL)) createNull
+    else              expression
     cases
     _others
     mustConsume "endScan"

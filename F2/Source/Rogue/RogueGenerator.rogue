@@ -461,15 +461,31 @@ class RogueGenerator : FroleyVisitor
     method visit( cmd:Scan )->Cmd  [override]
       write_replacements["$scan_table"] = cmd.id
 
-      write @|$scan_table.reset
-             |contingent
-             |  necessary ($scan_table.accept(forEach in
-      write " "
-trace cmd.expression
-trace cmd.expression.type_name
-      cmd.expression.dispatch(this)
-      writeln @|))
-               |  which ($scan_table.product)
+      writeln @|$scan_table.reset
+               |contingent
+      if (cmd.expression)
+        # Read from string; must accept all characters.
+        write @|  necessary ($scan_table.accept(forEach in
+        write " "
+        cmd.expression.dispatch(this)
+        writeln @|))
+      else
+        # Read longest match from input
+        indent += 2
+        writeln @|block n=1
+                 |  while (scanner.has_another(n))
+                 |    if (not $scan_table.accept(scanner.peek(n-1)))
+                 |      escapeWhile
+                 |    endIf
+                 |    ++n
+                 |  endWhile
+                 |  necessary ($scan_table.has_product)
+                 |  loop ($scan_table.match_count) scanner.read
+                 |endBlock
+        indent -= 2
+      endIf
+
+      writeln @|  which ($scan_table.product)
       indent += 4
       forEach (statements at i in cmd.statement_lists)
         writeln "case "+i

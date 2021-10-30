@@ -7,10 +7,11 @@ augment RogueGenerator
        |$module
        |class ScanTable
        |  PROPERTIES
-       |    data            : Int32[]
-       |    cursor          : Int32
+       |    data             : Int32[]
+       |    cursor           : Int32
        |    most_recent_acceptable = -1
-       |    match_count     = 0
+       |    cur_count        : Int32
+       |    match_count      : Int32
        |
        |  METHODS
        |    method init( base64:String )
@@ -31,14 +32,20 @@ augment RogueGenerator
        |      loop (n)
        |        if (data[i] == ch)
        |          cursor = data[i+1]
-       |          if (data[cursor] != -1) most_recent_acceptable = cursor
-       |          ++match_count
+       |          ++cur_count
+       |          if (data[cursor] != -1)
+       |            most_recent_acceptable = cursor
+       |            match_count = cur_count
+       |          endIf
        |          return true
        |        else
        |          i += 2
        |        endIf
        |      endLoop
        |      return false
+       |
+       |    method has_product->Logical
+       |      return most_recent_acceptable != -1
        |
        |    method product->Int32
        |      return data[most_recent_acceptable]
@@ -50,6 +57,7 @@ augment RogueGenerator
        |      if (data[0] == -1) most_recent_acceptable = -1
        |      else               most_recent_acceptable = 0
        |      cursor = 0
+       |      cur_count = 0
        |      match_count = 0
        |
        |endClass

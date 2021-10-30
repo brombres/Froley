@@ -30,6 +30,7 @@ class Organizer : FroleyVisitor
       else                      return LiteralString( cmd.t, cmd.value ).dispatch( this )
 
     method visit( cmd:ParserDef )->Cmd [override]
+      if (not cmd.name) cmd.name = "Parser"
       program.parsers[cmd.name] = cmd
       return prior.visit( cmd )
 
@@ -65,6 +66,7 @@ class Organizer : FroleyVisitor
       return prior.visit( cmd )
 
     method visit( cmd:ScannerDef )->Cmd [override]
+      if (not cmd.name) cmd.name = "Scanner"
       program.scanners[cmd.name] = cmd
       return prior.visit( cmd )
 

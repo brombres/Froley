@@ -5,7 +5,7 @@ SYMBOL_A a
 SYMBOL_B B
 SYMBOL_B b
 
-scanner Scanner
+scanner
 
 + scan_token
   consume_whitespace

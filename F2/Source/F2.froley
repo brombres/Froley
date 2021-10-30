@@ -224,13 +224,15 @@ SYMBOL_STAR         *
 
 + element
   on "scanner"
-    identifier
+    if (consume(EOL)) createNull
+    else              identifier
     must_consume_eols
     routines
     produce ScannerDef(name:String,code)
 
   elseOn "parser"
-    identifier
+    if (consume(EOL)) createNull
+    else              identifier
     must_consume_eols
     routines
     produce ParserDef(name:String,code)

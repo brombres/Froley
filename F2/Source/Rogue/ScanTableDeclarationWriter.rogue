@@ -1,0 +1,5 @@
+module F2
+
+class ScanTableDeclarationWriter : FroleyVisitor
+  METHODS
+endClass

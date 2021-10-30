@@ -2,6 +2,7 @@ module F2
 
 $include "CompileErrorTemplate.rogue"
 $include "ScannerTemplate.rogue"
+$include "ScanTableDeclarationWriter.rogue"
 $include "TokenTemplate.rogue"
 
 class RogueGenerator : FroleyVisitor
@@ -340,10 +341,9 @@ class RogueGenerator : FroleyVisitor
                |    ip         : Int32
                |    halt       = false
                |
+               |    # GENERATED PROPERTIES
 
       if (cmd.vars.count)
-        writeln @|
-                 |    # Generated Properties
         local max_w = 0
         max_w .= or_larger( (forEach in cmd.vars).name.count )
 
@@ -365,6 +365,8 @@ class RogueGenerator : FroleyVisitor
           endWhich
         endForEach
       endIf
+
+      cmd.dispatch( ScanTableDeclarationWriter(program) )
 
       writeln @|
                |  METHODS
@@ -462,7 +464,7 @@ class RogueGenerator : FroleyVisitor
       endIf
       return cmd
 
-    #method visit( cmd:Which )->Cmd  [override]
+    #method visit( cmd:Scan )->Cmd  [override]
     #  write "buffer.clear.print "
     #  dispatch( cmd.new_value )
     #  return cmd

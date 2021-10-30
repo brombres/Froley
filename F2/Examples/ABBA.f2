@@ -10,13 +10,13 @@ scanner Scanner
   if (not hasNext) halt
 
   collect( read )
-  which (buffer)
+  scan (buffer)
     #produceAny tokens
-    case 'A': produce SYMBOL_A
-    case 'a': produce SYMBOL_A
-    case 'B': produce SYMBOL_B
-    case 'b': produce SYMBOL_B
-  endWhich
+    on 'A': produce SYMBOL_A
+    on 'a': produce SYMBOL_A
+    on 'B': produce SYMBOL_B
+    on 'b': produce SYMBOL_B
+  endScan
   #if (ch == 'A') produce SYMBOL_A
   #if (ch == 'a') produce SYMBOL_A
   #if (ch == 'B') produce SYMBOL_B

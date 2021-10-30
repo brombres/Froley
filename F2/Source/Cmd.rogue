@@ -642,14 +642,14 @@ class Args : CmdList
 endClass
 
 
-class Which( t, expression:Cmd, cases:CmdList, _others:Cmd ) : Cmd
+class Scan( t, expression:Cmd, cases:CmdList, _others:Cmd ) : Cmd
   METHODS
     method to->String
-      return "Which($,$,$)"(expression,cases,_others)
+      return "Scan($,$,$)"(expression,cases,_others)
 endClass
 
-class WhichCase( t, expression:Cmd, statements:CmdList ) : Cmd
+class ScanOn( t, expression:Cmd, statements:CmdList ) : Cmd
   METHODS
     method to->String
-      return "WhichCase($,$)"(expression,statements)
+      return "ScanOn($,$)"(expression,statements)
 endClass

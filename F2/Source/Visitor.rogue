@@ -290,13 +290,13 @@ class Visitor
       endForEach
       return cmd
 
-    method visit( cmd:Which )->Cmd
+    method visit( cmd:Scan )->Cmd
       if (cmd.expression) cmd.expression = cmd.expression.dispatch( this )
       if (cmd.cases) cmd.cases = cmd.cases.dispatch( this ) as CmdList
       if (cmd._others) cmd._others = cmd._others.dispatch( this )
       return cmd
 
-    method visit( cmd:WhichCase )->Cmd
+    method visit( cmd:ScanOn )->Cmd
       if (cmd.expression) cmd.expression = cmd.expression.dispatch( this )
       if (cmd.statements) cmd.statements = cmd.statements.dispatch( this ) as CmdList
 

@@ -22,18 +22,17 @@ KEYWORD_PRODUCE_ANY     produceAny
 
 [common_keywords]
 KEYWORD_AND             and
-KEYWORD_CASE            case        [structural]
 KEYWORD_CONSUME         consume
 KEYWORD_ELSE            else        [structural]
 KEYWORD_ELSE_IF         elseIf      [structural]
 KEYWORD_END_IF          endIf       [structural]
-KEYWORD_END_WHICH       endWhich    [structural]
+KEYWORD_END_SCAN        endScan     [structural]
 KEYWORD_END_WHILE       endWhile    [structural]
-KEYWORD_ESCAPE_WHILE    escapeWhile
 KEYWORD_HALT            halt
 KEYWORD_HAS_NEXT        hasNext
 KEYWORD_IF              if
 KEYWORD_NOT             not
+KEYWORD_ON              on          [structural]
 KEYWORD_OR              or
 KEYWORD_OTHERS          others      [structural]
 KEYWORD_PRINT           print
@@ -41,8 +40,8 @@ KEYWORD_PRINTLN         println
 KEYWORD_PRODUCE         produce
 KEYWORD_READ            read
 KEYWORD_RETURN          return
+KEYWORD_SCAN            scan
 KEYWORD_SYNTAX_ERROR    syntaxError
-KEYWORD_WHICH           which
 KEYWORD_WHILE           while
 
 [symbols]
@@ -346,12 +345,12 @@ SYMBOL_STAR         *
     produce If( condition, statements:Statements, else_ifs:CmdList, _else:Statements )
   endOn
 
-  on "which"
+  on "scan"
     expression
     cases
     _others
-    mustConsume "endWhich"
-    produce Which(expression,cases:CmdList,_others:Cmd)
+    mustConsume "endScan"
+    produce Scan(expression,cases:CmdList,_others:Cmd)
   endOn
 
   on "while"
@@ -384,12 +383,12 @@ SYMBOL_STAR         *
     consume_eols
     while (hasAnother)
       consume_eols
-      on "case"
+      on "on"
         expression
         consume(":")
         consume_eols
         multi_line_statements
-        create WhichCase(expression,statements:CmdList)
+        create ScanOn(expression,statements:CmdList)
       else
         produceList
       endOn

@@ -1,7 +1,7 @@
 scanner
 # Begins the definition of a scanner. Can customize the class name with 'scanner ScannerName'.
 
-+ main
+- main
   # Begins a routine with the arbitrary name "main".
 
   line = 1
@@ -17,7 +17,7 @@ scanner
   endWhile
   halt
 
-+ print_current_line
+- print_current_line
   if (line < 10)     print "     "
   elseIf (line < 100) print "    "
   elseIf (line < 1000) print "   "

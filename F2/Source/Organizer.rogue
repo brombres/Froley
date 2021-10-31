@@ -50,7 +50,7 @@ class Organizer : FroleyVisitor
       endForEach
       return null
 
-    method visit( cmd:RoutineDef )->Cmd [override]
+    method visit( cmd:Routine )->Cmd [override]
       cmd.ip = cur_element.routines.count
       cur_element.routines[cmd.name] = cmd
       return prior.visit( cmd )
@@ -60,7 +60,7 @@ class Organizer : FroleyVisitor
         return prior.visit( cmd )
       endTemporarily
 
-    method visit( cmd:SubroutineDef )->Cmd [override]
+    method visit( cmd:Subroutine )->Cmd [override]
       cmd.ip = cur_element.routines.count
       cur_element.routines[cmd.name] = cmd
       return prior.visit( cmd )

@@ -303,7 +303,7 @@ class RogueGenerator : FroleyVisitor
       write   "return true"
       return cmd
 
-    method visit( cmd:RoutineDef )->Cmd  [override]
+    method visit( cmd:Routine )->Cmd  [override]
       writeln "          case ip_$"(cmd.name)
 
       indent += 12

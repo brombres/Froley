@@ -4,8 +4,8 @@ class FroleyVisitor : Visitor
   PROPERTIES
     program     : Program
 
-    cur_element : ElementDef
-    cur_routine : RoutineDef
+    cur_element : Element
+    cur_routine : Routine
     cur_tokens  : TokenGroup
 
   METHODS
@@ -15,11 +15,11 @@ class FroleyVisitor : Visitor
       cur_element = cmd
       return prior.visit( cmd )
 
-    method visit( cmd:RoutineDef )->Cmd [override]
+    method visit( cmd:Routine )->Cmd [override]
       cur_routine = cmd
       return prior.visit( cmd )
 
-    method visit( cmd:SubroutineDef )->Cmd [override]
+    method visit( cmd:Subroutine )->Cmd [override]
       cur_routine = cmd
       return prior.visit( cmd )
 

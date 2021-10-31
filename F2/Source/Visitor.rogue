@@ -46,11 +46,11 @@ class Visitor
       if (cmd.code) cmd.code = cmd.code.dispatch( this )
       return cmd
 
-    method visit( cmd:RoutineDef )->Cmd
+    method visit( cmd:Routine )->Cmd
       if (cmd.statements) cmd.statements = cmd.statements.dispatch( this )
       return cmd
 
-    method visit( cmd:SubroutineDef )->Cmd
+    method visit( cmd:Subroutine )->Cmd
       if (cmd.statements) cmd.statements = cmd.statements.dispatch( this )
       return cmd
 

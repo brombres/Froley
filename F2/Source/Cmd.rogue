@@ -254,9 +254,9 @@ class Identifier( t, name:String ) : Cmd
       return "$"(name)
 endClass
 
-class ElementDef : Cmd
+class Element : Cmd
   PROPERTIES
-    routines = StringTable<<RoutineDef>>()
+    routines = StringTable<<Routine>>()
     vars     = StringTable<<Var>>()
 
   METHODS
@@ -286,32 +286,32 @@ class ElementDef : Cmd
       return entry.value.type
 endClass
 
-class ParserDef( t, name:String, code:Cmd ) : ElementDef
+class ParserDef( t, name:String, code:Cmd ) : Element
   METHODS
     method to->String
       return "ParserDef($)"(name)
 endClass
 
-class ScannerDef( t, name:String, code:Cmd ) : ElementDef
+class ScannerDef( t, name:String, code:Cmd ) : Element
   METHODS
     method to->String
       return "ScannerDef($,$)"(name,code)
 endClass
 
 
-class RoutineDef( t, name:String, base_type:String, statements:Cmd ) : Cmd
+class Routine( t, name:String, base_type:String, statements:Cmd ) : Cmd
   PROPERTIES
     ip : Int32
 
   METHODS
     method to->String
-      return "RoutineDef($,$,$)"(name,base_type,statements)
+      return "Routine($,$,$)"(name,base_type,statements)
 endClass
 
-class SubroutineDef : RoutineDef
+class Subroutine : Routine
   METHODS
     method to->String
-      return "SubroutineDef($,$,$)"(name,base_type,statements)
+      return "Subroutine($,$,$)"(name,base_type,statements)
 endClass
 
 
@@ -629,7 +629,7 @@ class ConsumeAny( t, alternatives:Cmd ) : Cmd
       return "ConsumeAny($)"(alternatives)
 endClass
 
-class Call( t, routine_def:RoutineDef ) : Cmd
+class Call( t, routine_def:Routine ) : Cmd
   METHODS
     method to->String
       return "Call($)"(routine_def.name)

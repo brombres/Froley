@@ -1,5 +1,5 @@
 scanner
 
-+ main
+- main
   println "Hello World!"
 

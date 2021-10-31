@@ -274,15 +274,15 @@ SYMBOL_STAR         *
   beginList
 
   consume_eols
-  while (nextIs('+') or nextIs('-'))
-    on "+"
+  while (nextIs('-') or nextIs('+'))
+    on "-"
       routine_name_and_base_type
       multi_line_statements
-      create RoutineDef(name:String,base_type:String,statements)
-    elseOn "-"
+      create Routine(name:String,base_type:String,statements)
+    elseOn "+"
       routine_name_and_base_type
       multi_line_statements
-      create SubroutineDef(name:String,base_type:String,statements)
+      create Subroutine(name:String,base_type:String,statements)
     endOn
     consume_eols
   endWhile

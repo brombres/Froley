@@ -31,7 +31,7 @@ augment RogueGenerator
        |      forEach (arg in command//args)
        |        local scanner = Scanner( File(arg) )
        |        tokens.add( scanner.tokenize )
-       |        if (scanner.output.count) println scanner.output
+       |        if (scanner.output.count) print scanner.output; flush
        |      endForEach
        |
        |      println (forEach in tokens)

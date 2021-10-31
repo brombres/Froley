@@ -305,4 +305,7 @@ class Visitor
 
     method visit( cmd:ProduceAny )->Cmd
       return cmd
+
+    method visit( cmd:LiteralLogical )->Cmd
+      return cmd
 endClass

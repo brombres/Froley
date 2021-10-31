@@ -221,6 +221,10 @@ class RogueGenerator : FroleyVisitor
       writer.print( cmd.value )
       return cmd
 
+    method visit( cmd:LiteralLogical )->Cmd  [override]
+      writer.print( cmd.value )
+      return cmd
+
     method visit( cmd:LiteralString )->Cmd  [override]
       if (cmd.value.count == 1)
         writer.print( "'$'"(to_escaped_ascii(cmd.value,"'")) )
@@ -324,18 +328,18 @@ class RogueGenerator : FroleyVisitor
 
       writeln @|
                |  PROPERTIES
-               |    filepath   : String
-               |    scanner    : ::Scanner
-               |    line       = 1
-               |    column     = 1
+               |    filepath    : String
+               |    scanner     : ::Scanner
+               |    _src_line   = 1
+               |    _src_column = 1
                |
-               |    tokens     = Token[]
-               |    buffer     = StringBuilder()
-               |    output     = StringBuilder()
+               |    tokens      = Token[]
+               |    buffer      = StringBuilder()
+               |    output      = StringBuilder()
                |
-               |    start_ip   = 0
-               |    ip         : Int32
-               |    halt       = false
+               |    start_ip    = 0
+               |    ip          : Int32
+               |    halt        = false
                |
                |    # GENERATED PROPERTIES
 
@@ -382,8 +386,8 @@ class RogueGenerator : FroleyVisitor
                |      tokens = Token[]
                |      buffer.clear
                |      output.clear
-               |      line = 1
-               |      column = 1
+               |      _src_line = 1
+               |      _src_column = 1
                |      halt = false
                |
                |    method describe_character( c:Character )->String
@@ -395,7 +399,7 @@ class RogueGenerator : FroleyVisitor
                |      return execute( start_ip )
                |
                |    method t( type:TokenType, content=null:String )->Token
-               |      return Token( type, filepath, scanner.source, line, column, content )
+               |      return Token( type, filepath, scanner.source, _src_line, _src_column, content )
                |
                |    method throw_expected_character_error( ch:Character )
                |      local message = "Syntax error - expected $, found " (describe_character(ch))

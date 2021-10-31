@@ -28,6 +28,7 @@ KEYWORD_ELSE_IF         elseIf      [structural]
 KEYWORD_END_IF          endIf       [structural]
 KEYWORD_END_SCAN        endScan     [structural]
 KEYWORD_END_WHILE       endWhile    [structural]
+KEYWORD_FALSE           false
 KEYWORD_HALT            halt
 KEYWORD_HAS_NEXT        hasAnother
 KEYWORD_IF              if
@@ -42,6 +43,7 @@ KEYWORD_READ            read
 KEYWORD_RETURN          return
 KEYWORD_SCAN            scan
 KEYWORD_SYNTAX_ERROR    syntaxError
+KEYWORD_TRUE            true
 KEYWORD_WHILE           while
 
 [symbols]
@@ -595,6 +597,7 @@ SYMBOL_STAR         *
   on '(' expression ')': return
   on "buffer"                -> ReadBuffer
   on "consume", alternatives -> Consume(alternatives:CmdList)
+  on "false"                 -> LiteralLogical(value="false":Logical)
   on "halt"                  -> Halt
   on "hasAnother"               -> HasAnother
   on "produce", expression   -> ScannerProduce(token_type:Cmd)
@@ -604,6 +607,7 @@ SYMBOL_STAR         *
     else             expression
     produce Return(value)
   endOn
+  on "true"                  -> LiteralLogical(value="true":Logical)
   on IDENTIFIER -> Access( name=t.content:String )
   on INTEGER    -> LiteralInteger( value=t.content:Int32 )
   on STRING     -> LiteralString( value=t.content:String )

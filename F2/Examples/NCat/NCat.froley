@@ -1,0 +1,29 @@
+scanner
+# Begins the definition of a scanner. Can customize the class name with 'scanner ScannerName'.
+
++ main
+  # Begins a routine with the arbitrary name "main".
+
+  line = 1
+  at_linestart = true
+  # Variables are implicitly declared by assigning a value to a name.
+  # All variables are global.
+
+  while (hasAnother)  # built-in commands use camelCase.
+    if (at_linestart) print_current_line
+    ch = read
+    print ch
+    if (ch == '\n') at_linestart = true
+  endWhile
+  halt
+
++ print_current_line
+  if (line < 10)     print "     "
+  elseIf (line < 100) print "    "
+  elseIf (line < 1000) print "   "
+  elseIf (line < 10000) print "  "
+  elseIf (line < 100000) print " "
+  print line "  "
+  ++line
+  at_linestart = false
+  return

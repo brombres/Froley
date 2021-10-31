@@ -718,3 +718,17 @@ class ProduceAny( t, token_group_name:String ) : Cmd
     method to->String
       return "ProduceAny($)"(token_group_name)
 endClass
+
+
+class Restart( t, start_ip:String ) : Cmd
+  METHODS
+    method to->String
+      return "Restart($)"(start_ip)
+endClass
+
+
+class MarkSourcePosition : Cmd
+  METHODS
+    method to->String
+      return "markSourcePosition"
+endClass

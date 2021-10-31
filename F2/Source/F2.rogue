@@ -37,7 +37,7 @@ class F2
     method init( args:String[] )
       local command = parse_args( args )
 
-      trace command
+      # trace command
       # has //options and possibly //args
 
       if (command//options//help or command//args.count != 2)

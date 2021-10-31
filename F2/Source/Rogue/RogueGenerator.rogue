@@ -148,13 +148,13 @@ class RogueGenerator : FroleyVisitor
       return cmd
 
     method visit( cmd:ConsumeAny )->Cmd  [override]
-      write "scanner.consume_any("
+      write "_scanner.consume_any("
       dispatch( cmd.alternatives )
       write ")"
       return cmd
 
     method visit( cmd:ConsumeValue )->Cmd  [override]
-      write "scanner.consume("
+      write "_scanner.consume("
       dispatch( cmd.value )
       write ")"
       return cmd
@@ -204,7 +204,7 @@ class RogueGenerator : FroleyVisitor
       return cmd
 
     method visit( cmd:HasAnother )->Cmd  [override]
-      write "scanner.has_another"
+      write "_scanner.has_another"
       return cmd
 
     method visit( cmd:LiteralCharacter )->Cmd  [override]
@@ -260,6 +260,11 @@ class RogueGenerator : FroleyVisitor
       write ")"
       return cmd
 
+    method visit( cmd:MarkSourcePosition )->Cmd  [override]
+      writeln "_src_line   = _scanner.line"
+      write   "_src_column = _scanner.column"
+      return cmd
+
     method visit( cmd:Print )->Cmd  [override]
       write "output"
       forEach (arg in cmd.args)
@@ -287,7 +292,7 @@ class RogueGenerator : FroleyVisitor
       return cmd
 
     method visit( cmd:Read )->Cmd  [override]
-      write "scanner.read"
+      write "_scanner.read"
       return cmd
 
     method visit( cmd:ReadBuffer )->Cmd  [override]
@@ -296,6 +301,14 @@ class RogueGenerator : FroleyVisitor
 
     method visit( cmd:ReadVar )->Cmd  [override]
       write cmd.var.name
+      return cmd
+
+    method visit( cmd:Restart )->Cmd  [override]
+      if (cmd.start_ip)
+        write "start_ip = ip_"
+        write cmd.start_ip
+      endIf
+      write "return false"
       return cmd
 
     method visit( cmd:Return )->Cmd  [override]
@@ -328,8 +341,8 @@ class RogueGenerator : FroleyVisitor
 
       writeln @|
                |  PROPERTIES
-               |    filepath    : String
-               |    scanner     : ::Scanner
+               |    _filepath   : String
+               |    _scanner    : ::Scanner
                |    _src_line   = 1
                |    _src_column = 1
                |
@@ -376,7 +389,7 @@ class RogueGenerator : FroleyVisitor
                |    method init( filepath:String, content:String )
                |      init( filepath, ::Scanner(content) )
                |
-               |    method init( filepath, scanner )
+               |    method init( _filepath, _scanner )
                |      noAction
                |
                |    method add( type:TokenType )
@@ -399,26 +412,26 @@ class RogueGenerator : FroleyVisitor
                |      return execute( start_ip )
                |
                |    method t( type:TokenType, content=null:String )->Token
-               |      return Token( type, filepath, scanner.source, _src_line, _src_column, content )
+               |      return Token( type, _filepath, _scanner.source, _src_line, _src_column, content )
                |
                |    method throw_expected_character_error( ch:Character )
                |      local message = "Syntax error - expected $, found " (describe_character(ch))
-               |      if (scanner.has_another) message += describe_character(scanner.peek) + "."
-               |      else                     message += "end of input."
-               |      throw CompileError( filepath, scanner.source, scanner.line, scanner.column, message )
+               |      if (_scanner.has_another) message += describe_character(_scanner.peek) + "."
+               |      else                      message += "end of input."
+               |      throw CompileError( _filepath, _scanner.source, _scanner.line, _scanner.column, message )
                |
                |    method throw_syntax_error( message=null:String )
                |      if (not message)
                |        local builder = StringBuilder()
                |        builder.print "Syntax error - unexpected "
-               |        if (not scanner.has_another)
+               |        if (not _scanner.has_another)
                |          builder.println "end of input."
                |        else
-               |          builder.print( describe_character(scanner.peek) ).print( '.' )
+               |          builder.print( describe_character(_scanner.peek) ).print( '.' )
                |        endIf
                |        message = builder->String
                |      endIf
-               |      throw CompileError( filepath, scanner.source, scanner.line, scanner.column, message )
+               |      throw CompileError( _filepath, _scanner.source, _scanner.line, _scanner.column, message )
                |
                |    method tokenize( ip=null:Int32? )->Token[]
                |      if (ip) start_ip = ip.value
@@ -470,14 +483,14 @@ class RogueGenerator : FroleyVisitor
         # Read longest match from input
         indent += 2
         writeln @|block n=1
-                 |  while (scanner.has_another(n))
-                 |    if (not $scan_table.accept(scanner.peek(n-1)))
+                 |  while (_scanner.has_another(n))
+                 |    if (not $scan_table.accept(_scanner.peek(n-1)))
                  |      escapeWhile
                  |    endIf
                  |    ++n
                  |  endWhile
                  |  necessary ($scan_table.has_product)
-                 |  loop ($scan_table.match_count) scanner.read
+                 |  loop ($scan_table.match_count) _scanner.read
                  |endBlock
         indent -= 2
       endIf

@@ -25,7 +25,7 @@ class Validator : FroleyVisitor
       if (cmd.vars.count)
         forEach (v in cmd.vars)
           if (v.type == Type.NONE)
-            throw v.t.error( "Cannot determine variable type of '$'. Set to an initial value."(v.name) )
+            throw v.t.error( "Reference to undefined routine or variable '$'."(v.name) )
           endIf
         endForEach
       endIf

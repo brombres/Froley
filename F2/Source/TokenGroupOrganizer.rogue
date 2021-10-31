@@ -3,8 +3,8 @@ module F2
 class TokenGroupOrganizer : FroleyVisitor
   METHODS
     method visit( cmd:TokenGroup )->Cmd [override]
+      if (not String.exists(cmd.name)) cmd.name = "Tokens"
       prior.visit( cmd )
-
       local entry = program.token_groups.find( cmd.name )
       if (entry)
         if (entry is not cmd)
@@ -19,6 +19,7 @@ class TokenGroupOrganizer : FroleyVisitor
       return prior.visit( cmd )
 
     method visit( cmd:TokenDef )->Cmd [override]
+      if (not cmd.symbol) cmd.symbol = cmd.name
       program.tokens_by_name[cmd.name] = cmd
       program.tokens_by_symbol[cmd.symbol] = cmd
       return prior.visit( cmd )

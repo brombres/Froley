@@ -308,4 +308,10 @@ class Visitor
 
     method visit( cmd:LiteralLogical )->Cmd
       return cmd
+
+    method visit( cmd:Restart )->Cmd
+      return cmd
+
+    method visit( cmd:MarkSourcePosition )->Cmd
+      return cmd
 endClass

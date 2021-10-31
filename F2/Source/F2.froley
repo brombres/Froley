@@ -19,10 +19,13 @@ KEYWORD_TOKENS          tokens      [structural]
 KEYWORD_BUFFER          buffer
 KEYWORD_COLLECT         collect
 KEYWORD_PRODUCE_ANY     produceAny
+KEYWORD_MARK_SRC_POS    markSourcePosition
+KEYWORD_RESTART         restart
 
 [common_keywords]
 KEYWORD_AND             and
 KEYWORD_CONSUME         consume
+KEYWORD_CONSUME_ANY     consumeAny
 KEYWORD_ELSE            else        [structural]
 KEYWORD_ELSE_IF         elseIf      [structural]
 KEYWORD_END_IF          endIf       [structural]
@@ -562,6 +565,10 @@ SYMBOL_STAR         *
   mustConsume(')')
   produceList Args
 
++ empty_statements
+  beginList
+  createList Statements
+
 + expression
 
 - logical_or : Binary
@@ -595,13 +602,25 @@ SYMBOL_STAR         *
 
 - term
   on '(' expression ')': return
-  on "buffer"                -> ReadBuffer
-  on "consume", alternatives -> Consume(alternatives:CmdList)
-  on "false"                 -> LiteralLogical(value="false":Logical)
-  on "halt"                  -> Halt
-  on "hasAnother"               -> HasAnother
-  on "produce", expression   -> ScannerProduce(token_type:Cmd)
-  on "read"                  -> Read
+  on "buffer"                 -> ReadBuffer
+  on "consume", alternatives  -> Consume(alternatives:CmdList)
+  on "consumeAny"
+    expression
+    create ConsumeAny(alternatives)
+    empty_statements
+    produce While(condition,statements:Statements)
+  endOn
+  on "false"                  -> LiteralLogical(value="false":Logical)
+  on "halt"                   -> Halt
+  on "hasAnother"             -> HasAnother
+  on "markSourcePosition"     -> MarkSourcePosition
+  on "produce", expression    -> ScannerProduce(token_type:Cmd)
+  on "read"                   -> Read
+  on "restart"
+    if (nextIs(EOL)) createNull
+    else             identifier
+    produce Restart(start_ip:String)
+  endOn
   on "return"
     if (nextIs(EOL)) createNull
     else             expression

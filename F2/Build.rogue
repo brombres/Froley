@@ -74,8 +74,9 @@ routine rogo_parser
 endRoutine
 
 routine rogo_run
-  local filename = "HelloWorld"
-  execute "cd Examples/$ && rogo" (filename)
+  execute exe_filepath
+  #local filename = "HelloWorld"
+  #execute "cd Examples/$ && rogo" (filename)
 endRoutine
 
 routine rogo_install_launcher

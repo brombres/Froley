@@ -8,17 +8,10 @@ description( "default", "The default action is performed when no other actions a
 description( "help",    "Displays a list of all actions that can be performed by Rogo." )
 
 augment Build
-  # You can create a Local.settings file with overrides for these values, e.g.:
-  # LAUNCHER_FOLDER = "~/bin"
   PROPERTIES
-    PROJECT           = "F2"
-    LAUNCHER_NAME     = "f2"
-    LAUNCHER_FOLDER   = "/usr/local/bin"
-    ROGUEC_FLAGS      = "--debug"
-    CPP_FLAGS_UNIX    = "-O0"
-                        # /O3 to optimize
-    CPP_FLAGS_WINDOWS = "/Od"
-                        # /Ob2ity /GF /Gy to optimize
+    PROJECT       = "HelloWorld"
+    LAUNCHER_NAME = PROJECT.to_lowercase : String
+    FROLEY_EXE    = "f2"
 endAugment
 
 routine exe_filepath->String
@@ -26,121 +19,58 @@ routine exe_filepath->String
   return "Build/$-$" (Build.PROJECT,System.os)
 endRoutine
 
-routine launcher_folder->String
-  local result = Build.LAUNCHER_FOLDER
-  result = File.expand_path( result )
-  return File.without_trailing_separator( result )
-endRoutine
-
 routine rogo_default
   rogo_build
-  rogo_install_launcher  # Uncomment to automatically install a /usr/local/bin/f2 launcher
   rogo_run
 endRoutine
 
 routine rogo_build
-  rogo_parser
-  block exe_filepath
-    local source_files = Files( "Source", "**/*.rogue" )
-    local src_filepath = "Source/$.rogue" (Build.PROJECT)
-    if (source_files.any_newer_than(exe_filepath))
-      local cpp_filepath = "Build/$-$.cpp" (Build.PROJECT,System.os)
-      if (source_files.any_newer_than(cpp_filepath))
-        execute "roguec $ $ --main --output=$ --target=Console,C++,$"...
-                (File.esc(src_filepath),Build.ROGUEC_FLAGS,File.esc(cpp_filepath),System.os)
-      endIf
-      if (System.is_windows)
-        local libs = ""
-        local cc = "cl $ /EHsc /nologo $ /Fe$ $" (Build.CPP_FLAGS_WINDOWS,File.esc(cpp_filepath),File.esc(exe_filepath),libs)
-        #cc += " /link /LTCG"   # uncomment this if there are errors linking libraries
-        execute cc
-      else
-        local libs = ""
-        local cc = "c++ -Wall -std=gnu++11 -fno-strict-aliasing -Wno-invalid-offsetof $ $ -o $$"...
-          (Build.CPP_FLAGS_UNIX,File.esc(cpp_filepath),File.esc(exe_filepath),libs)
-        execute cc
-      endIf
-    endIf
-  endBlock
+  local src = Files(".","*.froley").add("Source/*")
+  if (src.any_newer_than(exe_filepath))
+    compile_froley
+    compile_rogue
+  endIf
 endRoutine
 
-routine rogo_parser
-  # Updates the F2 language parser if necessary
-  local def = File( "Source/F2.froley" )
-  if (def.is_newer_than("Source/TokenizerVM.rogue"))
-    println "Compiling F2 language parser"
-    execute "froley $ --target=rogue --output=Source/" (def.esc)
-  endIf
+routine rogo_rebuild
+  compile_froley
+  compile_rogue
+endRoutine
+
+routine compile_froley
+  local froley_src = File( "$.froley"(Build.PROJECT) )
+  #execute "$ $ Build --main"(File.esc(Build.FROLEY_EXE),froley_src.esc)
+  execute "$ $ Build"(File.esc(Build.FROLEY_EXE),froley_src.esc)
+  File.copy( "Source/HelloWorld.rogue", "Build", &if_different, &verbose )
+endRoutine
+
+routine compile_rogue
+  local src_filepath = "Build/$.rogue" (Build.PROJECT)
+  local cpp_filepath = "Build/$-$.cpp" (Build.PROJECT,System.os)
+  local flags = "--debug --compile"
+  execute "roguec $ $ --main --output=$ --target=Console,C++,$"...
+          (File.esc(src_filepath),flags,File.esc(cpp_filepath),System.os)
 endRoutine
 
 routine rogo_run
-  local filename = "HelloWorld"
-  execute "cd Examples/$ && rogo" (filename)
-endRoutine
-
-routine rogo_install_launcher
-  local exe_filepath = File.absolute_filepath( exe_filepath )
-  if (System.is_windows)
-    local exe_folder = File.conventional_filepath( File.folder(exe_filepath) )
-    local path = System.environment//PATH
-    if (not path.to_lowercase.contains(exe_folder.to_lowercase))
-      println
-      println ''Add the following to your system PATH then reopen this command prompt to be able''
-      println ''to launch $ by typing "$":'' (Build.PROJECT,Build.LAUNCHER_NAME)
-      println
-      println "  ADD THIS TO YOUR PATH"
-      println "  " + exe_folder
-    endIf
-  else
-    contingent
-      local result = Process.run( "which " + Build.LAUNCHER_NAME, &env )
-      necessary (result.success)
-      local launcher_filepath = result->String.trimmed
-      necessary launcher_filepath
-      necessary File.load_as_string( launcher_filepath ).contains( exe_filepath )
-
-    unsatisfied
-      local launcher_filepath = "$/$" (launcher_folder,Build.LAUNCHER_NAME)
-      println "Creating launcher " + launcher_filepath
-      local sudo = ""
-      loop
-        try
-          if (not File.exists(launcher_folder)) execute( "$mkdir $"(sudo,launcher_folder) )
-          File.save( "$.launcher"(Build.LAUNCHER_NAME), ''#!/bin/sh\nexec "$" "$@"\n''(exe_filepath,'$') )
-          execute( "$mv $.launcher $"(sudo,Build.LAUNCHER_NAME,launcher_filepath) )
-          execute( "$chmod a+x $"(sudo,launcher_filepath) )
-          escapeLoop
-        catch (err:Error)
-          if (sudo != "") throw err
-          sudo = "sudo "
-        endTry
-      endLoop
-    endContingent
-  endIf
+  execute File.esc(exe_filepath)
+  #execute "$ Test.$" (File.esc(exe_filepath),Build.PROJECT.to_lowercase)
 endRoutine
 
 routine rogo_clean
-  verbose_delete( "Build" )
-  if (not System.is_windows) verbose_delete( "$/$"(launcher_folder,Build.LAUNCHER_NAME) )
+  File.delete( "Build" )
 endRoutine
 
-routine verbose_delete( filepath:String )
-  if (File.exists(filepath))
-    println "> Delete " + filepath
-    if (not File.delete(filepath))
-      println "*** Failed to delete - retrying with sudo"
-      local cmd = ''sudo rm -rf $'' (File.shell_escaped(filepath))
-      execute cmd
-    endIf
-  endIf
-endRoutine
-
-routine execute( commands:String, &suppress_error )->Logical
+routine execute( commands:String, error_message=null:String, &suppress_error )->Logical
   forEach (cmd in LineReader(commands))
     print( "> " ).println( cmd )
-    if (System.run(cmd) != 0)
-      if (suppress_error) return false
-      else                throw Error( "Build failed." )
+    if (0 != System.run(cmd))
+      if (suppress_error)
+        return false
+      else
+        if (not error_message) error_message = "Build failed."
+        throw Error( error_message )
+      endIf
     endIf
   endForEach
   return true
@@ -227,7 +157,7 @@ class Build [singleton]
     rogo_args           = @[]
     rogo_error          : Error
 
-    LOCAL_DEFS_FILE     = "Local.mk"
+    LOCAL_SETTINGS_FILE = "Local.settings"
 
   METHODS
     method launch
@@ -308,10 +238,10 @@ class Build [singleton]
       endBlock
 
     method read_defs
-      read_defs( LOCAL_DEFS_FILE )
+      read_defs( LOCAL_SETTINGS_FILE )
 
     method read_defs( defs_filepath:String )
-      # Attempt to read defs from Local.mk
+      # Attempt to read defs from Local.settings
       local overrides = String[]
       if (File.exists(defs_filepath))
         forEach (line in LineReader(File(defs_filepath)))

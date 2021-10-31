@@ -1,0 +1,55 @@
+$include "Scanner.rogue"
+uses HelloWorld
+uses Utility/CommandLineParser
+
+try
+  HelloWorld( System.command_line_arguments )
+catch (error:Error)
+  Console.error.println error
+  System.exit 1
+endTry
+
+class HelloWorld
+  METHODS
+    method init( args:String[] )
+      local command = parse_args( args )
+
+      # trace command
+      # has //options and possibly //args
+
+      local scanner = Scanner( "Dummy Filename", "Dummy Content" )
+      scanner.execute
+      if (scanner.output.count) print( scanner.output ).flush
+
+      # Commented out general-purpose framework from running Froley with --main
+      #if (command//options//help or command//args.count == 0)
+      #  print_usage
+      #  System.exit 0
+      #endIf
+
+      #local tokens = Token[]
+      #forEach (arg in command//args)
+      #  local scanner = Scanner( File(arg) )
+      #  tokens.add( scanner.tokenize )
+      #  if (scanner.output.count) println scanner.output
+      #endForEach
+
+      #println (forEach in tokens)
+
+    method parse_args( args:String[] )->Value
+      local command = CommandLineParser().
+      [
+        option( "--flag",     &alias="-f" )
+        option( "--help",     &aliases=["-h","-?"] )
+        option( "--setting=", &alias="-s" )
+      ].parse( args )
+      return command
+
+    method print_usage
+      println @|USAGE
+               |  helloworld [OPTIONS] <filepath>
+               |
+               |OPTIONS
+               |  --help, -h, -?
+               |    Show this help text.
+endClass

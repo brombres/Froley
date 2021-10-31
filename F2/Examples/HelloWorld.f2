@@ -1,4 +1,0 @@
-scanner HelloWorldScanner
-
-+ start
-  println "Hello World!"

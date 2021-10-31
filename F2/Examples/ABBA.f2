@@ -20,7 +20,7 @@ scanner
 
 + consume_whitespace
   while (hasAnother)
-    if (not (consume(' ' | '\r' | '\t'))) return
+    if (not (consume(' ' | '\r' | '\t' | '\n'))) return
   endWhile
   return
 

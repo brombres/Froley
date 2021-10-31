@@ -1,9 +1,9 @@
 #================================================================================
-# Froley.rogue
-# April 17, 2021
+# F2.rogue
+# October 30, 2021
 #================================================================================
 
-$requireRogue "1.8.1"
+$requireRogue "1.9.4"
 
 $include "FroleyVisitor.rogue"
 $include "Rogue/RogueGenerator.rogue"
@@ -17,33 +17,61 @@ $include "Tokenizer.rogue"
 $include "Type.rogue"
 $include "Validator.rogue"
 $include "Var.rogue"
-uses F2
 
+uses F2
 uses Utility/CommandLineParser
 
 try
-  Froley( System.command_line_arguments )
+  F2( System.command_line_arguments )
 catch (error:Error)
-  Console.error.println error
+  local w = Console.width.or_smaller( 80 )
+  Console.error.println "="*w
+  Console.error.println "ERROR"
+  Console.error.println error->String.word_wrapped(w-2).indented(2)
+  Console.error.println "="*w
   System.exit 1
 endTry
 
-class Froley
+class F2
   METHODS
     method init( args:String[] )
+      local command = parse_args( args )
+
+      trace command
+      # has //options and possibly //args
+
+      if (command//options//help or command//args.count != 2)
+        print_usage
+        System.exit 0
+      endIf
+
+      local program = Program( File(command//args.first->String) )
+      local output = command//args[1]->String
+      File.create_folder( output )
+      local main = command//options//main
+      if (main)
+        if (main.is_string) program.main_filename = main->String
+        else                program.main_filename = program.project_name
+      endIf
+      program.generate_rogue( output )
+
+    method parse_args( args:String[] )->Value
       local command = CommandLineParser().
       [
-        # option( "--flag", &alias="-f" )
-        # option( "--setting=",  &alias="-s" )
-      ].parse( System.command_line_arguments )
+        option( "--help",  &aliases=["-h","-?"] )
+        option( "--main=", &optional )
+      ].parse( args )
+      return command
 
-      #trace command
-      # has //options and possibly //args
-      #println( Tokenizer( File("Examples/ABBA.f2") ).tokenize )
-      #forEach (t in Tokenizer( File("Examples/ABBA.f2") ).tokenize)
-      #  println "[$] $"(t.type,t)
-      #endForEach
-
-      local program = Program( File("Examples/ABBA.f2") )
-      program.generate_rogue( "Build/ABBA" )
+    method print_usage
+      println @|USAGE
+               |  f2 [OPTIONS] <language-definition>.f2 <output-folder>
+               |
+               |OPTIONS
+               |  --help, -h, -?
+               |    Show this help text.
+               |
+               |  --main, --main=filename
+               |    Create a main file to run the generated compiler.
 endClass
+

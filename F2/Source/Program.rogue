@@ -3,16 +3,17 @@ module F2
 class Program
   PROPERTIES
     nodes            : Cmd
-    prefix       = ""
+    project_name           = ""
     scanners         = StringTable<<ScannerDef>>()
     parsers          = StringTable<<ParserDef>>()
     token_groups     = StringTable<<TokenGroup>>()
     tokens_by_name   = StringTable<<TokenDef>>()
     tokens_by_symbol = StringTable<<TokenDef>>()
+    main_filename    : String
 
   METHODS
     method init( froley_file:File )
-      prefix = froley_file.filename.before_last('.')
+      project_name = froley_file.filename.before_last('.')
       init( Parser().[open(froley_file)].parse("program") )
 
     method init( nodes )

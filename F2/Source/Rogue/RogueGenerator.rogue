@@ -1,6 +1,7 @@
 module F2
 
 $include "CompileErrorTemplate.rogue"
+$include "MainTemplate.rogue"
 $include "ScannerTemplate.rogue"
 $include "ScanTableTemplate.rogue"
 $include "ScanTableDeclarationWriter.rogue"
@@ -44,14 +45,20 @@ class RogueGenerator : FroleyVisitor
       writeln @|endEnum
       writer.close
 
+      # Main
+      if (program.main_filename)
+        create_file( program.main_filename, template_Main )
+      endIf
+
     method create_file( class_name, template=null:String, filename=null:String )
       if (not filename) filename = class_name + ".rogue"
+      local filepath = folder/filename
 
-      if (File.exists(filename)) print "Recreating "
+      if (File.exists(filepath)) print "Recreating "
       else                       print "Creating "
-      println filename
+      println filepath
 
-      writer = File(folder/filename).print_writer
+      writer = File.print_writer(filepath)
       if (template)
         write( template )
         writer.close
@@ -533,12 +540,13 @@ class RogueGenerator : FroleyVisitor
 
       if (content.contains('$'))
         content .= replacing( "$ClassName",  class_name )
-        if (String.exists(program.prefix))
-          content .= replacing( "$module", "module $\n"(program.prefix) )
+        if (String.exists(program.project_name))
+          content .= replacing( "$module", "module $\n"(program.project_name) )
         else
           content .= replacing( "$module", "" )
         endIf
-        content .= replacing( "$Prefix", program.prefix )
+        content .= replacing( "$ProjectName", program.project_name )
+        content .= replacing( "$projectname", program.project_name.to_lowercase )
         forEach (entry in write_replacements.entries)
           content .= replacing( entry.key, entry.value )
         endForEach

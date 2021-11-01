@@ -1,0 +1,4 @@
+# Fahrenheit to Celsius
+fahrenheight = 212
+celsus = (5/9)*(fahrenheight-32)
+println fahrenheight "F = " celsius "C"

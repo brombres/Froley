@@ -736,10 +736,10 @@ class Restart( t, start_ip:String ) : Cmd
 endClass
 
 
-class MarkSourcePosition : Cmd
+class MarkPosition : Cmd
   METHODS
     method to->String
-      return "markSourcePosition"
+      return "markPosition"
 endClass
 
 
@@ -752,3 +752,22 @@ class CollectRange( t, range:Cmd ) : Cmd
       return Type.INTEGER
 endClass
 
+
+
+class DiscardPosition : Cmd
+  METHODS
+    method to->String
+      return "discardPosition"
+endClass
+
+class RestorePosition : Cmd
+  METHODS
+    method to->String
+      return "restorePosition"
+endClass
+
+class SavePosition : Cmd
+  METHODS
+    method to->String
+      return "savePosition"
+endClass

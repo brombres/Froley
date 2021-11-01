@@ -15,12 +15,15 @@ KEYWORD_SCANNER         scanner     [structural]
 KEYWORD_TOKENS          tokens      [structural]
 
 [scanner_keywords]
-KEYWORD_BUFFER          buffer
-KEYWORD_COLLECT         collect
-KEYWORD_COLLECT_RANGE   collectRange
-KEYWORD_PRODUCE_ANY     produceAny
-KEYWORD_MARK_SRC_POS    markSourcePosition
-KEYWORD_RESTART         restart
+KEYWORD_BUFFER           buffer
+KEYWORD_COLLECT          collect
+KEYWORD_COLLECT_RANGE    collectRange
+KEYWORD_DISCARD_POSITION discardPosition
+KEYWORD_PRODUCE_ANY      produceAny
+KEYWORD_MARK_POSITION    markPosition
+KEYWORD_RESTART          restart
+KEYWORD_RESTORE_POSITION restorePosition
+KEYWORD_SAVE_POSITION    savePosition
 
 [common_keywords]
 KEYWORD_AND             and
@@ -672,22 +675,25 @@ SYMBOL_STAR         *
     empty_statements
     produce While(condition,statements:Statements)
   endOn
-  on "false"                  -> LiteralLogical(value="false":Logical)
-  on "halt"                   -> Halt
-  on "hasAnother"             -> HasAnother
-  on "markSourcePosition"     -> MarkSourcePosition
-  on "produce", expression    -> ScannerProduce(token_type:Cmd)
-  on "read"                   -> Read
+  on "discardPosition"     -> DiscardPosition
+  on "false"               -> LiteralLogical(value="false":Logical)
+  on "halt"                -> Halt
+  on "hasAnother"          -> HasAnother
+  on "markPosition"        -> MarkPosition
+  on "produce", expression -> ScannerProduce(token_type:Cmd)
+  on "read"                -> Read
   on "restart"
     if (nextIs(EOL)) createNull
     else             identifier
     produce Restart(start_ip:String)
   endOn
+  on "restorePosition"     -> RestorePosition
   on "return"
     if (nextIs(EOL)) createNull
     else             expression
     produce Return(value)
   endOn
+  on "savePosition"        -> SavePosition
   on "true"                  -> LiteralLogical(value="true":Logical)
   on IDENTIFIER -> Access( name=t.content:String )
   on INTEGER    -> LiteralInteger( value=t.content:Int32 )

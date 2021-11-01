@@ -1,0 +1,95 @@
+tokens
+EOL
+IDENTIFIER identifier [content]
+NUMBER     number     [content]
+
+tokens Symbols
+SYMBOL_CARET       ^
+SYMBOL_CLOSE_PAREN )
+SYMBOL_EQUALS      =
+SYMBOL_MINUS       -
+SYMBOL_OPEN_PAREN  (
+SYMBOL_PLUS        +
+SYMBOL_SLASH       /
+SYMBOL_STAR        *
+
+scanner
+
+#TODO: how deep can I integrate regular expressions?
+
+- main
+  while (hasAnother) print read
+  halt
+
+#{
+  consume [ \r\t]*    # whitespace
+  if (consume('#' [^\n]*)) restart  # single-line comment
+  if (not hasAnother) halt
+
+  markSourcePosition
+  on '\n' -> EOL
+  on [_A-Za-z] [_A-Za-z0-9]* -> IDENTIFIER
+
+  if nextIs [0-9]
+    scan_integer_discarding_underscores
+    if (scan('.')) scan_integer_discarding_underscores
+    produce NUMBER
+  elseIf (nextIs '.' and peek(1) == [0-9])
+    scan '.'
+    scan_integer_discarding_underscores
+    produce NUMBER
+  endIf
+
+  scan
+    produceAny Symbols
+  endScan
+
+  syntaxError
+
+- scan_integer_discarding_underscores
+  while hasAnother
+    if (not scan [0-9]) return
+    consumeAny '_'
+  endWhile
+}#
+
+
+#{
+- scan_integer
+  while (ch is '0'..'9' or ch == '_')
+    ch = read
+    if (ch != '_') collect ch
+    if (not hasAnother) return
+    ch = peek
+  endWhile
+  return
+}#
+
+#{
+[parser]
++ expression
+
+- assign : RightBinary
+  on "=" -> Assign
+
+- add_subtract : Binary
+  on "+" -> Add
+  on "-" -> Subtract
+
+- multiply_divide : Binary
+  on "*" -> Multiply
+  on "/" -> Divide
+
+- power : Binary
+  on "^" -> Power
+
+- pre_unary : PreUnary
+  on "-" -> Negate
+
+- term
+  on IDENTIFIER -> Access( name=t.content:String )
+  on INTEGER    -> LiteralInt32( value=t.content:String )
+  on '(' expression ')': return
+  syntaxError
+}#
+

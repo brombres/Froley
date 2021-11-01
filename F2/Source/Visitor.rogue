@@ -310,10 +310,19 @@ class Visitor
     method visit( cmd:Restart )->Cmd
       return cmd
 
-    method visit( cmd:MarkSourcePosition )->Cmd
+    method visit( cmd:MarkPosition )->Cmd
       return cmd
 
     method visit( cmd:CollectRange )->Cmd
       if (cmd.range) cmd.range = cmd.range.dispatch( this )
+      return cmd
+
+    method visit( cmd:DiscardPosition )->Cmd
+      return cmd
+
+    method visit( cmd:RestorePosition )->Cmd
+      return cmd
+
+    method visit( cmd:SavePosition )->Cmd
       return cmd
 endClass

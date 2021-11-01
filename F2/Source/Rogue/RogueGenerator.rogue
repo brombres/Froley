@@ -180,6 +180,10 @@ class RogueGenerator : FroleyVisitor
       dispatch( cmd.target )
       return cmd
 
+    method visit( cmd:DiscardPosition )->Cmd  [override]
+      write @|if (_position_stack.count) _position_stack.remove_last
+      return cmd
+
     method visit( cmd:If )->Cmd  [override]
       write   "if ("
       dispatch( cmd.condition )
@@ -276,7 +280,7 @@ class RogueGenerator : FroleyVisitor
       write ")"
       return cmd
 
-    method visit( cmd:MarkSourcePosition )->Cmd  [override]
+    method visit( cmd:MarkPosition )->Cmd  [override]
       writeln "_src_line   = _scanner.line"
       write   "_src_column = _scanner.column"
       return cmd
@@ -327,6 +331,10 @@ class RogueGenerator : FroleyVisitor
       write "return false"
       return cmd
 
+    method visit( cmd:RestorePosition )->Cmd  [override]
+      write @|if (_position_stack.count) _scanner.seek( _position_stack.remove_last )
+      return cmd
+
     method visit( cmd:Return )->Cmd  [override]
       # TODO: save return value first, if needed
       write   "return true"
@@ -339,6 +347,10 @@ class RogueGenerator : FroleyVisitor
       prior.visit( cmd )
       indent -= 12
 
+      return cmd
+
+    method visit( cmd:SavePosition )->Cmd  [override]
+      write "_position_stack.add( _scanner.position )"
       return cmd
 
     method visit( cmd:ScannerDef )->Cmd  [override]
@@ -369,6 +381,8 @@ class RogueGenerator : FroleyVisitor
                |    start_ip    = 0
                |    ip          : Int32
                |    halt        = false
+               |
+               |    _position_stack = Int32[]
                |
                |    # GENERATED PROPERTIES
 

@@ -3,12 +3,13 @@ module F2
 class Program
   PROPERTIES
     nodes            : Cmd
-    project_name           = ""
+    project_name     = ""
     scanners         = StringTable<<ScannerDef>>()
     parsers          = StringTable<<ParserDef>>()
     token_groups     = StringTable<<TokenGroup>>()
     tokens_by_name   = StringTable<<TokenDef>>()
     tokens_by_symbol = StringTable<<TokenDef>>()
+    token_attributes = StringTable<<Int32>>(){ "content":1 }
     main_filename    : String
 
   METHODS
@@ -17,7 +18,7 @@ class Program
       init( Parser().[open(froley_file)].parse("program") )
 
     method init( nodes )
-      nodes.dispatch( TokenGroupOrganizer(this) )
+      nodes.dispatch( TokenOrganizer(this) )
       nodes.dispatch( Organizer(this) )
       nodes.dispatch( Resolver(this) )
       nodes.dispatch( Validator(this) )

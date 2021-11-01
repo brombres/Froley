@@ -247,11 +247,10 @@ class Binary( t, left:Cmd, right:Cmd ) : Cmd
       return "($ $ $)" (left,op,right)
 endClass
 
-
 class Identifier( t, name:String ) : Cmd
   METHODS
     method to->String
-      return "$"(name)
+      return name
 endClass
 
 class Element : Cmd
@@ -590,8 +589,18 @@ class TokenGroup( t, name:String, definitions:CmdList ) : Cmd
 endClass
 
 
-class TokenDef( t, name:String, symbol:String, attributes:CmdList ) : Cmd
+class TokenDef( t, name:String, symbol:String, attributes:String[] ) : Cmd
   METHODS
+    method init( t, name, symbol, attribute_cmd_list:CmdList )
+      if (not String.exists(symbol)) symbol = name
+      if (attribute_cmd_list)
+        attributes = attribute_cmd_list.list.map<<String>>( $->String )
+      endIf
+
+    method has_attribute( attribute_name:String )->Logical
+      if (not attributes) return false
+      return attributes.locate(attribute_name)?
+
     method to->String
       return "TokenDef($,$,$)"(name,symbol,attributes)
 endClass

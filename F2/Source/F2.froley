@@ -9,11 +9,10 @@ SYMBOL              symbol     [content]
 [attributes]
 structural
 
-[element_keywords]
+[section_keywords]
 KEYWORD_PARSER          parser      [structural]
 KEYWORD_SCANNER         scanner     [structural]
 KEYWORD_TOKENS          tokens      [structural]
-# For changes here be sure to adjust scanning_token_defs logic
 
 [scanner_keywords]
 KEYWORD_BUFFER          buffer
@@ -76,7 +75,7 @@ SYMBOL_SLASH        /
 SYMBOL_STAR         *
 
 [tokenizer]
-+ tokenize_froley
++ scan_standard_token
   if (not hasAnother) halt
 
   consume_whitespace
@@ -101,26 +100,6 @@ SYMBOL_STAR         *
   endWhich
 
   syntaxError
-
-+ scan_token_def
-  if (not hasAnother) halt
-
-  consume_whitespace
-  markSourcePosition
-
-  if (consume('\n'))
-    mode tokenize_froley
-    produce EOL
-  endIf
-
-  # Scan everything to the next space; backslash escapes
-  while (hasAnother and not nextIs(' ') and not nextIs('\n'))
-    ch = read
-    if (ch == '\\' and hasAnother) ch = read
-    collect ch
-  endWhile
-
-  produce SYMBOL
 
 - consume_whitespace
   while (consume(' ') or consume('\t')) noAction
@@ -153,44 +132,109 @@ SYMBOL_STAR         *
     restart
   endIf
 
+- scan_tokens_id
+  consume_whitespace
+  consume_comment
+  if (not hasAnother) halt
+
+  markSourcePosition
+  mode scan_token_name
+
+  if (consume('\n')) produce EOL
+
+  scan_identifier
+  syntaxError "Identifier expected."
+
+- scan_token_name
+  consume_whitespace
+  consume_comment
+  if (not hasAnother) halt
+
+  if (nextIs('-') or nextIs('+')) restart scan_standard_token
+
+  markSourcePosition
+  mode scan_token_symbol
+  scan_identifier
+
+  mode scan_token_name
+  if (consume('\n')) produce EOL
+  syntaxError "Identifier expected."
+
+- scan_token_symbol
+  consume_whitespace
+
+  if (nextIs('[') or nextIs('\n')) restart scan_token_attributes
+
+  # Scan everything to the next space; backslash escapes
+  while (hasAnother and not nextIs(' ') and not nextIs('\n'))
+    ch = read
+    if (ch == '\\' and hasAnother) ch = read
+    collect ch
+  endWhile
+
+  mode scan_token_attributes
+  produce SYMBOL
+
+- scan_token_attributes
+  consume_whitespace
+  consume_comment
+  if (not hasAnother) halt
+
+  which (input)
+    case '\n': mode scan_token_name; produce EOL
+    case '[':  produce SYMBOL_OPEN_SQUARE
+    case ']':  produce SYMBOL_CLOSE_SQUARE
+    case ',':  produce SYMBOL_COMMA
+  endWhich
+
+  must_scan_attribute_identifier
+
 - scan_identifier
   ch = peek
   if (ch is 'a'..'z' or ch is 'A'..'Z' or ch == '_')
-    clear buffer
-    while (ch is 'a'..'z' or ch is 'A'..'Z' or ch is '0'..'9' or ch == '_')
-      ch = read
-      collect ch
-      ch = peek
-      if (ch == '/')
-        ch = peek(1)
-        if (ch == '/') ch = read; collect ch; ch = read; collect ch
-        ch = peek
-      endIf
-    endWhile
+    collect_identifier
 
     which (buffer)
       case "parser"
-        @scanning_token_defs = 0
+        mode scan_standard_token
         produce KEYWORD_PARSER
       case "scanner"
-        @scanning_token_defs = 0
+        mode scan_standard_token
         produce KEYWORD_SCANNER
       case "tokens"
-        @scanning_token_defs = 1
+        mode scan_tokens_id
         produce KEYWORD_TOKENS
-      others
-        if (@scanning_token_defs)
-          mode scan_token_def
-          produce IDENTIFIER
-        endIf
-    endWhich
-
-    which (buffer)
       produceAny [scanner_keywords]
       produceAny [common_keywords]
-      others: produce IDENTIFIER
+      others
+        produce IDENTIFIER
     endWhich
   endIf
+  return
+
+- must_scan_attribute_identifier
+  ch = peek
+  if (ch is 'a'..'z' or ch is 'A'..'Z' or ch == '_')
+    collect_identifier
+    produce IDENTIFIER
+  endIf
+  syntaxError "Identifier expected."
+
+- collect_identifier
+  clear buffer
+
+  ch = peek
+  while (ch is 'a'..'z' or ch is 'A'..'Z' or ch is '0'..'9' or ch == '_')
+    ch = read
+    collect ch
+    ch = peek
+    if (ch == '/')
+      ch = peek(1)
+      if (ch == '/') ch = read; collect ch; ch = read; collect ch
+      ch = peek
+    endIf
+  endWhile
+
   return
 
 - scan_integer
@@ -217,7 +261,7 @@ SYMBOL_STAR         *
   if (not consume('"')) return
   while (hasAnother)
     if (consume('"')) produce STRING
-    if (nextIs('\n')) trace; syntaxError "Unterminated string."
+    if (nextIs('\n')) syntaxError "Unterminated string."
     scan_literal_character
   endWhile
   syntaxError "Unterminated string."
@@ -307,13 +351,29 @@ SYMBOL_STAR         *
   consume_eols
   while (hasAnother and not nextHasAttribute(structural))
     identifier
+
     if (nextIs(SYMBOL)) symbol
     else                createNull
-    createNull  # [attributes] placeholder
+
+    attributes
+
     create TokenDef(name:String,symbol:String,attributes:CmdList)
     consume_eols
   endWhile
 
+  produceList
+
++ attributes
+  if (not consume('[')) produceNull
+  if (consume(']'))     produceNull
+
+  beginList
+  identifier
+  while (consume(',') or not nextIs(']'))
+    if (not hasAnother or nextIs(EOL)) syntaxError "Closing ']' expected."
+    identifier
+  endWhile
+  mustConsume(']')
   produceList
 
 + symbol

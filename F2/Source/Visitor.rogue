@@ -231,8 +231,6 @@ class Visitor
       return cmd
 
     method visit( cmd:TokenDef )->Cmd
-      if (cmd.attributes) cmd.attributes = cmd.attributes.dispatch( this ) as CmdList
-
       return cmd
 
     method visit( cmd:Symbol )->Cmd

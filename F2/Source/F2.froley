@@ -17,6 +17,7 @@ KEYWORD_TOKENS          tokens      [structural]
 [scanner_keywords]
 KEYWORD_BUFFER          buffer
 KEYWORD_COLLECT         collect
+KEYWORD_COLLECT_RANGE   collectRange
 KEYWORD_PRODUCE_ANY     produceAny
 KEYWORD_MARK_SRC_POS    markSourcePosition
 KEYWORD_RESTART         restart
@@ -662,8 +663,9 @@ SYMBOL_STAR         *
 
 - term
   on '(' expression ')': return
-  on "buffer"                 -> ReadBuffer
-  on "consume", alternatives  -> Consume(alternatives:CmdList)
+  on "buffer"                   -> ReadBuffer
+  on "collectRange", expression -> CollectRange(range)
+  on "consume", alternatives    -> Consume(alternatives:CmdList)
   on "consumeAny"
     expression
     create ConsumeAny(alternatives)

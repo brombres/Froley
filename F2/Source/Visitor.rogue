@@ -312,4 +312,8 @@ class Visitor
 
     method visit( cmd:MarkSourcePosition )->Cmd
       return cmd
+
+    method visit( cmd:CollectRange )->Cmd
+      if (cmd.range) cmd.range = cmd.range.dispatch( this )
+      return cmd
 endClass

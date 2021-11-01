@@ -96,6 +96,32 @@ class Resolver : FroleyVisitor
           throw t.error( "[INTERNAL] Unhandled cast type: $."(cmd.to_type) )
       endWhich
 
+    method visit( cmd:CollectRange )->Cmd [override]
+      cmd.range = cast_to( cmd.range, Type.STRING )
+      local cmd_range = cmd.range as LiteralString
+      if (not cmd_range) throw cmd.range.t.error( "Literal string expected." )
+
+      # Reformat e.g. ".0-9" to be "..09"
+      # Output: every pair of characters is a (low,high), ordered by low
+      # Input:  "L-H" -> "LH", "N" -> "NN"
+      local range = cmd_range.value
+      local pairs = String[]
+      local i = 0
+      local n = range.count
+      while (i < n)
+        if (i+2 < n and range[i+1] == '-')
+          pairs.add( "$$"(range[i],range[i+2]) )
+          i += 3
+        else
+          pairs.add( "$$"(range[i],range[i]) )
+          ++i
+        endIf
+      endWhile
+      pairs.sort( (a,b) => a[0] <= b[0] )
+      cmd_range.value = pairs.join("")
+
+      return cmd
+
     method visit( cmd:ScannerProduce )->Cmd [override]
       cmd.token_type = cast_to( cmd.token_type, Type.TOKEN_TYPE )
       return cmd

@@ -741,3 +741,14 @@ class MarkSourcePosition : Cmd
     method to->String
       return "markSourcePosition"
 endClass
+
+
+class CollectRange( t, range:Cmd ) : Cmd
+  METHODS
+    method to->String
+      return "CollectRange($)"(range)
+
+    method type->Type
+      return Type.INTEGER
+endClass
+

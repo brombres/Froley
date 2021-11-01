@@ -109,6 +109,12 @@ class RogueGenerator : FroleyVisitor
       endForEach
       return cmd
 
+    method visit( cmd:CollectRange )->Cmd  [override]
+      write "collect_range( "
+      cmd.range.dispatch( this )
+      write " )"
+      return cmd
+
     method visit( cmd:CompareEQ )->Cmd  [override]
       write "("
       dispatch( cmd.left )
@@ -416,6 +422,25 @@ class RogueGenerator : FroleyVisitor
                |      _src_line = 1
                |      _src_column = 1
                |      halt = false
+               |
+               |    method collect_range( range:String )->Int32
+               |      local n = 0
+               |      while (_scanner.has_another)
+               |        block
+               |          local ch = _scanner.peek
+               |          forEach (low at i in range step 2)
+               |            if (ch < low) return n
+               |            # ch is >= low
+               |            if (ch <= range[i+1])
+               |              buffer.print _scanner.read
+               |              ++n
+               |              escapeBlock
+               |            endIf
+               |          endForEach
+               |          return n
+               |        endBlock
+               |      endWhile
+               |      return n
                |
                |    method describe_character( c:Character )->String
                |      if (c == 10 or c == 13)       return "end of line";

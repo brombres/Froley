@@ -325,4 +325,15 @@ class Visitor
 
     method visit( cmd:SavePosition )->Cmd
       return cmd
+
+    method visit( cmd:CharSet )->Cmd
+      return cmd
+
+    method visit( cmd:ZeroOrMore )->Cmd
+      if (cmd.pattern) cmd.pattern = cmd.pattern.dispatch( this )
+      return cmd
+
+    method visit( cmd:OneOrMore )->Cmd
+      if (cmd.pattern) cmd.pattern = cmd.pattern.dispatch( this )
+      return cmd
 endClass

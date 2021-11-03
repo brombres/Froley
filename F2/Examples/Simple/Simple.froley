@@ -15,9 +15,9 @@ SYMBOL_STAR        *
 
 scanner
 
-#TODO: how deep can I integrate regular expressions?
-
 - main
+  [ \r\t]*    # whitespace
+  #consume [ \r\t]*    # whitespace
   while (hasAnother) print read
   halt
 

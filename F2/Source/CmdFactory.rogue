@@ -63,10 +63,13 @@ class CmdFactory
         case 52: return Return( t, args[0] )
         case 53: return SavePosition( t )
         case 54: return LiteralLogical( t, true )
-        case 55: return Access( t, t.content )
-        case 56: return LiteralInteger( t, t.content )
-        case 57: return LiteralString( t, t.content )
-        case 58: return LiteralStringOrCharacter( t, t.content )
+        case 55: return CharSet( t, t.content )
+        case 56: return ZeroOrMore( t, args[0] )
+        case 57: return OneOrMore( t, args[0] )
+        case 58: return Access( t, t.content )
+        case 59: return LiteralInteger( t, t.content )
+        case 60: return LiteralString( t, t.content )
+        case 61: return LiteralStringOrCharacter( t, t.content )
         others
           throw Error( "[INTERNAL] CmdFactory.create_cmd() constructor index out of bounds: " + constructor_index )
       endWhich

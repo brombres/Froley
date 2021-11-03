@@ -1,5 +1,6 @@
 [tokens]
 EOL                 EOL
+CHARSET             charset    [content]
 IDENTIFIER          identifier [content]
 INTEGER             integer    [content]
 STRING              string     [content]
@@ -53,30 +54,31 @@ KEYWORD_TRUE            true
 KEYWORD_WHILE           while
 
 [symbols]
-SYMBOL_ALTERNATIVE  |
-SYMBOL_ASSIGN       =
-SYMBOL_CARET        ^
-SYMBOL_CLOSE_PAREN  )   [structural]
-SYMBOL_CLOSE_SQUARE ]   [structural]
-SYMBOL_COLON        :
-SYMBOL_COMMA        ,
-SYMBOL_DOT_DOT      ..
-SYMBOL_EQ           ==
-SYMBOL_GE           >=
-SYMBOL_GT           >
-SYMBOL_LE           <=
-SYMBOL_LT           <
-SYMBOL_NE           !=
-SYMBOL_MINUS        -
-SYMBOL_MINUS_MINUS  --
-SYMBOL_OPEN_PAREN   (
-SYMBOL_OPEN_SQUARE  [
-SYMBOL_PLUS         +
-SYMBOL_PLUS_PLUS    ++
-SYMBOL_SEMICOLON    ;
-SYMBOL_SINGLE_QUOTE '\''
-SYMBOL_SLASH        /
-SYMBOL_STAR         *
+SYMBOL_ALTERNATIVE    |
+SYMBOL_ASSIGN         =
+SYMBOL_CARET          ^
+SYMBOL_CLOSE_PAREN    )   [structural]
+SYMBOL_CLOSE_SQUARE   ]   [structural]
+SYMBOL_COLON          :
+SYMBOL_COMMA          ,
+SYMBOL_DOT_DOT        ..
+SYMBOL_EMPTY_BRACKETS []
+SYMBOL_EQ             ==
+SYMBOL_GE             >=
+SYMBOL_GT             >
+SYMBOL_LE             <=
+SYMBOL_LT             <
+SYMBOL_NE             !=
+SYMBOL_MINUS          -
+SYMBOL_MINUS_MINUS    --
+SYMBOL_OPEN_PAREN     (
+SYMBOL_OPEN_SQUARE    [
+SYMBOL_PLUS           +
+SYMBOL_PLUS_PLUS      ++
+SYMBOL_SEMICOLON      ;
+SYMBOL_SINGLE_QUOTE   '\''
+SYMBOL_SLASH          /
+SYMBOL_STAR           *
 
 [tokenizer]
 + scan_standard_token
@@ -92,6 +94,7 @@ SYMBOL_STAR         *
   scan_identifier
   scan_single_quoted_string
   scan_double_quoted_string
+  scan_charset
 
   which (input)
     produceAny [symbols]
@@ -104,6 +107,21 @@ SYMBOL_STAR         *
   endWhich
 
   syntaxError
+
+- scan_charset
+  if (not consume('[')) return
+  if (consume(']')) produce SYMBOL_EMPTY_BRACKETS
+
+  collect '['
+  while (hasAnother and not nextIs(']'))
+    ch = read
+    if (ch == '\\') ch = read
+    collect ch
+  endWhile
+
+  mustConsume ']'
+  collect ']'
+  produce CHARSET
 
 - consume_whitespace
   while (consume(' ') or consume('\t')) noAction
@@ -695,6 +713,12 @@ SYMBOL_STAR         *
   endOn
   on "savePosition"        -> SavePosition
   on "true"                  -> LiteralLogical(value="true":Logical)
+  on CHARSET
+    create CharSet(characters=t.content:String)
+    on '*' -> ZeroOrMore(pattern)
+    on '+' -> OneOrMore(pattern)
+    return  # just the CharSet
+  endOn
   on IDENTIFIER -> Access( name=t.content:String )
   on INTEGER    -> LiteralInteger( value=t.content:Int32 )
   on STRING     -> LiteralString( value=t.content:String )

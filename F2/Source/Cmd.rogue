@@ -771,3 +771,22 @@ class SavePosition : Cmd
     method to->String
       return "savePosition"
 endClass
+
+
+class CharSet( t, characters:String ) : Cmd
+  METHODS
+    method to->String
+      return "$"(characters)
+endClass
+
+class ZeroOrMore( t, pattern:Cmd ) : Cmd
+  METHODS
+    method to->String
+      return "*($)"(pattern)
+endClass
+
+class OneOrMore( t, pattern:Cmd ) : Cmd
+  METHODS
+    method to->String
+      return "+($)"(pattern)
+endClass

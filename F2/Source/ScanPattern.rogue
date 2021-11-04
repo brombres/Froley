@@ -8,26 +8,26 @@ class ScanPattern
     method escape( pattern:String, at_escape:String )->String
       use builder = StringBuilder.pool
         forEach (ch in pattern.to_escaped_ascii('"'))
-          if (at_escape.contains(ch)) builder.print('@')
-          builder.print ch
+          if (at_escape.contains(ch)) builder.print("\\\\").print(ch)
+          else                        ch.print_escaped_ascii( builder, '"' )
         endForEach
         return builder->String
       endUse
 
   METHODS
-    method isNext( scanner:Scanner )->Logical
+    method is_next( scanner: ::Scanner )->Logical
       local original_location = scanner.location
       local result = scan( scanner )
       scanner.location = original_location
       return result
 
-    method scan( scanner:Scanner, builder=null:StringBuilder )->Logical
+    method scan( scanner: ::Scanner, builder=null:StringBuilder )->Logical
       throw UnsupportedOperationError()
 endClass
 
 class ScanPatternRoot( pattern:ScanPattern ) : ScanPattern
   METHODS
-    method scan( scanner:Scanner, builder=null:StringBuilder )->Logical
+    method scan( scanner: ::Scanner, builder=null:StringBuilder )->Logical
       # Ensure that a zero-length match doesn't return 'true'
       local og_pos = scanner.position
       if (not pattern.scan(scanner,builder)) return false
@@ -39,7 +39,10 @@ endClass
 
 class ScanPatternList( patterns:ScanPattern[] ) : ScanPattern
   METHODS
-    method scan( scanner:Scanner, builder=null:StringBuilder )->Logical
+    method add( pattern:ScanPattern )
+      patterns.add( pattern )
+
+    method scan( scanner: ::Scanner, builder=null:StringBuilder )->Logical
       local original_location = scanner.location
       local original_count = which{ builder:builder.count || 0 }
 
@@ -71,7 +74,7 @@ class SinglesSetScanPattern : ScanPattern
         characters = pattern
       endIf
 
-    method scan( scanner:Scanner, builder=null:StringBuilder )->Logical
+    method scan( scanner: ::Scanner, builder=null:StringBuilder )->Logical
       if (not scanner.has_another) return false
       if (invert)
         if (characters.contains(scanner.peek)) return false
@@ -120,7 +123,7 @@ class LowHighSetScanPattern : ScanPattern
       pairs.sort( (a,b) => (a[0] <= b[0]) )
       characters = pairs.join("")
 
-    method scan( scanner:Scanner, builder=null:StringBuilder )->Logical
+    method scan( scanner: ::Scanner, builder=null:StringBuilder )->Logical
       local ch = scanner.peek
       if (invert)
         forEach (low at i in characters step 2)
@@ -158,7 +161,7 @@ endClass
 
 class LiteralStringScanPattern( characters:String ) : ScanPattern
   METHODS
-    method scan( scanner:Scanner, builder=null:StringBuilder )->Logical
+    method scan( scanner: ::Scanner, builder=null:StringBuilder )->Logical
       if (not scanner.consume(characters)) return false
       if (builder) builder.print characters
       return true
@@ -169,7 +172,7 @@ endClass
 
 class ZeroOrMoreScanPattern( operand:ScanPattern ) : ScanPattern
   METHODS
-    method scan( scanner:Scanner, builder=null:StringBuilder )->Logical
+    method scan( scanner: ::Scanner, builder=null:StringBuilder )->Logical
       while (operand.scan(scanner,builder)) noAction
       return true
 
@@ -179,7 +182,7 @@ endClass
 
 class OneOrMoreScanPattern( operand:ScanPattern ) : ScanPattern
   METHODS
-    method scan( scanner:Scanner, builder=null:StringBuilder )->Logical
+    method scan( scanner: ::Scanner, builder=null:StringBuilder )->Logical
       if (not operand.scan(scanner,builder)) return false
       while (operand.scan(scanner,builder)) noAction
       return true
@@ -190,7 +193,7 @@ endClass
 
 class OptionalScanPattern( operand:ScanPattern ) : ScanPattern
   METHODS
-    method scan( scanner:Scanner, builder=null:StringBuilder )->Logical
+    method scan( scanner: ::Scanner, builder=null:StringBuilder )->Logical
       operand.scan( scanner, builder )
       return true
 
@@ -202,7 +205,7 @@ class AnyCharacterScanPattern : ScanPattern
   METHODS
     method init
 
-    method scan( scanner:Scanner, builder=null:StringBuilder )->Logical
+    method scan( scanner: ::Scanner, builder=null:StringBuilder )->Logical
       if (not scanner.has_another) return false
       local ch = scanner.read
       if (builder) builder.print( ch )
@@ -254,18 +257,36 @@ class ScanPatternParser [singleton]
                   else                     stack.add( ScanPatternList(patterns) )
                 endIf
               case '*'
+                if (builder.count > 1)
+                  # Apply only to last character of current sequence
+                  local last_ch = builder.remove_last
+                  _flush
+                  builder.print last_ch
+                endIf
                 _flush
                 if (stack.count) stack.add( ZeroOrMoreScanPattern(stack.remove_last) )
               case '+'
+                if (builder.count > 1)
+                  # Apply only to last character of current sequence
+                  local last_ch = builder.remove_last
+                  _flush
+                  builder.print last_ch
+                endIf
                 _flush
                 if (stack.count) stack.add( OneOrMoreScanPattern(stack.remove_last) )
               case '?'
+                if (builder.count > 1)
+                  # Apply only to last character of current sequence
+                  local last_ch = builder.remove_last
+                  _flush
+                  builder.print last_ch
+                endIf
                 _flush
                 if (stack.count) stack.add( OptionalScanPattern(stack.remove_last) )
               case '.'
                 _flush
                 stack.add( AnyCharacterScanPattern() )
-              case '@'
+              case '\\'
                 ch = scanner.read
                 builder.print ch
               others
@@ -277,7 +298,7 @@ class ScanPatternParser [singleton]
               case ']'
                 _flush
                 state = PARSE_SEQ
-              case '@'
+              case '\\'
                 ch = scanner.read
                 builder.print ch
               others
@@ -298,17 +319,19 @@ class ScanPatternParser [singleton]
           case PARSE_SEQ
             stack.add( LiteralStringScanPattern(builder->String) )
           case PARSE_SET
-            local pattern = builder->String
-            local i = pattern.locate('-',1)
-            if (i.exists and i.value < pattern.count-1)
-              # This set contains at least one range
-              stack.add( LowHighSetScanPattern(pattern) )
-            else
-              # Single characters only
-              stack.add( SinglesSetScanPattern(pattern) )
-            endIf
+            stack.add( charset_to_scan_pattern(builder->String) )
         endWhich
         builder.clear
+      endIf
+
+    method charset_to_scan_pattern( charset:String )->ScanPattern
+      local i = charset.locate('-',1)
+      if (i.exists and i.value < charset.count-1)
+        # This set contains at least one range
+        return LowHighSetScanPattern( charset )
+      else
+        # Single characters only
+        return SinglesSetScanPattern( charset )
       endIf
 endClass
 

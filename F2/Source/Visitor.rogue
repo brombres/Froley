@@ -202,10 +202,6 @@ class Visitor
       if (cmd.args) cmd.args = cmd.args.dispatch( this ) as CmdList
       return cmd
 
-    method visit( cmd:CastTo )->Cmd
-      cmd.operand = cmd.operand.dispatch( this )
-      return cmd
-
     method visit( cmd:CastToLogical )->Cmd
       cmd.operand = cmd.operand.dispatch( this )
       return cmd
@@ -226,6 +222,10 @@ class Visitor
       cmd.operand = cmd.operand.dispatch( this )
       return cmd
 
+    method visit( cmd:CastToPattern )->Cmd
+      cmd.operand = cmd.operand.dispatch( this )
+      return cmd
+
     method visit( cmd:TokenGroup )->Cmd
       if (cmd.definitions) cmd.definitions = cmd.definitions.dispatch( this ) as CmdList
       return cmd
@@ -241,15 +241,15 @@ class Visitor
       return cmd
 
     method visit( cmd:Consume )->Cmd
-      cmd.alternatives = cmd.alternatives.dispatch( this ) as CmdList
+      cmd.args = cmd.args.dispatch( this ) as CmdList
       return cmd
 
-    method visit( cmd:ConsumeValue )->Cmd
+    method visit( cmd:ConsumeCharacters )->Cmd
       cmd.value .= dispatch( this )
       return cmd
 
-    method visit( cmd:ConsumeAny )->Cmd
-      if (cmd.alternatives) cmd.alternatives .= dispatch( this )
+    method visit( cmd:ConsumePattern )->Cmd
+      if (cmd.pattern) cmd.pattern = cmd.pattern.dispatch( this )
       return cmd
 
     method visit( cmd:Call )->Cmd
@@ -336,4 +336,8 @@ class Visitor
     method visit( cmd:OneOrMore )->Cmd
       if (cmd.pattern) cmd.pattern = cmd.pattern.dispatch( this )
       return cmd
+
+    method visit( cmd:Pattern )->Cmd
+      return cmd
+
 endClass

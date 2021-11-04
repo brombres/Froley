@@ -3,6 +3,7 @@ module F2
 $include "CompileErrorTemplate.rogue"
 $include "MainTemplate.rogue"
 $include "ScannerTemplate.rogue"
+$include "ScanPatternTemplate.rogue"
 $include "ScanTableTemplate.rogue"
 $include "ScanTableDeclarationWriter.rogue"
 $include "TokenTemplate.rogue"
@@ -28,7 +29,8 @@ class RogueGenerator : FroleyVisitor
 
       create_file( "CompileError", template_CompileError )
       create_file( "Token", template_Token )
-      create_file( "ScanTable", template_ScanTable )
+      create_file( "ScanPattern", template_ScanPattern )
+      create_file( "ScanTable",   template_ScanTable )
 
       # TokenType
       create_file( "TokenType" )
@@ -102,6 +104,7 @@ class RogueGenerator : FroleyVisitor
 
     method visit( cmd:CharSet )->Cmd  [override]
       trace cmd.characters
+      println StackTrace()
       return cmd
 
     method visit( cmd:Collect )->Cmd  [override]
@@ -167,16 +170,13 @@ class RogueGenerator : FroleyVisitor
       write ")"
       return cmd
 
-    method visit( cmd:ConsumeAny )->Cmd  [override]
-      write "_scanner.consume_any("
-      dispatch( cmd.alternatives )
-      write ")"
+    method visit( cmd:ConsumePattern )->Cmd  [override]
+      dispatch( cmd.pattern )
+      write ".scan(_scanner)"
       return cmd
 
-    method visit( cmd:ConsumeValue )->Cmd  [override]
-      write "_scanner.consume("
-      dispatch( cmd.value )
-      write ")"
+    method visit( cmd:Pattern )->Cmd  [override]
+      write cmd.reference_name
       return cmd
 
     method visit( cmd:Decrement )->Cmd  [override]
@@ -411,6 +411,10 @@ class RogueGenerator : FroleyVisitor
           endWhich
         endForEach
       endIf
+
+      forEach (entry in program.scan_patterns.entries)
+        writeln ''$ = ScanPattern( "$" )'' (entry.value,entry.key)
+      endForEach
 
       cmd.dispatch( ScanTableDeclarationWriter(program,this) )
       indent -= 4

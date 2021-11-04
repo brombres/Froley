@@ -54,8 +54,8 @@ enum TokenType( symbol:String, attributes=TokenTypeAttribute.NONE:TokenTypeAttri
   KEYWORD_SYNTAX_ERROR("syntaxError")                         = 43
   KEYWORD_TRUE("true")                                        = 44
   KEYWORD_WHILE("while")                                      = 45
-  SYMBOL_ALTERNATIVE("|")                                     = 46
-  SYMBOL_ASSIGN("=")                                          = 47
+  SYMBOL_ASSIGN("=")                                          = 46
+  SYMBOL_AT("@")                                              = 47
   SYMBOL_CARET("^")                                           = 48
   SYMBOL_CLOSE_PAREN(")",TokenTypeAttribute.STRUCTURAL)       = 49
   SYMBOL_CLOSE_SQUARE("]",TokenTypeAttribute.STRUCTURAL)      = 50

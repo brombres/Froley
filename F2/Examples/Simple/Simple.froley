@@ -16,17 +16,20 @@ SYMBOL_STAR        *
 scanner
 
 - main
-  [ \r\t]*    # whitespace
-  #consume [ \r\t]*    # whitespace
+  consume [ \r\t]*    # whitespace
   while (hasAnother) print read
   halt
+
+# scan 'x' <> if (nextIs('x')) collect( read )
+# scan 'x' -> IDENTIFIER
 
 #{
   consume [ \r\t]*    # whitespace
   if (consume('#' [^\n]*)) restart  # single-line comment
   if (not hasAnother) halt
 
-  markSourcePosition
+  markPosition
+
   on '\n' -> EOL
   on [_A-Za-z] [_A-Za-z0-9]* -> IDENTIFIER
 
@@ -40,9 +43,9 @@ scanner
     produce NUMBER
   endIf
 
-  scan
+  which input
     produceAny Symbols
-  endScan
+  endWhich
 
   syntaxError
 

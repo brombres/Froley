@@ -22,6 +22,27 @@ class Resolver : FroleyVisitor
       if (cmd.type == to_type) return cmd
       return cmd.cast_to( to_type ).dispatch( this )
 
+    method resolve_sequence( cmd:CmdList )->Cmd
+      cmd.dispatch( this )
+
+      contingent
+        forEach (element in cmd)
+          sufficient (element.type == Type.PATTERN)
+        endForEach
+        return cmd
+
+      satisfied
+        if (cmd.count == 1)
+          return Pattern( cmd.t, cmd.first->ScanPattern ).dispatch( this )
+        else
+          # Convert this list into a pattern
+          local pattern = ScanPatternList( ScanPattern[] )
+          pattern.add( (forEach in cmd)->ScanPattern )
+          return Pattern( cmd.t, pattern ).dispatch( this )
+        endIf
+
+      endContingent
+
     method visit( cmd:Access )->Cmd [override]
       local r = cur_element.routines[ cmd.name ]
       if (r)
@@ -78,23 +99,8 @@ class Resolver : FroleyVisitor
     method visit( cmd:Assign )->Cmd [override]
       return cmd.target.resolve_assignment( cmd, this )
 
-    method visit( cmd:CastTo )->Cmd [override]
-      cmd.operand .= dispatch(this)
-      local operand = cmd.operand
-
-      local from_type = operand.require_type
-      if (from_type == cmd.to_type) return operand  # no cast needed
-
-      local t = cmd.t
-      which (cmd.to_type)
-        case Type.LOGICAL:    return CastToLogical( t, operand )
-        case Type.CHARACTER:  return CastToCharacter( t, operand )
-        case Type.INTEGER:    return CastToInteger( t, operand )
-        case Type.TOKEN_TYPE: return CastToTokenType( t, operand )
-        case Type.STRING:     return CastToString( t, operand )
-        others
-          throw t.error( "[INTERNAL] Unhandled cast type: $."(cmd.to_type) )
-      endWhich
+    method visit( cmd:CastToPattern )->Cmd [override]
+      return cmd.operand.cast_to_pattern.dispatch( this )
 
     method visit( cmd:CollectRange )->Cmd [override]
       cmd.range = cast_to( cmd.range, Type.STRING )
@@ -120,6 +126,27 @@ class Resolver : FroleyVisitor
       pairs.sort( (a,b) => a[0] <= b[0] )
       cmd_range.value = pairs.join("")
 
+      return cmd
+
+    method visit( cmd:Consume )->Cmd [override]
+      local seq = resolve_sequence( cmd.args )
+      which (seq.require_type)
+        case Type.CHARACTER, Type.STRING
+          return ConsumeCharacters( cmd.t, seq ).dispatch( this )
+        case Type.PATTERN
+          return ConsumePattern( cmd.t, seq ).dispatch( this )
+        others
+          throw cmd.t.error( "[INTERNAL] Unhandled type $."(cmd.type) )
+      endWhich
+
+    method visit( cmd:Pattern )->Cmd [override]
+      if (not cmd.reference_name)
+        local pattern = cmd.scan_pattern->String
+        if (not program.scan_patterns.contains(pattern))
+          program.scan_patterns[ pattern ] = "_scan_pattern_" + program.scan_patterns.count
+        endIf
+        cmd.reference_name = program.scan_patterns[ pattern ]
+      endIf
       return cmd
 
     method visit( cmd:ScannerProduce )->Cmd [override]

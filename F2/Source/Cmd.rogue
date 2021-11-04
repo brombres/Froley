@@ -11,9 +11,13 @@ class Cmd( t:Token )
         case Type.INTEGER:    return CastToInteger( t, this )
         case Type.TOKEN_TYPE: return CastToTokenType( t, this )
         case Type.STRING:     return CastToString( t, this )
+        case Type.PATTERN:    return CastToPattern( t, this )
         others
           throw t.error( "Cannot cast type $ to type: $."(type,to_type) )
       endWhich
+
+    method cast_to_pattern->Cmd
+      throw t.error( "[INTERNAL] TODO (Pattern expected.)" )
 
     method common_type( other:Cmd )->Type
       local a = require_type
@@ -35,6 +39,9 @@ class Cmd( t:Token )
     method resolve_assignment( cmd:Assign, resolver:Resolver )->Cmd
       throw t.error( "Illegal assignment." )
 
+    method to->CmdList
+      return CmdList(t).[ add(this) ]
+
     method to->Int32
       return this->String->Int32
 
@@ -44,8 +51,9 @@ class Cmd( t:Token )
     method to->Real64
       return this->Int32
 
-    method to->CmdList
-      return CmdList(t).[ add(this) ]
+    method to->ScanPattern
+trace type_name #FIXME
+      throw t.error( ''Pattern expected.'' )
 
     method type->Type
       return Type.NONE
@@ -526,15 +534,6 @@ class ScanError( t, args:CmdList ) : Cmd
       return "ScanError($)"(args)
 endClass
 
-class CastTo( t, operand, to_type:Type )  : Unary
-  METHODS
-    method to->String [override]
-      return "$->$"(operand,to_type)
-
-    method type->Type
-      return to_type
-endClass
-
 class CastToLogical : Unary
   METHODS
     method to->String [override]
@@ -580,6 +579,11 @@ class CastToString : Unary
       return Type.STRING
 endClass
 
+class CastToPattern : Unary
+  METHODS
+    method type->Type
+      return Type.PATTERN
+endClass
 
 
 class TokenGroup( t, name:String, definitions:CmdList ) : Cmd
@@ -620,22 +624,25 @@ class LogicalNot : Unary
 endClass
 
 
-class Consume( t, alternatives:CmdList ) : Cmd
+class Consume( t, args:CmdList ) : Cmd
   METHODS
     method to->String
-      return "Consume($)"(alternatives)
+      return "Consume($)"(args)
 endClass
 
-class ConsumeValue( t, value:Cmd ) : Cmd
+class ConsumeCharacters( t, value:Cmd ) : Cmd
   METHODS
     method to->String
-      return "ConsumeValue($)"(value)
+      return "ConsumeCharacters($)"(value)
 endClass
 
-class ConsumeAny( t, alternatives:Cmd ) : Cmd
+class ConsumePattern( t, pattern:Cmd ) : Cmd
   METHODS
     method to->String
-      return "ConsumeAny($)"(alternatives)
+      return "ConsumePattern($)"(pattern)
+
+    method type->Type
+      return Type.LOGICAL
 endClass
 
 class Call( t, routine_def:Routine ) : Cmd
@@ -773,20 +780,62 @@ class SavePosition : Cmd
 endClass
 
 
-class CharSet( t, characters:String ) : Cmd
+class CharSet : Cmd
+  PROPERTIES
+    characters : String
+
   METHODS
+    method init( t, characters )
+
+      #method cast_to_pattern->Cmd
+      #return prior.cast_to_pattern
+
+    method to->ScanPattern
+      return ScanPatternParser.charset_to_scan_pattern( characters.from(1,characters.count-2) )
+
     method to->String
       return "$"(characters)
+
+    method type->Type
+      return Type.PATTERN
 endClass
 
-class ZeroOrMore( t, pattern:Cmd ) : Cmd
+class ZeroOrMore : Cmd
+  PROPERTIES
+    pattern : Cmd
+
   METHODS
+    method init( t, pattern )
+
+    method to->ScanPattern
+      return ZeroOrMoreScanPattern( pattern->ScanPattern )
+
     method to->String
       return "*($)"(pattern)
+
+    method type->Type
+      return Type.PATTERN
 endClass
 
 class OneOrMore( t, pattern:Cmd ) : Cmd
   METHODS
     method to->String
       return "+($)"(pattern)
+
+    method type->Type
+      return Type.PATTERN
 endClass
+
+class Pattern( t, scan_pattern:ScanPattern ) : Cmd
+  PROPERTIES
+    reference_name : String
+
+  METHODS
+    method to->String
+      return "Pattern"
+
+    method type->Type
+      return Type.PATTERN
+endClass
+
+

@@ -5,26 +5,6 @@ class Organizer : FroleyVisitor
     cur_scan : Scan
 
   METHODS
-    method visit( cmd:Consume )->Cmd [override]
-      if (cmd.alternatives)
-        if (cmd.alternatives.count == 1)
-          return ConsumeValue( cmd.t, cmd.alternatives.first ).dispatch( this )
-        else
-          local alts : Cmd
-          forEach (alt in cmd.alternatives)
-            alt .= cast_to(Type.STRING)
-            if (alts)
-              alts = Add( alt.t, alts, alt )
-            else
-              alts = alt
-            endIf
-          endForEach
-          return ConsumeAny( cmd.t, alts.dispatch(this) )
-        endIf
-      else
-        return prior.visit( cmd )
-      endIf
-
     method visit( cmd:LiteralStringOrCharacter )->Cmd [override]
       if (cmd.value.count == 1) return LiteralCharacter( cmd.t, cmd.value[0] ).dispatch( this )
       else                      return LiteralString( cmd.t, cmd.value ).dispatch( this )

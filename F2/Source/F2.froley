@@ -54,8 +54,9 @@ KEYWORD_TRUE            true
 KEYWORD_WHILE           while
 
 [symbols]
-SYMBOL_ALTERNATIVE    |
+#SYMBOL_ALTERNATIVE    |
 SYMBOL_ASSIGN         =
+SYMBOL_AT             @
 SYMBOL_CARET          ^
 SYMBOL_CLOSE_PAREN    )   [structural]
 SYMBOL_CLOSE_SQUARE   ]   [structural]
@@ -115,7 +116,13 @@ SYMBOL_STAR           *
   collect '['
   while (hasAnother and not nextIs(']'))
     ch = read
-    if (ch == '\\') ch = read
+    if (ch == '\\')
+      ch = read
+      if (ch == 'n')     ch = '\n'
+      elseIf (ch == 'r') ch = '\r'
+      elseIf (ch == 't') ch = '\t'
+      else               collect '\\'  # leave the slash
+    endIf
     collect ch
   endWhile
 
@@ -187,10 +194,9 @@ SYMBOL_STAR           *
 
   if (nextIs('[') or nextIs('\n')) restart scan_token_attributes
 
-  # Scan everything to the next space; backslash escapes
+  # Scan everything to the next space
   while (hasAnother and not nextIs(' ') and not nextIs('\n'))
     ch = read
-    if (ch == '\\' and hasAnother) ch = read
     collect ch
   endWhile
 
@@ -630,22 +636,22 @@ SYMBOL_STAR           *
 
   produceList Args
 
-+ alternatives
-  mustConsume('(')
-
-  beginList
-  consume_eols
-  if (consume(')')) produceList Args
-
-  expression
-  consume_eols
-  while (consume("|"))
-    expression
-    consume_eols
-  endWhile
-
-  mustConsume(')')
-  produceList Args
+#+ alternatives
+#  mustConsume('(')
+#
+#  beginList
+#  consume_eols
+#  if (consume(')')) produceList Args
+#
+#  expression
+#  consume_eols
+#  while (consume("|"))
+#    expression
+#    consume_eols
+#  endWhile
+#
+#  mustConsume(')')
+#  produceList Args
 
 + empty_statements
   beginList
@@ -686,13 +692,7 @@ SYMBOL_STAR           *
   on '(' expression ')': return
   on "buffer"                   -> ReadBuffer
   on "collectRange", expression -> CollectRange(range)
-  on "consume", alternatives    -> Consume(alternatives:CmdList)
-  on "consumeAny"
-    expression
-    create ConsumeAny(alternatives)
-    empty_statements
-    produce While(condition,statements:Statements)
-  endOn
+  on "consume", args            -> Consume(args:CmdList)
   on "discardPosition"     -> DiscardPosition
   on "false"               -> LiteralLogical(value="false":Logical)
   on "halt"                -> Halt
@@ -715,8 +715,11 @@ SYMBOL_STAR           *
   on "true"                  -> LiteralLogical(value="true":Logical)
   on CHARSET
     create CharSet(characters=t.content:String)
-    on '*' -> ZeroOrMore(pattern)
-    on '+' -> OneOrMore(pattern)
+    on '*'
+      produce ZeroOrMore(pattern)
+    elseOn '+'
+      produce OneOrMore(pattern)
+    endOn
     return  # just the CharSet
   endOn
   on IDENTIFIER -> Access( name=t.content:String )

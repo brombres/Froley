@@ -8,6 +8,7 @@ enum Type
     INTEGER
     TOKEN_TYPE
     STRING
+    PATTERN
 
   METHODS
     method exists->Logical

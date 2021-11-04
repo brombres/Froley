@@ -11,6 +11,7 @@ class Program
     tokens_by_symbol = StringTable<<TokenDef>>()
     token_attributes = StringTable<<Int32>>(){ "content":1 }
     main_filename    : String
+    scan_patterns    = StringTable<<String>>()
 
   METHODS
     method init( froley_file:File )

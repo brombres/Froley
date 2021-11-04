@@ -3,7 +3,6 @@ module F2
 $include "CompileErrorTemplate.rogue"
 $include "MainTemplate.rogue"
 $include "ScannerTemplate.rogue"
-$include "ScanPatternTemplate.rogue"
 $include "ScanTableTemplate.rogue"
 $include "ScanTableDeclarationWriter.rogue"
 $include "TokenTemplate.rogue"
@@ -29,7 +28,6 @@ class RogueGenerator : FroleyVisitor
 
       create_file( "CompileError", template_CompileError )
       create_file( "Token", template_Token )
-      create_file( "ScanPattern", template_ScanPattern )
       create_file( "ScanTable",   template_ScanTable )
 
       # TokenType

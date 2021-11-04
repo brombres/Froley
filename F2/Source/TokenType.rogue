@@ -57,26 +57,29 @@ enum TokenType( symbol:String, attributes=TokenTypeAttribute.NONE:TokenTypeAttri
   SYMBOL_ASSIGN("=")                                          = 46
   SYMBOL_AT("@")                                              = 47
   SYMBOL_CARET("^")                                           = 48
-  SYMBOL_CLOSE_PAREN(")",TokenTypeAttribute.STRUCTURAL)       = 49
-  SYMBOL_CLOSE_SQUARE("]",TokenTypeAttribute.STRUCTURAL)      = 50
-  SYMBOL_COLON(":")                                           = 51
-  SYMBOL_COMMA(",")                                           = 52
-  SYMBOL_DOT_DOT("..")                                        = 53
-  SYMBOL_EMPTY_BRACKETS("[]")                                 = 54
-  SYMBOL_EQ("==")                                             = 55
-  SYMBOL_GE(">=")                                             = 56
-  SYMBOL_GT(">")                                              = 57
-  SYMBOL_LE("<=")                                             = 58
-  SYMBOL_LT("<")                                              = 59
-  SYMBOL_NE("!=")                                             = 60
-  SYMBOL_MINUS("-")                                           = 61
-  SYMBOL_MINUS_MINUS("--")                                    = 62
-  SYMBOL_OPEN_PAREN("(")                                      = 63
-  SYMBOL_OPEN_SQUARE("[")                                     = 64
-  SYMBOL_PLUS("+")                                            = 65
-  SYMBOL_PLUS_PLUS("++")                                      = 66
-  SYMBOL_SEMICOLON(";")                                       = 67
-  SYMBOL_SINGLE_QUOTE("'")                                    = 68
-  SYMBOL_SLASH("/")                                           = 69
-  SYMBOL_STAR("*")                                            = 70
+  SYMBOL_CLOSE_CURLY("}",TokenTypeAttribute.STRUCTURAL)       = 49
+  SYMBOL_CLOSE_PAREN(")",TokenTypeAttribute.STRUCTURAL)       = 50
+  SYMBOL_CLOSE_SQUARE("]",TokenTypeAttribute.STRUCTURAL)      = 51
+  SYMBOL_COLON(":")                                           = 52
+  SYMBOL_COMMA(",")                                           = 53
+  SYMBOL_DOT_DOT("..")                                        = 54
+  SYMBOL_EMPTY_BRACKETS("[]")                                 = 55
+  SYMBOL_EQ("==")                                             = 56
+  SYMBOL_GE(">=")                                             = 57
+  SYMBOL_GT(">")                                              = 58
+  SYMBOL_LE("<=")                                             = 59
+  SYMBOL_LT("<")                                              = 60
+  SYMBOL_NE("!=")                                             = 61
+  SYMBOL_MINUS("-")                                           = 62
+  SYMBOL_MINUS_MINUS("--")                                    = 63
+  SYMBOL_OPEN_CURLY("{")                                      = 64
+  SYMBOL_OPEN_PAREN("(")                                      = 65
+  SYMBOL_OPEN_SQUARE("[")                                     = 66
+  SYMBOL_PLUS("+")                                            = 67
+  SYMBOL_PLUS_PLUS("++")                                      = 68
+  SYMBOL_QUESTION("?")                                        = 69
+  SYMBOL_SEMICOLON(";")                                       = 70
+  SYMBOL_SINGLE_QUOTE("'")                                    = 71
+  SYMBOL_SLASH("/")                                           = 72
+  SYMBOL_STAR("*")                                            = 73
 endEnum

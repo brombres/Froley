@@ -173,11 +173,11 @@ class Visitor
       return cmd
 
     method visit( cmd:Print )->Cmd
-      if (cmd.args) cmd.args = cmd.args.dispatch( this )
+      if (cmd.args) cmd.args = cmd.args.dispatch( this ) as Args
       return cmd
 
     method visit( cmd:Println )->Cmd
-      if (cmd.args) cmd.args = cmd.args.dispatch( this )
+      if (cmd.args) cmd.args = cmd.args.dispatch( this ) as Args
       return cmd
 
     method visit( cmd:HasAnother )->Cmd
@@ -187,7 +187,7 @@ class Visitor
       return cmd
 
     method visit( cmd:Collect )->Cmd
-      if (cmd.args) cmd.args = cmd.args.dispatch( this ) as CmdList
+      if (cmd.args) cmd.args = cmd.args.dispatch( this ) as Args
 
       return cmd
 
@@ -199,7 +199,7 @@ class Visitor
       return cmd
 
     method visit( cmd:ScanError )->Cmd
-      if (cmd.args) cmd.args = cmd.args.dispatch( this ) as CmdList
+      if (cmd.args) cmd.args = cmd.args.dispatch( this ) as Args
       return cmd
 
     method visit( cmd:CastToLogical )->Cmd
@@ -241,7 +241,7 @@ class Visitor
       return cmd
 
     method visit( cmd:Consume )->Cmd
-      cmd.args = cmd.args.dispatch( this ) as CmdList
+      cmd.args = cmd.args.dispatch( this ) as Args
       return cmd
 
     method visit( cmd:ConsumeCharacters )->Cmd
@@ -340,4 +340,14 @@ class Visitor
     method visit( cmd:Pattern )->Cmd
       return cmd
 
+
+    method visit( cmd:OptionalPattern )->Cmd
+      if (cmd.pattern) cmd.pattern = cmd.pattern.dispatch( this )
+      return cmd
+
+    method visit( cmd:SequenceArgs )->Cmd
+      forEach (element at index in cmd)
+        if (element) cmd[ index ] = element.dispatch( this )
+      endForEach
+      return cmd
 endClass

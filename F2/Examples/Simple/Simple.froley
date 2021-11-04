@@ -17,6 +17,7 @@ scanner
 
 - main
   consume [ \r\t]*    # whitespace
+  consume "#" [^\n]*  # single-line comment
   while (hasAnother) print read
   halt
 

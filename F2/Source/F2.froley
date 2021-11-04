@@ -54,10 +54,10 @@ KEYWORD_TRUE            true
 KEYWORD_WHILE           while
 
 [symbols]
-#SYMBOL_ALTERNATIVE    |
 SYMBOL_ASSIGN         =
 SYMBOL_AT             @
 SYMBOL_CARET          ^
+SYMBOL_CLOSE_CURLY    }   [structural]
 SYMBOL_CLOSE_PAREN    )   [structural]
 SYMBOL_CLOSE_SQUARE   ]   [structural]
 SYMBOL_COLON          :
@@ -72,10 +72,12 @@ SYMBOL_LT             <
 SYMBOL_NE             !=
 SYMBOL_MINUS          -
 SYMBOL_MINUS_MINUS    --
+SYMBOL_OPEN_CURLY     {
 SYMBOL_OPEN_PAREN     (
 SYMBOL_OPEN_SQUARE    [
 SYMBOL_PLUS           +
 SYMBOL_PLUS_PLUS      ++
+SYMBOL_QUESTION       ?
 SYMBOL_SEMICOLON      ;
 SYMBOL_SINGLE_QUOTE   '\''
 SYMBOL_SLASH          /
@@ -590,13 +592,13 @@ SYMBOL_STAR           *
   endOn
 
 + statement
-  on "collect",      args -> Collect(args:CmdList)
-  on "print",        args -> Print(args:CmdList)
-  on "println",      args -> Println(args:CmdList)
+  on "collect",      args -> Collect(args:Args)
+  on "print",        args -> Print(args:Args)
+  on "println",      args -> Println(args:Args)
   on "syntaxError"
     if (nextIs(EOL)) createNull
     else             args
-    produce ScanError(args:CmdList)
+    produce ScanError(args:Args)
   endOn
 
   on "++", expression -> Increment(target)
@@ -635,6 +637,47 @@ SYMBOL_STAR           *
   endWhile
 
   produceList Args
+
++ sequence
+  beginList
+  if (nextHasAttribute(structural)) produceList SequenceArgs
+
+  sequence_item
+  while (hasAnother)
+    if (consume('*'))
+      create ZeroOrMore(pattern)
+    elseIf (consume('+'))
+      create OneOrMore(pattern)
+    elseIf (consume('?'))
+      create OptionalPattern(pattern)
+    elseIf (consume(','))
+      consume_eols
+      sequence_item
+    elseIf (nextIs(EOL) or nextHasAttribute(structural))
+      produceList SequenceArgs
+    else
+      sequence_item
+    endIf
+  endWhile
+
+  produceList SequenceArgs
+
++ sequence_item
+  on '{' sequence '}': return
+  on CHARSET
+    create CharSet(characters=t.content:String)
+    on '*'
+      produce ZeroOrMore(pattern)
+    elseOn '+'
+      produce OneOrMore(pattern)
+    elseOn '?'
+      produce OptionalPattern(pattern)
+    endOn
+    return  # just the CharSet
+  endOn
+  on STRING              -> LiteralString( value=t.content:String )
+  on STRING_OR_CHARACTER -> LiteralStringOrCharacter( value=t.content:String )
+  syntaxError
 
 #+ alternatives
 #  mustConsume('(')
@@ -689,17 +732,18 @@ SYMBOL_STAR           *
   on "not" -> LogicalNot
 
 - term
-  on '(' expression ')': return
+  on '(' expression ')':        return
+  on '{' sequence '}':          return
   on "buffer"                   -> ReadBuffer
   on "collectRange", expression -> CollectRange(range)
-  on "consume", args            -> Consume(args:CmdList)
-  on "discardPosition"     -> DiscardPosition
-  on "false"               -> LiteralLogical(value="false":Logical)
-  on "halt"                -> Halt
-  on "hasAnother"          -> HasAnother
-  on "markPosition"        -> MarkPosition
-  on "produce", expression -> ScannerProduce(token_type:Cmd)
-  on "read"                -> Read
+  on "consume", args            -> Consume(args:Args)
+  on "discardPosition"          -> DiscardPosition
+  on "false"                    -> LiteralLogical(value="false":Logical)
+  on "halt"                     -> Halt
+  on "hasAnother"               -> HasAnother
+  on "markPosition"             -> MarkPosition
+  on "produce", expression      -> ScannerProduce(token_type:Cmd)
+  on "read"                     -> Read
   on "restart"
     if (nextIs(EOL)) createNull
     else             identifier
@@ -719,12 +763,14 @@ SYMBOL_STAR           *
       produce ZeroOrMore(pattern)
     elseOn '+'
       produce OneOrMore(pattern)
+    elseOn '?'
+      produce OptionalPattern(pattern)
     endOn
     return  # just the CharSet
   endOn
-  on IDENTIFIER -> Access( name=t.content:String )
-  on INTEGER    -> LiteralInteger( value=t.content:Int32 )
-  on STRING     -> LiteralString( value=t.content:String )
+  on IDENTIFIER          -> Access( name=t.content:String )
+  on INTEGER             -> LiteralInteger( value=t.content:Int32 )
+  on STRING              -> LiteralString( value=t.content:String )
   on STRING_OR_CHARACTER -> LiteralStringOrCharacter( value=t.content:String )
   syntaxError
 

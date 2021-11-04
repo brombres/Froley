@@ -16,9 +16,6 @@ class Cmd( t:Token )
           throw t.error( "Cannot cast type $ to type: $."(type,to_type) )
       endWhich
 
-    method cast_to_pattern->Cmd
-      throw t.error( "[INTERNAL] TODO (Pattern expected.)" )
-
     method common_type( other:Cmd )->Type
       local a = require_type
       local b = other.require_type
@@ -29,7 +26,9 @@ class Cmd( t:Token )
 
     method require_type->Type
       localize type
-      if (not type.exists) throw t.error( "Value expected." )
+      if (not type.exists)
+        throw t.error( "Value expected.($,$)"(type_name,type) ) #FIXME
+      endIf
       return type
 
     method require_value->Cmd
@@ -180,6 +179,9 @@ class LiteralString( t, value:String ) : Literal
           return prior.cast_to( to_type )
       endWhich
 
+    method to->ScanPattern
+      return LiteralStringScanPattern( value )
+
     method to->String
       return value.to_escaped_ascii
 
@@ -199,6 +201,9 @@ class LiteralCharacter( t, value:Character ) : Literal
         others
           return prior.cast_to( to_type )
       endWhich
+
+    method to->ScanPattern
+      return LiteralStringScanPattern( ""+value )
 
     method to->String
       return value.to_escaped_ascii
@@ -462,13 +467,13 @@ class Decrement( t, target:Cmd ) : Cmd
       return "Decrement($)"(target)
 endClass
 
-class Print( t, args:CmdList ) : Cmd
+class Print( t, args:Args ) : Cmd
   METHODS
     method to->String
       return "Print($)"(args)
 endClass
 
-class Println( t, args:CmdList ) : Cmd
+class Println( t, args:Args ) : Cmd
   METHODS
     method to->String
       return "Println($)"(args)
@@ -494,7 +499,7 @@ class Read : Cmd
       return Type.CHARACTER
 endClass
 
-class Collect( t, args:CmdList ) : Cmd
+class Collect( t, args:Args ) : Cmd
   METHODS
     method to->String
       return "Collect($)"(args)
@@ -528,7 +533,7 @@ class ReadVar : Cmd
       return var.type
 endClass
 
-class ScanError( t, args:CmdList ) : Cmd
+class ScanError( t, args:Args ) : Cmd
   METHODS
     method to->String
       return "ScanError($)"(args)
@@ -624,7 +629,7 @@ class LogicalNot : Unary
 endClass
 
 
-class Consume( t, args:CmdList ) : Cmd
+class Consume( t, args:Args ) : Cmd
   METHODS
     method to->String
       return "Consume($)"(args)
@@ -787,9 +792,6 @@ class CharSet : Cmd
   METHODS
     method init( t, characters )
 
-      #method cast_to_pattern->Cmd
-      #return prior.cast_to_pattern
-
     method to->ScanPattern
       return ScanPatternParser.charset_to_scan_pattern( characters.from(1,characters.count-2) )
 
@@ -819,6 +821,9 @@ endClass
 
 class OneOrMore( t, pattern:Cmd ) : Cmd
   METHODS
+    method to->ScanPattern
+      return OneOrMoreScanPattern( pattern->ScanPattern )
+
     method to->String
       return "+($)"(pattern)
 
@@ -838,4 +843,26 @@ class Pattern( t, scan_pattern:ScanPattern ) : Cmd
       return Type.PATTERN
 endClass
 
+class OptionalPattern( t, pattern:Cmd ) : Cmd
+  METHODS
+    method to->String
+      return "OptionalPattern($)"(pattern)
+
+    method to->ScanPattern
+      return OptionalScanPattern( pattern->ScanPattern )
+
+    method type->Type
+      return Type.PATTERN
+endClass
+
+class SequenceArgs : CmdList
+  METHODS
+    method to->ScanPattern
+      local result = ScanPatternList( ScanPattern[] )
+      result.add( (forEach in this)->ScanPattern )
+      return result
+
+    method type->Type
+      return Type.PATTERN
+endClass
 

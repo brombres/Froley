@@ -22,7 +22,7 @@ class Resolver : FroleyVisitor
       if (cmd.type == to_type) return cmd
       return cmd.cast_to( to_type ).dispatch( this )
 
-    method resolve_sequence( cmd:CmdList )->Cmd
+    method resolve_sequence( cmd:Args )->Cmd
       cmd.dispatch( this )
 
       contingent
@@ -100,7 +100,7 @@ class Resolver : FroleyVisitor
       return cmd.target.resolve_assignment( cmd, this )
 
     method visit( cmd:CastToPattern )->Cmd [override]
-      return cmd.operand.cast_to_pattern.dispatch( this )
+      return Pattern( cmd.t, cmd.operand->ScanPattern ).dispatch( this )
 
     method visit( cmd:CollectRange )->Cmd [override]
       cmd.range = cast_to( cmd.range, Type.STRING )

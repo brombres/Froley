@@ -372,7 +372,7 @@ class Visitor
       if (cmd.pattern) cmd.pattern = cmd.pattern.dispatch( this )
       return cmd
 
-    method visit( cmd:Native )->Cmd
+    method visit( cmd:CallUserMethod )->Cmd
       return cmd
 
     method visit( cmd:Goto )->Cmd

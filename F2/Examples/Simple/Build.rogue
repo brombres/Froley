@@ -26,9 +26,11 @@ routine rogo_default
 endRoutine
 
 routine rogo_build
-  local src = Files(".","*.froley").add("Source/*")
-  if (src.any_newer_than(exe_filepath))
+  localize exe_filepath
+  if (Files(".","*.froley").add("Source/*").any_newer_than(exe_filepath))
     compile_froley
+  endIf
+  if (Files("Build","*.rogue").any_newer_than(exe_filepath))
     compile_rogue
   endIf
 endRoutine

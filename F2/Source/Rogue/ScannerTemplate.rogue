@@ -12,6 +12,8 @@ augment RogueGenerator
        |$include "TokenType.rogue"
        |
        |class $ClassName : $ClassNameCore
+       |  METHODS
+       |$UserMethods
        |endClass
 endAugment
 

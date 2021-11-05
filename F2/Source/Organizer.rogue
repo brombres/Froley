@@ -5,8 +5,8 @@ class Organizer : FroleyVisitor
     cur_match : Match
 
   METHODS
-    method visit( cmd:Native )->Cmd [override]
-      program.native_calls.add( cmd.fn_name )
+    method visit( cmd:CallUserMethod )->Cmd [override]
+      program.user_calls.add( cmd.fn_name )
       return cmd
 
     method visit( cmd:LiteralStringOrCharacter )->Cmd [override]

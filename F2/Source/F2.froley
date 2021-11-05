@@ -27,6 +27,7 @@ KEYWORD_RESTART          restart
 
 [common_keywords]
 KEYWORD_AND              and
+KEYWORD_CALL             call
 KEYWORD_CONSUME          consume
 KEYWORD_CONSUME_ANY      consumeAny
 KEYWORD_DISCARD_POSITION discardPosition
@@ -41,7 +42,6 @@ KEYWORD_HAS_NEXT         hasAnother
 KEYWORD_IF               if
 KEYWORD_MARK_POSITION    markPosition
 KEYWORD_MODE             mode
-KEYWORD_NATIVE           native
 KEYWORD_NEXT_IS          nextIs
 KEYWORD_NOT              not
 KEYWORD_ON               on          [structural]
@@ -778,8 +778,8 @@ SYMBOL_STAR           *
   on '(' expression ')':        return
   on '{' sequence '}':          return
   on "buffer"                   -> ReadBuffer
+  on "call", identifier         -> CallUserMethod(fn_name:String)
   on "consume", args            -> Consume(args:Args)
-  on "native", identifier       -> Native(fn_name:String)
   on "false"                    -> LiteralLogical(value="false":Logical)
   on "goto", identifier         -> Goto(routine_name:String)
   on "hasAnother"               -> HasAnother

@@ -33,7 +33,7 @@ scanner
   if (not hasAnother) halt
   read
   st = "beta"
-  native all_caps
+  call all_caps
   println st
   mode alpha
   restart

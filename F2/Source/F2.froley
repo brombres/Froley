@@ -35,10 +35,13 @@ KEYWORD_ELSE_IF          elseIf      [structural]
 KEYWORD_END_IF           endIf       [structural]
 KEYWORD_END_WHILE        endWhile    [structural]
 KEYWORD_FALSE            false
+KEYWORD_GOTO             goto
 KEYWORD_HALT             halt
 KEYWORD_HAS_NEXT         hasAnother
 KEYWORD_IF               if
 KEYWORD_MARK_POSITION    markPosition
+KEYWORD_MODE             mode
+KEYWORD_NATIVE           native
 KEYWORD_NEXT_IS          nextIs
 KEYWORD_NOT              not
 KEYWORD_ON               on          [structural]
@@ -606,11 +609,12 @@ SYMBOL_STAR           *
   endOn
 
 + statement
-  on "collect", args   -> Collect(args:Args)
-  on "discardPosition" -> DiscardPosition
-  on "halt"            -> Halt
-  on "markPosition"    -> MarkPosition
-  on "print",   args   -> Print(args:Args)
+  on "collect", args    -> Collect(args:Args)
+  on "discardPosition"  -> DiscardPosition
+  on "halt"             -> Halt
+  on "markPosition"     -> MarkPosition
+  on "mode", identifier -> Mode(routine_name:String)
+  on "print",   args    -> Print(args:Args)
   on "println"
     if (not hasAnother or nextHasAttribute(structural))
       beginList
@@ -775,7 +779,9 @@ SYMBOL_STAR           *
   on '{' sequence '}':          return
   on "buffer"                   -> ReadBuffer
   on "consume", args            -> Consume(args:Args)
+  on "native", identifier       -> Native(fn_name:String)
   on "false"                    -> LiteralLogical(value="false":Logical)
+  on "goto", identifier         -> Goto(routine_name:String)
   on "hasAnother"               -> HasAnother
   on "nextIs", args             -> NextIs(args:Args)
   on "read"                     -> Read

@@ -931,3 +931,22 @@ class NextIsPattern( t, pattern:Cmd ) : Cmd
     method type->Type
       return Type.LOGICAL
 endClass
+
+
+class Native( t, fn_name:String ) : Cmd
+  METHODS
+    method to->String
+      return "Native($)"(fn_name)
+endClass
+
+class Goto( t, routine_name:String ) : Cmd
+  METHODS
+    method to->String
+      return "$"(routine_name)
+endClass
+
+class Mode( t, routine_name:String ) : Cmd
+  METHODS
+    method to->String
+      return "$"(routine_name)
+endClass

@@ -12,6 +12,7 @@ class Program
     token_attributes = StringTable<<Int32>>(){ "content":1 }
     main_filename    : String
     scan_patterns    = StringTable<<String>>()
+    native_calls     = Set<<String>>()
 
   METHODS
     method init( froley_file:File )

@@ -5,6 +5,10 @@ class Organizer : FroleyVisitor
     cur_match : Match
 
   METHODS
+    method visit( cmd:Native )->Cmd [override]
+      program.native_calls.add( cmd.fn_name )
+      return cmd
+
     method visit( cmd:LiteralStringOrCharacter )->Cmd [override]
       if (cmd.value.count == 1) return LiteralCharacter( cmd.t, cmd.value[0] ).dispatch( this )
       else                      return LiteralString( cmd.t, cmd.value ).dispatch( this )

@@ -7,7 +7,6 @@ augment RogueGenerator
        |$module
        |$include "$ClassNameCore.rogue"
        |$include "CompileError.rogue"
-       |$include "ScanPattern.rogue"
        |$include "ScanTable.rogue"
        |$include "Token.rogue"
        |$include "TokenType.rogue"

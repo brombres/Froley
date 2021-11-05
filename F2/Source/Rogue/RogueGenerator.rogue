@@ -225,6 +225,13 @@ class RogueGenerator : FroleyVisitor
       dispatch( cmd.target )
       return cmd
 
+    method visit( cmd:Goto )->Cmd  [override]
+      write   "this.ip = ip_"
+      writeln cmd.routine_name
+      writeln "_execute_goto = true"
+      write   "return false"
+      return cmd
+
     method visit( cmd:HasAnother )->Cmd  [override]
       write "_scanner.has_another"
       return cmd
@@ -286,6 +293,17 @@ class RogueGenerator : FroleyVisitor
     method visit( cmd:MarkPosition )->Cmd  [override]
       writeln "_src_line   = _scanner.line"
       write   "_src_column = _scanner.column"
+      return cmd
+
+    method visit( cmd:Mode )->Cmd  [override]
+      write "start_ip = ip_"
+      write cmd.routine_name
+      return cmd
+
+    method visit( cmd:Native )->Cmd  [override]
+      writeln "this.ip = ip"
+      writeln cmd.fn_name
+      write   "ip = this.ip"
       return cmd
 
     method visit( cmd:NextIsCharacters )->Cmd  [override]
@@ -400,18 +418,19 @@ class RogueGenerator : FroleyVisitor
 
       writeln @|
                |  PROPERTIES
-               |    _filepath   : String
-               |    _scanner    : ::Scanner
-               |    _src_line   = 1
-               |    _src_column = 1
+               |    _filepath     : String
+               |    _scanner      : ::Scanner
+               |    _src_line     = 1
+               |    _src_column   = 1
                |
-               |    tokens      = Token[]
-               |    buffer      = StringBuilder()
-               |    output      = StringBuilder()
+               |    tokens        = Token[]
+               |    buffer        = StringBuilder()
+               |    output        = StringBuilder()
                |
-               |    start_ip    = 0
-               |    ip          : Int32
-               |    halt        = false
+               |    start_ip      = 0
+               |    ip            : Int32
+               |    halt          = false
+               |    _execute_goto = false
                |
                |    _position_stack = Int32[]
                |
@@ -457,7 +476,14 @@ class RogueGenerator : FroleyVisitor
                |    method init( _filepath, _scanner )
                |      noAction
                |
-               |    method _add( type:TokenType )
+
+      forEach (fn_name in program.native_calls)
+        writeln  "    method $" (fn_name)
+        writeln ''      throw Error( "[INTERNAL] Native callback $ has not been defined - override 'method $' in class Scanner." )'' (fn_name,fn_name)
+        writeln
+      endForEach
+
+      writeln @|    method _add( type:TokenType )
                |      if (type.attributes & TokenType.ATTRIBUTE_CONTENT)
                |        tokens.add( _t(type,buffer) )
                |      else
@@ -476,9 +502,6 @@ class RogueGenerator : FroleyVisitor
                |      if (c == 10 or c == 13)       return "end of line";
                |      elseIf (c >= 32 and c != 127) return "'$'" (c)
                |      else                          return "'$'" (c.to_escaped_ascii)
-               |
-               |    method execute->Logical
-               |      return execute( start_ip )
                |
                |    method _is_next( text:String )->Logical
                |      local location = _scanner.location
@@ -521,8 +544,14 @@ class RogueGenerator : FroleyVisitor
                |    method tokenize( ip=null:Int32? )->Token[]
                |      if (ip) start_ip = ip.value
                |      _clear
-               |      while (execute(start_ip) or not halt)
-               |        buffer.clear
+               |      this.ip = start_ip
+               |      while (execute(this.ip) or not halt)
+               |        if (_execute_goto)
+               |          _execute_goto = false
+               |        else
+               |          buffer.clear
+               |          this.ip = start_ip
+               |        endIf
                |      endWhile
                |      return tokens
                |

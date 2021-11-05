@@ -371,4 +371,13 @@ class Visitor
     method visit( cmd:NextIsPattern )->Cmd
       if (cmd.pattern) cmd.pattern = cmd.pattern.dispatch( this )
       return cmd
+
+    method visit( cmd:Native )->Cmd
+      return cmd
+
+    method visit( cmd:Goto )->Cmd
+      return cmd
+
+    method visit( cmd:Mode )->Cmd
+      return cmd
 endClass

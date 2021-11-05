@@ -2,7 +2,7 @@ module F2
 
 class Organizer : FroleyVisitor
   PROPERTIES
-    cur_scan : Scan
+    cur_match : Match
 
   METHODS
     method visit( cmd:LiteralStringOrCharacter )->Cmd [override]
@@ -24,8 +24,8 @@ class Organizer : FroleyVisitor
       forEach (item in group.definitions)
         local def = item as TokenDef
         local expr = LiteralString( t, def.symbol )
-        local _case = ScanOn( t, expr, Statements(t,ScannerProduce(t,Access(t,def.name))) )
-        cur_scan.cases.add( _case )
+        local _case = MatchCase( t, expr, Statements(t,ScannerProduce(t,Access(t,def.name))) )
+        cur_match.cases.add( _case )
         _case.dispatch( this )
       endForEach
       return null
@@ -35,8 +35,8 @@ class Organizer : FroleyVisitor
       cur_element.routines[cmd.name] = cmd
       return prior.visit( cmd )
 
-    method visit( cmd:Scan )->Cmd [override]
-      temporarily cur_scan = cmd
+    method visit( cmd:Match )->Cmd [override]
+      temporarily cur_match = cmd
         return prior.visit( cmd )
       endTemporarily
 

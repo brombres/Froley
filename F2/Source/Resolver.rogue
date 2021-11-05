@@ -2,7 +2,7 @@ module F2
 
 class Resolver : FroleyVisitor
   PROPERTIES
-    cur_scan           : Scan
+    cur_match           : Match
     next_scan_table_id = 0
 
   METHODS
@@ -153,8 +153,8 @@ class Resolver : FroleyVisitor
       cmd.token_type = cast_to( cmd.token_type, Type.TOKEN_TYPE )
       return cmd
 
-    method visit( cmd:Scan )->Cmd [override]
-      temporarily cur_scan = cmd
+    method visit( cmd:Match )->Cmd [override]
+      temporarily cur_match = cmd
         if (not cmd.id)
           cmd.id = "scan_table_" + next_scan_table_id
           ++next_scan_table_id
@@ -169,7 +169,7 @@ class Resolver : FroleyVisitor
         return prior.visit( cmd )
       endTemporarily
 
-    method visit( cmd:ScanOn )->Cmd [override]
+    method visit( cmd:MatchCase )->Cmd [override]
       if (not cmd.is_resolved)
         cmd.is_resolved = true
 
@@ -182,8 +182,8 @@ class Resolver : FroleyVisitor
 
         cmd.statements = cmd.statements.dispatch(this)
 
-        cur_scan.table_builder.add( (cmd.expression as LiteralString).value, cur_scan.statement_lists.count )
-        cur_scan.statement_lists.add( cmd.statements )
+        cur_match.table_builder.add( (cmd.expression as LiteralString).value, cur_match.statement_lists.count )
+        cur_match.statement_lists.add( cmd.statements )
       endIf
       return cmd
 

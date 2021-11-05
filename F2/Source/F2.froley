@@ -17,10 +17,14 @@ KEYWORD_TOKENS          tokens      [structural]
 
 [scanner_keywords]
 KEYWORD_BUFFER           buffer
+KEYWORD_CASE             case
 KEYWORD_COLLECT          collect
 KEYWORD_COLLECT_RANGE    collectRange
 KEYWORD_DISCARD_POSITION discardPosition
+KEYWORD_END_MATCH        endMatch    [structural]
+KEYWORD_INPUT            input
 KEYWORD_PRODUCE_ANY      produceAny
+KEYWORD_MATCH            match
 KEYWORD_MARK_POSITION    markPosition
 KEYWORD_RESTART          restart
 KEYWORD_RESTORE_POSITION restorePosition
@@ -33,7 +37,6 @@ KEYWORD_CONSUME_ANY     consumeAny
 KEYWORD_ELSE            else        [structural]
 KEYWORD_ELSE_IF         elseIf      [structural]
 KEYWORD_END_IF          endIf       [structural]
-KEYWORD_END_SCAN        endScan     [structural]
 KEYWORD_END_WHILE       endWhile    [structural]
 KEYWORD_FALSE           false
 KEYWORD_HALT            halt
@@ -54,6 +57,7 @@ KEYWORD_TRUE            true
 KEYWORD_WHILE           while
 
 [symbols]
+SYMBOL_ARROW          ->  [structural]
 SYMBOL_ASSIGN         =
 SYMBOL_AT             @
 SYMBOL_CARET          ^
@@ -78,7 +82,7 @@ SYMBOL_OPEN_SQUARE    [
 SYMBOL_PLUS           +
 SYMBOL_PLUS_PLUS      ++
 SYMBOL_QUESTION       ?
-SYMBOL_SEMICOLON      ;
+SYMBOL_SEMICOLON      ;    [structural]
 SYMBOL_SINGLE_QUOTE   '\''
 SYMBOL_SLASH          /
 SYMBOL_STAR           *
@@ -461,13 +465,16 @@ SYMBOL_STAR           *
     produce If( condition, statements:Statements, else_ifs:CmdList, _else:Statements )
   endOn
 
-  on "scan"
-    if (consume(EOL)) createNull
-    else              expression
+  on "match"
+    if (consume(EOL) or consume("input"))
+      createNull
+    else
+      expression
+    endIf
     cases
     _others
-    mustConsume "endScan"
-    produce Scan(expression,cases:CmdList,_others:Cmd)
+    mustConsume "endMatch"
+    produce Match(expression,cases:CmdList,_others:Cmd)
   endOn
 
   on "while"
@@ -505,12 +512,19 @@ SYMBOL_STAR           *
     consume_eols
     while (hasAnother)
       consume_eols
-      on "on"
+      on "case"
         expression
-        consume(":")
-        consume_eols
-        multi_line_statements
-        create ScanOn(expression,statements:CmdList)
+        if (consume("->"))
+          beginList
+            expression
+            create ScannerProduce(token_type:Cmd)
+          createList Statements
+        else
+          consume(":")
+          consume_eols
+          multi_line_statements
+        endIf
+        create MatchCase(expression,statements:CmdList)
       elseOn "produceAny"
         identifier
         create ProduceAny(token_group_name:String)
@@ -594,7 +608,15 @@ SYMBOL_STAR           *
 + statement
   on "collect",      args -> Collect(args:Args)
   on "print",        args -> Print(args:Args)
-  on "println",      args -> Println(args:Args)
+  on "println"
+    if (not hasAnother or nextHasAttribute(structural))
+      beginList
+      createList Args
+    else
+      args
+    endIf
+    produce Println(args:Args)
+  endOn
   on "syntaxError"
     if (nextIs(EOL)) createNull
     else             args
@@ -743,6 +765,7 @@ SYMBOL_STAR           *
   on "hasAnother"               -> HasAnother
   on "markPosition"             -> MarkPosition
   on "produce", expression      -> ScannerProduce(token_type:Cmd)
+  on "->",      expression      -> ScannerProduce(token_type:Cmd)
   on "read"                     -> Read
   on "restart"
     if (nextIs(EOL)) createNull

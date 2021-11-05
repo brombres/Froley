@@ -8,7 +8,7 @@ class ScanTableDeclarationWriter : FroleyVisitor
     method init( program:Program, generator )
       prior.init( program )
 
-    method visit( cmd:Scan )->Cmd [override]
+    method visit( cmd:Match )->Cmd [override]
       generator.writeln ''$ = ScanTable("$")'' (cmd.id,cmd.table_builder.to_encoded_scan_table)
       return cmd
 endClass

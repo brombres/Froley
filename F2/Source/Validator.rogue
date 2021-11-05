@@ -16,9 +16,6 @@ class Validator : FroleyVisitor
       return prior.visit( cmd )
 
     method visit( cmd:Println )->Cmd  [override]
-      if (cmd.args.count == 0)
-        throw cmd.t.error( "Argument expected for 'println'." )
-      endIf
       return prior.visit( cmd )
 
     method visit( cmd:ScannerDef )->Cmd  [override]

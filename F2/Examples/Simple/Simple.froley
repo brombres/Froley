@@ -3,6 +3,9 @@ EOL
 IDENTIFIER identifier [content]
 NUMBER     number     [content]
 
+tokens Keywords
+KEYWORD_PRINTLN println
+
 tokens Symbols
 SYMBOL_CARET       ^
 SYMBOL_CLOSE_PAREN )
@@ -18,19 +21,27 @@ scanner
 - main
   consume [ \r\t]*    # whitespace
   consume "#" [^\n]*  # single-line comment
-  while (hasAnother) print read
-  halt
+
+  if (not hasAnother) println; halt
+  markPosition
+
+  match
+    produceAny Keywords
+    produceAny Symbols
+    case '\n' -> EOL
+  endMatch
+
+  #if (scan( [_a-zA-Z][_a-zA-Z0-9]* ))
+  #  println "ID:" buffer
+  #  produce IDENTIFIER
+  #endIf
+
+  if (hasAnother) print read; restart
 
 # scan 'x' <> if (nextIs('x')) collect( read )
 # scan 'x' -> IDENTIFIER
 
 #{
-  consume [ \r\t]*    # whitespace
-  if (consume('#' [^\n]*)) restart  # single-line comment
-  if (not hasAnother) halt
-
-  markPosition
-
   on '\n' -> EOL
   on [_A-Za-z] [_A-Za-z0-9]* -> IDENTIFIER
 

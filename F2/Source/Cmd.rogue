@@ -712,7 +712,7 @@ class Args : CmdList
   METHODS
 endClass
 
-class Scan( t, expression:Cmd, cases:CmdList, _others:Cmd ) : Cmd
+class Match( t, expression:Cmd, cases:CmdList, _others:Cmd ) : Cmd
   PROPERTIES
     id              : String
     table_builder   = ScanTableBuilder()
@@ -720,16 +720,16 @@ class Scan( t, expression:Cmd, cases:CmdList, _others:Cmd ) : Cmd
 
   METHODS
     method to->String
-      return "Scan($,$,$)"(expression,cases,_others)
+      return "Match($,$,$)"(expression,cases,_others)
 endClass
 
-class ScanOn( t, expression:Cmd, statements:CmdList ) : Cmd
+class MatchCase( t, expression:Cmd, statements:CmdList ) : Cmd
   PROPERTIES
     is_resolved : Logical
 
   METHODS
     method to->String
-      return "ScanOn($,$)"(expression,statements)
+      return "MatchCase($,$)"(expression,statements)
 endClass
 
 

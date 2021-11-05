@@ -527,7 +527,7 @@ class RogueGenerator : FroleyVisitor
       endForEach
       return cmd
 
-    method visit( cmd:Scan )->Cmd  [override]
+    method visit( cmd:Match )->Cmd  [override]
       write_replacements["$scan_table"] = cmd.id
 
       writeln @|$scan_table.reset

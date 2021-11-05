@@ -31,10 +31,7 @@ scanner
     case '\n' -> EOL
   endMatch
 
-  #if (scan( [_a-zA-Z][_a-zA-Z0-9]* ))
-  #  println "ID:" buffer
-  #  produce IDENTIFIER
-  #endIf
+  if (scan( [_a-zA-Z][_a-zA-Z0-9]* )) -> IDENTIFIER
 
   if (hasAnother) print read; restart
 

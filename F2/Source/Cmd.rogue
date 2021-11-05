@@ -754,18 +754,6 @@ class MarkPosition : Cmd
       return "markPosition"
 endClass
 
-
-class CollectRange( t, range:Cmd ) : Cmd
-  METHODS
-    method to->String
-      return "CollectRange($)"(range)
-
-    method type->Type
-      return Type.INTEGER
-endClass
-
-
-
 class DiscardPosition : Cmd
   METHODS
     method to->String
@@ -864,5 +852,26 @@ class SequenceArgs : CmdList
 
     method type->Type
       return Type.PATTERN
+endClass
+
+class Scan( t, args:Args ) : Cmd
+  METHODS
+    method to->String
+      return "Scan($)"(args)
+endClass
+
+class ScanCharacters( t, value:Cmd ) : Cmd
+  METHODS
+    method to->String
+      return "ScanCharacters($)"(value)
+endClass
+
+class ScanPatternCmd( t, pattern:Cmd ) : Cmd
+  METHODS
+    method to->String
+      return "ScanPatternCmd($)"(pattern)
+
+    method type->Type
+      return Type.LOGICAL
 endClass
 

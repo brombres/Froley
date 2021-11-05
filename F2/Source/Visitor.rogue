@@ -313,10 +313,6 @@ class Visitor
     method visit( cmd:MarkPosition )->Cmd
       return cmd
 
-    method visit( cmd:CollectRange )->Cmd
-      if (cmd.range) cmd.range = cmd.range.dispatch( this )
-      return cmd
-
     method visit( cmd:DiscardPosition )->Cmd
       return cmd
 
@@ -350,4 +346,17 @@ class Visitor
         if (element) cmd[ index ] = element.dispatch( this )
       endForEach
       return cmd
+
+    method visit( cmd:Scan )->Cmd
+      cmd.args = cmd.args.dispatch( this ) as Args
+      return cmd
+
+    method visit( cmd:ScanCharacters )->Cmd
+      cmd.value .= dispatch( this )
+      return cmd
+
+    method visit( cmd:ScanPatternCmd )->Cmd
+      if (cmd.pattern) cmd.pattern = cmd.pattern.dispatch( this )
+      return cmd
+
 endClass

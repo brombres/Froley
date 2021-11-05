@@ -114,12 +114,6 @@ class RogueGenerator : FroleyVisitor
       endForEach
       return cmd
 
-    method visit( cmd:CollectRange )->Cmd  [override]
-      write "collect_range( "
-      cmd.range.dispatch( this )
-      write " )"
-      return cmd
-
     method visit( cmd:CompareEQ )->Cmd  [override]
       write "("
       dispatch( cmd.left )
@@ -165,6 +159,12 @@ class RogueGenerator : FroleyVisitor
       dispatch( cmd.left )
       write "!="
       dispatch( cmd.right )
+      write ")"
+      return cmd
+
+    method visit( cmd:ConsumeCharacters )->Cmd  [override]
+      write "_scanner.scan("
+      dispatch( cmd.value )
       write ")"
       return cmd
 
@@ -306,8 +306,19 @@ class RogueGenerator : FroleyVisitor
       write ".println"
       return cmd
 
+    method visit( cmd:ScanCharacters )->Cmd  [override]
+      write "_scan("
+      dispatch( cmd.value )
+      write ")"
+      return cmd
+
+    method visit( cmd:ScanPatternCmd )->Cmd  [override]
+      dispatch( cmd.pattern )
+      write ".scan(_scanner,buffer)"
+      return cmd
+
     method visit( cmd:ScannerProduce )->Cmd  [override]
-      write   "add( "
+      write   "_add( "
       cmd.token_type.dispatch( this )
       writeln " )"
       write   "return false"
@@ -428,14 +439,14 @@ class RogueGenerator : FroleyVisitor
                |    method init( _filepath, _scanner )
                |      noAction
                |
-               |    method add( type:TokenType )
+               |    method _add( type:TokenType )
                |      if (type.attributes & TokenType.ATTRIBUTE_CONTENT)
-               |        tokens.add( t(type,buffer) )
+               |        tokens.add( _t(type,buffer) )
                |      else
-               |        tokens.add( t(type) )
+               |        tokens.add( _t(type) )
                |      endIf
                |
-               |    method clear
+               |    method _clear
                |      tokens = Token[]
                |      buffer.clear
                |      output.clear
@@ -443,26 +454,7 @@ class RogueGenerator : FroleyVisitor
                |      _src_column = 1
                |      halt = false
                |
-               |    method collect_range( range:String )->Int32
-               |      local n = 0
-               |      while (_scanner.has_another)
-               |        block
-               |          local ch = _scanner.peek
-               |          forEach (low at i in range step 2)
-               |            if (ch < low) return n
-               |            # ch is >= low
-               |            if (ch <= range[i+1])
-               |              buffer.print _scanner.read
-               |              ++n
-               |              escapeBlock
-               |            endIf
-               |          endForEach
-               |          return n
-               |        endBlock
-               |      endWhile
-               |      return n
-               |
-               |    method describe_character( c:Character )->String
+               |    method _describe_character( c:Character )->String
                |      if (c == 10 or c == 13)       return "end of line";
                |      elseIf (c >= 32 and c != 127) return "'$'" (c)
                |      else                          return "'$'" (c.to_escaped_ascii)
@@ -470,23 +462,33 @@ class RogueGenerator : FroleyVisitor
                |    method execute->Logical
                |      return execute( start_ip )
                |
-               |    method t( type:TokenType, content=null:String )->Token
+               |    method _scan( ch:Character )->Logical
+               |      if (not _scanner.consume(ch)) return false
+               |      buffer.print ch
+               |      return true
+               |
+               |    method _scan( text:String )->Logical
+               |      if (not _scanner.consume(text)) return false
+               |      buffer.print text
+               |      return true
+               |
+               |    method _t( type:TokenType, content=null:String )->Token
                |      return Token( type, _filepath, _scanner.source, _src_line, _src_column, content )
                |
-               |    method throw_expected_character_error( ch:Character )
-               |      local message = "Syntax error - expected $, found " (describe_character(ch))
-               |      if (_scanner.has_another) message += describe_character(_scanner.peek) + "."
+               |    method _throw_expected_character_error( ch:Character )
+               |      local message = "Syntax error - expected $, found " (_describe_character(ch))
+               |      if (_scanner.has_another) message += _describe_character(_scanner.peek) + "."
                |      else                      message += "end of input."
                |      throw CompileError( _filepath, _scanner.source, _scanner.line, _scanner.column, message )
                |
-               |    method throw_syntax_error( message=null:String )
+               |    method _throw_syntax_error( message=null:String )
                |      if (not message)
                |        local builder = StringBuilder()
                |        builder.print "Syntax error - unexpected "
                |        if (not _scanner.has_another)
                |          builder.println "end of input."
                |        else
-               |          builder.print( describe_character(_scanner.peek) ).print( '.' )
+               |          builder.print( _describe_character(_scanner.peek) ).print( '.' )
                |        endIf
                |        message = builder->String
                |      endIf
@@ -494,7 +496,7 @@ class RogueGenerator : FroleyVisitor
                |
                |    method tokenize( ip=null:Int32? )->Token[]
                |      if (ip) start_ip = ip.value
-               |      clear
+               |      _clear
                |      while (execute(start_ip) or not halt)
                |        buffer.clear
                |      endWhile
@@ -570,7 +572,7 @@ class RogueGenerator : FroleyVisitor
       return cmd
 
     method visit( cmd:ScanError )->Cmd  [override]
-      write "throw_syntax_error"
+      write "_throw_syntax_error"
       if (cmd.args and cmd.args.count)
         write "("
         forEach (arg at i in cmd.args)

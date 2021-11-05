@@ -102,32 +102,6 @@ class Resolver : FroleyVisitor
     method visit( cmd:CastToPattern )->Cmd [override]
       return Pattern( cmd.t, cmd.operand->ScanPattern ).dispatch( this )
 
-    method visit( cmd:CollectRange )->Cmd [override]
-      cmd.range = cast_to( cmd.range, Type.STRING )
-      local cmd_range = cmd.range as LiteralString
-      if (not cmd_range) throw cmd.range.t.error( "Literal string expected." )
-
-      # Reformat e.g. ".0-9" to be "..09"
-      # Output: every pair of characters is a (low,high), ordered by low
-      # Input:  "L-H" -> "LH", "N" -> "NN"
-      local range = cmd_range.value
-      local pairs = String[]
-      local i = 0
-      local n = range.count
-      while (i < n)
-        if (i+2 < n and range[i+1] == '-')
-          pairs.add( "$$"(range[i],range[i+2]) )
-          i += 3
-        else
-          pairs.add( "$$"(range[i],range[i]) )
-          ++i
-        endIf
-      endWhile
-      pairs.sort( (a,b) => a[0] <= b[0] )
-      cmd_range.value = pairs.join("")
-
-      return cmd
-
     method visit( cmd:Consume )->Cmd [override]
       local seq = resolve_sequence( cmd.args )
       which (seq.require_type)
@@ -186,6 +160,17 @@ class Resolver : FroleyVisitor
         cur_match.statement_lists.add( cmd.statements )
       endIf
       return cmd
+
+    method visit( cmd:Scan )->Cmd [override]
+      local seq = resolve_sequence( cmd.args )
+      which (seq.require_type)
+        case Type.CHARACTER, Type.STRING
+          return ScanCharacters( cmd.t, seq ).dispatch( this )
+        case Type.PATTERN
+          return ScanPatternCmd( cmd.t, seq ).dispatch( this )
+        others
+          throw cmd.t.error( "[INTERNAL] Unhandled type $."(cmd.type) )
+      endWhich
 
     method visit( cmd:ScanError )->Cmd [override]
       if (cmd.args)

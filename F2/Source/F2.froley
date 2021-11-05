@@ -19,7 +19,6 @@ KEYWORD_TOKENS          tokens      [structural]
 KEYWORD_BUFFER           buffer
 KEYWORD_CASE             case
 KEYWORD_COLLECT          collect
-KEYWORD_COLLECT_RANGE    collectRange
 KEYWORD_DISCARD_POSITION discardPosition
 KEYWORD_END_MATCH        endMatch    [structural]
 KEYWORD_INPUT            input
@@ -757,7 +756,6 @@ SYMBOL_STAR           *
   on '(' expression ')':        return
   on '{' sequence '}':          return
   on "buffer"                   -> ReadBuffer
-  on "collectRange", expression -> CollectRange(range)
   on "consume", args            -> Consume(args:Args)
   on "discardPosition"          -> DiscardPosition
   on "false"                    -> LiteralLogical(value="false":Logical)
@@ -778,8 +776,9 @@ SYMBOL_STAR           *
     else             expression
     produce Return(value)
   endOn
-  on "savePosition"        -> SavePosition
-  on "true"                  -> LiteralLogical(value="true":Logical)
+  on "savePosition"           -> SavePosition
+  on "scan", args             -> Scan(args:Args)
+  on "true"                   -> LiteralLogical(value="true":Logical)
   on CHARSET
     create CharSet(characters=t.content:String)
     on '*'

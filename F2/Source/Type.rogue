@@ -1,14 +1,14 @@
 module F2
 
-enum Type
+enum Type( display_name:String )
   CATEGORIES
-    NONE
-    LOGICAL
-    CHARACTER
-    INTEGER
-    TOKEN_TYPE
-    STRING
-    PATTERN
+    NONE( "null" )
+    LOGICAL( "Logical" )
+    CHARACTER( "Character" )
+    INTEGER( "Integer" )
+    TOKEN_TYPE( "Token" )
+    STRING( "String" )
+    PATTERN( "Pattern" )
 
   METHODS
     method exists->Logical

@@ -359,4 +359,16 @@ class Visitor
       if (cmd.pattern) cmd.pattern = cmd.pattern.dispatch( this )
       return cmd
 
+
+    method visit( cmd:NextIs )->Cmd
+      if (cmd.args) cmd.args = cmd.args.dispatch( this ) as Args
+      return cmd
+
+    method visit( cmd:NextIsCharacters )->Cmd
+      if (cmd.value) cmd.value = cmd.value.dispatch( this )
+      return cmd
+
+    method visit( cmd:NextIsPattern )->Cmd
+      if (cmd.pattern) cmd.pattern = cmd.pattern.dispatch( this )
+      return cmd
 endClass

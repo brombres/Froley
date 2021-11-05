@@ -19,41 +19,42 @@ KEYWORD_TOKENS          tokens      [structural]
 KEYWORD_BUFFER           buffer
 KEYWORD_CASE             case
 KEYWORD_COLLECT          collect
-KEYWORD_DISCARD_POSITION discardPosition
 KEYWORD_END_MATCH        endMatch    [structural]
 KEYWORD_INPUT            input
 KEYWORD_PRODUCE_ANY      produceAny
 KEYWORD_MATCH            match
-KEYWORD_MARK_POSITION    markPosition
 KEYWORD_RESTART          restart
-KEYWORD_RESTORE_POSITION restorePosition
-KEYWORD_SAVE_POSITION    savePosition
 
 [common_keywords]
-KEYWORD_AND             and
-KEYWORD_CONSUME         consume
-KEYWORD_CONSUME_ANY     consumeAny
-KEYWORD_ELSE            else        [structural]
-KEYWORD_ELSE_IF         elseIf      [structural]
-KEYWORD_END_IF          endIf       [structural]
-KEYWORD_END_WHILE       endWhile    [structural]
-KEYWORD_FALSE           false
-KEYWORD_HALT            halt
-KEYWORD_HAS_NEXT        hasAnother
-KEYWORD_IF              if
-KEYWORD_NOT             not
-KEYWORD_ON              on          [structural]
-KEYWORD_OR              or
-KEYWORD_OTHERS          others      [structural]
-KEYWORD_PRINT           print
-KEYWORD_PRINTLN         println
-KEYWORD_PRODUCE         produce
-KEYWORD_READ            read
-KEYWORD_RETURN          return
-KEYWORD_SCAN            scan
-KEYWORD_SYNTAX_ERROR    syntaxError
-KEYWORD_TRUE            true
-KEYWORD_WHILE           while
+KEYWORD_AND              and
+KEYWORD_CONSUME          consume
+KEYWORD_CONSUME_ANY      consumeAny
+KEYWORD_DISCARD_POSITION discardPosition
+KEYWORD_ELSE             else        [structural]
+KEYWORD_ELSE_IF          elseIf      [structural]
+KEYWORD_END_IF           endIf       [structural]
+KEYWORD_END_WHILE        endWhile    [structural]
+KEYWORD_FALSE            false
+KEYWORD_HALT             halt
+KEYWORD_HAS_NEXT         hasAnother
+KEYWORD_IF               if
+KEYWORD_MARK_POSITION    markPosition
+KEYWORD_NEXT_IS          nextIs
+KEYWORD_NOT              not
+KEYWORD_ON               on          [structural]
+KEYWORD_OR               or
+KEYWORD_OTHERS           others      [structural]
+KEYWORD_PRINT            print
+KEYWORD_PRINTLN          println
+KEYWORD_PRODUCE          produce
+KEYWORD_READ             read
+KEYWORD_RESTORE_POSITION restorePosition
+KEYWORD_RETURN           return
+KEYWORD_SAVE_POSITION    savePosition
+KEYWORD_SCAN             scan
+KEYWORD_SYNTAX_ERROR     syntaxError
+KEYWORD_TRUE             true
+KEYWORD_WHILE            while
 
 [symbols]
 SYMBOL_ARROW          ->  [structural]
@@ -605,8 +606,11 @@ SYMBOL_STAR           *
   endOn
 
 + statement
-  on "collect",      args -> Collect(args:Args)
-  on "print",        args -> Print(args:Args)
+  on "collect", args   -> Collect(args:Args)
+  on "discardPosition" -> DiscardPosition
+  on "halt"            -> Halt
+  on "markPosition"    -> MarkPosition
+  on "print",   args   -> Print(args:Args)
   on "println"
     if (not hasAnother or nextHasAttribute(structural))
       beginList
@@ -616,6 +620,20 @@ SYMBOL_STAR           *
     endIf
     produce Println(args:Args)
   endOn
+  on "produce", expression      -> ScannerProduce(token_type:Cmd)
+  on "->",      expression      -> ScannerProduce(token_type:Cmd)
+  on "restart"
+    if (nextIs(EOL)) createNull
+    else             identifier
+    produce Restart(start_ip:String)
+  endOn
+  on "restorePosition" -> RestorePosition
+  on "return"
+    if (nextIs(EOL)) createNull
+    else             expression
+    produce Return(value)
+  endOn
+  on "savePosition"    -> SavePosition
   on "syntaxError"
     if (nextIs(EOL)) createNull
     else             args
@@ -757,26 +775,10 @@ SYMBOL_STAR           *
   on '{' sequence '}':          return
   on "buffer"                   -> ReadBuffer
   on "consume", args            -> Consume(args:Args)
-  on "discardPosition"          -> DiscardPosition
   on "false"                    -> LiteralLogical(value="false":Logical)
-  on "halt"                     -> Halt
   on "hasAnother"               -> HasAnother
-  on "markPosition"             -> MarkPosition
-  on "produce", expression      -> ScannerProduce(token_type:Cmd)
-  on "->",      expression      -> ScannerProduce(token_type:Cmd)
+  on "nextIs", args             -> NextIs(args:Args)
   on "read"                     -> Read
-  on "restart"
-    if (nextIs(EOL)) createNull
-    else             identifier
-    produce Restart(start_ip:String)
-  endOn
-  on "restorePosition"     -> RestorePosition
-  on "return"
-    if (nextIs(EOL)) createNull
-    else             expression
-    produce Return(value)
-  endOn
-  on "savePosition"           -> SavePosition
   on "scan", args             -> Scan(args:Args)
   on "true"                   -> LiteralLogical(value="true":Logical)
   on CHARSET

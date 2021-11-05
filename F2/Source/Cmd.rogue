@@ -51,7 +51,7 @@ class Cmd( t:Token )
       return this->Int32
 
     method to->ScanPattern
-trace type_name #FIXME
+      #trace type_name #FIXME
       throw t.error( ''Pattern expected.'' )
 
     method type->Type
@@ -179,11 +179,14 @@ class LiteralString( t, value:String ) : Literal
           return prior.cast_to( to_type )
       endWhich
 
+    method description->String
+      return value.to_escaped_ascii
+
     method to->ScanPattern
       return LiteralStringScanPattern( value )
 
     method to->String
-      return value.to_escaped_ascii
+      return value
 
     method type->Type
       return Type.STRING
@@ -202,11 +205,14 @@ class LiteralCharacter( t, value:Character ) : Literal
           return prior.cast_to( to_type )
       endWhich
 
+    method description->String
+      return value.to_escaped_ascii
+
     method to->ScanPattern
       return LiteralStringScanPattern( ""+value )
 
     method to->String
-      return value.to_escaped_ascii
+      return value->String
 
     method type->Type
       return Type.CHARACTER
@@ -225,8 +231,11 @@ class LiteralStringOrCharacter( t, value:String ) : Literal
           return prior.cast_to( to_type )
       endWhich
 
-    method to->String
+    method description->String
       return value.to_escaped_ascii
+
+    method to->String
+      return value
 
     method type->Type
       return Type.STRING
@@ -410,12 +419,18 @@ class LogicalOr : Binary
   METHODS
     method op->String
       return "or"
+
+    method type->Type
+      return Type.LOGICAL
 endClass
 
 class LogicalAnd : Binary
   METHODS
     method op->String
       return "and"
+
+    method type->Type
+      return Type.LOGICAL
 endClass
 
 class CompareEQ : Binary
@@ -626,6 +641,9 @@ class LogicalNot : Unary
   METHODS
     method op->String
       return "not"
+
+    method type->Type
+      return Type.LOGICAL
 endClass
 
 
@@ -639,6 +657,9 @@ class ConsumeCharacters( t, value:Cmd ) : Cmd
   METHODS
     method to->String
       return "ConsumeCharacters($)"(value)
+
+    method type->Type
+      return Type.LOGICAL
 endClass
 
 class ConsumePattern( t, pattern:Cmd ) : Cmd
@@ -858,12 +879,18 @@ class Scan( t, args:Args ) : Cmd
   METHODS
     method to->String
       return "Scan($)"(args)
+
+    method type->Type
+      return Type.LOGICAL
 endClass
 
 class ScanCharacters( t, value:Cmd ) : Cmd
   METHODS
     method to->String
       return "ScanCharacters($)"(value)
+
+    method type->Type
+      return Type.LOGICAL
 endClass
 
 class ScanPatternCmd( t, pattern:Cmd ) : Cmd
@@ -875,3 +902,32 @@ class ScanPatternCmd( t, pattern:Cmd ) : Cmd
       return Type.LOGICAL
 endClass
 
+
+
+class NextIs( t, args:Args ) : Cmd
+  METHODS
+    method to->String
+      return "NextIs($)"(args)
+
+    method type->Type
+      return Type.LOGICAL
+endClass
+
+
+class NextIsCharacters( t, value:Cmd ) : Cmd
+  METHODS
+    method to->String
+      return "NextIsCharacters($)"(value)
+
+    method type->Type
+      return Type.LOGICAL
+endClass
+
+class NextIsPattern( t, pattern:Cmd ) : Cmd
+  METHODS
+    method to->String
+      return "NextIsPattern($)"(pattern)
+
+    method type->Type
+      return Type.LOGICAL
+endClass

@@ -163,7 +163,7 @@ class RogueGenerator : FroleyVisitor
       return cmd
 
     method visit( cmd:ConsumeCharacters )->Cmd  [override]
-      write "_scanner.scan("
+      write "_scanner.consume("
       dispatch( cmd.value )
       write ")"
       return cmd
@@ -231,6 +231,7 @@ class RogueGenerator : FroleyVisitor
 
     method visit( cmd:LiteralCharacter )->Cmd  [override]
       which (cmd.value)
+        case '\\': write @|'\\'
         case '\n': write @|'\n'
         case '\r': write @|'\r'
         case '\t': write @|'\t'
@@ -285,6 +286,23 @@ class RogueGenerator : FroleyVisitor
     method visit( cmd:MarkPosition )->Cmd  [override]
       writeln "_src_line   = _scanner.line"
       write   "_src_column = _scanner.column"
+      return cmd
+
+    method visit( cmd:NextIsCharacters )->Cmd  [override]
+      if (cmd.value.type == Type.CHARACTER)
+        write "_scanner.next_is("
+        dispatch( cmd.value )
+        write ")"
+      else
+        write "_next_is("
+        dispatch( cmd.value )
+        write ")"
+      endIf
+      return cmd
+
+    method visit( cmd:NextIsPattern )->Cmd  [override]
+      dispatch( cmd.pattern )
+      write ".is_next(_scanner)"
       return cmd
 
     method visit( cmd:Print )->Cmd  [override]
@@ -416,7 +434,7 @@ class RogueGenerator : FroleyVisitor
             case Type.STRING
               writeln "String"
             others
-              throw v.t.error( "[INTERNAL] Unhandled type '$'."(v.type) )
+              throw v.t.error( "[INTERNAL] Unhandled type '$' (1)."(v.type) )
           endWhich
         endForEach
       endIf
@@ -461,6 +479,12 @@ class RogueGenerator : FroleyVisitor
                |
                |    method execute->Logical
                |      return execute( start_ip )
+               |
+               |    method _is_next( text:String )->Logical
+               |      local location = _scanner.location
+               |      local result = _scanner.consume( text )
+               |      _scanner.location = location
+               |      return result
                |
                |    method _scan( ch:Character )->Logical
                |      if (not _scanner.consume(ch)) return false

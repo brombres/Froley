@@ -25,13 +25,20 @@ class Resolver : FroleyVisitor
     method resolve_sequence( cmd:Args )->Cmd
       cmd.dispatch( this )
 
-      contingent
-        forEach (element in cmd)
-          sufficient (element.type == Type.PATTERN)
-        endForEach
-        return cmd
+      local any_patterns = false
+      local all_strings = true
+      forEach (element in cmd)
+        if (element.type != Type.STRING and element.type != Type.CHARACTER)
+          all_strings = false
+        endIf
 
-      satisfied
+        if (element.type == Type.PATTERN)
+          any_patterns = true
+          escapeForEach
+        endIf
+      endForEach
+
+      if (any_patterns)
         if (cmd.count == 1)
           return Pattern( cmd.t, cmd.first->ScanPattern ).dispatch( this )
         else
@@ -40,8 +47,21 @@ class Resolver : FroleyVisitor
           pattern.add( (forEach in cmd)->ScanPattern )
           return Pattern( cmd.t, pattern ).dispatch( this )
         endIf
+      endIf
 
-      endContingent
+      # Non-pattern
+      if (cmd.count == 1) return cmd[0]
+
+      # All characters and strings?
+      if (all_strings)
+        use builder = StringBuilder.pool
+          builder.print( (forEach in cmd)->String )
+          if (builder.count == 1) return LiteralCharacter( cmd.t, builder[0] )
+          else                    return LiteralString( cmd.t, builder->String )
+        endUse
+      endIf
+
+      throw cmd[1].t.error( "Too many arguments." )
 
     method visit( cmd:Access )->Cmd [override]
       local r = cur_element.routines[ cmd.name ]
@@ -110,7 +130,7 @@ class Resolver : FroleyVisitor
         case Type.PATTERN
           return ConsumePattern( cmd.t, seq ).dispatch( this )
         others
-          throw cmd.t.error( "[INTERNAL] Unhandled type $."(cmd.type) )
+          throw cmd.t.error( "Expected character, string, or pattern; found type $."(seq.type.display_name) )
       endWhich
 
     method visit( cmd:Pattern )->Cmd [override]
@@ -161,6 +181,17 @@ class Resolver : FroleyVisitor
       endIf
       return cmd
 
+    method visit( cmd:NextIs )->Cmd [override]
+      local seq = resolve_sequence( cmd.args )
+      which (seq.require_type)
+        case Type.CHARACTER, Type.STRING
+          return NextIsCharacters( cmd.t, seq ).dispatch( this )
+        case Type.PATTERN
+          return NextIsPattern( cmd.t, seq ).dispatch( this )
+        others
+          throw cmd.t.error( "Expected character, string, or pattern; found type $."(seq.type.display_name) )
+      endWhich
+
     method visit( cmd:Scan )->Cmd [override]
       local seq = resolve_sequence( cmd.args )
       which (seq.require_type)
@@ -169,7 +200,7 @@ class Resolver : FroleyVisitor
         case Type.PATTERN
           return ScanPatternCmd( cmd.t, seq ).dispatch( this )
         others
-          throw cmd.t.error( "[INTERNAL] Unhandled type $."(cmd.type) )
+          throw cmd.t.error( "Expected character, string, or pattern; found type $."(seq.type.display_name) )
       endWhich
 
     method visit( cmd:ScanError )->Cmd [override]

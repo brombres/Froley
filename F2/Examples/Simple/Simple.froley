@@ -2,6 +2,7 @@ tokens
 EOL
 IDENTIFIER identifier [content]
 NUMBER     number     [content]
+STRING     string     [content]
 
 tokens Keywords
 KEYWORD_PRINTLN println
@@ -29,14 +30,43 @@ scanner
     produceAny Keywords
     produceAny Symbols
     case '\n' -> EOL
+    case '"':    scan_string
   endMatch
 
   if (scan( [_a-zA-Z][_a-zA-Z0-9]* )) -> IDENTIFIER
+  scan_number
 
   if (hasAnother) print read; restart
+  halt
 
-# scan 'x' <> if (nextIs('x')) collect( read )
-# scan 'x' -> IDENTIFIER
+- scan_string
+  # already read initial double quote
+  while (hasAnother and not nextIs('\n'))
+    if consume('"') produce STRING
+    ch = read
+    if (ch == '\\' and hasAnother) ch = read
+    collect ch
+  endWhile
+  if nextIs('\n') syntaxError "Unterminated string."
+
+- scan_number
+  if (not hasAnother) return
+
+  if (scan [0-9])
+    scan_integer
+    if (scan '.') scan_integer
+    produce NUMBER
+  elseIf (scan '.')
+    scan_integer
+    produce NUMBER
+  else
+    return
+  endIf
+
+- scan_integer
+  while hasAnother
+    if (not scan([0-9]) and not consume([_]*)) return
+  endWhile
 
 #{
   on '\n' -> EOL

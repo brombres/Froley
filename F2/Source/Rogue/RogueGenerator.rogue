@@ -173,6 +173,18 @@ class RogueGenerator : FroleyVisitor
       write ".scan(_scanner)"
       return cmd
 
+    method visit( cmd:MustConsumeCharacters )->Cmd  [override]
+      write "_must_consume( "
+      dispatch( cmd.value )
+      write " )"
+      return cmd
+
+    method visit( cmd:MustConsumePattern )->Cmd  [override]
+      write "_must_consume( "
+      dispatch( cmd.pattern )
+      write " )"
+      return cmd
+
     method visit( cmd:Pattern )->Cmd  [override]
       write cmd.reference_name
       return cmd
@@ -521,6 +533,21 @@ class RogueGenerator : FroleyVisitor
                |      _scanner.location = location
                |      return result
                |
+               |    method _must_consume( ch:Character )
+               |      if (_scanner.consume(ch)) return
+               |      local message = "Syntax error - expected $, found " (_describe_character(ch))
+               |      if (_scanner.has_another) message += _describe_character(_scanner.peek) + "."
+               |      else                      message += "end of input."
+               |      throw CompileError( _filepath, _scanner.source, _scanner.line, _scanner.column, message )
+               |
+               |    method _must_consume( st:String )
+               |      if (_scanner.consume(st)) return
+               |      _throw_expected_string_error( "'$'" (st.to_escaped_ascii("'")) )
+               |
+               |    method _must_consume( pattern:ScanPattern )
+               |      if (pattern.scan(_scanner)) return
+               |      _throw_expected_string_error( pattern->String )
+               |
                |    method _scan( ch:Character )->Logical
                |      if (not _scanner.consume(ch)) return false
                |      buffer.print ch
@@ -534,8 +561,8 @@ class RogueGenerator : FroleyVisitor
                |    method _t( type:TokenType, content=null:String )->Token
                |      return Token( type, _filepath, _scanner.source, _src_line, _src_column, content )
                |
-               |    method _throw_expected_character_error( ch:Character )
-               |      local message = "Syntax error - expected $, found " (_describe_character(ch))
+               |    method _throw_expected_string_error( st:String )
+               |      local message = "Syntax error - expected $, found " (st)
                |      if (_scanner.has_another) message += _describe_character(_scanner.peek) + "."
                |      else                      message += "end of input."
                |      throw CompileError( _filepath, _scanner.source, _scanner.line, _scanner.column, message )

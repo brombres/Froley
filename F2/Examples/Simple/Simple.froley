@@ -20,24 +20,6 @@ SYMBOL_STAR        *
 scanner
 
 - main
-  goto beta
-
-- alpha
-  if (not hasAnother) halt
-  read
-  println "alpha"
-  mode beta
-  restart
-
-- beta
-  if (not hasAnother) halt
-  read
-  st = "beta"
-  call all_caps
-  println st
-  mode alpha
-  restart
-
   consume [ \r\t]*    # whitespace
   consume "#" [^\n]*  # single-line comment
 

@@ -380,4 +380,17 @@ class Visitor
 
     method visit( cmd:Mode )->Cmd
       return cmd
+
+    method visit( cmd:MustConsume )->Cmd
+      if (cmd.args) cmd.args = cmd.args.dispatch( this ) as Args
+      return cmd
+
+    method visit( cmd:MustConsumeCharacters )->Cmd
+      if (cmd.value) cmd.value = cmd.value.dispatch( this )
+      return cmd
+
+    method visit( cmd:MustConsumePattern )->Cmd
+      if (cmd.pattern) cmd.pattern = cmd.pattern.dispatch( this )
+      return cmd
 endClass
+

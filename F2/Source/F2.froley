@@ -42,6 +42,7 @@ KEYWORD_HAS_NEXT         hasAnother
 KEYWORD_IF               if
 KEYWORD_MARK_POSITION    markPosition
 KEYWORD_MODE             mode
+KEYWORD_MUST_CONSUME     mustConsume
 KEYWORD_NEXT_IS          nextIs
 KEYWORD_NOT              not
 KEYWORD_ON               on          [structural]
@@ -609,12 +610,13 @@ SYMBOL_STAR           *
   endOn
 
 + statement
-  on "collect", args    -> Collect(args:Args)
-  on "discardPosition"  -> DiscardPosition
-  on "halt"             -> Halt
-  on "markPosition"     -> MarkPosition
-  on "mode", identifier -> Mode(routine_name:String)
-  on "print",   args    -> Print(args:Args)
+  on "collect", args     -> Collect(args:Args)
+  on "discardPosition"   -> DiscardPosition
+  on "halt"              -> Halt
+  on "markPosition"      -> MarkPosition
+  on "mode", identifier  -> Mode(routine_name:String)
+  on "mustConsume", args -> MustConsume(args:Args)
+  on "print",   args     -> Print(args:Args)
   on "println"
     if (not hasAnother or nextHasAttribute(structural))
       beginList

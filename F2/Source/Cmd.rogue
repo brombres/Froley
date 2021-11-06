@@ -950,3 +950,21 @@ class Mode( t, routine_name:String ) : Cmd
     method to->String
       return "$"(routine_name)
 endClass
+
+class MustConsume( t, args:Args ) : Cmd
+  METHODS
+    method to->String
+      return "MustConsume($)"(args)
+endClass
+
+class MustConsumeCharacters( t, value:Cmd ) : Cmd
+  METHODS
+    method to->String
+      return "MustConsumeCharacters($)"(value)
+endClass
+
+class MustConsumePattern( t, pattern:Cmd ) : Cmd
+  METHODS
+    method to->String
+      return "MustConsumePattern($)"(pattern)
+endClass

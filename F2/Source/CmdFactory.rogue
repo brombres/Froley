@@ -38,7 +38,7 @@ class CmdFactory
         case 27: return RestorePosition( t )
         case 28: return Return( t, args[0] )
         case 29: return SavePosition( t )
-        case 30: return ScanError( t, args.cmd_as<<Args>>(0) )
+        case 30: return ThrowSyntaxError( t, args.cmd_as<<Args>>(0) )
         case 31: return Increment( t, args[0] )
         case 32: return Decrement( t, args[0] )
         case 33: return Assign( t, args[0], args[1] )

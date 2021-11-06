@@ -330,15 +330,13 @@ SYMBOL_STAR           *
 
 + element
   on "scanner"
-    if (consume(EOL)) createNull
-    else              identifier
+    createNull
     must_consume_eols
     routines
     produce ScannerDef(name:String,code)
 
   elseOn "parser"
-    if (consume(EOL)) createNull
-    else              identifier
+    createNull
     must_consume_eols
     routines
     produce ParserDef(name:String,code)
@@ -643,7 +641,7 @@ SYMBOL_STAR           *
   on "syntaxError"
     if (nextIs(EOL)) createNull
     else             args
-    produce ScanError(args:Args)
+    produce ThrowSyntaxError(args:Args)
   endOn
 
   on "++", expression -> Increment(target)

@@ -1,13 +1,19 @@
 module F2
 
-$include "CompileErrorTemplate.rogue"
+$include "CmdTemplate.rogue"
+$include "SyntaxErrorTemplate.rogue"
 $include "MainTemplate.rogue"
+$include "ParserTemplate.rogue"
 $include "ScannerTemplate.rogue"
 $include "ScanTableTemplate.rogue"
 $include "ScanTableDeclarationWriter.rogue"
 $include "TokenTemplate.rogue"
 
 class RogueGenerator : FroleyVisitor
+  GLOBAL METHODS
+    method to_escaped_ascii( st:String, additional_escapes:String )->String
+      return st.to_escaped_ascii( additional_escapes )
+
   PROPERTIES
     folder     : String
     writer     : PrintWriter
@@ -16,6 +22,9 @@ class RogueGenerator : FroleyVisitor
     indent     = 0
     at_newline = true
     write_replacements = StringTable<<String>>()
+
+    writing_scanner = false
+    writing_parser  = false
 
   METHODS
     method init( program, folder )
@@ -26,7 +35,7 @@ class RogueGenerator : FroleyVisitor
       #generate_parser( forEach in parsers )
       #nodes.dispatch( Organizer(this) )
 
-      create_file( "CompileError", template_CompileError )
+      create_file( "SyntaxError", template_SyntaxError )
       create_file( "Token", template_Token )
       create_file( "ScanTable",   template_ScanTable )
 
@@ -415,12 +424,15 @@ class RogueGenerator : FroleyVisitor
       return cmd
 
     method visit( cmd:ScannerDef )->Cmd  [override]
+      writing_scanner = true
+      writing_parser = false
+
       # OutputFolder/XYZScanner.rogue
       block
         create_file( cmd.name )
         local template = template_Scanner
         use builder = StringBuilder.pool
-          forEach (fn_name at i in program.user_calls)
+          forEach (fn_name at i in program.scanner_user_calls)
             if (i > 0) builder.println
             builder.println "    method $" (fn_name)
             builder.println "      noAction"
@@ -502,7 +514,7 @@ class RogueGenerator : FroleyVisitor
                |      noAction
                |
 
-      forEach (fn_name in program.user_calls)
+      forEach (fn_name in program.scanner_user_calls)
         writeln  "    method $ [abstract]" (fn_name)
         writeln
       endForEach
@@ -538,7 +550,7 @@ class RogueGenerator : FroleyVisitor
                |      local message = "Syntax error - expected $, found " (_describe_character(ch))
                |      if (_scanner.has_another) message += _describe_character(_scanner.peek) + "."
                |      else                      message += "end of input."
-               |      throw CompileError( _filepath, _scanner.source, _scanner.line, _scanner.column, message )
+               |      throw SyntaxError( _filepath, _scanner.source, _scanner.line, _scanner.column, message )
                |
                |    method _must_consume( st:String )
                |      if (_scanner.consume(st)) return
@@ -565,7 +577,7 @@ class RogueGenerator : FroleyVisitor
                |      local message = "Syntax error - expected $, found " (st)
                |      if (_scanner.has_another) message += _describe_character(_scanner.peek) + "."
                |      else                      message += "end of input."
-               |      throw CompileError( _filepath, _scanner.source, _scanner.line, _scanner.column, message )
+               |      throw SyntaxError( _filepath, _scanner.source, _scanner.line, _scanner.column, message )
                |
                |    method _throw_syntax_error( message=null:String )
                |      if (not message)
@@ -578,7 +590,7 @@ class RogueGenerator : FroleyVisitor
                |        endIf
                |        message = builder->String
                |      endIf
-               |      throw CompileError( _filepath, _scanner.source, _scanner.line, _scanner.column, message )
+               |      throw SyntaxError( _filepath, _scanner.source, _scanner.line, _scanner.column, message )
                |
                |    method tokenize( ip=null:Int32? )->Token[]
                |      if (ip) start_ip = ip.value
@@ -663,7 +675,7 @@ class RogueGenerator : FroleyVisitor
       write_replacements.remove( "$scan_table" )
       return cmd
 
-    method visit( cmd:ScanError )->Cmd  [override]
+    method visit( cmd:ThrowSyntaxError )->Cmd  [override]
       write "_throw_syntax_error"
       if (cmd.args and cmd.args.count)
         write "("
@@ -730,8 +742,70 @@ class RogueGenerator : FroleyVisitor
       writer.println
       at_newline = true
 
-  GLOBAL METHODS
-    method to_escaped_ascii( st:String, additional_escapes:String )->String
-      return st.to_escaped_ascii( additional_escapes )
+    method visit( cmd:ParserDef )->Cmd  [override]
+      writing_parser = true
+      writing_scanner = false
 
+      create_file( "Cmd", template_Cmd )
+
+      # OutputFolder/XYZParser.rogue
+      block
+        create_file( cmd.name )
+        local template = template_Parser
+        use builder = StringBuilder.pool
+          forEach (fn_name at i in program.parser_user_calls)
+            if (i > 0) builder.println
+            builder.println "    method $" (fn_name)
+            builder.println "      noAction"
+          endForEach
+          template .= replacing( "$UserMethods", builder->String )
+        endUse
+        write template
+        writer.close
+      endBlock
+
+      # OutputFolder/XYZParserCore.rogue
+      create_file( cmd.name+"Core" )
+      writeln @|# Generated by Froley. WARNING: WILL BE OVERWRITTEN.
+               |$module
+               |class $ClassName [abstract]
+               |  DEFINITIONS
+      forEach (r in cmd.routines)
+        writeln "    ip_$ = $" (r.name,r.ip)
+      endForEach
+
+      writeln @|
+               |  PROPERTIES
+               |    _tokens      : Token[]
+               |    _position    : Int32
+               |    _limit       : Int32
+               |    _cmd_stack   : Cmd[]
+               |    _token_stack = Token[]
+               |    output       = StringBuilder()
+               |
+               |  METHODS
+               |    method _describe( type:TokenType )->String
+               |      if (type.symbol[0].is_letter) return type.symbol
+               |      return "'$'" (type.symbol)
+               |
+               |    method _throw_syntax_error( message=null:String, expected=TokenType.NONE:TokenType )
+               |      if (message is null)
+               |        use builder = StringBuilder.pool
+               |          local next = _describe( which{ _position<_limit:_tokens[_position].type || TokenType.EOI } )
+               |          if (expected == TokenType.NONE)
+               |            builder.print "Unexpected $." (next)
+               |          else
+               |            builder.print "Expected $, found $." (_describe(expected),next)
+               |          endIf
+               |          message = builder->String
+               |        endUse
+               |      endIf
+               |
+               |      if (_limit == 0) throw SyntaxError( null, null, 0, 0, message )
+               |      throw _tokens[_position.clamped_high(_limit-1)].error( message )
+               |
+               |endClass
+      writer.close
+
+      return cmd
 endClass

@@ -6,7 +6,7 @@ class Organizer : FroleyVisitor
 
   METHODS
     method visit( cmd:CallUserMethod )->Cmd [override]
-      program.user_calls.add( cmd.fn_name )
+      program.scanner_user_calls.add( cmd.fn_name )
       return cmd
 
     method visit( cmd:LiteralStringOrCharacter )->Cmd [override]
@@ -15,7 +15,10 @@ class Organizer : FroleyVisitor
 
     method visit( cmd:ParserDef )->Cmd [override]
       if (not cmd.name) cmd.name = "Parser"
-      program.parsers[cmd.name] = cmd
+      if (program.parser and program.parser is not cmd)
+        throw cmd.t.error( "Multiple parsers defined - only one parser can be defined." )
+      endIf
+      program.parser = cmd
       return prior.visit( cmd )
 
     method visit( cmd:ProduceAny )->Cmd [override]
@@ -51,7 +54,10 @@ class Organizer : FroleyVisitor
 
     method visit( cmd:ScannerDef )->Cmd [override]
       if (not cmd.name) cmd.name = "Scanner"
-      program.scanners[cmd.name] = cmd
+      if (program.scanner and program.scanner is not cmd)
+        throw cmd.t.error( "Multiple scanners defined - only one scanner can be defined." )
+      endIf
+      program.scanner = cmd
       return prior.visit( cmd )
 
 endClass

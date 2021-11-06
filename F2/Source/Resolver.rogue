@@ -13,8 +13,8 @@ class Resolver : FroleyVisitor
       if (not program.tokens_by_name.contains("EOI"))
         program.tokens_by_name//EOI = TokenDef( t, "EOI", "end of input", null_attr )
       endIf
-      if (not program.tokens_by_name.contains("COMPILE_ERROR"))
-        program.tokens_by_name//COMPILE_ERROR = TokenDef( t, "COMPILE_ERROR", "compile error", null_attr )
+      if (not program.tokens_by_name.contains("SYNTAX_ERROR"))
+        program.tokens_by_name//SYNTAX_ERROR = TokenDef( t, "SYNTAX_ERROR", "compile error", null_attr )
       endIf
 
     method cast_to( cmd:Cmd, to_type:Type )->Cmd
@@ -214,7 +214,7 @@ class Resolver : FroleyVisitor
           throw cmd.t.error( "Expected character, string, or pattern; found type $."(seq.type.display_name) )
       endWhich
 
-    method visit( cmd:ScanError )->Cmd [override]
+    method visit( cmd:ThrowSyntaxError )->Cmd [override]
       if (cmd.args)
         forEach (arg at i in cmd.args)
           cmd.args[i] = arg.cast_to( Type.STRING ).dispatch( this )

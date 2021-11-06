@@ -548,10 +548,10 @@ class ReadVar : Cmd
       return var.type
 endClass
 
-class ScanError( t, args:Args ) : Cmd
+class ThrowSyntaxError( t, args:Args ) : Cmd
   METHODS
     method to->String
-      return "ScanError($)"(args)
+      return "ThrowSyntaxError($)"(args)
 endClass
 
 class CastToLogical : Unary

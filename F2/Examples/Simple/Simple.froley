@@ -68,6 +68,12 @@ scanner
     if (not scan([0-9]) and not consume([_]*)) return
   endWhile
 
+parser
+
+- identifier
+  syntaxError
+  #on IDENTIFIER -> Identifier(name=t:String)
+
 #{
   on '\n' -> EOL
   on [_A-Za-z] [_A-Za-z0-9]* -> IDENTIFIER

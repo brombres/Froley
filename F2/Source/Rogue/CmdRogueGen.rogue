@@ -1,6 +1,6 @@
 module F2
 
-class CmdWriter : RogueSourceFileWriter
+class CmdRogueGen : RogueSourceGen
   METHODS
     method init_object
       class_name = "Cmd"

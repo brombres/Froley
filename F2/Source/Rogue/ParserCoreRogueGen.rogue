@@ -1,6 +1,6 @@
 module F2
 
-class ParserCoreWriter( generator, parser_def:ParserDef ) : RogueSourceFileWriter
+class ParserCoreRogueGen( generator, parser_def:ParserDef ) : RogueSourceGen
   METHODS
     method init_object
       class_name = "ParserCore"

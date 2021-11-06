@@ -1,6 +1,6 @@
 module F2
 
-class SyntaxErrorWriter : RogueSourceFileWriter
+class SyntaxErrorRogueGen : RogueSourceGen
   METHODS
     method init_object
       class_name = "SyntaxError"

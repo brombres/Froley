@@ -1,12 +1,15 @@
 module F2
 
-class RogueSourceFileWriter
+class RogueSourceGen
   PROPERTIES
     generator  : RogueGenerator
     class_name : String
 
   METHODS
     method init( generator )
+
+    method indent->Int32
+      return generator.indent
 
     method overwrite
       require class_name
@@ -27,6 +30,9 @@ class RogueSourceFileWriter
       write_content
 
       generator.writer.close
+
+    method set_indent( new_indent:Int32 )
+      generator.indent = new_indent
 
     method write( content:String )
       generator.write( content )

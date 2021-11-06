@@ -1,6 +1,6 @@
 module F2
 
-class ScanTableWriter : RogueSourceFileWriter
+class ScanTableRogueGen : RogueSourceGen
   METHODS
     method init_object
       class_name = "ScanTable"

@@ -776,34 +776,77 @@ class RogueGenerator : FroleyVisitor
 
       writeln @|
                |  PROPERTIES
-               |    _tokens      : Token[]
-               |    _position    : Int32
-               |    _limit       : Int32
-               |    _cmd_stack   : Cmd[]
-               |    _token_stack = Token[]
-               |    output       = StringBuilder()
+               |    _tokens       : Token[]
+               |    _position     : Int32
+               |    _limit        : Int32
+               |    _cmd_stack    = Cmd[]
+               |    _token_stack  = Token[]
+               |    _execute_goto = false
+               |    start_ip      = 0
+               |    ip            = 0
+               |    output        = StringBuilder()
                |
                |  METHODS
+               |    method init( file:File )
+               |      local scanner = Scanner( file )
+               |      local tokens = scanner.tokenize
+               |      if (scanner.output.count) print scanner.output; flush
+               |      init( tokens )
+               |
+               |    method init( _tokens )
+               |      _position = 0
+               |      _limit = _tokens.count
+               |      _cmd_stack.clear
+               |      _token_stack.clear
+               |      output.clear
+               |
+               |    method has_another->Logical
+               |      return _position < _limit
+               |
+               |    method parse( ip=null:Int32? )->Cmd
+               |      if (ip) start_ip = ip.value
+               |      _token_stack.clear
+               |      execute( start_ip )
+               |      if (_cmd_stack.count != 1)
+               |        throw _peek.error( "[INTERNAL] Expected exactly one command node remaining on stack." )
+               |      endIf
+               |      return _cmd_stack.remove_last
+               |
                |    method _describe( type:TokenType )->String
                |      if (type.symbol[0].is_letter) return type.symbol
                |      return "'$'" (type.symbol)
                |
-               |    method _throw_syntax_error( message=null:String, expected=TokenType.NONE:TokenType )
+               |    method _peek->Token
+               |      if (_position < _limit) return _tokens[ _position ]
+               |      if (_limit > 0)         return _tokens[ _limit - 1 ]
+               |      return Token( TokenType.EOI, null, null, 0, 0 )
+               |
+               |    method _throw_syntax_error( message=null:String, expected:TokenType? )
                |      if (message is null)
                |        use builder = StringBuilder.pool
-               |          local next = _describe( which{ _position<_limit:_tokens[_position].type || TokenType.EOI } )
-               |          if (expected == TokenType.NONE)
+               |          local next = _describe( _peek.type )
+               |          if (expected)
                |            builder.print "Unexpected $." (next)
                |          else
-               |            builder.print "Expected $, found $." (_describe(expected),next)
+               |            builder.print "Expected $, found $." (_describe(expected.value),next)
                |          endIf
                |          message = builder->String
                |        endUse
                |      endIf
                |
-               |      if (_limit == 0) throw SyntaxError( null, null, 0, 0, message )
-               |      throw _tokens[_position.clamped_high(_limit-1)].error( message )
+               |      throw _peek.error( message )
                |
+               |    method execute( ip:Int32 )
+               |      loop
+               |        ++ip
+               |        which (ip-1)
+
+               #prior.visit( cmd )
+
+      writeln @|          others
+               |            return
+               |        endWhich
+               |      endLoop
                |endClass
       writer.close
 

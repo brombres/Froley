@@ -30,6 +30,7 @@ KEYWORD_AND              and
 KEYWORD_CALL             call
 KEYWORD_CONSUME          consume
 KEYWORD_CONSUME_ANY      consumeAny
+KEYWORD_CREATE           create
 KEYWORD_DISCARD_POSITION discardPosition
 KEYWORD_ELSE             else        [structural]
 KEYWORD_ELSE_IF          elseIf      [structural]
@@ -608,14 +609,15 @@ SYMBOL_STAR           *
   endOn
 
 + statement
-  on "collect", args     -> Collect(args:Args)
-  on "discardPosition"   -> DiscardPosition
-  on "halt"              -> Halt
-  on "markPosition"      -> MarkPosition
-  on "mode", identifier  -> Mode(routine_name:String)
-  on "mustConsume", args -> MustConsume(args:Args)
+  on "collect", args      -> Collect(args:Args)
+  #on "create", expression -> ScannerProduce(token_type:Cmd)
+  on "discardPosition"    -> DiscardPosition
+  on "halt"               -> Halt
+  on "markPosition"       -> MarkPosition
+  on "mode", identifier   -> Mode(routine_name:String)
+  on "mustConsume", args  -> MustConsume(args:Args)
   on "noAction": return
-  on "print",   args     -> Print(args:Args)
+  on "print",   args      -> Print(args:Args)
   on "println"
     if (not hasAnother or nextHasAttribute(structural))
       beginList

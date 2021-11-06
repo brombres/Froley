@@ -23,6 +23,8 @@ class ParserCoreRogueGen( generator, parser_def:ParserDef ) : RogueSourceGen
          |    _limit        : Int32
          |    _cmd_stack    = Cmd[]
          |    _token_stack  = Token[]
+         |    _token_frames = Int32[]
+         |    _cur_t        : Token
          |    start_ip      = 0
          |    ip            = 0
          |    output        = StringBuilder()
@@ -45,9 +47,12 @@ class ParserCoreRogueGen( generator, parser_def:ParserDef ) : RogueSourceGen
          |      return _position < _limit
          |
          |    method parse( ip=null:Int32? )->Cmd
+         |      if (_position == _limit) return null
          |      if (ip) start_ip = ip.value
          |      _token_stack.clear
-         |      execute( start_ip )
+         |      _token_frames.clear
+         |      _cur_t = _tokens[_position]
+         |      _execute( start_ip )
          |      if (_cmd_stack.count != 1)
          |        throw _peek.error( "[INTERNAL] Expected exactly one command node remaining on stack." )
          |      endIf
@@ -61,6 +66,10 @@ class ParserCoreRogueGen( generator, parser_def:ParserDef ) : RogueSourceGen
          |      if (_position < _limit) return _tokens[ _position ]
          |      if (_limit > 0)         return _tokens[ _limit - 1 ]
          |      return Token( TokenType.EOI, null, null, 0, 0 )
+         |
+         |    method _pop_frame
+         |      _token_stack.discard_from( _token_frames.remove_last )
+         |      _cur_t = _token_stack.remove_last
          |
          |    method _throw_syntax_error( message=null:String, expected:TokenType? )
          |      if (message is null)
@@ -77,12 +86,14 @@ class ParserCoreRogueGen( generator, parser_def:ParserDef ) : RogueSourceGen
          |
          |      throw _peek.error( message )
          |
-         |    method execute( ip:Int32 )
+         |    method _execute( ip:Int32 )
+         |      _token_stack.add( _cur_t )
+         |      _token_frames.add( _token_stack.count )
          |      loop
          |        ++ip
          |        which (ip-1)
 
-               #prior.visit( cmd )
+      parser_def.code.dispatch( generator )
 
       writeln @|          others
                |            return

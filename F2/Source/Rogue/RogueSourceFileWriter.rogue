@@ -1,0 +1,43 @@
+module F2
+
+class RogueSourceFileWriter
+  PROPERTIES
+    generator  : RogueGenerator
+    class_name : String
+
+  METHODS
+    method init( generator )
+
+    method overwrite
+      require class_name
+      overwrite( class_name )
+
+    method overwrite( class_name )
+      local filename = class_name + ".rogue"
+      local filepath = generator.folder/filename
+
+      if (File.exists(filepath)) print "Recreating "
+      else                       print "Creating "
+      println filepath
+
+      generator.writer = File.print_writer(filepath)
+
+      writeln "module $\n"(generator.program.project_name)
+
+      write_content
+
+      generator.writer.close
+
+    method write( content:String )
+      generator.write( content )
+
+    method writeln
+      generator.writeln
+
+    method writeln( content:String )
+      generator.writeln( content )
+
+    method write_content
+      noAction  # Overridden
+
+endClass

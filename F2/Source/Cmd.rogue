@@ -939,12 +939,6 @@ class CallUserMethod( t, fn_name:String ) : Cmd
       return "CallUserMethod($)"(fn_name)
 endClass
 
-class Goto( t, routine_name:String ) : Cmd
-  METHODS
-    method to->String
-      return "$"(routine_name)
-endClass
-
 class Mode( t, routine_name:String ) : Cmd
   METHODS
     method to->String

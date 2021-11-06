@@ -36,7 +36,6 @@ KEYWORD_ELSE_IF          elseIf      [structural]
 KEYWORD_END_IF           endIf       [structural]
 KEYWORD_END_WHILE        endWhile    [structural]
 KEYWORD_FALSE            false
-KEYWORD_GOTO             goto
 KEYWORD_HALT             halt
 KEYWORD_HAS_NEXT         hasAnother
 KEYWORD_IF               if
@@ -783,7 +782,6 @@ SYMBOL_STAR           *
   on "call", identifier         -> CallUserMethod(fn_name:String)
   on "consume", args            -> Consume(args:Args)
   on "false"                    -> LiteralLogical(value="false":Logical)
-  on "goto", identifier         -> Goto(routine_name:String)
   on "hasAnother"               -> HasAnother
   on "nextIs", args             -> NextIs(args:Args)
   on "read"                     -> Read

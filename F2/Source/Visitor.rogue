@@ -375,9 +375,6 @@ class Visitor
     method visit( cmd:CallUserMethod )->Cmd
       return cmd
 
-    method visit( cmd:Goto )->Cmd
-      return cmd
-
     method visit( cmd:Mode )->Cmd
       return cmd
 

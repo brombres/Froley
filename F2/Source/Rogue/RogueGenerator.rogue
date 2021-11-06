@@ -246,13 +246,6 @@ class RogueGenerator : FroleyVisitor
       dispatch( cmd.target )
       return cmd
 
-    method visit( cmd:Goto )->Cmd  [override]
-      write   "this.ip = ip_"
-      writeln cmd.routine_name
-      writeln "_execute_goto = true"
-      write   "return false"
-      return cmd
-
     method visit( cmd:HasAnother )->Cmd  [override]
       write "_scanner.has_another"
       return cmd
@@ -467,7 +460,6 @@ class RogueGenerator : FroleyVisitor
                |    start_ip      = 0
                |    ip            : Int32
                |    halt          = false
-               |    _execute_goto = false
                |
                |    _position_stack = Int32[]
                |
@@ -595,14 +587,8 @@ class RogueGenerator : FroleyVisitor
                |    method tokenize( ip=null:Int32? )->Token[]
                |      if (ip) start_ip = ip.value
                |      _clear
-               |      this.ip = start_ip
-               |      while (execute(this.ip) or not halt)
-               |        if (_execute_goto)
-               |          _execute_goto = false
-               |        else
-               |          buffer.clear
-               |          this.ip = start_ip
-               |        endIf
+               |      while (execute(start_ip) or not halt)
+               |        buffer.clear
                |      endWhile
                |      return tokens
                |
@@ -781,7 +767,6 @@ class RogueGenerator : FroleyVisitor
                |    _limit        : Int32
                |    _cmd_stack    = Cmd[]
                |    _token_stack  = Token[]
-               |    _execute_goto = false
                |    start_ip      = 0
                |    ip            = 0
                |    output        = StringBuilder()

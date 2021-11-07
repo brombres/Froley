@@ -71,14 +71,14 @@ class ParserCoreRogueGen( generator, parser_def:ParserDef ) : RogueSourceGen
          |      _token_stack.discard_from( _token_frames.remove_last )
          |      _cur_t = _token_stack.remove_last
          |
-         |    method _throw_syntax_error( message=null:String, expected:TokenType? )
+         |    method _throw_syntax_error( message=null:String, expected=null:TokenType? )
          |      if (message is null)
          |        use builder = StringBuilder.pool
          |          local next = _describe( _peek.type )
          |          if (expected)
-         |            builder.print "Unexpected $." (next)
-         |          else
          |            builder.print "Expected $, found $." (_describe(expected.value),next)
+         |          else
+         |            builder.print "Unexpected $." (next)
          |          endIf
          |          message = builder->String
          |        endUse

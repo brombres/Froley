@@ -1,5 +1,5 @@
 tokens
-EOL
+EOL(end of line)
 IDENTIFIER identifier [content]
 NUMBER     number     [content]
 STRING     string     [content]
@@ -71,6 +71,7 @@ scanner
 parser
 
 - identifier
+  #produce CmdTest(name)
   syntaxError
   #on IDENTIFIER -> Identifier(name=t:String)
 

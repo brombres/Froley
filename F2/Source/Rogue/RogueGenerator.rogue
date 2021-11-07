@@ -27,9 +27,6 @@ class RogueGenerator : FroleyVisitor
     at_newline = true
     write_replacements = StringTable<<String>>()
 
-    writing_scanner = false
-    writing_parser  = false
-
   METHODS
     method init( program, folder )
       File.create_folder( folder )
@@ -333,9 +330,9 @@ class RogueGenerator : FroleyVisitor
       write ".scan(_scanner,buffer)"
       return cmd
 
-    method visit( cmd:ScannerProduce )->Cmd  [override]
+    method visit( cmd:Produce )->Cmd  [override]
       write   "_add( "
-      cmd.token_type.dispatch( this )
+      cmd.arg.dispatch( this )
       writeln " )"
       write   "return false"
       return cmd
@@ -383,8 +380,8 @@ class RogueGenerator : FroleyVisitor
       return cmd
 
     method visit( cmd:ScannerDef )->Cmd  [override]
-      writing_scanner = true
-      writing_parser = false
+      is_scanner = true
+      is_parser = false
 
       ScannerRogueGen(this).overwrite
       ScannerCoreRogueGen(this,cmd).overwrite
@@ -502,8 +499,8 @@ class RogueGenerator : FroleyVisitor
       at_newline = true
 
     method visit( cmd:ParserDef )->Cmd  [override]
-      writing_parser = true
-      writing_scanner = false
+      is_parser = true
+      is_scanner = false
 
       CmdRogueGen(this).overwrite
       ParserRogueGen(this).overwrite

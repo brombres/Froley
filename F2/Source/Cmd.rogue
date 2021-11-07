@@ -686,10 +686,10 @@ endClass
 
 
 
-class ScannerProduce( t, token_type:Cmd ) : Cmd
+class Produce( t, arg:Cmd ) : Cmd
   METHODS
     method to->String
-      return "ScannerProduce($)"(token_type)
+      return "Produce($)"(arg)
 endClass
 
 class LiteralTokenType( t, token_type:TokenDef ) : Literal

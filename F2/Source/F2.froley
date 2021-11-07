@@ -201,15 +201,26 @@ SYMBOL_STAR           *
   syntaxError "Identifier expected."
 
 - scan_token_symbol
-  consume_whitespace
+  # TOKEN_ID(symbol)
+  # TOKEN_ID symbol
+  if (consume('('))
+    while (hasAnother and not nextIs(')') and not nextIs('\n'))
+      ch = read
+      collect ch
+    endWhile
+    mustConsume(')')
 
-  if (nextIs('[') or nextIs('\n')) restart scan_token_attributes
+  else
+    consume_whitespace
 
-  # Scan everything to the next space
-  while (hasAnother and not nextIs(' ') and not nextIs('\n'))
-    ch = read
-    collect ch
-  endWhile
+    if (nextIs('[') or nextIs('\n')) restart scan_token_attributes
+
+    # Scan everything to the next space
+    while (hasAnother and not nextIs(' ') and not nextIs('\n'))
+      ch = read
+      collect ch
+    endWhile
+  endIf
 
   mode scan_token_attributes
   produce SYMBOL
@@ -520,7 +531,7 @@ SYMBOL_STAR           *
         if (consume("->"))
           beginList
             expression
-            create ScannerProduce(token_type:Cmd)
+            create Produce(arg:Cmd)
           createList Statements
         else
           consume(":")
@@ -610,7 +621,7 @@ SYMBOL_STAR           *
 
 + statement
   on "collect", args      -> Collect(args:Args)
-  #on "create", expression -> ScannerProduce(token_type:Cmd)
+  #on "create", expression -> Produce(arg:Cmd)
   on "discardPosition"    -> DiscardPosition
   on "halt"               -> Halt
   on "markPosition"       -> MarkPosition
@@ -627,8 +638,8 @@ SYMBOL_STAR           *
     endIf
     produce Println(args:Args)
   endOn
-  on "produce", expression      -> ScannerProduce(token_type:Cmd)
-  on "->",      expression      -> ScannerProduce(token_type:Cmd)
+  on "produce", expression      -> Produce(arg:Cmd)
+  on "->",      expression      -> Produce(arg:Cmd)
   on "restart"
     if (nextIs(EOL)) createNull
     else             identifier

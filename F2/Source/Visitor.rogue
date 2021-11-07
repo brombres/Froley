@@ -262,8 +262,8 @@ class Visitor
     method visit( cmd:LiteralStringOrCharacter )->Cmd
       return cmd
 
-    method visit( cmd:ScannerProduce )->Cmd
-      if (cmd.token_type) cmd.token_type = cmd.token_type.dispatch( this )
+    method visit( cmd:Produce )->Cmd
+      if (cmd.arg) cmd.arg = cmd.arg.dispatch( this )
       return cmd
 
     method visit( cmd:LiteralTokenType )->Cmd

@@ -21,7 +21,7 @@ class CmdFactory
         case 10: return If( t, args[0], args.cmd_as<<Statements>>(1), args.cmd_as<<CmdList>>(2), args.cmd_as<<Statements>>(3) )
         case 11: return Match( t, args[0], args.cmd_as<<CmdList>>(1), args[2] )
         case 12: return While( t, args[0], args.cmd_as<<Statements>>(1) )
-        case 13: return ScannerProduce( t, args[0] )
+        case 13: return Produce( t, args[0] )
         case 14: return MatchCase( t, args[0], args.cmd_as<<CmdList>>(1) )
         case 15: return ProduceAny( t, args.cmd_to<<String>>(0) )
         case 16: return ElseIf( t, args[0], args.cmd_as<<Statements>>(1) )

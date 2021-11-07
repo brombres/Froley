@@ -8,12 +8,17 @@ class FroleyVisitor : Visitor
     cur_routine : Routine
     cur_tokens  : TokenGroup
 
+    is_scanner  : Logical
+    is_parser   : Logical
+
   METHODS
     method init( program )
 
     method visit( cmd:ParserDef )->Cmd [override]
-      cur_element = cmd
-      return prior.visit( cmd )
+      temporarily is_scanner = true
+        cur_element = cmd
+        return prior.visit( cmd )
+      endTemporarily
 
     method visit( cmd:Routine )->Cmd [override]
       cur_routine = cmd
@@ -24,8 +29,10 @@ class FroleyVisitor : Visitor
       return prior.visit( cmd )
 
     method visit( cmd:ScannerDef )->Cmd [override]
-      cur_element = cmd
-      return prior.visit( cmd )
+      temporarily is_parser = true
+        cur_element = cmd
+        return prior.visit( cmd )
+      endTemporarily
 
     method visit( cmd:TokenGroup )->Cmd [override]
       cur_tokens = cmd

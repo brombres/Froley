@@ -154,8 +154,16 @@ class Resolver : FroleyVisitor
       endIf
       return cmd
 
-    method visit( cmd:ScannerProduce )->Cmd [override]
-      cmd.token_type = cast_to( cmd.token_type, Type.TOKEN_TYPE )
+    method visit( cmd:Produce )->Cmd [override]
+        cmd.arg = cast_to( cmd.arg, Type.TOKEN_TYPE )
+        #{
+      if (is_scanner)
+        cmd.arg = cast_to( cmd.arg, Type.TOKEN_TYPE )
+      else
+        trace cmd
+        throw cmd.t.error( "TODO" )
+      endIf
+      }#
       return cmd
 
     method visit( cmd:Match )->Cmd [override]

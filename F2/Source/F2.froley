@@ -46,7 +46,7 @@ KEYWORD_MUST_CONSUME     mustConsume
 KEYWORD_NEXT_IS          nextIs
 KEYWORD_NO_ACTION        noAction
 KEYWORD_NOT              not
-KEYWORD_ON               on          [structural]
+KEYWORD_ON               on
 KEYWORD_OR               or
 KEYWORD_OTHERS           others      [structural]
 KEYWORD_PRINT            print
@@ -639,6 +639,10 @@ SYMBOL_T_CONTENT      t.content
     endIf
     produce Println(args:Args)
   endOn
+  #on "on"
+  #  identifier_or_string
+  #  additional_elements
+  #endOn
   on "produce", product    -> Produce(arg:Cmd)
   on "->",      product    -> Produce(arg:Cmd)
   on "restart"

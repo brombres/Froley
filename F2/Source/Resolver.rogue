@@ -159,7 +159,7 @@ class Resolver : FroleyVisitor
         cmd.arg = cast_to( cmd.arg, Type.TOKEN_TYPE )
       else
         trace cmd
-        throw cmd.t.error( "TODO" )
+        throw cmd.t.error( "TODO" ) #FIXME
       endIf
       return cmd
 

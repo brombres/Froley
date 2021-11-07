@@ -6,9 +6,10 @@ enum Type( display_name:String )
     LOGICAL( "Logical" )
     CHARACTER( "Character" )
     INTEGER( "Integer" )
-    TOKEN_TYPE( "Token" )
+    TOKEN_TYPE( "TokenType" )
     STRING( "String" )
     PATTERN( "Pattern" )
+    TOKEN( "Token" )
 
   METHODS
     method exists->Logical

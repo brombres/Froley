@@ -37,7 +37,6 @@ class MainRogueGen : RogueSourceGen
          |      #  tokens.add( scanner.tokenize )
          |      #  if (scanner.output.count) print scanner.output; flush
          |      #endForEach
-         |
          |      #println (forEach in tokens)
          |
          |      forEach (arg in command//args)

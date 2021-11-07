@@ -498,7 +498,7 @@ class Println( t, args:Args ) : Cmd
 endClass
 
 
-class HasAnother : Cmd
+class ScannerHasAnother : Cmd
   METHODS
     method to->String
       return "hasAnother"
@@ -508,7 +508,7 @@ class HasAnother : Cmd
 endClass
 
 
-class Read : Cmd
+class ScannerRead : Cmd
   METHODS
     method to->String
       return "read"
@@ -650,10 +650,10 @@ class LogicalNot : Unary
 endClass
 
 
-class Consume( t, args:Args ) : Cmd
+class ScannerConsume( t, args:SequenceArgs ) : Cmd
   METHODS
     method to->String
-      return "Consume($)"(args)
+      return "ScannerConsume($)"(args)
 endClass
 
 class ConsumeCharacters( t, value:Cmd ) : Cmd
@@ -733,6 +733,10 @@ class WriteBuffer( t, new_value:Cmd ) : Cmd
 endClass
 
 class Args : CmdList
+  METHODS
+endClass
+
+class SequenceArgs : Args
   METHODS
 endClass
 
@@ -867,7 +871,7 @@ class OptionalPattern( t, pattern:Cmd ) : Cmd
       return Type.PATTERN
 endClass
 
-class SequenceArgs : CmdList
+class PatternSequence : CmdList
   METHODS
     method to->ScanPattern
       local result = ScanPatternList( ScanPattern[] )
@@ -878,7 +882,7 @@ class SequenceArgs : CmdList
       return Type.PATTERN
 endClass
 
-class Scan( t, args:Args ) : Cmd
+class Scan( t, args:SequenceArgs ) : Cmd
   METHODS
     method to->String
       return "Scan($)"(args)
@@ -907,10 +911,10 @@ endClass
 
 
 
-class NextIs( t, args:Args ) : Cmd
+class ScannerNextIs( t, args:SequenceArgs ) : Cmd
   METHODS
     method to->String
-      return "NextIs($)"(args)
+      return "ScannerNextIs($)"(args)
 
     method type->Type
       return Type.LOGICAL
@@ -936,10 +940,10 @@ class NextIsPattern( t, pattern:Cmd ) : Cmd
 endClass
 
 
-class CallUserMethod( t, fn_name:String ) : Cmd
+class ScannerCallUserMethod( t, fn_name:String ) : Cmd
   METHODS
     method to->String
-      return "CallUserMethod($)"(fn_name)
+      return "ScannerCallUserMethod($)"(fn_name)
 endClass
 
 class Mode( t, routine_name:String ) : Cmd
@@ -948,7 +952,7 @@ class Mode( t, routine_name:String ) : Cmd
       return "$"(routine_name)
 endClass
 
-class MustConsume( t, args:Args ) : Cmd
+class MustConsume( t, args:SequenceArgs ) : Cmd
   METHODS
     method to->String
       return "MustConsume($)"(args)
@@ -987,4 +991,41 @@ class CreateCmdArg( t, arg_name:String, arg_value:Cmd, arg_type:String ) : Cmd
     method to->String
       return "CmdArg($,$,$)"(arg_name,arg_value,arg_type)
 endClass
+
+
+
+class ParserArgs : Args
+  METHODS
+endClass
+
+class ParserCallUserMethod( t, fn_name:String ) : Cmd
+  METHODS
+    method to->String
+      return "ParserCallUserMethod($)"(fn_name)
+endClass
+
+class ParserConsume( t, args:ParserArgs ) : Cmd
+  METHODS
+    method to->String
+      return "ParserConsume($)"(args)
+endClass
+
+class ParserHasAnother : Cmd
+  METHODS
+    method to->String
+      return "hasAnother"
+endClass
+
+class ParserNextIs( t, args:ParserArgs ) : Cmd
+  METHODS
+    method to->String
+      return "ParserNextIs($)"(args)
+endClass
+
+class ParserRead : Cmd
+  METHODS
+    method to->String
+      return "read"
+endClass
+
 

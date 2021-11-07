@@ -345,13 +345,13 @@ SYMBOL_T_CONTENT      t.content
   on "scanner"
     createNull
     must_consume_eols
-    routines
+    scanner_routines
     produce ScannerDef(name:String,code)
 
   elseOn "parser"
     createNull
     must_consume_eols
-    routines
+    parser_routines
     produce ParserDef(name:String,code)
 
   elseOn "tokens"
@@ -366,19 +366,15 @@ SYMBOL_T_CONTENT      t.content
   on IDENTIFIER -> Identifier(name=t.content:String)
   syntaxError "Identifier expected."
 
-+ routines
++ scanner_routines
   beginList
 
   consume_eols
-  while (nextIs('-') or nextIs('+'))
+  while nextIs('-')
     on "-"
       routine_name_and_base_type
-      multi_line_statements
+      scanner_multi_line_statements
       create Routine(name:String,base_type:String,statements)
-    elseOn "+"
-      routine_name_and_base_type
-      multi_line_statements
-      create Subroutine(name:String,base_type:String,statements)
     endOn
     consume_eols
   endWhile
@@ -436,46 +432,46 @@ SYMBOL_T_CONTENT      t.content
   mustConsume(EOL)
   while (consume(EOL)) noAction
 
-+ multi_line_statements
++ scanner_multi_line_statements
   consume_eols
   if (not hasAnother) syntaxError
   beginList
   while (hasAnother and not (nextIs('+') or nextIs('-') or nextHasAttribute(structural)))
-    control_structure
+    scanner_control_structure
     consume_eols
   endWhile
   produceList Statements
 
-+ single_line_statements
++ scanner_single_line_statements
   beginList
 
   if (consume(EOL)) produceList Statements
-  statement
+  scanner_statement
   while (consume(';'))
     consume_eols
-    statement
+    scanner_statement
   endWhile
   must_consume_eols
 
   produceList Statements
 
-+ control_structure
++ scanner_control_structure
   on "if"
     if (consume("("))
-      expression
+      scanner_expression
       mustConsume( ")" )
     else
-      expression
+      scanner_expression
     endIf
     if (consume(EOL))
-      multi_line_statements
-      multi_line_else_ifs
-      multi_line_else
+      scanner_multi_line_statements
+      scanner_multi_line_else_ifs
+      scanner_multi_line_else
       mustConsume( "endIf" )
     else
-      single_line_statements
-      single_line_else_ifs
-      single_line_else
+      scanner_single_line_statements
+      scanner_single_line_else_ifs
+      scanner_single_line_else
     endIf
     produce If( condition, statements:Statements, else_ifs:CmdList, _else:Statements )
   endOn
@@ -484,43 +480,31 @@ SYMBOL_T_CONTENT      t.content
     if (consume(EOL) or consume("input"))
       createNull
     else
-      expression
+      scanner_expression
     endIf
     cases
     _others
     mustConsume "endMatch"
-    produce Match(expression,cases:CmdList,_others:Cmd)
+    produce Match(scanner_expression,cases:CmdList,_others:Cmd)
   endOn
 
   on "while"
     if (consume("("))
-      expression
+      scanner_expression
       mustConsume( ")" )
     else
-      expression
+      scanner_expression
     endIf
     if (consume(EOL))
-      multi_line_statements
+      scanner_multi_line_statements
       mustConsume( "endWhile" )
     else
-      single_line_statements
+      scanner_single_line_statements
     endIf
     produce While( condition, statements:Statements )
   endOn
 
-  #on "local"
-  #  identifier
-  #  if (consume("=")) expression
-  #  else              createNull
-  #  produce LocalDeclaration(name:String,initial_value)
-  #endOn
-
-  statement
-
-
-+ cases
-  beginList
-  endList
+  scanner_statement
 
 + cases
   beginList
@@ -528,7 +512,7 @@ SYMBOL_T_CONTENT      t.content
     while (hasAnother)
       consume_eols
       on "case"
-        expression
+        scanner_expression
         if (consume("->"))
           beginList
             product
@@ -537,9 +521,9 @@ SYMBOL_T_CONTENT      t.content
         else
           consume(":")
           consume_eols
-          multi_line_statements
+          scanner_multi_line_statements
         endIf
-        create MatchCase(expression,statements:CmdList)
+        create MatchCase(scanner_expression,statements:CmdList)
       elseOn "produceAny"
         identifier
         create ProduceAny(token_group_name:String)
@@ -553,89 +537,89 @@ SYMBOL_T_CONTENT      t.content
   on "others"
     consume(":")
     consume_eols
-    multi_line_statements
+    scanner_multi_line_statements
   else
     createNull
   endOn
 
-+ multi_line_else_ifs
++ scanner_multi_line_else_ifs
   beginList
 
   while (nextIs("elseIf"))
     savePosition
     on "elseIf"
       if (consume("("))
-        expression
+        scanner_expression
         mustConsume( ")" )
       else
-        expression
+        scanner_expression
       endIf
       if (nextIs(EOL)) discardPosition
       else             restorePosition; produceList
-      multi_line_statements
+      scanner_multi_line_statements
       create ElseIf(condition,statements:Statements)
     endOn
   endWhile
 
   produceList
 
-+ multi_line_else
++ scanner_multi_line_else
   if (not nextIs("else")) produceNull
   savePosition
   on "else"
     if (not consume(EOL)) restorePosition; produceNull
-    multi_line_statements
+    scanner_multi_line_statements
     discardPosition
     return
   endOn
 
-+ single_line_else_ifs
++ scanner_single_line_else_ifs
   beginList
 
   while (nextIs("elseIf"))
     savePosition
     on "elseIf"
       if (consume("("))
-        expression
+        scanner_expression
         mustConsume( ")" )
       else
-        expression
+        scanner_expression
       endIf
       if (nextIs(EOL)) restorePosition; produceList
       else             discardPosition
-      single_line_statements
+      scanner_single_line_statements
       create ElseIf(condition,statements:Statements)
     endOn
   endWhile
 
   produceList
 
-+ single_line_else
++ scanner_single_line_else
   if (not nextIs("else")) produceNull
   savePosition
   on "else"
     if (consume(EOL)) restorePosition; produceNull
-    single_line_statements
+    scanner_single_line_statements
     discardPosition
     return
   endOn
 
-+ statement
-  on "collect", args       -> Collect(args:Args)
-  #on "create", product    -> Produce(arg:Cmd)
-  on "discardPosition"     -> DiscardPosition
-  on "halt"                -> Halt
-  on "markPosition"        -> MarkPosition
-  on "mode", identifier    -> Mode(routine_name:String)
-  on "mustConsume", args   -> MustConsume(args:Args)
++ scanner_statement
+  on "collect", scanner_args -> Collect(args:Args)
+  #on "create", product      -> Produce(arg:Cmd)
+  on "discardPosition"       -> DiscardPosition
+  on "halt"                  -> Halt
+  on "markPosition"          -> MarkPosition
+  on "mode", identifier      -> Mode(routine_name:String)
+  on "mustConsume", sequence_args   -> MustConsume(args:SequenceArgs)
   on "noAction": return
-  on "print",   args       -> Print(args:Args)
+  on "print",   scanner_args       -> Print(args:Args)
   on "println"
     if (not hasAnother or nextHasAttribute(structural))
       beginList
       createList Args
     else
-      args
+      scanner_args
     endIf
     produce Println(args:Args)
   endOn
@@ -653,24 +637,24 @@ SYMBOL_T_CONTENT      t.content
   on "restorePosition" -> RestorePosition
   on "return"
     if (nextIs(EOL)) createNull
-    else             expression
+    else             scanner_expression
     produce Return(value)
   endOn
   on "savePosition"    -> SavePosition
   on "syntaxError"
     if (nextIs(EOL)) createNull
-    else             args
+    else             scanner_args
     produce ThrowSyntaxError(args:Args)
   endOn
 
-  on "++", expression -> Increment(target)
-  on "--", expression -> Decrement(target)
+  on "++", scanner_expression -> Increment(target)
+  on "--", scanner_expression -> Decrement(target)
 
-  expression
+  scanner_expression
 
-  on "=",  expression -> Assign(target,new_value)
-  on "++", expression -> Increment(target)
-  on "--", expression -> Decrement(target)
+  on "=",  scanner_expression -> Assign(target,new_value)
+  on "++", scanner_expression -> Increment(target)
+  on "--", scanner_expression -> Decrement(target)
 
 + product
   identifier
@@ -685,14 +669,14 @@ SYMBOL_T_CONTENT      t.content
 + cmd_args
   beginList
     consume_eols
-    if (consume(')')) produceList Args
+    if (consume(')')) produceList SequenceArgs
     cmd_arg
     while (consume(','))
       consume_eols
       cmd_arg
       consume_eols
     endWhile
-  produceList Args
+  produceList SequenceArgs
 
 + cmd_arg
   identifier
@@ -711,37 +695,65 @@ SYMBOL_T_CONTENT      t.content
   else              createNull
   produce CreateCmdArg(arg_name:String,arg_value,arg_type:String)
 
-+ args
++ scanner_args
   if (consume('('))
     consume_eols
-    csv
+    scanner_arg_list
     consume_eols
     mustConsume(')')
   else
-    csv
+    scanner_arg_list
   endIf
 
-+ csv
++ scanner_arg_list
   beginList
   if (nextHasAttribute(structural)) produceList Args
 
-  expression
+  scanner_expression
   while (hasAnother)
     if (consume(','))
       consume_eols
-      expression
+      scanner_expression
     elseIf (nextIs(EOL) or nextHasAttribute(structural))
       produceList Args
     else
-      expression
+      scanner_expression
     endIf
   endWhile
 
   produceList Args
 
-+ sequence
++ sequence_args
+  if (consume('('))
+    consume_eols
+    sequence_arg_list
+    consume_eols
+    mustConsume(')')
+  else
+    sequence_arg_list
+  endIf
+
++ sequence_arg_list
   beginList
   if (nextHasAttribute(structural)) produceList SequenceArgs
+
+  scanner_expression
+  while (hasAnother)
+    if (consume(','))
+      consume_eols
+      scanner_expression
+    elseIf (nextIs(EOL) or nextHasAttribute(structural))
+      produceList SequenceArgs
+    else
+      scanner_expression
+    endIf
+  endWhile
+
+  produceList SequenceArgs
+
++ pattern_sequence
+  beginList
+  if (nextHasAttribute(structural)) produceList PatternSequence
 
   sequence_item
   while (hasAnother)
@@ -755,16 +767,16 @@ SYMBOL_T_CONTENT      t.content
       consume_eols
       sequence_item
     elseIf (nextIs(EOL) or nextHasAttribute(structural))
-      produceList SequenceArgs
+      produceList PatternSequence
     else
       sequence_item
     endIf
   endWhile
 
-  produceList SequenceArgs
+  produceList PatternSequence
 
 + sequence_item
-  on '{' sequence '}': return
+  on '{' pattern_sequence '}': return
   on CHARSET
     create CharSet(characters=t.content:String)
     on '*'
@@ -780,36 +792,19 @@ SYMBOL_T_CONTENT      t.content
   on STRING_OR_CHARACTER -> LiteralStringOrCharacter( value=t.content:String )
   syntaxError
 
-#+ alternatives
-#  mustConsume('(')
-#
-#  beginList
-#  consume_eols
-#  if (consume(')')) produceList Args
-#
-#  expression
-#  consume_eols
-#  while (consume("|"))
-#    expression
-#    consume_eols
-#  endWhile
-#
-#  mustConsume(')')
-#  produceList Args
-
 + empty_statements
   beginList
   createList Statements
 
-+ expression
++ scanner_expression
 
-- logical_or : Binary
+- scanner_logical_or : Binary
   on "or" -> LogicalOr
 
-- logical_and : Binary
+- scanner_logical_and : Binary
   on "and" -> LogicalAnd
 
-- comparison : Binary
+- scanner_comparison : Binary
   on "==" -> CompareEQ
   on "!=" -> CompareNE
   on "<"  -> CompareLT
@@ -817,32 +812,333 @@ SYMBOL_T_CONTENT      t.content
   on "<=" -> CompareLE
   on ">=" -> CompareGE
 
-- add_subtract : Binary
+- scanner_add_subtract : Binary
   on "+" -> Add
   on "-" -> Subtract
 
-- multiply_divide : Binary
+- scanner_multiply_divide : Binary
   on "*" -> Multiply
   on "/" -> Divide
 
-- power : Binary
+- scanner_power : Binary
   on "^" -> Power
 
-- pre_unary : PreUnary
+- scanner_pre_unary : PreUnary
   on "-"   -> Negate
   on "not" -> LogicalNot
 
-- term
-  on '(' expression ')':        return
-  on '{' sequence '}':          return
+- scanner_term
+  on '(' scanner_expression ')': return
+  on '{' pattern_sequence '}':   return
+  on "buffer"                    -> ReadBuffer
+  on "call", identifier          -> ScannerCallUserMethod(fn_name:String)
+  on "consume", sequence_args     -> ScannerConsume(args:SequenceArgs)
+  on "false"                     -> LiteralLogical(value="false":Logical)
+  on "hasAnother"                -> ScannerHasAnother
+  on "nextIs", sequence_args      -> ScannerNextIs(args:SequenceArgs)
+  on "read"                      -> ScannerRead
+  on "scan", sequence_args        -> Scan(args:SequenceArgs)
+  on "true"                      -> LiteralLogical(value="true":Logical)
+  on CHARSET
+    create CharSet(characters=t.content:String)
+    on '*'
+      produce ZeroOrMore(pattern)
+    elseOn '+'
+      produce OneOrMore(pattern)
+    elseOn '?'
+      produce OptionalPattern(pattern)
+    endOn
+    return  # just the CharSet
+  endOn
+  on IDENTIFIER          -> Access( name=t.content:String )
+  on INTEGER             -> LiteralInteger( value=t.content:Int32 )
+  on STRING              -> LiteralString( value=t.content:String )
+  on STRING_OR_CHARACTER -> LiteralStringOrCharacter( value=t.content:String )
+  syntaxError
+
++ parser_routines
+  beginList
+
+  consume_eols
+  while (nextIs('-') or nextIs('+'))
+    on "-"
+      routine_name_and_base_type
+      parser_multi_line_statements
+      create Routine(name:String,base_type:String,statements)
+    elseOn "+"
+      routine_name_and_base_type
+      parser_multi_line_statements
+      create Subroutine(name:String,base_type:String,statements)
+    endOn
+    consume_eols
+  endWhile
+
+  produceList
+
++ parser_multi_line_statements
+  consume_eols
+  if (not hasAnother) syntaxError
+  beginList
+  while (hasAnother and not (nextIs('+') or nextIs('-') or nextHasAttribute(structural)))
+    parser_control_structure
+    consume_eols
+  endWhile
+  produceList Statements
+
++ parser_single_line_statements
+  beginList
+
+  if (consume(EOL)) produceList Statements
+  parser_statement
+  while (consume(';'))
+    consume_eols
+    parser_statement
+  endWhile
+  must_consume_eols
+
+  produceList Statements
+
++ parser_control_structure
+  on "if"
+    if (consume("("))
+      parser_expression
+      mustConsume( ")" )
+    else
+      parser_expression
+    endIf
+    if (consume(EOL))
+      parser_multi_line_statements
+      parser_multi_line_else_ifs
+      parser_multi_line_else
+      mustConsume( "endIf" )
+    else
+      parser_single_line_statements
+      parser_single_line_else_ifs
+      parser_single_line_else
+    endIf
+    produce If( condition, statements:Statements, else_ifs:CmdList, _else:Statements )
+  endOn
+
+  on "match"
+    if (consume(EOL) or consume("input"))
+      createNull
+    else
+      parser_expression
+    endIf
+    cases
+    _others
+    mustConsume "endMatch"
+    produce Match(parser_expression,cases:CmdList,_others:Cmd)
+  endOn
+
+  on "while"
+    if (consume("("))
+      parser_expression
+      mustConsume( ")" )
+    else
+      parser_expression
+    endIf
+    if (consume(EOL))
+      parser_multi_line_statements
+      mustConsume( "endWhile" )
+    else
+      parser_single_line_statements
+    endIf
+    produce While( condition, statements:Statements )
+  endOn
+
+  parser_statement
+
++ parser_multi_line_else_ifs
+  beginList
+
+  while (nextIs("elseIf"))
+    savePosition
+    on "elseIf"
+      if (consume("("))
+        parser_expression
+        mustConsume( ")" )
+      else
+        parser_expression
+      endIf
+      if (nextIs(EOL)) discardPosition
+      else             restorePosition; produceList
+      parser_multi_line_statements
+      create ElseIf(condition,statements:Statements)
+    endOn
+  endWhile
+
+  produceList
+
++ parser_multi_line_else
+  if (not nextIs("else")) produceNull
+  savePosition
+  on "else"
+    if (not consume(EOL)) restorePosition; produceNull
+    parser_multi_line_statements
+    discardPosition
+    return
+  endOn
+
++ parser_single_line_else_ifs
+  beginList
+
+  while (nextIs("elseIf"))
+    savePosition
+    on "elseIf"
+      if (consume("("))
+        parser_expression
+        mustConsume( ")" )
+      else
+        parser_expression
+      endIf
+      if (nextIs(EOL)) restorePosition; produceList
+      else             discardPosition
+      parser_single_line_statements
+      create ElseIf(condition,statements:Statements)
+    endOn
+  endWhile
+
+  produceList
+
++ parser_single_line_else
+  if (not nextIs("else")) produceNull
+  savePosition
+  on "else"
+    if (consume(EOL)) restorePosition; produceNull
+    parser_single_line_statements
+    discardPosition
+    return
+  endOn
+
++ parser_statement
+#{
+  on "collect", parser_args       -> Collect(args:ParserArgs)
+  #on "create", product    -> Produce(arg:Cmd)
+  on "discardPosition"     -> DiscardPosition
+  on "halt"                -> Halt
+  on "markPosition"        -> MarkPosition
+  on "mode", identifier    -> Mode(routine_name:String)
+  on "mustConsume", parser_args   -> MustConsume(args:ParserArgs)
+  on "noAction": return
+  on "print",   parser_args       -> Print(args:ParserArgs)
+  on "println"
+    if (not hasAnother or nextHasAttribute(structural))
+      beginList
+      createList ParserArgs
+    else
+      parser_args
+    endIf
+    produce Println(args:ParserArgs)
+  endOn
+  #on "on"
+  #  identifier_or_string
+  #  additional_elements
+  #endOn
+  on "produce", product    -> Produce(arg:Cmd)
+  on "->",      product    -> Produce(arg:Cmd)
+  on "restart"
+    if (nextIs(EOL)) createNull
+    else             identifier
+    produce Restart(start_ip:String)
+  endOn
+  on "restorePosition" -> RestorePosition
+  on "return"
+    if (nextIs(EOL)) createNull
+    else             parser_expression
+    produce Return(value)
+  endOn
+  on "savePosition"    -> SavePosition
+}#
+  on "syntaxError"
+    if (nextIs(EOL)) createNull
+    else             parser_args
+    produce ThrowSyntaxError(args:Args)
+  endOn
+#{
+  on "++", parser_expression -> Increment(target)
+  on "--", parser_expression -> Decrement(target)
+}#
+
+  parser_expression
+
+#{
+  on "=",  parser_expression -> Assign(target,new_value)
+  on "++", parser_expression -> Increment(target)
+  on "--", parser_expression -> Decrement(target)
+}#
+
++ parser_args
+  if (consume('('))
+    consume_eols
+    parser_arg_list
+    consume_eols
+    mustConsume(')')
+  else
+    parser_arg_list
+  endIf
+
++ parser_arg_list
+  beginList
+  if (nextHasAttribute(structural)) produceList ParserArgs
+
+  parser_expression
+  while (hasAnother)
+    if (consume(','))
+      consume_eols
+      parser_expression
+    elseIf (nextIs(EOL) or nextHasAttribute(structural))
+      produceList ParserArgs
+    else
+      parser_expression
+    endIf
+  endWhile
+
+  produceList ParserArgs
+
++ parser_expression
+
+- parser_logical_or : Binary
+  on "or" -> LogicalOr
+
+- parser_logical_and : Binary
+  on "and" -> LogicalAnd
+
+- parser_comparison : Binary
+  on "==" -> CompareEQ
+  on "!=" -> CompareNE
+  on "<"  -> CompareLT
+  on ">"  -> CompareGT
+  on "<=" -> CompareLE
+  on ">=" -> CompareGE
+
+- parser_add_subtract : Binary
+  on "+" -> Add
+  on "-" -> Subtract
+
+- parser_multiply_divide : Binary
+  on "*" -> Multiply
+  on "/" -> Divide
+
+- parser_power : Binary
+  on "^" -> Power
+
+- parser_pre_unary : PreUnary
+  on "-"   -> Negate
+  on "not" -> LogicalNot
+
+- parser_term
+#{
+  on '(' parser_expression ')':        return
+  on '{' pattern_sequence '}':          return
   on "buffer"                   -> ReadBuffer
-  on "call", identifier         -> CallUserMethod(fn_name:String)
-  on "consume", args            -> Consume(args:Args)
+  on "call", identifier         -> ParserCallUserMethod(fn_name:String)
+  on "consume", parser_args            -> ParserConsume(args:ParserArgs)
   on "false"                    -> LiteralLogical(value="false":Logical)
-  on "hasAnother"               -> HasAnother
-  on "nextIs", args             -> NextIs(args:Args)
-  on "read"                     -> Read
-  on "scan", args             -> Scan(args:Args)
+  on "hasAnother"               -> ParserHasAnother
+  on "nextIs", parser_args             -> ParserNextIs(args:ParserArgs)
+  on "read"                     -> ParserRead
+  on "scan", parser_args             -> Scan(args:ParserArgs)
   on "true"                   -> LiteralLogical(value="true":Logical)
   on CHARSET
     create CharSet(characters=t.content:String)
@@ -855,6 +1151,7 @@ SYMBOL_T_CONTENT      t.content
     endOn
     return  # just the CharSet
   endOn
+}#
   on IDENTIFIER          -> Access( name=t.content:String )
   on INTEGER             -> LiteralInteger( value=t.content:Int32 )
   on STRING              -> LiteralString( value=t.content:String )

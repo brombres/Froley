@@ -209,7 +209,7 @@ class RogueGenerator : FroleyVisitor
       dispatch( cmd.target )
       return cmd
 
-    method visit( cmd:HasAnother )->Cmd  [override]
+    method visit( cmd:ScannerHasAnother )->Cmd  [override]
       write "_scanner.has_another"
       return cmd
 
@@ -277,7 +277,7 @@ class RogueGenerator : FroleyVisitor
       write cmd.routine_name
       return cmd
 
-    method visit( cmd:CallUserMethod )->Cmd  [override]
+    method visit( cmd:ScannerCallUserMethod )->Cmd  [override]
       writeln "this.ip = ip"
       writeln cmd.fn_name
       write   "ip = this.ip"
@@ -337,7 +337,7 @@ class RogueGenerator : FroleyVisitor
       write   "return false"
       return cmd
 
-    method visit( cmd:Read )->Cmd  [override]
+    method visit( cmd:ScannerRead )->Cmd  [override]
       write "_scanner.read"
       return cmd
 
@@ -402,13 +402,13 @@ class RogueGenerator : FroleyVisitor
       writeln @|$scan_table.reset
                |contingent
       if (cmd.expression)
-        # Read from string; must accept all characters.
+        # ScannerRead from string; must accept all characters.
         write @|  necessary ($scan_table.accept(forEach in
         write " "
         cmd.expression.dispatch(this)
         writeln @|))
       else
-        # Read longest match from input
+        # ScannerRead longest match from input
         indent += 2
         writeln @|block n=1
                  |  while (_scanner.has_another(n))
@@ -508,3 +508,4 @@ class RogueGenerator : FroleyVisitor
 
       return cmd
 endClass
+

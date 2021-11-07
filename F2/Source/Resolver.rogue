@@ -22,7 +22,7 @@ class Resolver : FroleyVisitor
       if (cmd.type == to_type) return cmd
       return cmd.cast_to( to_type ).dispatch( this )
 
-    method resolve_sequence( cmd:Args )->Cmd
+    method resolve_sequence( cmd:SequenceArgs )->Cmd
       cmd.dispatch( this )
 
       local any_patterns = false
@@ -110,7 +110,7 @@ class Resolver : FroleyVisitor
       endIf
       return cmd
 
-    method visit( cmd:Args )->Cmd [override]
+    method visit( cmd:SequenceArgs )->Cmd [override]
       local result = prior.visit( cmd )
       if (not result) return null
       (forEach in cmd.list).require_value
@@ -122,7 +122,7 @@ class Resolver : FroleyVisitor
     method visit( cmd:CastToPattern )->Cmd [override]
       return Pattern( cmd.t, cmd.operand->ScanPattern ).dispatch( this )
 
-    method visit( cmd:Consume )->Cmd [override]
+    method visit( cmd:ScannerConsume )->Cmd [override]
       local seq = resolve_sequence( cmd.args )
       which (seq.require_type)
         case Type.CHARACTER, Type.STRING
@@ -197,7 +197,7 @@ class Resolver : FroleyVisitor
       endIf
       return cmd
 
-    method visit( cmd:NextIs )->Cmd [override]
+    method visit( cmd:ScannerNextIs )->Cmd [override]
       local seq = resolve_sequence( cmd.args )
       which (seq.require_type)
         case Type.CHARACTER, Type.STRING

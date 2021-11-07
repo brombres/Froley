@@ -5,7 +5,7 @@ class Organizer : FroleyVisitor
     this_match      : Match
 
   METHODS
-    method visit( cmd:CallUserMethod )->Cmd [override]
+    method visit( cmd:ScannerCallUserMethod )->Cmd [override]
       program.scanner_user_calls.add( cmd.fn_name )
       return cmd
 
@@ -55,7 +55,7 @@ class Organizer : FroleyVisitor
 
         if (cmd.args)
           # Count number of args
-          local args = cmd.args as Args
+          local args = cmd.args as SequenceArgs
           cmd.arg_count = args.count
           forEach (arg at index in args)
             block arg = arg as CreateCmdArg

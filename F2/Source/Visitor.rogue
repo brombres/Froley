@@ -180,10 +180,10 @@ class Visitor
       if (cmd.args) cmd.args = cmd.args.dispatch( this ) as Args
       return cmd
 
-    method visit( cmd:HasAnother )->Cmd
+    method visit( cmd:ScannerHasAnother )->Cmd
       return cmd
 
-    method visit( cmd:Read )->Cmd
+    method visit( cmd:ScannerRead )->Cmd
       return cmd
 
     method visit( cmd:Collect )->Cmd
@@ -240,8 +240,8 @@ class Visitor
       if (cmd.operand)  cmd.operand = cmd.operand.dispatch( this )
       return cmd
 
-    method visit( cmd:Consume )->Cmd
-      cmd.args = cmd.args.dispatch( this ) as Args
+    method visit( cmd:ScannerConsume )->Cmd
+      cmd.args = cmd.args.dispatch( this ) as SequenceArgs
       return cmd
 
     method visit( cmd:ConsumeCharacters )->Cmd
@@ -279,7 +279,7 @@ class Visitor
       cmd.new_value .= dispatch( this )
       return cmd
 
-    method visit( cmd:Args )->Cmd
+    method visit( cmd:SequenceArgs )->Cmd
       forEach (item in rewriter=cmd.list.rewriter)
         if (item)
           item .= dispatch( this )
@@ -341,14 +341,14 @@ class Visitor
       if (cmd.pattern) cmd.pattern = cmd.pattern.dispatch( this )
       return cmd
 
-    method visit( cmd:SequenceArgs )->Cmd
+    method visit( cmd:PatternSequence )->Cmd
       forEach (element at index in cmd)
         if (element) cmd[ index ] = element.dispatch( this )
       endForEach
       return cmd
 
     method visit( cmd:Scan )->Cmd
-      cmd.args = cmd.args.dispatch( this ) as Args
+      cmd.args = cmd.args.dispatch( this ) as SequenceArgs
       return cmd
 
     method visit( cmd:ScanCharacters )->Cmd
@@ -360,8 +360,8 @@ class Visitor
       return cmd
 
 
-    method visit( cmd:NextIs )->Cmd
-      if (cmd.args) cmd.args = cmd.args.dispatch( this ) as Args
+    method visit( cmd:ScannerNextIs )->Cmd
+      if (cmd.args) cmd.args = cmd.args.dispatch( this ) as SequenceArgs
       return cmd
 
     method visit( cmd:NextIsCharacters )->Cmd
@@ -372,14 +372,14 @@ class Visitor
       if (cmd.pattern) cmd.pattern = cmd.pattern.dispatch( this )
       return cmd
 
-    method visit( cmd:CallUserMethod )->Cmd
+    method visit( cmd:ScannerCallUserMethod )->Cmd
       return cmd
 
     method visit( cmd:Mode )->Cmd
       return cmd
 
     method visit( cmd:MustConsume )->Cmd
-      if (cmd.args) cmd.args = cmd.args.dispatch( this ) as Args
+      if (cmd.args) cmd.args = cmd.args.dispatch( this ) as SequenceArgs
       return cmd
 
     method visit( cmd:MustConsumeCharacters )->Cmd
@@ -396,5 +396,36 @@ class Visitor
 
     method visit( cmd:CreateCmdArg )->Cmd
       if (cmd.arg_value) cmd.arg_value = cmd.arg_value.dispatch( this )
+      return cmd
+
+    method visit( cmd:ParserArgs )->Cmd
+      forEach (element at index in cmd)
+        if (element) cmd[ index ] = element.dispatch( this )
+      endForEach
+      return cmd
+
+    method visit( cmd:ParserCallUserMethod )->Cmd
+      return cmd
+
+    method visit( cmd:ParserConsume )->Cmd
+      if (cmd.args) cmd.args = cmd.args.dispatch( this ) as ParserArgs
+
+      return cmd
+
+    method visit( cmd:ParserHasAnother )->Cmd
+      return cmd
+
+    method visit( cmd:ParserNextIs )->Cmd
+      if (cmd.args) cmd.args = cmd.args.dispatch( this ) as ParserArgs
+
+      return cmd
+
+    method visit( cmd:ParserRead )->Cmd
+      return cmd
+
+    method visit( cmd:Args )->Cmd
+      forEach (element at index in cmd)
+        if (element) cmd[ index ] = element.dispatch( this )
+      endForEach
       return cmd
 endClass

@@ -962,3 +962,22 @@ class MustConsumePattern( t, pattern:Cmd ) : Cmd
     method to->String
       return "MustConsumePattern($)"(pattern)
 endClass
+
+
+class NewCmd( t, name:String, args:Cmd ) : Cmd
+  METHODS
+    method to->String
+      return "($,$)"(name,args)
+endClass
+
+class TokenContent : Cmd
+  METHODS
+    method to->String
+      return "TokenContent"
+endClass
+
+class NewCmdArg( t, arg_name:String, arg_value:Cmd, arg_type:Cmd ) : Cmd
+  METHODS
+    method to->String
+      return "Arg($,$,$)"(arg_name,arg_value,arg_type)
+endClass

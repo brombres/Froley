@@ -71,7 +71,7 @@ scanner
 parser
 
 - identifier
-  #produce CmdTest(name)
+  produce CmdTest(name)
   syntaxError
   #on IDENTIFIER -> Identifier(name=t:String)
 

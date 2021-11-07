@@ -91,4 +91,5 @@ enum TokenType( symbol:String, attributes=TokenTypeAttribute.NONE:TokenTypeAttri
   SYMBOL_SINGLE_QUOTE("'")                                    = 80
   SYMBOL_SLASH("/")                                           = 81
   SYMBOL_STAR("*")                                            = 82
+  SYMBOL_T_CONTENT("t.content")                               = 83
 endEnum

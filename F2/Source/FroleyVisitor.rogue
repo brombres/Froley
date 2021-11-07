@@ -15,7 +15,7 @@ class FroleyVisitor : Visitor
     method init( program )
 
     method visit( cmd:ParserDef )->Cmd [override]
-      temporarily is_scanner = true
+      temporarily is_parser = true
         cur_element = cmd
         return prior.visit( cmd )
       endTemporarily
@@ -29,7 +29,7 @@ class FroleyVisitor : Visitor
       return prior.visit( cmd )
 
     method visit( cmd:ScannerDef )->Cmd [override]
-      temporarily is_parser = true
+      temporarily is_scanner = true
         cur_element = cmd
         return prior.visit( cmd )
       endTemporarily

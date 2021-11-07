@@ -91,6 +91,7 @@ SYMBOL_SEMICOLON      ;    [structural]
 SYMBOL_SINGLE_QUOTE   '\''
 SYMBOL_SLASH          /
 SYMBOL_STAR           *
+SYMBOL_T_CONTENT      t.content
 
 [tokenizer]
 + scan_standard_token
@@ -530,7 +531,7 @@ SYMBOL_STAR           *
         expression
         if (consume("->"))
           beginList
-            expression
+            product
             create Produce(arg:Cmd)
           createList Statements
         else
@@ -620,15 +621,15 @@ SYMBOL_STAR           *
   endOn
 
 + statement
-  on "collect", args      -> Collect(args:Args)
-  #on "create", expression -> Produce(arg:Cmd)
-  on "discardPosition"    -> DiscardPosition
-  on "halt"               -> Halt
-  on "markPosition"       -> MarkPosition
-  on "mode", identifier   -> Mode(routine_name:String)
-  on "mustConsume", args  -> MustConsume(args:Args)
+  on "collect", args       -> Collect(args:Args)
+  #on "create", product    -> Produce(arg:Cmd)
+  on "discardPosition"     -> DiscardPosition
+  on "halt"                -> Halt
+  on "markPosition"        -> MarkPosition
+  on "mode", identifier    -> Mode(routine_name:String)
+  on "mustConsume", args   -> MustConsume(args:Args)
   on "noAction": return
-  on "print",   args      -> Print(args:Args)
+  on "print",   args       -> Print(args:Args)
   on "println"
     if (not hasAnother or nextHasAttribute(structural))
       beginList
@@ -638,8 +639,8 @@ SYMBOL_STAR           *
     endIf
     produce Println(args:Args)
   endOn
-  on "produce", expression      -> Produce(arg:Cmd)
-  on "->",      expression      -> Produce(arg:Cmd)
+  on "produce", product    -> Produce(arg:Cmd)
+  on "->",      product    -> Produce(arg:Cmd)
   on "restart"
     if (nextIs(EOL)) createNull
     else             identifier
@@ -663,9 +664,48 @@ SYMBOL_STAR           *
 
   expression
 
-  on "=", expression -> Assign(target,new_value)
+  on "=",  expression -> Assign(target,new_value)
   on "++", expression -> Increment(target)
   on "--", expression -> Decrement(target)
+
++ product
+  identifier
+  if (consume('('))
+    cmd_args
+    mustConsume(')')
+    produce NewCmd(name=t.content:String,args)
+  else
+    produce Access( name=t.content:String )
+  endIf
+
++ cmd_args
+  beginList
+    consume_eols
+    if (consume(')')) produceList Args
+    cmd_arg
+    while (consume(','))
+      consume_eols
+      cmd_arg
+      consume_eols
+    endWhile
+  produceList
+
++ cmd_arg
+  identifier
+  if (consume('='))
+    on "t.content"
+      create TokenContent
+    elseOn STRING
+      create LiteralString( value=t.content:String )
+    else
+      syntaxError "t.content or \"quoted expression\" expected."
+    endOn
+  else
+    createNull
+  endIf
+  if (consume(':')) identifier
+  else              createNull
+  produce NewCmdArg(arg_name:String,arg_value,arg_type)
 
 + args
   if (consume('('))

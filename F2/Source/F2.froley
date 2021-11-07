@@ -673,7 +673,7 @@ SYMBOL_T_CONTENT      t.content
   if (consume('('))
     cmd_args
     mustConsume(')')
-    produce NewCmd(name=t.content:String,args)
+    produce CreateCmd(name=t.content:String,args)
   else
     produce Access( name=t.content:String )
   endIf
@@ -688,24 +688,24 @@ SYMBOL_T_CONTENT      t.content
       cmd_arg
       consume_eols
     endWhile
-  produceList
+  produceList Args
 
 + cmd_arg
   identifier
   if (consume('='))
-    on "t.content"
-      create TokenContent
+    on IDENTIFIER
+      create Identifier( value=t.content:String )
     elseOn STRING
       create LiteralString( value=t.content:String )
     else
-      syntaxError "t.content or \"quoted expression\" expected."
+      syntaxError "content or \"quoted expression\" expected."
     endOn
   else
     createNull
   endIf
   if (consume(':')) identifier
   else              createNull
-  produce NewCmdArg(arg_name:String,arg_value,arg_type)
+  produce CreateCmdArg(arg_name:String,arg_value,arg_type:String)
 
 + args
   if (consume('('))

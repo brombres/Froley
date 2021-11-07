@@ -2,21 +2,24 @@ module F2
 
 class FroleyVisitor : Visitor
   PROPERTIES
-    program     : Program
+    program      : Program
 
-    cur_element : Element
-    cur_routine : Routine
-    cur_tokens  : TokenGroup
+    this_element : Element
+    this_scanner : ScannerDef
+    this_parser  : ParserDef
+    cur_routine  : Routine
+    cur_tokens   : TokenGroup
 
-    is_scanner  : Logical
-    is_parser   : Logical
+    is_scanner   : Logical
+    is_parser    : Logical
 
   METHODS
     method init( program )
 
     method visit( cmd:ParserDef )->Cmd [override]
       temporarily is_parser = true
-        cur_element = cmd
+        this_element = cmd
+        this_parser = cmd
         return prior.visit( cmd )
       endTemporarily
 
@@ -30,7 +33,8 @@ class FroleyVisitor : Visitor
 
     method visit( cmd:ScannerDef )->Cmd [override]
       temporarily is_scanner = true
-        cur_element = cmd
+        this_element = cmd
+        this_scanner = cmd
         return prior.visit( cmd )
       endTemporarily
 

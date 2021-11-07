@@ -64,7 +64,7 @@ class Resolver : FroleyVisitor
       throw cmd[1].t.error( "Too many arguments." )
 
     method visit( cmd:Access )->Cmd [override]
-      local r = cur_element.routines[ cmd.name ]
+      local r = this_element.routines[ cmd.name ]
       if (r)
         return Call(cmd.t,r).dispatch( this )
       else
@@ -72,7 +72,7 @@ class Resolver : FroleyVisitor
         if (t_def)
           return LiteralTokenType( cmd.t, t_def ).dispatch(this)
         else
-          return ReadVar(cur_element.define_var(cmd.t,cmd.name)).dispatch(this)
+          return ReadVar(this_element.define_var(cmd.t,cmd.name)).dispatch(this)
         endIf
       endIf
 

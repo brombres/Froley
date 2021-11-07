@@ -308,6 +308,9 @@ class Element : Cmd
 endClass
 
 class ParserDef( t, name:String, code:Cmd ) : Element
+  PROPERTIES
+    cmd_node_defs = StringTable<<CreateCmd>>()
+
   METHODS
     method to->String
       return "ParserDef($)"(name)
@@ -375,9 +378,9 @@ endClass
 class Access( t, name:String ) : Cmd
   METHODS
     method resolve_assignment( cmd:Assign, resolver:Resolver )->Cmd
-      local r = resolver.cur_element.routines[name]
+      local r = resolver.this_element.routines[name]
       if (r) throw t.error( "Illegal assignment to a routine." )
-      local v = resolver.cur_element.define_var( t, name, cmd.new_value.type )
+      local v = resolver.this_element.define_var( t, name, cmd.new_value.type )
       return WriteVar( v, cmd.new_value ).dispatch( resolver )
 
     method to->String
@@ -963,21 +966,25 @@ class MustConsumePattern( t, pattern:Cmd ) : Cmd
       return "MustConsumePattern($)"(pattern)
 endClass
 
+class CreateCmd( t, name:String, args:Cmd ) : Cmd
+  PROPERTIES
+    is_organized   = false
+    arg_count      = 0
+    node_arg_count = 0  # number of node-based args (vs 'content')
 
-class NewCmd( t, name:String, args:Cmd ) : Cmd
   METHODS
     method to->String
-      return "($,$)"(name,args)
+      return "CreateCmd($,$)"(name,args)
 endClass
 
-class TokenContent : Cmd
+class CreateCmdArg( t, arg_name:String, arg_value:Cmd, arg_type:String ) : Cmd
+  PROPERTIES
+    is_node_arg  = false   # versus 'content'
+    index        : Int32   # arg index 0, 1, ...
+    stack_offset : Int32   # back into cmd stack; most recent = -1, one back = -2, ...
+
   METHODS
     method to->String
-      return "TokenContent"
+      return "CmdArg($,$,$)"(arg_name,arg_value,arg_type)
 endClass
 
-class NewCmdArg( t, arg_name:String, arg_value:Cmd, arg_type:Cmd ) : Cmd
-  METHODS
-    method to->String
-      return "Arg($,$,$)"(arg_name,arg_value,arg_type)
-endClass

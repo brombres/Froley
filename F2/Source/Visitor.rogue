@@ -390,16 +390,11 @@ class Visitor
       if (cmd.pattern) cmd.pattern = cmd.pattern.dispatch( this )
       return cmd
 
-    method visit( cmd:NewCmd )->Cmd
+    method visit( cmd:CreateCmd )->Cmd
       if (cmd.args) cmd.args = cmd.args.dispatch( this )
       return cmd
 
-    method visit( cmd:TokenContent )->Cmd
-      return cmd
-
-    method visit( cmd:NewCmdArg )->Cmd
-trace cmd.arg_name
+    method visit( cmd:CreateCmdArg )->Cmd
       if (cmd.arg_value) cmd.arg_value = cmd.arg_value.dispatch( this )
-      if (cmd.arg_type) cmd.arg_type = cmd.arg_type.dispatch( this )
       return cmd
 endClass

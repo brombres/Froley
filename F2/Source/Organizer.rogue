@@ -2,7 +2,7 @@ module F2
 
 class Organizer : FroleyVisitor
   PROPERTIES
-    cur_match : Match
+    this_match      : Match
 
   METHODS
     method visit( cmd:CallUserMethod )->Cmd [override]
@@ -32,24 +32,64 @@ class Organizer : FroleyVisitor
         local def = item as TokenDef
         local expr = LiteralString( t, def.symbol )
         local _case = MatchCase( t, expr, Statements(t,Produce(t,Access(t,def.name))) )
-        cur_match.cases.add( _case )
+        this_match.cases.add( _case )
         _case.dispatch( this )
       endForEach
       return null
 
     method visit( cmd:Routine )->Cmd [override]
-      cmd.ip = cur_element.routines.count
-      cur_element.routines[cmd.name] = cmd
+      cmd.ip = this_element.routines.count
+      this_element.routines[cmd.name] = cmd
       return prior.visit( cmd )
 
     method visit( cmd:Match )->Cmd [override]
-      temporarily cur_match = cmd
+      temporarily this_match = cmd
         return prior.visit( cmd )
       endTemporarily
 
+    method visit( cmd:CreateCmd )->Cmd [override]
+      this_parser.cmd_node_defs[ cmd.name ] = cmd
+
+      if (not cmd.is_organized)
+        cmd.is_organized = true
+
+        if (cmd.args)
+          # Count number of args
+          local args = cmd.args as Args
+          cmd.arg_count = args.count
+          forEach (arg at index in args)
+            block arg = arg as CreateCmdArg
+              arg.index = index
+              if (not arg.arg_type) arg.arg_type = "Cmd"
+              if (arg.arg_value instanceOf Identifier)
+                if ((arg.arg_value as Identifier).name != "content")
+                  throw arg.t.error( "Expected literal string or 'content' keyword." )
+                endIf
+              else
+                ++cmd.node_arg_count
+                arg.is_node_arg = true
+              endIf
+            endBlock
+          endForEach
+
+          # Assign stack-relative offsets
+          local stack_offset = -(cmd.node_arg_count)
+          forEach (arg in args)
+            block arg = arg as CreateCmdArg
+              if (arg.is_node_arg)
+                arg.stack_offset = stack_offset
+                ++stack_offset
+              endIf
+            endBlock
+          endForEach
+        endIf
+      endIf
+
+      return prior.visit( cmd )
+
     method visit( cmd:Subroutine )->Cmd [override]
-      cmd.ip = cur_element.routines.count
-      cur_element.routines[cmd.name] = cmd
+      cmd.ip = this_element.routines.count
+      this_element.routines[cmd.name] = cmd
       return prior.visit( cmd )
 
     method visit( cmd:ScannerDef )->Cmd [override]

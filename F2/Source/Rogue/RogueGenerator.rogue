@@ -1,17 +1,17 @@
 module F2
 
-$include "CmdRogueGen.rogue"
-$include "MainRogueGen.rogue"
-$include "ParserCoreRogueGen.rogue"
-$include "ParserRogueGen.rogue"
-$include "RogueSourceGen.rogue"
+$include "RCmd.rogue"
+$include "RMain.rogue"
+$include "RParser.rogue"
+$include "RParserCore.rogue"
+$include "RScanTable.rogue"
+$include "RScanner.rogue"
+$include "RScannerCore.rogue"
+$include "RSyntaxError.rogue"
+$include "RToken.rogue"
+$include "RTokenType.rogue"
+$include "RogueCodeWriter.rogue"
 $include "ScanTableDeclarationWriter.rogue"
-$include "ScanTableRogueGen.rogue"
-$include "ScannerCoreRogueGen.rogue"
-$include "ScannerRogueGen.rogue"
-$include "SyntaxErrorRogueGen.rogue"
-$include "TokenRogueGen.rogue"
-$include "TokenTypeRogueGen.rogue"
 
 class RogueGenerator : FroleyVisitor
   GLOBAL METHODS

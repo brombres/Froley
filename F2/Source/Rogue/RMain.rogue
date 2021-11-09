@@ -1,6 +1,6 @@
 module F2
 
-class MainRogueGen : RogueSourceGen
+class MainRogueGen : RogueCodeWriter
   METHODS
     method init( generator, class_name )
 

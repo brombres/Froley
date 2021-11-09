@@ -952,10 +952,10 @@ class Mode( t, routine_name:String ) : Cmd
       return "$"(routine_name)
 endClass
 
-class MustConsume( t, args:SequenceArgs ) : Cmd
+class ScannerMustConsume( t, args:SequenceArgs ) : Cmd
   METHODS
     method to->String
-      return "MustConsume($)"(args)
+      return "ScannerMustConsume($)"(args)
 endClass
 
 class MustConsumeCharacters( t, value:Cmd ) : Cmd
@@ -1026,6 +1026,9 @@ class ParserRead : Cmd
   METHODS
     method to->String
       return "read"
+
+    method type->Type
+      return Type.TOKEN
 endClass
 
 
@@ -1035,4 +1038,18 @@ class ConsumeToken( t, token_type:TokenDef ) : Cmd
   METHODS
     method to->String
       return "ConsumeToken($)"(token_type)
+endClass
+
+
+class ParserMustConsume( t, token_type:Cmd ) : Cmd
+  METHODS
+    method to->String
+      return "ParserMustConsume($)"(token_type)
+endClass
+
+
+class MustConsumeToken( t, token_type:TokenDef ) : Cmd
+  METHODS
+    method to->String
+      return "MustConsumeToken($)"(token_type)
 endClass

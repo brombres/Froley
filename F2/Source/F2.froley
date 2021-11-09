@@ -25,6 +25,12 @@ KEYWORD_PRODUCE_ANY      produceAny
 KEYWORD_MATCH            match
 KEYWORD_RESTART          restart
 
+[parser_keywords]
+KEYWORD_ON               on
+KEYWORD_ELSE_ON          elseOn       [structural]
+KEYWORD_ELSE_ON          elseOnOthers [structural]
+KEYWORD_END_ON           endOn        [structural]
+
 [common_keywords]
 KEYWORD_AND              and
 KEYWORD_CALL             call
@@ -46,7 +52,6 @@ KEYWORD_MUST_CONSUME     mustConsume
 KEYWORD_NEXT_IS          nextIs
 KEYWORD_NO_ACTION        noAction
 KEYWORD_NOT              not
-KEYWORD_ON               on
 KEYWORD_OR               or
 KEYWORD_OTHERS           others      [structural]
 KEYWORD_PRINT            print
@@ -255,8 +260,9 @@ SYMBOL_T_CONTENT      t.content
       case "tokens"
         mode scan_tokens_id
         produce KEYWORD_TOKENS
-      produceAny [scanner_keywords]
       produceAny [common_keywords]
+      produceAny [parser_keywords]
+      produceAny [scanner_keywords]
       others
         produce IDENTIFIER
     endWhich
@@ -611,7 +617,7 @@ SYMBOL_T_CONTENT      t.content
   on "halt"                  -> Halt
   on "markPosition"          -> MarkPosition
   on "mode", identifier      -> Mode(routine_name:String)
-  on "mustConsume", sequence_args   -> MustConsume(args:SequenceArgs)
+  on "mustConsume", sequence_args   -> ScannerMustConsume(args:SequenceArgs)
   on "noAction": return
   on "print",   scanner_args       -> Print(args:Args)
   on "println"
@@ -623,10 +629,6 @@ SYMBOL_T_CONTENT      t.content
     endIf
     produce Println(args:Args)
   endOn
-  #on "on"
-  #  identifier_or_string
-  #  additional_elements
-  #endOn
   on "produce", product    -> Produce(arg:Cmd)
   on "->",      product    -> Produce(arg:Cmd)
   on "restart"
@@ -919,16 +921,24 @@ SYMBOL_T_CONTENT      t.content
     produce If( condition, statements:Statements, else_ifs:CmdList, _else:Statements )
   endOn
 
-  on "match"
-    if (consume(EOL) or consume("input"))
-      createNull
+  on "on"
+    if (consume("("))
+      parser_expression
+      mustConsume( ")" )
     else
       parser_expression
     endIf
-    cases
-    _others
-    mustConsume "endMatch"
-    produce Match(parser_expression,cases:CmdList,_others:Cmd)
+    if (consume(EOL))
+      parser_multi_line_statements
+      parser_multi_line_else_ifs
+      parser_multi_line_else
+      mustConsume( "endOn" )
+    else
+      parser_single_line_statements
+      parser_single_line_else_ifs
+      parser_single_line_else
+    endIf
+    produce If( condition, statements:Statements, else_ifs:CmdList, _else:Statements )
   endOn
 
   on "while"
@@ -1020,7 +1030,7 @@ SYMBOL_T_CONTENT      t.content
   on "markPosition"        -> MarkPosition
   on "mode", identifier    -> Mode(routine_name:String)
 }#
-  #on "mustConsume", string_or_id_arg   -> MustConsume(token_type)
+  on "mustConsume", string_or_id_arg   -> ParserMustConsume(token_type)
 #{
   on "noAction": return
   on "print",   parser_args       -> Print(args:ParserArgs)
@@ -1155,7 +1165,9 @@ SYMBOL_T_CONTENT      t.content
   on "false"                     -> LiteralLogical(value="false":Logical)
   on "hasAnother"                -> ParserHasAnother
   on "nextIs", parser_args       -> ParserNextIs(args:ParserArgs)
+}#
   on "read"                      -> ParserRead
+#{
   on "scan", parser_args         -> Scan(args:ParserArgs)
   on "true"                      -> LiteralLogical(value="true":Logical)
   on CHARSET

@@ -29,7 +29,7 @@ class CmdFactory
         case 18: return Halt( t )
         case 19: return MarkPosition( t )
         case 20: return Mode( t, args.cmd_to<<String>>(0) )
-        case 21: return MustConsume( t, args.cmd_as<<SequenceArgs>>(0) )
+        case 21: return ScannerMustConsume( t, args.cmd_as<<SequenceArgs>>(0) )
         case 22: return Print( t, args.cmd_as<<Args>>(0) )
         case 23: return Args( t, args )
         case 24: return Println( t, args.cmd_as<<Args>>(0) )
@@ -79,9 +79,10 @@ class CmdFactory
         case 68: return LiteralLogical( t, true )
         case 69: return LiteralInteger( t, t.content )
         case 70: return Subroutine( t, args.cmd_to<<String>>(0), args.cmd_to<<String>>(1), args[2] )
-        case 71: return Match( t, args[0], args.cmd_as<<CmdList>>(1), args[2] )
+        case 71: return ParserMustConsume( t, args[0] )
         case 72: return ParserArgs( t, args )
         case 73: return ParserConsume( t, args[0] )
+        case 74: return ParserRead( t )
         others
           throw Error( "[INTERNAL] CmdFactory.create_cmd() constructor index out of bounds: " + constructor_index )
       endWhich

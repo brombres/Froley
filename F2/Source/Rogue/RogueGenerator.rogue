@@ -163,6 +163,14 @@ class RogueGenerator : FroleyVisitor
       write " )"
       return cmd
 
+    method visit( cmd:MustConsumeToken )->Cmd  [override]
+      write "if (not _consume(TokenType."
+      write cmd.token_type.name
+      write ")) _throw_syntax_error( &expected=TokenType."
+      write cmd.token_type.name
+      write " )"
+      return cmd
+
     method visit( cmd:Pattern )->Cmd  [override]
       write cmd.reference_name
       return cmd
@@ -334,6 +342,10 @@ class RogueGenerator : FroleyVisitor
     method visit( cmd:ScanPatternCmd )->Cmd  [override]
       dispatch( cmd.pattern )
       write ".scan(_scanner,buffer)"
+      return cmd
+
+    method visit( cmd:ParserRead )->Cmd  [override]
+      write "_read"
       return cmd
 
     method visit( cmd:Produce )->Cmd  [override]

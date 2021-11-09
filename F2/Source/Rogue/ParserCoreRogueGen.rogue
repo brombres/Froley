@@ -60,8 +60,7 @@ class ParserCoreRogueGen( generator, parser_def:ParserDef ) : RogueSourceGen
          |
          |    method _consume( type:TokenType )->Logical
          |      if (_cur_t.type != type) return false
-         |      ++_position
-         |      _cur_t = _peek
+         |      if (_position < _limit) ++_position; _cur_t = _peek
          |      return true
          |
          |    method _describe( type:TokenType )->String
@@ -75,6 +74,11 @@ class ParserCoreRogueGen( generator, parser_def:ParserDef ) : RogueSourceGen
          |    method _pop_frame
          |      _token_stack.discard_from( _token_frames.remove_last )
          |      _cur_t = _token_stack.remove_last
+         |
+         |    method _read->Token
+         |      local result = _cur_t
+         |      if (_position < _limit) ++_position; _cur_t = _peek
+         |      return result
          |
          |    method _throw_syntax_error( message=null:String, expected=null:TokenType? )
          |      if (message is null)

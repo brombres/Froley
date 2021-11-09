@@ -133,7 +133,7 @@ class Resolver : FroleyVisitor
           throw cmd.t.error( "Expected character, string, or pattern; found type $."(seq.type.display_name) )
       endWhich
 
-    method visit( cmd:MustConsume )->Cmd [override]
+    method visit( cmd:ScannerMustConsume )->Cmd [override]
       local seq = resolve_sequence( cmd.args )
       which (seq.require_type)
         case Type.CHARACTER, Type.STRING
@@ -209,6 +209,19 @@ class Resolver : FroleyVisitor
         if (not def) throw t.error( ''No token has symbol '$'.''(name) )
       endIf
       return ConsumeToken( t, def ).dispatch( this )
+
+    method visit( cmd:ParserMustConsume )->Cmd [override]
+      local t = cmd.t
+      local name = cmd.token_type->String
+      local def : TokenDef
+      if (cmd.token_type instanceOf Identifier)
+        def = program.tokens_by_name[ name ]
+        if (not def) throw t.error( ''No token is named '$'.''(name) )
+      else
+        def = program.tokens_by_symbol[ name ]
+        if (not def) throw t.error( ''No token has symbol '$'.''(name) )
+      endIf
+      return MustConsumeToken( t, def ).dispatch( this )
 
     method visit( cmd:ScannerNextIs )->Cmd [override]
       local seq = resolve_sequence( cmd.args )

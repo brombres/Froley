@@ -378,7 +378,7 @@ class Visitor
     method visit( cmd:Mode )->Cmd
       return cmd
 
-    method visit( cmd:MustConsume )->Cmd
+    method visit( cmd:ScannerMustConsume )->Cmd
       if (cmd.args) cmd.args = cmd.args.dispatch( this ) as SequenceArgs
       return cmd
 
@@ -430,5 +430,14 @@ class Visitor
       return cmd
 
     method visit( cmd:ConsumeToken )->Cmd
+      if (cmd.token_type) cmd.token_type = cmd.token_type.dispatch( this ) as TokenDef
+      return cmd
+
+    method visit( cmd:ParserMustConsume )->Cmd
+      if (cmd.token_type) cmd.token_type = cmd.token_type.dispatch( this )
+      return cmd
+
+    method visit( cmd:MustConsumeToken )->Cmd
+      if (cmd.token_type) cmd.token_type = cmd.token_type.dispatch( this ) as TokenDef
       return cmd
 endClass

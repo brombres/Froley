@@ -145,6 +145,12 @@ class RogueGenerator : FroleyVisitor
       write ".scan(_scanner)"
       return cmd
 
+    method visit( cmd:ConsumeToken )->Cmd  [override]
+      write "_consume(TokenType."
+      write cmd.token_type.name
+      write ")"
+      return cmd
+
     method visit( cmd:MustConsumeCharacters )->Cmd  [override]
       write "_must_consume( "
       dispatch( cmd.value )

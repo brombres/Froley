@@ -408,7 +408,7 @@ class Visitor
       return cmd
 
     method visit( cmd:ParserConsume )->Cmd
-      if (cmd.args) cmd.args = cmd.args.dispatch( this ) as ParserArgs
+      if (cmd.token_type) cmd.token_type = cmd.token_type.dispatch( this )
 
       return cmd
 
@@ -427,5 +427,8 @@ class Visitor
       forEach (element at index in cmd)
         if (element) cmd[ index ] = element.dispatch( this )
       endForEach
+      return cmd
+
+    method visit( cmd:ConsumeToken )->Cmd
       return cmd
 endClass

@@ -72,6 +72,7 @@ scanner
 parser
 
 - identifier
+  mustConsume(EOL)
   #produce CmdTest(name)
   syntaxError "TODO"
 #{

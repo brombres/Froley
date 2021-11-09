@@ -58,13 +58,18 @@ class ParserCoreRogueGen( generator, parser_def:ParserDef ) : RogueSourceGen
          |      endIf
          |      return _cmd_stack.remove_last
          |
+         |    method _consume( type:TokenType )->Logical
+         |      if (_cur_t.type != type) return false
+         |      ++_position
+         |      _cur_t = _peek
+         |      return true
+         |
          |    method _describe( type:TokenType )->String
          |      if (type.symbol[0].is_letter) return type.symbol
          |      return "'$'" (type.symbol)
          |
          |    method _peek->Token
          |      if (_position < _limit) return _tokens[ _position ]
-         |      if (_limit > 0)         return _tokens[ _limit - 1 ]
          |      return Token( TokenType.EOI, null, null, 0, 0 )
          |
          |    method _pop_frame

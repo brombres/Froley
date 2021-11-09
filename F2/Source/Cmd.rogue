@@ -1004,10 +1004,10 @@ class ParserCallUserMethod( t, fn_name:String ) : Cmd
       return "ParserCallUserMethod($)"(fn_name)
 endClass
 
-class ParserConsume( t, args:ParserArgs ) : Cmd
+class ParserConsume( t, token_type:Cmd ) : Cmd
   METHODS
     method to->String
-      return "ParserConsume($)"(args)
+      return "ParserConsume($)"(token_type)
 endClass
 
 class ParserHasAnother : Cmd
@@ -1029,3 +1029,10 @@ class ParserRead : Cmd
 endClass
 
 
+
+
+class ConsumeToken( t, token_type:TokenDef ) : Cmd
+  METHODS
+    method to->String
+      return "ConsumeToken($)"(token_type)
+endClass

@@ -197,6 +197,19 @@ class Resolver : FroleyVisitor
       endIf
       return cmd
 
+    method visit( cmd:ParserConsume )->Cmd [override]
+      local t = cmd.t
+      local name = cmd.token_type->String
+      local def : TokenDef
+      if (cmd.token_type instanceOf Identifier)
+        def = program.tokens_by_name[ name ]
+        if (not def) throw t.error( ''No token is named '$'.''(name) )
+      else
+        def = program.tokens_by_symbol[ name ]
+        if (not def) throw t.error( ''No token has symbol '$'.''(name) )
+      endIf
+      return ConsumeToken( t, def ).dispatch( this )
+
     method visit( cmd:ScannerNextIs )->Cmd [override]
       local seq = resolve_sequence( cmd.args )
       which (seq.require_type)

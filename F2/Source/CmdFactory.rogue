@@ -81,6 +81,7 @@ class CmdFactory
         case 70: return Subroutine( t, args.cmd_to<<String>>(0), args.cmd_to<<String>>(1), args[2] )
         case 71: return Match( t, args[0], args.cmd_as<<CmdList>>(1), args[2] )
         case 72: return ParserArgs( t, args )
+        case 73: return ParserConsume( t, args[0] )
         others
           throw Error( "[INTERNAL] CmdFactory.create_cmd() constructor index out of bounds: " + constructor_index )
       endWhich

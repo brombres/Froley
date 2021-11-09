@@ -31,7 +31,7 @@ class Organizer : FroleyVisitor
       forEach (item in group.definitions)
         local def = item as TokenDef
         local expr = LiteralString( t, def.symbol )
-        local _case = MatchCase( t, expr, Statements(t,Produce(t,Access(t,def.name))) )
+        local _case = MatchCase( t, expr, Statements(t,ScannerProduce(t,Access(t,def.name))) )
         this_match.cases.add( _case )
         _case.dispatch( this )
       endForEach
@@ -48,27 +48,28 @@ class Organizer : FroleyVisitor
       endTemporarily
 
     method visit( cmd:CreateCmd )->Cmd [override]
-      this_parser.cmd_node_defs[ cmd.name ] = cmd
-
       if (not cmd.is_organized)
         cmd.is_organized = true
 
         if (cmd.args)
           # Count number of args
-          local args = cmd.args as SequenceArgs
+          local args = cmd.args as Args
           cmd.arg_count = args.count
           forEach (arg at index in args)
             block arg = arg as CreateCmdArg
               arg.index = index
-              if (not arg.arg_type) arg.arg_type = "Cmd"
-              if (arg.arg_value instanceOf Identifier)
-                if ((arg.arg_value as Identifier).name != "content")
+              local arg_as_id = arg.arg_value as Identifier
+              if (arg_as_id)
+                if (arg_as_id.name == "content")
+                  if (not arg.arg_type) arg.arg_type = "String"
+                else
                   throw arg.t.error( "Expected literal string or 'content' keyword." )
                 endIf
               else
                 ++cmd.node_arg_count
                 arg.is_node_arg = true
               endIf
+              if (not arg.arg_type) arg.arg_type = "Cmd"
             endBlock
           endForEach
 
@@ -83,6 +84,28 @@ class Organizer : FroleyVisitor
             endBlock
           endForEach
         endIf
+
+        use sig_builder = StringBuilder.pool
+          sig_builder.print( cmd.name )
+          sig_builder.print( "(" )
+          if (cmd.args)
+            forEach (arg at index in cmd.args as Args)
+              block arg = arg as CreateCmdArg
+                if (index > 0) sig_builder.print ','
+                sig_builder.print(arg.arg_type)
+              endBlock
+            endForEach
+          endIf
+          sig_builder.print( ")" )
+          cmd.signature = sig_builder->String
+        endUse
+
+        local cmd_node_info = program.cmd_node_info[ cmd.name ]
+        if (not cmd_node_info)
+          cmd_node_info = CmdNodeInfo( cmd.name )
+          program.cmd_node_info[ cmd.name ] = cmd_node_info
+        endIf
+        cmd_node_info.add( cmd )
       endIf
 
       return prior.visit( cmd )

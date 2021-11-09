@@ -308,9 +308,6 @@ class Element : Cmd
 endClass
 
 class ParserDef( t, name:String, code:Cmd ) : Element
-  PROPERTIES
-    cmd_node_defs = StringTable<<CreateCmd>>()
-
   METHODS
     method to->String
       return "ParserDef($)"(name)
@@ -688,11 +685,10 @@ class Return( t, value:Cmd ) : Cmd
 endClass
 
 
-
-class Produce( t, arg:Cmd ) : Cmd
+class ScannerProduce( t, arg:Cmd ) : Cmd
   METHODS
     method to->String
-      return "Produce($)"(arg)
+      return "ScannerProduce($)"(arg)
 endClass
 
 class LiteralTokenType( t, token_type:TokenDef ) : Literal
@@ -975,6 +971,7 @@ class CreateCmd( t, name:String, args:Cmd ) : Cmd
     is_organized   = false
     arg_count      = 0
     node_arg_count = 0  # number of node-based args (vs 'content')
+    signature      : String
 
   METHODS
     method to->String
@@ -1031,9 +1028,6 @@ class ParserRead : Cmd
       return Type.TOKEN
 endClass
 
-
-
-
 class ConsumeToken( t, token_type:TokenDef ) : Cmd
   METHODS
     method to->String
@@ -1052,4 +1046,11 @@ class MustConsumeToken( t, token_type:TokenDef ) : Cmd
   METHODS
     method to->String
       return "MustConsumeToken($)"(token_type)
+endClass
+
+
+class ParserProduce( t, arg:Cmd ) : Cmd
+  METHODS
+    method to->String
+      return "ParserProduce($)"(arg)
 endClass

@@ -521,8 +521,8 @@ SYMBOL_T_CONTENT      t.content
         scanner_expression
         if (consume("->"))
           beginList
-            product
-            create Produce(arg:Cmd)
+            scanner_product
+            create ScannerProduce(arg:Cmd)
           createList Statements
         else
           consume(":")
@@ -612,7 +612,7 @@ SYMBOL_T_CONTENT      t.content
 
 + scanner_statement
   on "collect", scanner_args -> Collect(args:Args)
-  #on "create", product      -> Produce(arg:Cmd)
+  #on "create", scanner_product      -> ScannerProduce(arg:Cmd)
   on "discardPosition"       -> DiscardPosition
   on "halt"                  -> Halt
   on "markPosition"          -> MarkPosition
@@ -629,8 +629,8 @@ SYMBOL_T_CONTENT      t.content
     endIf
     produce Println(args:Args)
   endOn
-  on "produce", product    -> Produce(arg:Cmd)
-  on "->",      product    -> Produce(arg:Cmd)
+  on "produce", scanner_product    -> ScannerProduce(arg:Cmd)
+  on "->",      scanner_product    -> ScannerProduce(arg:Cmd)
   on "restart"
     if (nextIs(EOL)) createNull
     else             identifier
@@ -658,27 +658,21 @@ SYMBOL_T_CONTENT      t.content
   on "++", scanner_expression -> Increment(target)
   on "--", scanner_expression -> Decrement(target)
 
-+ product
++ scanner_product
   identifier
-  if (consume('('))
-    cmd_args
-    mustConsume(')')
-    produce CreateCmd(name=t.content:String,args)
-  else
-    produce Access( name=t.content:String )
-  endIf
+  produce Access( name=t.content:String )
 
 + cmd_args
   beginList
     consume_eols
-    if (consume(')')) produceList SequenceArgs
+    if (consume(')')) produceList Args
     cmd_arg
     while (consume(','))
       consume_eols
       cmd_arg
       consume_eols
     endWhile
-  produceList SequenceArgs
+  produceList Args
 
 + cmd_arg
   identifier
@@ -1024,7 +1018,7 @@ SYMBOL_T_CONTENT      t.content
 + parser_statement
 #{
   on "collect", parser_args       -> Collect(args:ParserArgs)
-  #on "create", product    -> Produce(arg:Cmd)
+  #on "create", parser_product    -> ParserCreate(arg:Cmd)
   on "discardPosition"     -> DiscardPosition
   on "halt"                -> Halt
   on "markPosition"        -> MarkPosition
@@ -1047,8 +1041,10 @@ SYMBOL_T_CONTENT      t.content
   #  identifier_or_string
   #  additional_elements
   #endOn
-  on "produce", product    -> Produce(arg:Cmd)
-  on "->",      product    -> Produce(arg:Cmd)
+}#
+  on "produce", parser_product    -> ParserProduce(arg:Cmd)
+  on "->",      parser_product    -> ParserProduce(arg:Cmd)
+#{
   on "restart"
     if (nextIs(EOL)) createNull
     else             identifier
@@ -1121,6 +1117,17 @@ SYMBOL_T_CONTENT      t.content
   on STRING              -> LiteralString( value=t.content:String )
   on STRING_OR_CHARACTER -> LiteralString( value=t.content:String )
   syntaxError "TOKEN_ID or \"token_name\" expected."
+
++ parser_product
+  identifier
+  if (consume('('))
+    cmd_args
+    mustConsume(')')
+  else
+    beginList
+    createList Args
+  endIf
+  produce CreateCmd(name=t.content:String,args)
 
 + parser_expression
 

@@ -262,7 +262,7 @@ class Visitor
     method visit( cmd:LiteralStringOrCharacter )->Cmd
       return cmd
 
-    method visit( cmd:Produce )->Cmd
+    method visit( cmd:ScannerProduce )->Cmd
       if (cmd.arg) cmd.arg = cmd.arg.dispatch( this )
       return cmd
 
@@ -439,5 +439,9 @@ class Visitor
 
     method visit( cmd:MustConsumeToken )->Cmd
       if (cmd.token_type) cmd.token_type = cmd.token_type.dispatch( this ) as TokenDef
+      return cmd
+
+    method visit( cmd:ParserProduce )->Cmd
+      if (cmd.arg) cmd.arg = cmd.arg.dispatch( this )
       return cmd
 endClass

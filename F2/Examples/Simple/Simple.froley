@@ -73,7 +73,7 @@ parser
 
 - identifier
   read
-  #produce CmdTest(name)
+  produce CmdTest(name=content)
   syntaxError "TODO"
 #{
   #on IDENTIFIER -> Identifier(name=t:String)

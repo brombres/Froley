@@ -348,7 +348,7 @@ class RogueGenerator : FroleyVisitor
       write "_read"
       return cmd
 
-    method visit( cmd:Produce )->Cmd  [override]
+    method visit( cmd:ScannerProduce )->Cmd  [override]
       write   "_add( "
       cmd.arg.dispatch( this )
       writeln " )"

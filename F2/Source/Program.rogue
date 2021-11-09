@@ -2,18 +2,19 @@ module F2
 
 class Program
   PROPERTIES
-    nodes              : Cmd
-    project_name       = ""
-    scanner            : ScannerDef
-    parser             : ParserDef
-    token_groups       = StringTable<<TokenGroup>>()
-    tokens_by_name     = StringTable<<TokenDef>>()
-    tokens_by_symbol   = StringTable<<TokenDef>>()
-    token_attributes   = StringTable<<Int32>>(){ "content":1 }
-    main_filename      : String
-    scan_patterns      = StringTable<<String>>()
-    scanner_user_calls = Set<<String>>()
-    parser_user_calls  = Set<<String>>()
+    nodes                 : Cmd
+    project_name          = ""
+    scanner               : ScannerDef
+    parser                : ParserDef
+    token_groups          = StringTable<<TokenGroup>>()
+    tokens_by_name        = StringTable<<TokenDef>>()
+    tokens_by_symbol      = StringTable<<TokenDef>>()
+    token_attributes      = StringTable<<Int32>>(){ "content":1 }
+    main_filename         : String
+    scan_patterns         = StringTable<<String>>()
+    scanner_user_calls    = Set<<String>>()
+    parser_user_calls     = Set<<String>>()
+    cmd_node_info         = StringTable<<CmdNodeInfo>>()
 
   METHODS
     method init( froley_file:File )

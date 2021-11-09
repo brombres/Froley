@@ -5,12 +5,13 @@
 
 $requireRogue "1.9.4"
 
+$include "CmdNodeInfo.rogue"
 $include "FroleyVisitor.rogue"
-$include "Rogue/RogueGenerator.rogue"
 $include "Organizer.rogue"
 $include "Parser.rogue"
 $include "Program.rogue"
 $include "Resolver.rogue"
+$include "Rogue/RogueGenerator.rogue"
 $include "ScanTableBuilder.rogue"
 $include "TokenOrganizer.rogue"
 $include "Tokenizer.rogue"

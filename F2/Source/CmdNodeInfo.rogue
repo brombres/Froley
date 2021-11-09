@@ -1,0 +1,14 @@
+module F2
+
+class CmdNodeInfo( name:String )
+  PROPERTIES
+    constructors = StringTable<<CreateCmd>>()
+
+  METHODS
+    method add( constructor:CreateCmd )
+      constructors[ constructor.signature ] = constructor
+
+    method description->String
+      return name
+endClass
+

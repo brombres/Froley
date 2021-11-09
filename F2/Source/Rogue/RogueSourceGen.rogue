@@ -2,8 +2,9 @@ module F2
 
 class RogueSourceGen
   PROPERTIES
-    generator  : RogueGenerator
-    class_name : String
+    generator   : RogueGenerator
+    class_name  : String
+    filepath    : String
 
   METHODS
     method init( generator )
@@ -11,28 +12,64 @@ class RogueSourceGen
     method indent->Int32
       return generator.indent
 
+    method close
+      local content = generator.writer->String
+      local file = File( filepath )
+      if (file.exists)
+        if (file.load_as_string != content)
+          print "Recreating "
+          println filepath
+          file.save( content )
+        endIf
+      else
+        print "Creating "
+        println filepath
+        file.save( content )
+      endIf
+
+    method create_missing
+      if (File.exists(filepath)) return
+      overwrite( class_name )
+
+    method filepath->String
+      if (@filepath) return @filepath
+
+      require class_name
+      local filename = class_name + ".rogue"
+      filepath = generator.folder/filename
+      return @filepath
+
     method overwrite
       require class_name
       overwrite( class_name )
 
     method overwrite( class_name )
-      local filename = class_name + ".rogue"
-      local filepath = generator.folder/filename
-
-      if (File.exists(filepath)) print "Recreating "
-      else                       print "Creating "
-      println filepath
-
-      generator.writer = File.print_writer(filepath)
+      generator.writer = StringBuilder(2048)
 
       writeln "module $\n"(generator.program.project_name)
-
       write_content
-
-      generator.writer.close
+      close
 
     method set_indent( new_indent:Int32 )
       generator.indent = new_indent
+
+    method update
+      local file = File(filepath)
+      if (file.exists)
+        local content = update_content( file.load_as_string )
+        if (content != file.load_as_string)
+          print "Updating "
+          println filepath
+          file.save( content )
+        endIf
+      else
+        print "Creating "
+        println filepath
+        file.save( update_content(null) )
+      endIf
+
+    method update_content( content:String )->String
+      throw UnsupportedOperationError()  # Overridden
 
     method write( content:String )
       generator.write( content )

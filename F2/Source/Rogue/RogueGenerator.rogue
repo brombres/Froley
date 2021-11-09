@@ -32,18 +32,15 @@ class RogueGenerator : FroleyVisitor
       File.create_folder( folder )
 
       program.nodes.dispatch( this )
-      #generate_scanner( forEach in scanners )
-      #generate_parser( forEach in parsers )
-      #nodes.dispatch( Organizer(this) )
 
-      SyntaxErrorRogueGen(this).overwrite
-      ScanTableRogueGen(this).overwrite
+      SyntaxErrorRogueGen(this).create_missing
+      ScanTableRogueGen(this).create_missing
       TokenTypeRogueGen(this).overwrite
-      TokenRogueGen(this).overwrite
+      TokenRogueGen(this).create_missing
 
       # Main
       if (program.main_filename)
-        MainRogueGen( this, program.main_filename ).overwrite
+        MainRogueGen( this, program.main_filename ).create_missing
       endIf
 
     method visit( cmd:Call )->Cmd  [override]
@@ -247,11 +244,12 @@ class RogueGenerator : FroleyVisitor
       return cmd
 
     method visit( cmd:LiteralString )->Cmd  [override]
-      if (cmd.value.count == 1)
-        writer.print( "'$'"(to_escaped_ascii(cmd.value,"'")) )
-      else
-        writer.print( ''"$"''(to_escaped_ascii(cmd.value,''"'')) )
-      endIf
+      writer.print( ''"$"''(to_escaped_ascii(cmd.value,''"'')) )
+      #if (cmd.value.count == 1)
+      #  writer.print( "'$'"(to_escaped_ascii(cmd.value,"'")) )
+      #else
+      #  writer.print( ''"$"''(to_escaped_ascii(cmd.value,''"'')) )
+      #endIf
       return cmd
 
     method visit( cmd:LiteralTokenType )->Cmd  [override]
@@ -401,7 +399,7 @@ class RogueGenerator : FroleyVisitor
       is_scanner = true
       is_parser = false
 
-      ScannerRogueGen(this).overwrite
+      ScannerRogueGen(this).create_missing
       ScannerCoreRogueGen(this,cmd).overwrite
       return cmd
 
@@ -520,8 +518,8 @@ class RogueGenerator : FroleyVisitor
       is_parser = true
       is_scanner = false
 
-      CmdRogueGen(this).overwrite
-      ParserRogueGen(this).overwrite
+      CmdRogueGen(this).update
+      ParserRogueGen(this).create_missing
       ParserCoreRogueGen(this,cmd).overwrite
 
       return cmd

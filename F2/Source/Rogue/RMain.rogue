@@ -44,12 +44,12 @@ class MainRogueGen : RogueCodeWriter
          |      endForEach
          |
          |    method parse( file:File )
-         |        local parser = Parser( file )
-         |        if (parser.has_another)
-         |          local cmd = parser.parse
-         |          if (parser.output.count) print parser.output; flush
-         |          println cmd
-         |        endIf
+         |      local parser = Parser( file )
+         |      if (parser.has_another)
+         |        local cmd = parser.parse
+         |        if (parser.output.count) print parser.output; flush
+         |        println cmd
+         |      endIf
          |
          |    method parse_args( args:String[] )->Value
          |      local command = CommandLineParser().

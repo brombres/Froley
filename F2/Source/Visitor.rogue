@@ -442,9 +442,13 @@ class Visitor
       return cmd
 
     method visit( cmd:ParserProduce )->Cmd
-      if (cmd.arg) cmd.arg = cmd.arg.dispatch( this )
+      if (cmd.arg) cmd.arg = cmd.arg.dispatch( this ) as CreateCmd
       return cmd
 
     method visit( cmd:TokenContent )->Cmd
+      return cmd
+
+    method visit( cmd:ParserCreate )->Cmd
+      if (cmd.arg) cmd.arg = cmd.arg.dispatch( this ) as CreateCmd
       return cmd
 endClass

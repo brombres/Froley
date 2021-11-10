@@ -1049,7 +1049,7 @@ class MustConsumeToken( t, token_type:TokenDef ) : Cmd
 endClass
 
 
-class ParserProduce( t, arg:Cmd ) : Cmd
+class ParserProduce( t, arg:CreateCmd ) : Cmd
   METHODS
     method to->String
       return "ParserProduce($)"(arg)
@@ -1063,4 +1063,11 @@ class TokenContent : Cmd
 
     method type->Type
       return Type.STRING
+endClass
+
+
+class ParserCreate( t, arg:CreateCmd ) : Cmd
+  METHODS
+    method to->String
+      return "ParserCreate($)"(arg)
 endClass

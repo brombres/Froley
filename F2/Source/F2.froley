@@ -1017,8 +1017,10 @@ SYMBOL_T_CONTENT      t.content
 
 + parser_statement
 #{
-  on "collect", parser_args       -> Collect(args:ParserArgs)
-  #on "create", parser_product    -> ParserCreate(arg:Cmd)
+  on "collect", parser_args   -> Collect(args:ParserArgs)
+}#
+  on "create", parser_product -> ParserCreate(arg:CreateCmd)
+#{
   on "discardPosition"     -> DiscardPosition
   on "halt"                -> Halt
   on "markPosition"        -> MarkPosition
@@ -1042,8 +1044,8 @@ SYMBOL_T_CONTENT      t.content
   #  additional_elements
   #endOn
 }#
-  on "produce", parser_product    -> ParserProduce(arg:Cmd)
-  on "->",      parser_product    -> ParserProduce(arg:Cmd)
+  on "produce", parser_product    -> ParserProduce(arg:CreateCmd)
+  on "->",      parser_product    -> ParserProduce(arg:CreateCmd)
 #{
   on "restart"
     if (nextIs(EOL)) createNull

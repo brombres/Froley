@@ -331,6 +331,16 @@ class RogueGenerator : FroleyVisitor
       write ".is_next(_scanner)"
       return cmd
 
+    method visit( cmd:ParserCreate )->Cmd  [override]
+      cmd.arg.dispatch( this )
+      return cmd
+
+    method visit( cmd:ParserProduce )->Cmd  [override]
+      cmd.arg.dispatch( this )
+      writeln
+      write "return"
+      return cmd
+
     method visit( cmd:Print )->Cmd  [override]
       write "output"
       forEach (arg in cmd.args)
@@ -359,12 +369,6 @@ class RogueGenerator : FroleyVisitor
     method visit( cmd:ScanPatternCmd )->Cmd  [override]
       dispatch( cmd.pattern )
       write ".scan(_scanner,buffer)"
-      return cmd
-
-    method visit( cmd:ParserProduce )->Cmd  [override]
-      cmd.arg.dispatch( this )
-      writeln
-      write "return"
       return cmd
 
     method visit( cmd:ParserRead )->Cmd  [override]

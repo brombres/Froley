@@ -83,7 +83,7 @@ class CmdRogueGen : RogueCodeWriter
             local w = 0
             w .= or_larger( (forEach in properties).name.count )
 
-            forEach (p in node_info.properties)
+            forEach (p in properties)
               builder.print( "    " ).print( p.name )
               loop (w - p.name.count) builder.print ' '
               builder.print( " : " ).println( p.type )
@@ -104,6 +104,20 @@ class CmdRogueGen : RogueCodeWriter
               builder.println " )"
               builder.println
             endForEach
+
+            builder.println "    method description->String"
+            builder.print   "      return \"$(" (node_info.name)
+            forEach (i of properties)
+              if (i > 0) builder.print ','
+              builder.print '$'
+            endForEach
+            builder.print ")\" ("
+            forEach (p at i in properties)
+              if (i > 0) builder.print ','
+              builder.print p.name
+            endForEach
+            builder.println ')'
+            builder.println
 
             builder.print "endClass"
           endIf

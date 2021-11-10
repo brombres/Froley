@@ -72,11 +72,10 @@ scanner
 parser
 
 - identifier
-  read
-  produce CmdTest(name=content)
+  consume_eols
+  #on IDENTIFIER -> Identifier(name=t:String)
   syntaxError "TODO!!"
 #{
-  #on IDENTIFIER -> Identifier(name=t:String)
 
   on '\n' -> EOL
   on [_A-Za-z] [_A-Za-z0-9]* -> IDENTIFIER
@@ -104,6 +103,8 @@ parser
   endWhile
 }#
 
+- consume_eols
+  while (consume(EOL)) noAction
 
 #{
 - scan_integer

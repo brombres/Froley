@@ -82,14 +82,26 @@ class ScannerCoreRogueGen( generator, scanner_def:ScannerDef ) : RogueCodeWriter
       endForEach
 
       writeln ...
-        @|    method _add( type:TokenType )
+        @|    method execute( ip:Int32 )
+         |      _clear_state
+         |      _execute( ip )
+         |
+         |    method tokenize( ip=null:Int32? )->Token[]
+         |      if (ip) start_ip = ip.value
+         |      _clear_state
+         |      while (_execute(start_ip) or not halt)
+         |        buffer.clear
+         |      endWhile
+         |      return tokens
+         |
+         |    method _add( type:TokenType )
          |      if (type.attributes & TokenType.ATTRIBUTE_CONTENT)
          |        tokens.add( _t(type,buffer) )
          |      else
          |        tokens.add( _t(type) )
          |      endIf
          |
-         |    method _clear
+         |    method _clear_state
          |      tokens = Token[]
          |      buffer.clear
          |      output.clear
@@ -155,15 +167,7 @@ class ScannerCoreRogueGen( generator, scanner_def:ScannerDef ) : RogueCodeWriter
          |      endIf
          |      throw SyntaxError( message, _filepath, _scanner.source, _scanner.line, _scanner.column )
          |
-         |    method tokenize( ip=null:Int32? )->Token[]
-         |      if (ip) start_ip = ip.value
-         |      _clear
-         |      while (execute(start_ip) or not halt)
-         |        buffer.clear
-         |      endWhile
-         |      return tokens
-         |
-         |    method execute( ip:Int32 )->Logical
+         |    method _execute( ip:Int32 )->Logical
          |      loop
          |        ++ip
          |        which (ip-1)

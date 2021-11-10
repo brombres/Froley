@@ -1027,8 +1027,8 @@ SYMBOL_T_CONTENT      t.content
   on "mode", identifier    -> Mode(routine_name:String)
 }#
   on "mustConsume", string_or_id_arg   -> ParserMustConsume(token_type)
-#{
   on "noAction": return
+#{
   on "print",   parser_args       -> Print(args:ParserArgs)
   on "println"
     if (not hasAnother or nextHasAttribute(structural))

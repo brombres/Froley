@@ -44,9 +44,15 @@ class RogueGenerator : FroleyVisitor
       endIf
 
     method visit( cmd:Call )->Cmd  [override]
-      write "if (not execute(ip_"
-      write cmd.routine_def.name
-      write ")) return false"
+      if (is_scanner)
+        write "if (not _execute(ip_"
+        write cmd.routine_def.name
+        write ")) return false"
+      else
+        write "_execute(ip_"
+        write cmd.routine_def.name
+        write ")"
+      endIf
       return cmd
 
     method visit( cmd:CastToLogical )->Cmd  [override]
@@ -416,6 +422,13 @@ class RogueGenerator : FroleyVisitor
 
       indent += 12
       prior.visit( cmd )
+
+      if (is_parser)
+        if (not BranchAnalyzer.all_paths_return(cmd))
+          writeln "return"
+        endIf
+      endIf
+
       indent -= 12
 
       return cmd

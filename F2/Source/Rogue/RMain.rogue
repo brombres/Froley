@@ -45,11 +45,11 @@ class MainRogueGen : RogueCodeWriter
          |
          |    method parse( file:File )
          |        local parser = Parser( file )
-         |        while (parser.has_another)
+         |        if (parser.has_another)
          |          local cmd = parser.parse
          |          if (parser.output.count) print parser.output; flush
          |          println cmd
-         |        endWhile
+         |        endIf
          |
          |    method parse_args( args:String[] )->Value
          |      local command = CommandLineParser().

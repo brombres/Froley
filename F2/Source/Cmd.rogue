@@ -986,7 +986,7 @@ class CreateCmdArg( t, arg_name:String, arg_value:Cmd, arg_type:String ) : Cmd
 
   METHODS
     method to->String
-      return "CmdArg($,$,$)"(arg_name,arg_value,arg_type)
+      return "CreateCmdArg($,$,$)"(arg_name,arg_value,arg_type)
 endClass
 
 
@@ -1053,4 +1053,14 @@ class ParserProduce( t, arg:Cmd ) : Cmd
   METHODS
     method to->String
       return "ParserProduce($)"(arg)
+endClass
+
+
+class TokenContent : Cmd
+  METHODS
+    method to->String
+      return "TokenContent"
+
+    method type->Type
+      return Type.STRING
 endClass

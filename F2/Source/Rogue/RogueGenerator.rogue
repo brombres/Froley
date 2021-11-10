@@ -148,6 +148,25 @@ class RogueGenerator : FroleyVisitor
       write ")"
       return cmd
 
+    method visit( cmd:CreateCmd )->Cmd  [override]
+      write "_add( "
+      write cmd.name
+      write "(_cur_t"
+      cmd.args.dispatch( this )
+      write "), "
+      write cmd.node_arg_count
+      write " )"
+      return cmd
+
+    method visit( cmd:CreateCmdArg )->Cmd  [override]
+      write ","
+      if (cmd.arg_value)
+        cmd.arg_value.dispatch( this )
+      else
+        write "_stack_arg($)"(cmd.stack_offset)
+      endIf
+      return cmd
+
     method visit( cmd:MustConsumeCharacters )->Cmd  [override]
       write "_must_consume( "
       dispatch( cmd.value )
@@ -342,6 +361,12 @@ class RogueGenerator : FroleyVisitor
       write ".scan(_scanner,buffer)"
       return cmd
 
+    method visit( cmd:ParserProduce )->Cmd  [override]
+      cmd.arg.dispatch( this )
+      writeln
+      write "return"
+      return cmd
+
     method visit( cmd:ParserRead )->Cmd  [override]
       write "_read"
       return cmd
@@ -464,6 +489,10 @@ class RogueGenerator : FroleyVisitor
         endForEach
         write ")"
       endIf
+      return cmd
+
+    method visit( cmd:TokenContent )->Cmd  [override]
+      write "_cur_t.content"
       return cmd
 
     method visit( cmd:WriteBuffer )->Cmd  [override]

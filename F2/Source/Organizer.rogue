@@ -5,6 +5,10 @@ class Organizer : FroleyVisitor
     this_match      : Match
 
   METHODS
+    method visit( cmd:Identifier )->Cmd
+      if (is_parser and cmd.name == "content") return TokenContent(cmd.t).dispatch(this)
+      return cmd
+
     method visit( cmd:ScannerCallUserMethod )->Cmd [override]
       program.scanner_user_calls.add( cmd.fn_name )
       return cmd
@@ -51,39 +55,34 @@ class Organizer : FroleyVisitor
       if (not cmd.is_organized)
         cmd.is_organized = true
 
-        if (cmd.args)
-          # Count number of args
-          local args = cmd.args as Args
-          cmd.arg_count = args.count
-          forEach (arg at index in args)
-            block arg = arg as CreateCmdArg
-              arg.index = index
-              local arg_as_id = arg.arg_value as Identifier
-              if (arg_as_id)
-                if (arg_as_id.name == "content")
-                  if (not arg.arg_type) arg.arg_type = "String"
-                else
-                  throw arg.t.error( "Expected literal string or 'content' keyword." )
-                endIf
-              else
-                ++cmd.node_arg_count
-                arg.is_node_arg = true
-              endIf
-              if (not arg.arg_type) arg.arg_type = "Cmd"
-            endBlock
-          endForEach
+        cmd.args.dispatch( this )
 
-          # Assign stack-relative offsets
-          local stack_offset = -(cmd.node_arg_count)
-          forEach (arg in args)
-            block arg = arg as CreateCmdArg
-              if (arg.is_node_arg)
-                arg.stack_offset = stack_offset
-                ++stack_offset
-              endIf
-            endBlock
-          endForEach
-        endIf
+        # Count number of args
+        local args = cmd.args as Args
+        cmd.arg_count = args.count
+        forEach (arg at index in args)
+          block arg = arg as CreateCmdArg
+            arg.index = index
+            if (arg.arg_value)
+              if (not arg.arg_type) arg.arg_type = "String"
+            else
+              ++cmd.node_arg_count
+              arg.is_node_arg = true
+              if (not arg.arg_type) arg.arg_type = "Cmd"
+            endIf
+          endBlock
+        endForEach
+
+        # Assign stack-relative offsets
+        local stack_offset = -(cmd.node_arg_count)
+        forEach (arg in args)
+          block arg = arg as CreateCmdArg
+            if (arg.is_node_arg)
+              arg.stack_offset = stack_offset
+              ++stack_offset
+            endIf
+          endBlock
+        endForEach
 
         use sig_builder = StringBuilder.pool
           sig_builder.print( cmd.name )

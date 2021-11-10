@@ -58,6 +58,10 @@ class ParserCoreRogueGen( generator, parser_def:ParserDef ) : RogueCodeWriter
          |      endIf
          |      return _cmd_stack.remove_last
          |
+         |    method _add( cmd:Cmd, node_arg_count:Int32 )
+         |      _cmd_stack.discard_from( _cmd_stack.count - node_arg_count )
+         |      _cmd_stack.add( cmd )
+         |
          |    method _consume( type:TokenType )->Logical
          |      if (_cur_t.type != type) return false
          |      if (_position < _limit) ++_position; _cur_t = _peek
@@ -79,6 +83,11 @@ class ParserCoreRogueGen( generator, parser_def:ParserDef ) : RogueCodeWriter
          |      local result = _cur_t
          |      if (_position < _limit) ++_position; _cur_t = _peek
          |      return result
+         |
+         |    method _stack_arg( relative:Int32 )->Cmd
+         |      local i = _cmd_stack.count + relative
+         |      if (i < 0) throw _peek.error( "[INTERNAL] Not enough nodes on stack to create new Cmd." )
+         |      return _cmd_stack[i]
          |
          |    method _throw_syntax_error( message=null:String, expected=null:TokenType? )
          |      if (message is null)

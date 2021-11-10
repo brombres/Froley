@@ -10,5 +10,39 @@ class CmdNodeInfo( name:String )
 
     method description->String
       return name
+
+    method properties->NameAndType[]
+      local types = StringTable<<NameAndType>>()
+      forEach (constructor in constructors)
+        if (constructor.args)
+          local args = constructor.args as Args
+          forEach (arg in args)
+            block arg = arg as CreateCmdArg
+              local name_and_type = NameAndType( arg.arg_name, arg.arg_type )
+              if (types.contains(name_and_type.name))
+                local existing = types[ name_and_type.name ]
+                if (existing != name_and_type)
+                  throw arg.t.error( "Multiple definitions of '$' as both type '$' and type '$'." ...
+                    (name_and_type.name,name_and_type.type,existing.type) )
+                endIf
+              endIf
+              types[ name_and_type.name ] = name_and_type
+            endBlock
+          endForEach
+        endIf
+      endForEach
+      return types.values.to_list
+endClass
+
+class NameAndType( name:String, type:String ) [compound]
+  METHODS
+    method description->String
+      return "$:$" (name,type)
+
+    method hash_code->Int32
+      return name.hash_code ~ type.hash_code
+
+    method operator==( other:NameAndType )->Logical
+      return name == other.name and type == other.type
 endClass
 

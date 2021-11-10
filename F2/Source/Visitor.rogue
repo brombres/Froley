@@ -444,4 +444,7 @@ class Visitor
     method visit( cmd:ParserProduce )->Cmd
       if (cmd.arg) cmd.arg = cmd.arg.dispatch( this )
       return cmd
+
+    method visit( cmd:TokenContent )->Cmd
+      return cmd
 endClass

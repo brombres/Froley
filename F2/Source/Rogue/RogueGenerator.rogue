@@ -10,7 +10,7 @@ $include "RScannerCore.rogue"
 $include "RSyntaxError.rogue"
 $include "RToken.rogue"
 $include "RTokenType.rogue"
-$include "RogueCodeWriter.rogue"
+$include "RogueSourceWriter.rogue"
 $include "ScanTableDeclarationWriter.rogue"
 
 class RogueGenerator : FroleyVisitor

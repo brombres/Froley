@@ -62,12 +62,16 @@ scanner
 parser
 #-------------------------------------------------------------------------------
 - expression
-  term
+  assign
 
-#{
-- assign : RightBinary
+- assign [rightBinary]
   on "=" -> Assign
 
+#- assign
+#  term
+#  on "=" assign: produce Assign(left,right)
+
+#{
 - add_subtract : Binary
   on "+" -> Add
   on "-" -> Subtract

@@ -1,6 +1,6 @@
 module F2
 
-class CmdRogueGen : RogueCodeWriter
+class CmdRogueGen : RogueSourceWriter
   PROPERTIES
     node_types = Set<<String>>()
 
@@ -44,6 +44,9 @@ class CmdRogueGen : RogueCodeWriter
              |    method count->Int32
              |      return 0
              |
+             |    method description->String
+             |      return "Cmd"
+             |
              |    method get( index:Int32 )->Cmd
              |      throw UnsupportedOperationError()
              |endClass
@@ -64,8 +67,22 @@ class CmdRogueGen : RogueCodeWriter
              |    method count->Int32
              |      return list.count
              |
+             |    method description->String
+             |      return "CmdList" + list
+             |
              |    method get( index:Int32 )->Cmd
              |      return list[index]
+             |endClass
+        endIf
+
+        if (not node_types.contains("Binary"))
+          node_types.add( "Binary" )
+          builder.println ...
+            @|
+             |class Binary( left:Cmd, right:Cmd ) : Cmd
+             |  METHODS
+             |    method description->String
+             |      return "Binary($,$)"(left,right)
              |endClass
         endIf
 
@@ -74,21 +91,25 @@ class CmdRogueGen : RogueCodeWriter
             node_types.add( node_info.name )
 
             builder.println
-            builder.print( "class " ).print( node_info.name ).print( " : " )
-            builder.print "Cmd"
+            builder.print( "class " ).print( node_info.name )
+            if (node_info.base_type)
+              builder.print( " : " ).print( node_info.base_type.name )
+            endIf
             builder.println
-            builder.println "  PROPERTIES"
 
-            local properties = node_info.properties
-            local w = 0
-            w .= or_larger( (forEach in properties).name.count )
+            local properties = node_info.extended_properties
+            if (properties.count)
+              builder.println "  PROPERTIES"
+              local w = 0
+              w .= or_larger( (forEach in properties).name.count )
 
-            forEach (p in properties)
-              builder.print( "    " ).print( p.name )
-              loop (w - p.name.count) builder.print ' '
-              builder.print( " : " ).println( p.type )
-            endForEach
-            builder.println
+              forEach (p in properties)
+                builder.print( "    " ).print( p.name )
+                loop (w - p.name.count) builder.print ' '
+                builder.print( " : " ).println( p.type )
+              endForEach
+              builder.println
+            endIf
 
             builder.println "  METHODS"
             forEach (constructor in node_info.constructors)
@@ -106,20 +127,25 @@ class CmdRogueGen : RogueCodeWriter
             endForEach
 
             builder.println "    method description->String"
-            builder.print   "      return \"$(" (node_info.name)
-            forEach (i of properties)
-              if (i > 0) builder.print ','
-              builder.print '$'
-            endForEach
-            builder.print ")\" ("
-            forEach (p at i in properties)
-              if (i > 0) builder.print ','
-              builder.print p.name
-            endForEach
-            builder.println ')'
+            properties = node_info.properties
+            if (properties.count)
+              builder.print  ''      return "$('' (node_info.name)
+              forEach (i of properties)
+                if (i > 0) builder.print ','
+                builder.print '$'
+              endForEach
+              builder.print ")\" ("
+              forEach (p at i in properties)
+                if (i > 0) builder.print ','
+                builder.print p.name
+              endForEach
+              builder.println ')'
+            else
+              builder.print  ''      return "$"'' (node_info.name)
+            endIf
             builder.println
 
-            builder.print "endClass"
+            builder.println "endClass"
           endIf
         endForEach
 

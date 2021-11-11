@@ -7,8 +7,7 @@ class FroleyVisitor : Visitor
     this_element : Element
     this_scanner : ScannerDef
     this_parser  : ParserDef
-    cur_routine  : Routine
-    cur_tokens   : TokenGroup
+    this_routine : Routine
 
     is_scanner   : Logical
     is_parser    : Logical
@@ -24,11 +23,7 @@ class FroleyVisitor : Visitor
       endTemporarily
 
     method visit( cmd:Routine )->Cmd [override]
-      cur_routine = cmd
-      return prior.visit( cmd )
-
-    method visit( cmd:Subroutine )->Cmd [override]
-      cur_routine = cmd
+      this_routine = cmd
       return prior.visit( cmd )
 
     method visit( cmd:ScannerDef )->Cmd [override]
@@ -37,9 +32,5 @@ class FroleyVisitor : Visitor
         this_scanner = cmd
         return prior.visit( cmd )
       endTemporarily
-
-    method visit( cmd:TokenGroup )->Cmd [override]
-      cur_tokens = cmd
-      return prior.visit( cmd )
 endClass
 

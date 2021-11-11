@@ -1,17 +1,37 @@
 module F2
 
-class CmdNodeInfo( name:String )
+class CmdNodeInfo
   PROPERTIES
+    name         : String
+    program      : Program
+    base_type    : CmdNodeInfo
     constructors = StringTable<<CreateCmd>>()
+    properties   : NameAndType[]
 
   METHODS
+    method init( name, program )
+      if (name != "Cmd") base_type = "Cmd"
+
     method add( constructor:CreateCmd )
       constructors[ constructor.signature ] = constructor
+
+    method add_property( name:String, type:String )
+      properties.add( NameAndType(name,type) )
 
     method description->String
       return name
 
+    method extended_properties->NameAndType[]
+      if (not base_type) return properties
+
+      local types = StringTable<<NameAndType>>()
+      forEach (p in properties) types[p.name] = p
+      forEach (p in base_type.properties) types.remove(p.name)
+      return types.values.to_list
+
     method properties->NameAndType[]
+      if (@properties) return @properties
+
       local types = StringTable<<NameAndType>>()
       forEach (constructor in constructors)
         if (constructor.args)
@@ -31,7 +51,35 @@ class CmdNodeInfo( name:String )
           endForEach
         endIf
       endForEach
-      return types.values.to_list
+
+      #if (base_type)
+      #  # Remove properties found in the base type
+      #  forEach (base_property in base_type.properties)
+      #    if (types.contains(base_property.name))
+      #      # Need to save a t (token) to do the following. Will leave as a TODO.
+      #      #local existing = types[ base_property.name ]
+      #      #if (existing != base_property)
+      #      #  throw arg.t.error( "Multiple definitions of '$' as both type '$' and inherited type '$'." ...
+      #      #    (base_property.name,existing.type,base_property.type) )
+      #      #endIf
+      #      types.remove( base_property.name )
+      #    endIf
+      #  endForEach
+      #endIf
+
+      @properties = types.values.to_list
+      return @properties
+
+    method set_base_type( @base_type )
+
+    method set_base_type( base_type_name:String )
+      local info = program.cmd_node_info[ base_type_name ]
+      if (not info)
+        info = CmdNodeInfo( base_type_name, program )
+        program.cmd_node_info[ base_type_name ] = info
+      endIf
+      @base_type = info
+
 endClass
 
 class NameAndType( name:String, type:String ) [compound]

@@ -1,6 +1,6 @@
 module F2
 
-class RogueCodeWriter
+class RogueSourceWriter
   PROPERTIES
     generator   : RogueGenerator
     class_name  : String

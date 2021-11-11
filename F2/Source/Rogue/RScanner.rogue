@@ -1,6 +1,6 @@
 module F2
 
-class ScannerRogueGen : RogueCodeWriter
+class ScannerRogueGen : RogueSourceWriter
   METHODS
     method init_object
       class_name = "Scanner"

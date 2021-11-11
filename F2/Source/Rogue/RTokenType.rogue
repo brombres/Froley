@@ -1,6 +1,6 @@
 module F2
 
-class TokenTypeRogueGen : RogueCodeWriter
+class TokenTypeRogueGen : RogueSourceWriter
   METHODS
     method init_object
       class_name = "TokenType"

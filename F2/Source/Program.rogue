@@ -22,6 +22,10 @@ class Program
       init( Parser().[open(froley_file)].parse("program") )
 
     method init( nodes )
+      type("Cmd")
+      type("CmdList")
+      type("Binary").[ add_property("left","Cmd"), add_property("right","Cmd") ]
+      nodes.dispatch( Collector(this) )
       nodes.dispatch( TokenOrganizer(this) )
       nodes.dispatch( Organizer(this) )
       nodes.dispatch( Resolver(this) )
@@ -32,6 +36,14 @@ class Program
 
     method generate_rogue( folder:String )
       RogueGenerator( this, folder )
+
+    method type( name:String )->CmdNodeInfo
+      local info = cmd_node_info[ name ]
+      if (info) return info
+
+      info = CmdNodeInfo( name, this )
+      cmd_node_info[name] = info
+      return info
 
 endClass
 

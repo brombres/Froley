@@ -196,7 +196,7 @@ SYMBOL_T_CONTENT      t.content
   consume_comment
   if (not hasAnother) halt
 
-  if (nextIs('-') or nextIs('+')) restart scan_standard_token
+  if (nextIs('-')) restart scan_standard_token
 
   markSourcePosition
   mode scan_token_symbol
@@ -378,22 +378,22 @@ SYMBOL_T_CONTENT      t.content
   consume_eols
   while nextIs('-')
     on "-"
-      routine_name_and_base_type
+      routine_name_and_attributes
       scanner_multi_line_statements
-      create Routine(name:String,base_type:String,statements)
+      create Routine(name:String,attributes:String,statements:Statements)
     endOn
     consume_eols
   endWhile
 
   produceList
 
-+ routine_name_and_base_type
++ routine_name_and_attributes
   identifier
-  if (consume(':'))
-    identifier
+  on CHARSET
+    create LiteralString(value=t.content:String)
   else
     createNull
-  endIf
+  endOn
   must_consume_eols
 
 + token_definitions
@@ -861,15 +861,11 @@ SYMBOL_T_CONTENT      t.content
   beginList
 
   consume_eols
-  while (nextIs('-') or nextIs('+'))
+  while (nextIs('-'))
     on "-"
-      routine_name_and_base_type
+      routine_name_and_attributes
       parser_multi_line_statements
-      create Routine(name:String,base_type:String,statements)
-    elseOn "+"
-      routine_name_and_base_type
-      parser_multi_line_statements
-      create Subroutine(name:String,base_type:String,statements)
+      create Routine(name:String,attributes:String,statements:Statements)
     endOn
     consume_eols
   endWhile
@@ -922,7 +918,7 @@ SYMBOL_T_CONTENT      t.content
 
   on "on"
     string_or_id
-    on_parse_list
+    collect_parse_list
     if (consume(EOL))
       parser_multi_line_statements
       parser_multi_line_else_ons
@@ -1024,7 +1020,7 @@ SYMBOL_T_CONTENT      t.content
     savePosition
     on "elseOn"
       string_or_id
-      on_parse_list
+      collect_parse_list
       if (nextIs(EOL)) discardPosition
       else             restorePosition; produceList
       parser_multi_line_statements
@@ -1051,7 +1047,7 @@ SYMBOL_T_CONTENT      t.content
     savePosition
     on "elseOn"
       string_or_id
-      on_parse_list
+      collect_parse_list
       if (nextIs(EOL)) restorePosition; produceList
       else             discardPosition
       consume(':')
@@ -1180,7 +1176,7 @@ SYMBOL_T_CONTENT      t.content
   on STRING_OR_CHARACTER -> LiteralString( value=t.content:String )
   syntaxError "TOKEN_ID or \"token_name\" expected."
 
-+ on_parse_list
++ collect_parse_list
   beginList
     while (hasAnother and not nextIs(EOL) and not nextHasAttribute(structural))
       consume ","
@@ -1203,7 +1199,7 @@ SYMBOL_T_CONTENT      t.content
     beginList
     createList Args
   endIf
-  produce CreateCmd(name=t.content:String,args)
+  produce CreateCmd(name=t.content:String,args:Args)
 
 + parser_expression
 

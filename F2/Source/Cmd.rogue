@@ -326,19 +326,36 @@ class ScannerDef( t, name:String, code:Cmd ) : Element
 endClass
 
 
-class Routine( t, name:String, base_type:String, statements:Cmd ) : Cmd
+class Routine : Cmd
   PROPERTIES
-    ip : Int32
+    name            : String
+    attributes      : String
+    statements      : Statements
+
+    ip              : Int32
+    is_binary       : Logical
+    is_right_binary : Logical
+    is_pre_unary    : Logical
+    is_post_unary   : Logical
+    is_organized    : Logical
+
+    next_routine    : Routine
 
   METHODS
-    method to->String
-      return "Routine($,$,$)"(name,base_type,statements)
-endClass
+    method init( t, name, attributes, statements )
+      if (attributes)
+        which (attributes)
+          case "[binary]":      is_binary = true
+          case "[rightBinary]": is_right_binary = true
+          case "[preUnary]":    is_pre_unary = true
+          case "[postUnary]":   is_post_unary = true
+          others:               throw t.error( "Unrecognized routine attribute $."(attributes) )
+        endWhich
+      endIf
 
-class Subroutine : Routine
-  METHODS
+
     method to->String
-      return "Subroutine($,$,$)"(name,base_type,statements)
+      return "Routine($,$,$)"(name,attributes,statements)
 endClass
 
 
@@ -972,7 +989,7 @@ class MustConsumePattern( t, pattern:Cmd ) : Cmd
       return "MustConsumePattern($)"(pattern)
 endClass
 
-class CreateCmd( t, name:String, args:Cmd ) : Cmd
+class CreateCmd( t, name:String, args:Args ) : Cmd
   PROPERTIES
     is_organized   = false
     arg_count      = 0
@@ -1079,12 +1096,18 @@ class ParserCreate( t, arg:CreateCmd ) : Cmd
 endClass
 
 class On( t, token_type:Cmd, token_types:Args, statements:Statements, else_ons:CmdList, _else_on_others:Statements ) : Cmd
+  PROPERTIES
+    is_organized : Logical
+
   METHODS
     method to->String
       return "On($,$,$,$,$)"(token_type,token_types,statements,else_ons,_else_on_others)
 endClass
 
 class ElseOn( t, token_type:Cmd, token_types:Args, statements:Statements ) : Cmd
+  PROPERTIES
+    is_organized : Logical
+
   METHODS
     method to->String
       return "ElseOn($,$)"(token_types,statements)

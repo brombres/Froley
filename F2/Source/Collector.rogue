@@ -1,0 +1,10 @@
+module F2
+
+class Collector : FroleyVisitor
+  METHODS
+    method visit( cmd:Routine )->Cmd [override]
+      cmd.ip = this_element.routines.count
+      this_element.routines[cmd.name] = cmd
+      return prior.visit( cmd )
+endClass
+

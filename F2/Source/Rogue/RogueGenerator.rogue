@@ -52,7 +52,7 @@ class RogueGenerator : FroleyVisitor
         write   "_execute(ip_"
         write   cmd.routine_def.name
         writeln ")"
-        writeln "_pop_frame"
+        write   "_pop_frame"
       endIf
       return cmd
 
@@ -168,6 +168,8 @@ class RogueGenerator : FroleyVisitor
     method visit( cmd:CreateCmdArg )->Cmd  [override]
       write ","
       if (cmd.arg_value)
+trace cmd.arg_value
+trace cmd.arg_value.type_name
         cmd.arg_value.dispatch( this )
       else
         write "_stack_arg($)"(cmd.stack_offset)
@@ -315,21 +317,24 @@ class RogueGenerator : FroleyVisitor
       write cmd.routine_name
       return cmd
 
-      #{
     method visit( cmd:On )->Cmd  [override]
-      write   "if ("
-      dispatch( cmd.token_types )
+      write   "if (_next_t.type == "
+      dispatch( cmd.token_type )
       writeln ")"
       indent += 2
+      write @|_tokens.add( _cur_t )
+             |_cur_t = _next_t
+             |++_position
+             |_next_t = _peek
       dispatch( cmd.statements )
       indent -= 2
 
-      dispatch( cmd.else_ifs )
+      dispatch( cmd.else_ons )
 
-      if (cmd._else)
+      if (cmd._else_on_others)
         writeln "else"
         indent += 2
-        dispatch( cmd._else )
+        dispatch( cmd._else_on_others )
         indent -= 2
       endIf
 
@@ -337,15 +342,17 @@ class RogueGenerator : FroleyVisitor
       return cmd
 
     method visit( cmd:ElseOn )->Cmd  [override]
-      write   "elseIf ("
-      dispatch( cmd.token_types )
+      write   "elseIf (_next_t.type == "
+      dispatch( cmd.token_type )
       writeln ")"
       indent += 2
+      write @|_tokens.add( _cur_t )
+             |_cur_t = _next_t
+             |++_position
+             |_next_t = _peek
       dispatch( cmd.statements )
       indent -= 2
       return cmd
-
-      }#
 
     method visit( cmd:ScannerCallUserMethod )->Cmd  [override]
       writeln "this.ip = ip"

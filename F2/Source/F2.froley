@@ -916,7 +916,8 @@ SYMBOL_T_CONTENT      t.content
   endOn
 
   on "on"
-    string_id_and_routine_list
+    string_or_id
+    on_parse_list
     if (consume(EOL))
       parser_multi_line_statements
       parser_multi_line_else_ons
@@ -928,7 +929,7 @@ SYMBOL_T_CONTENT      t.content
       parser_single_line_else_ons
       parser_single_line_else_on_others
     endIf
-    produce On( token_types:Args, statements:Statements, else_ons:CmdList, _else_on_others:Statements )
+    produce On( token_type, token_types:Args, statements:Statements, else_ons:CmdList, _else_on_others:Statements )
   endOn
 
   on "while"
@@ -1017,11 +1018,12 @@ SYMBOL_T_CONTENT      t.content
   while (nextIs("elseOn"))
     savePosition
     on "elseOn"
-      string_id_and_routine_list
+      string_or_id
+      on_parse_list
       if (nextIs(EOL)) discardPosition
       else             restorePosition; produceList
       parser_multi_line_statements
-      create ElseOn(token_types:Args,statements:Statements)
+      create ElseOn(token_type,token_types:Args,statements:Statements)
     endOn
   endWhile
 
@@ -1043,12 +1045,13 @@ SYMBOL_T_CONTENT      t.content
   while (nextIs("elseOn"))
     savePosition
     on "elseOn"
-      string_id_and_routine_list
+      string_or_id
+      on_parse_list
       if (nextIs(EOL)) restorePosition; produceList
       else             discardPosition
       consume(':')
       parser_single_line_statements
-      create ElseOn(token_types:Args,statements:Statements)
+      create ElseOn(token_type,token_types:Args,statements:Statements)
     endOn
   endWhile
 
@@ -1170,10 +1173,9 @@ SYMBOL_T_CONTENT      t.content
   on STRING_OR_CHARACTER -> LiteralString( value=t.content:String )
   syntaxError "TOKEN_ID or \"token_name\" expected."
 
-+ string_id_and_routine_list
++ on_parse_list
   beginList
-    string_or_id
-    while (hasAnother and not nextHasAttribute(structural))
+    while (hasAnother and not nextIs(EOL) and not nextHasAttribute(structural))
       consume ","
       string_id_or_routine
     endWhile

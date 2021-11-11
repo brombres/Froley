@@ -63,6 +63,7 @@ class ParserCoreRogueGen( generator, parser_def:ParserDef ) : RogueCodeWriter
          |    method _add( cmd:Cmd, node_arg_count:Int32 )
          |      _cmd_stack.discard_from( _cmd_stack.count - node_arg_count )
          |      _cmd_stack.add( cmd )
+         |      if (_tokens.count) _cur_t = _tokens.remove_last
          |
          |    method _consume( type:TokenType )->Logical
          |      if (_next_t.type != type) return false

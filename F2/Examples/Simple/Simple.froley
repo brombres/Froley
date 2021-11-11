@@ -73,8 +73,8 @@ parser
 
 - identifier
   consume_eols
-  #on IDENTIFIER -> Identifier(name=t:String)
-  syntaxError "TODO!!"
+  on IDENTIFIER -> Identifier(name=content:String)
+  syntaxError "Identifier expected."
 #{
 
   on '\n' -> EOL

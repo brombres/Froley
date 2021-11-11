@@ -91,8 +91,14 @@ class CmdList : Cmd
     method get( index:Int32 )->Cmd
       return list[ index ]
 
+    method insert( cmd:Cmd )
+      list.insert( cmd )
+
     method last->Cmd
       return list.last
+
+    method remove_last->Cmd
+      return list.remove_last
 
     method set( index:Int32, value:Cmd )->this
       list[ index ] = value
@@ -1072,13 +1078,13 @@ class ParserCreate( t, arg:CreateCmd ) : Cmd
       return "ParserCreate($)"(arg)
 endClass
 
-class On( t, token_types:Args, statements:Statements, else_ons:CmdList, _else_on_others:Statements ) : Cmd
+class On( t, token_type:Cmd, token_types:Args, statements:Statements, else_ons:CmdList, _else_on_others:Statements ) : Cmd
   METHODS
     method to->String
-      return "On($,$,$,$)"(token_types,statements,else_ons,_else_on_others)
+      return "On($,$,$,$,$)"(token_type,token_types,statements,else_ons,_else_on_others)
 endClass
 
-class ElseOn( t, token_types:Args, statements:Statements ) : Cmd
+class ElseOn( t, token_type:Cmd, token_types:Args, statements:Statements ) : Cmd
   METHODS
     method to->String
       return "ElseOn($,$)"(token_types,statements)

@@ -22,6 +22,19 @@ class Resolver : FroleyVisitor
       if (cmd.type == to_type) return cmd
       return cmd.cast_to( to_type ).dispatch( this )
 
+    method resolve_token_type( token_type:Cmd, &optional )->TokenDef
+      local name = token_type->String
+      if (token_type instanceOf Identifier)
+        local def = program.tokens_by_name[ name ]
+        if (def) return def
+        if (optional) return null # optional only applies to an Identifier
+        throw token_type.t.error( ''No token is named '$'.''(name) )
+      else
+        local def = program.tokens_by_symbol[ name ]
+        if (def) return def
+        throw token_type.t.error( ''No token has symbol '$'.''(name) )
+      endIf
+
     method resolve_sequence( cmd:SequenceArgs )->Cmd
       cmd.dispatch( this )
 
@@ -192,31 +205,39 @@ class Resolver : FroleyVisitor
       endIf
       return cmd
 
+    method visit( cmd:On )->Cmd [override]
+      cmd.token_type = LiteralTokenType( cmd.token_type.t, resolve_token_type(cmd.token_type) )
+      while (cmd.token_types.count)
+        local ttype = cmd.token_types.remove_last
+        local def = resolve_token_type( ttype )
+        if (def)
+          cmd.statements.insert( MustConsumeToken(ttype.t,def) )
+        else
+          cmd.statements.insert( Access(ttype.t,ttype->String) )
+        endIf
+      endWhile
+      return prior.visit( cmd )
+
+    method visit( cmd:ElseOn )->Cmd [override]
+      cmd.token_type = LiteralTokenType( cmd.token_type.t, resolve_token_type(cmd.token_type) )
+      while (cmd.token_types.count)
+        local ttype = cmd.token_types.remove_last
+        local def = resolve_token_type( ttype )
+        if (def)
+          cmd.statements.insert( MustConsumeToken(ttype.t,def) )
+        else
+          cmd.statements.insert( Access(ttype.t,ttype->String) )
+        endIf
+      endWhile
+      return prior.visit( cmd )
+
     method visit( cmd:ParserConsume )->Cmd [override]
       local t = cmd.t
-      local name = cmd.token_type->String
-      local def : TokenDef
-      if (cmd.token_type instanceOf Identifier)
-        def = program.tokens_by_name[ name ]
-        if (not def) throw t.error( ''No token is named '$'.''(name) )
-      else
-        def = program.tokens_by_symbol[ name ]
-        if (not def) throw t.error( ''No token has symbol '$'.''(name) )
-      endIf
-      return ConsumeToken( t, def ).dispatch( this )
+      return ConsumeToken( t, resolve_token_type(cmd.token_type) ).dispatch( this )
 
     method visit( cmd:ParserMustConsume )->Cmd [override]
       local t = cmd.t
-      local name = cmd.token_type->String
-      local def : TokenDef
-      if (cmd.token_type instanceOf Identifier)
-        def = program.tokens_by_name[ name ]
-        if (not def) throw t.error( ''No token is named '$'.''(name) )
-      else
-        def = program.tokens_by_symbol[ name ]
-        if (not def) throw t.error( ''No token has symbol '$'.''(name) )
-      endIf
-      return MustConsumeToken( t, def ).dispatch( this )
+      return MustConsumeToken( t, resolve_token_type(cmd.token_type) ).dispatch( this )
 
     method visit( cmd:ScannerNextIs )->Cmd [override]
       local seq = resolve_sequence( cmd.args )

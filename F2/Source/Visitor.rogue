@@ -453,8 +453,9 @@ class Visitor
       return cmd
 
     method visit( cmd:On )->Cmd
-      if (cmd.token_types) cmd.token_types = cmd.token_types.dispatch( this ) as Args
-      if (cmd.statements) cmd.statements = cmd.statements.dispatch( this ) as Statements
+      cmd.token_type .= dispatch( this )
+      cmd.token_types = cmd.token_types.dispatch( this ) as Args
+      cmd.statements = cmd.statements.dispatch( this ) as Statements
 
       if (cmd.else_ons) cmd.else_ons = cmd.else_ons.dispatch( this ) as CmdList
 
@@ -463,8 +464,9 @@ class Visitor
       return cmd
 
     method visit( cmd:ElseOn )->Cmd
-      if (cmd.token_types) cmd.token_types = cmd.token_types.dispatch( this ) as Args
-      if (cmd.statements) cmd.statements = cmd.statements.dispatch( this ) as Statements
+      cmd.token_type .= dispatch( this )
+      cmd.token_types = cmd.token_types.dispatch( this ) as Args
+      cmd.statements = cmd.statements.dispatch( this ) as Statements
 
       return cmd
 endClass

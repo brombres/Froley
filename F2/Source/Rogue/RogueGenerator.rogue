@@ -168,8 +168,6 @@ class RogueGenerator : FroleyVisitor
     method visit( cmd:CreateCmdArg )->Cmd  [override]
       write ","
       if (cmd.arg_value)
-trace cmd.arg_value
-trace cmd.arg_value.type_name
         cmd.arg_value.dispatch( this )
       else
         write "_stack_arg($)"(cmd.stack_offset)
@@ -322,10 +320,10 @@ trace cmd.arg_value.type_name
       dispatch( cmd.token_type )
       writeln ")"
       indent += 2
-      write @|_tokens.add( _cur_t )
-             |_cur_t = _next_t
-             |++_position
-             |_next_t = _peek
+      writeln @|_tokens.add( _cur_t )
+               |_cur_t = _next_t
+               |++_position
+               |_next_t = _peek
       dispatch( cmd.statements )
       indent -= 2
 
@@ -346,10 +344,10 @@ trace cmd.arg_value.type_name
       dispatch( cmd.token_type )
       writeln ")"
       indent += 2
-      write @|_tokens.add( _cur_t )
-             |_cur_t = _next_t
-             |++_position
-             |_next_t = _peek
+      writeln @|_tokens.add( _cur_t )
+               |_cur_t = _next_t
+               |++_position
+               |_next_t = _peek
       dispatch( cmd.statements )
       indent -= 2
       return cmd
@@ -453,8 +451,8 @@ trace cmd.arg_value.type_name
       return cmd
 
     method visit( cmd:Return )->Cmd  [override]
-      # TODO: save return value first, if needed
-      write   "return true"
+      if (is_scanner) write   "return true"
+      else            write   "return"
       return cmd
 
     method visit( cmd:Routine )->Cmd  [override]

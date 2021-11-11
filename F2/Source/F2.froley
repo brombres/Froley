@@ -754,7 +754,7 @@ SYMBOL_T_CONTENT      t.content
   sequence_item
   while (hasAnother)
     if (consume('*'))
-      create ZeroOrMore(pattern)
+      create ZeroOrMore(pattern:Cmd)
     elseIf (consume('+'))
       create OneOrMore(pattern)
     elseIf (consume('?'))
@@ -775,13 +775,7 @@ SYMBOL_T_CONTENT      t.content
   on '{' pattern_sequence '}': return
   on CHARSET
     create CharSet(characters=t.content:String)
-    on '*'
-      produce ZeroOrMore(pattern)
-    elseOn '+'
-      produce OneOrMore(pattern)
-    elseOn '?'
-      produce OptionalPattern(pattern)
-    endOn
+    repeat_count
     return  # just the CharSet
   endOn
   on STRING              -> LiteralString( value=t.content:String )
@@ -828,29 +822,40 @@ SYMBOL_T_CONTENT      t.content
   on '{' pattern_sequence '}':   return
   on "buffer"                    -> ReadBuffer
   on "call", identifier          -> ScannerCallUserMethod(fn_name:String)
-  on "consume", sequence_args     -> ScannerConsume(args:SequenceArgs)
+  on "consume", sequence_args    -> ScannerConsume(args:SequenceArgs)
   on "false"                     -> LiteralLogical(value="false":Logical)
   on "hasAnother"                -> ScannerHasAnother
-  on "nextIs", sequence_args      -> ScannerNextIs(args:SequenceArgs)
+  on "nextIs", sequence_args     -> ScannerNextIs(args:SequenceArgs)
   on "read"                      -> ScannerRead
-  on "scan", sequence_args        -> Scan(args:SequenceArgs)
+  on "scan", sequence_args       -> Scan(args:SequenceArgs)
   on "true"                      -> LiteralLogical(value="true":Logical)
   on CHARSET
     create CharSet(characters=t.content:String)
-    on '*'
-      produce ZeroOrMore(pattern)
-    elseOn '+'
-      produce OneOrMore(pattern)
-    elseOn '?'
-      produce OptionalPattern(pattern)
-    endOn
-    return  # just the CharSet
+    repeat_count
+    return
   endOn
   on IDENTIFIER          -> Access( name=t.content:String )
   on INTEGER             -> LiteralInteger( value=t.content:Int32 )
-  on STRING              -> LiteralString( value=t.content:String )
-  on STRING_OR_CHARACTER -> LiteralStringOrCharacter( value=t.content:String )
+  on STRING
+    create LiteralString( value=t.content:String )
+    repeat_count
+    return
+  elseOn STRING_OR_CHARACTER
+    create LiteralStringOrCharacter( value=t.content:String )
+    repeat_count
+    return
+  endOn
   syntaxError
+
++ repeat_count
+  on "*"
+    produce ZeroOrMore(pattern:Cmd)
+  elseOn "+"
+    produce OneOrMore(pattern)
+  elseOn "?"
+    produce OptionalPattern(pattern)
+  endOn
+  # else just the CharSet
 
 + parser_routines
   beginList
@@ -1106,11 +1111,13 @@ SYMBOL_T_CONTENT      t.content
     produce Restart(start_ip:String)
   endOn
   on "restorePosition" -> RestorePosition
+}#
   on "return"
     if (nextIs(EOL)) createNull
     else             parser_expression
-    produce Return(value)
+    produce          Return(value)
   endOn
+#{
   on "savePosition"    -> SavePosition
 }#
   on "syntaxError"
@@ -1237,27 +1244,13 @@ SYMBOL_T_CONTENT      t.content
   on "call", identifier          -> ParserCallUserMethod(fn_name:String)
 }#
   on "consume", string_or_id_arg -> ParserConsume(token_type)
-#{
   on "false"                     -> LiteralLogical(value="false":Logical)
+#{
   on "hasAnother"                -> ParserHasAnother
   on "nextIs", parser_args       -> ParserNextIs(args:ParserArgs)
 }#
   on "read"                      -> ParserRead
-#{
-  on "scan", parser_args         -> Scan(args:ParserArgs)
   on "true"                      -> LiteralLogical(value="true":Logical)
-  on CHARSET
-    create CharSet(characters=t.content:String)
-    on '*'
-      produce ZeroOrMore(pattern)
-    elseOn '+'
-      produce OneOrMore(pattern)
-    elseOn '?'
-      produce OptionalPattern(pattern)
-    endOn
-    return  # just the CharSet
-  endOn
-}#
   on IDENTIFIER          -> Access( name=t.content:String )
   on INTEGER             -> LiteralInteger( value=t.content:Int32 )
   on STRING              -> LiteralString( value=t.content:String )

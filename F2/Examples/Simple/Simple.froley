@@ -1,13 +1,12 @@
+#-------------------------------------------------------------------------------
 tokens
-EOL(end of line)
+#-------------------------------------------------------------------------------
 IDENTIFIER identifier [content]
 NUMBER     number     [content]
-STRING     string     [content]
 
-tokens Keywords
-KEYWORD_PRINTLN println
-
+#-------------------------------------------------------------------------------
 tokens Symbols
+#-------------------------------------------------------------------------------
 SYMBOL_CARET       ^
 SYMBOL_CLOSE_PAREN )
 SYMBOL_EQUALS      =
@@ -17,37 +16,27 @@ SYMBOL_PLUS        +
 SYMBOL_SLASH       /
 SYMBOL_STAR        *
 
+
+#-------------------------------------------------------------------------------
 scanner
-
+#-------------------------------------------------------------------------------
 - main
-  consume [ \r\t]*    # whitespace
-  consume "#" [^\n]*  # single-line comment
+  consume [ \n\r\t]*  # whitespace
 
-  if (not hasAnother) println; halt
+  # single-line comment
+  if consume("#" [^\n]*) restart
+
+  if (not hasAnother) halt
   markPosition
 
   match
-    produceAny Keywords
     produceAny Symbols
-    case '\n' -> EOL
-    case '"':    scan_string
   endMatch
 
-  if (scan( [_a-zA-Z][_a-zA-Z0-9]* )) -> IDENTIFIER
+  if (scan([_a-zA-Z][_a-zA-Z0-9]*)) produce IDENTIFIER
   scan_number
 
-  if (hasAnother) print read; restart
-  halt
-
-- scan_string
-  # already read initial double quote
-  while (hasAnother and not nextIs('\n'))
-    if consume('"') produce STRING
-    ch = read
-    if (ch == '\\' and hasAnother) ch = read
-    collect ch
-  endWhile
-  if nextIs('\n') syntaxError "Unterminated string."
+  syntaxError
 
 - scan_number
   if (not hasAnother) return
@@ -65,62 +54,17 @@ scanner
 
 - scan_integer
   while hasAnother
-    if (not scan([0-9]) and not consume([_]*)) return
+    if (not scan([0-9]) and not consume('_'*)) return
   endWhile
   return
 
+#-------------------------------------------------------------------------------
 parser
-
-- identifier
-  consume_eols
-  on IDENTIFIER -> Identifier(name=content:String)
-  syntaxError "Identifier expected."
-#{
-
-  on '\n' -> EOL
-  on [_A-Za-z] [_A-Za-z0-9]* -> IDENTIFIER
-
-  if nextIs [0-9]
-    scan_integer_discarding_underscores
-    if (scan('.')) scan_integer_discarding_underscores
-    produce NUMBER
-  elseIf (nextIs '.' and peek(1) == [0-9])
-    scan '.'
-    scan_integer_discarding_underscores
-    produce NUMBER
-  endIf
-
-  which input
-    produceAny Symbols
-  endWhich
-
-  syntaxError
-
-- scan_integer_discarding_underscores
-  while hasAnother
-    if (not scan [0-9]) return
-    consumeAny '_'
-  endWhile
-}#
-
-- consume_eols
-  while (consume(EOL)) noAction
+#-------------------------------------------------------------------------------
+- expression
+  term
 
 #{
-- scan_integer
-  while (ch is '0'..'9' or ch == '_')
-    ch = read
-    if (ch != '_') collect ch
-    if (not hasAnother) return
-    ch = peek
-  endWhile
-  return
-}#
-
-#{
-[parser]
-+ expression
-
 - assign : RightBinary
   on "=" -> Assign
 
@@ -137,11 +81,11 @@ parser
 
 - pre_unary : PreUnary
   on "-" -> Negate
+}#
 
 - term
-  on IDENTIFIER -> Access( name=t.content:String )
-  on INTEGER    -> LiteralInt32( value=t.content:String )
   on '(' expression ')': return
+  on IDENTIFIER -> Access(name=content)
+  on NUMBER     -> Number(value=content)
   syntaxError
-}#
 

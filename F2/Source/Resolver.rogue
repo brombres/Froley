@@ -209,7 +209,7 @@ class Resolver : FroleyVisitor
       cmd.token_type = LiteralTokenType( cmd.token_type.t, resolve_token_type(cmd.token_type) )
       while (cmd.token_types.count)
         local ttype = cmd.token_types.remove_last
-        local def = resolve_token_type( ttype )
+        local def = resolve_token_type( ttype, &optional )
         if (def)
           cmd.statements.insert( MustConsumeToken(ttype.t,def) )
         else
@@ -222,7 +222,7 @@ class Resolver : FroleyVisitor
       cmd.token_type = LiteralTokenType( cmd.token_type.t, resolve_token_type(cmd.token_type) )
       while (cmd.token_types.count)
         local ttype = cmd.token_types.remove_last
-        local def = resolve_token_type( ttype )
+        local def = resolve_token_type( ttype, &optional )
         if (def)
           cmd.statements.insert( MustConsumeToken(ttype.t,def) )
         else

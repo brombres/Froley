@@ -451,4 +451,20 @@ class Visitor
     method visit( cmd:ParserCreate )->Cmd
       if (cmd.arg) cmd.arg = cmd.arg.dispatch( this ) as CreateCmd
       return cmd
+
+    method visit( cmd:On )->Cmd
+      if (cmd.token_types) cmd.token_types = cmd.token_types.dispatch( this ) as Args
+      if (cmd.statements) cmd.statements = cmd.statements.dispatch( this ) as Statements
+
+      if (cmd.else_ons) cmd.else_ons = cmd.else_ons.dispatch( this ) as CmdList
+
+      if (cmd._else_on_others) cmd._else_on_others = cmd._else_on_others.dispatch( this ) as Statements
+
+      return cmd
+
+    method visit( cmd:ElseOn )->Cmd
+      if (cmd.token_types) cmd.token_types = cmd.token_types.dispatch( this ) as Args
+      if (cmd.statements) cmd.statements = cmd.statements.dispatch( this ) as Statements
+
+      return cmd
 endClass

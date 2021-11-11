@@ -49,9 +49,10 @@ class RogueGenerator : FroleyVisitor
         write cmd.routine_def.name
         write ")) return false"
       else
-        write "_execute(ip_"
-        write cmd.routine_def.name
-        write ")"
+        write   "_execute(ip_"
+        write   cmd.routine_def.name
+        writeln ")"
+        writeln "_pop_frame"
       endIf
       return cmd
 
@@ -313,6 +314,38 @@ class RogueGenerator : FroleyVisitor
       write "start_ip = ip_"
       write cmd.routine_name
       return cmd
+
+      #{
+    method visit( cmd:On )->Cmd  [override]
+      write   "if ("
+      dispatch( cmd.token_types )
+      writeln ")"
+      indent += 2
+      dispatch( cmd.statements )
+      indent -= 2
+
+      dispatch( cmd.else_ifs )
+
+      if (cmd._else)
+        writeln "else"
+        indent += 2
+        dispatch( cmd._else )
+        indent -= 2
+      endIf
+
+      write   "endIf"
+      return cmd
+
+    method visit( cmd:ElseOn )->Cmd  [override]
+      write   "elseIf ("
+      dispatch( cmd.token_types )
+      writeln ")"
+      indent += 2
+      dispatch( cmd.statements )
+      indent -= 2
+      return cmd
+
+      }#
 
     method visit( cmd:ScannerCallUserMethod )->Cmd  [override]
       writeln "this.ip = ip"

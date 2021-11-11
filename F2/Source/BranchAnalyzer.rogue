@@ -29,6 +29,25 @@ class BranchAnalyzer : FroleyVisitor [singleton]
 
       return cmd
 
+    method visit( cmd:On )->Cmd  [override]
+      if (not cmd._else_on_others) return cmd
+
+      cmd.statements.dispatch( this )
+      if (not _all_paths_return) return cmd
+
+      if (cmd.else_ons)
+        forEach (else_on in cmd.else_ons)
+          _all_paths_return = false
+            else_on.dispatch( this )
+          if (not _all_paths_return) return cmd
+        endForEach
+      endIf
+
+      _all_paths_return = false
+      cmd._else_on_others.dispatch( this )
+
+      return cmd
+
     method visit( cmd:ParserProduce )->Cmd  [override]
       _all_paths_return = true
       return cmd

@@ -1071,3 +1071,16 @@ class ParserCreate( t, arg:CreateCmd ) : Cmd
     method to->String
       return "ParserCreate($)"(arg)
 endClass
+
+class On( t, token_types:Args, statements:Statements, else_ons:CmdList, _else_on_others:Statements ) : Cmd
+  METHODS
+    method to->String
+      return "On($,$,$,$)"(token_types,statements,else_ons,_else_on_others)
+endClass
+
+class ElseOn( t, token_types:Args, statements:Statements ) : Cmd
+  METHODS
+    method to->String
+      return "ElseOn($,$)"(token_types,statements)
+endClass
+

@@ -175,10 +175,21 @@ class RogueGenerator : FroleyVisitor
 
     method visit( cmd:CreateCmdArg )->Cmd  [override]
       write ","
+      local arg_type = program.type( cmd.arg_type )
       if (cmd.arg_value)
-        cmd.arg_value.dispatch( this )
+        if (arg_type.is_built_in and arg_type.name != "String")
+          write "_string_to_$(" (arg_type.name)
+          cmd.arg_value.dispatch( this )
+          write ")"
+        else
+          cmd.arg_value.dispatch( this )
+        endIf
       else
-        write "_stack_arg($)"(cmd.stack_offset)
+        if (arg_type.is_built_in)
+          write "_$_arg($)"(arg_type.name_lc,cmd.stack_offset)
+        else
+          write "_node_arg($)"(cmd.stack_offset)
+        endIf
       endIf
       return cmd
 

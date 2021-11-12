@@ -109,6 +109,6 @@ parser
 - term
   on '(' expression ')': return
   on IDENTIFIER -> Access(name=content)
-  on NUMBER     -> Number(value=content)
+  on NUMBER     -> Number(value=content:Real)
   syntaxError
 

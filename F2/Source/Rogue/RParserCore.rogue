@@ -49,6 +49,8 @@ class ParserCoreRogueGen( generator, parser_def:ParserDef ) : RogueSourceWriter
               writeln "Character"
             case Type.INTEGER
               writeln "Int32"
+            case Type.REAL
+              writeln "Real64"
             case Type.STRING
               writeln "String"
             others
@@ -174,10 +176,48 @@ class ParserCoreRogueGen( generator, parser_def:ParserDef ) : RogueSourceWriter
          |    method _save_position
          |      _saved_positions.add( ParserPosition(_position,_cmd_stack.count,_cur_t) )
          |
-         |    method _stack_arg( relative:Int32 )->Cmd
+         |    method _node_arg( relative:Int32 )->Cmd
          |      local i = _cmd_stack.count + relative
          |      if (i < 0) throw _peek.error( "[INTERNAL] Not enough nodes on stack to create new Cmd." )
          |      return _cmd_stack[i]
+         |
+         |    method _logical_arg( relative:Int32 )->Logical
+         |      local node = _node_arg( relative )
+         |      if (node is null) return false
+         |      return node->Logical
+         |
+         |    method _character_arg( relative:Int32 )->Character
+         |      local node = _node_arg( relative )
+         |      if (node is null) return 0
+         |      return node->Character
+         |
+         |    method _integer_arg( relative:Int32 )->Int32
+         |      local node = _node_arg( relative )
+         |      if (node is null) return 0
+         |      return node->Int32
+         |
+         |    method _real_arg( relative:Int32 )->Real64
+         |      local node = _node_arg( relative )
+         |      if (node is null) return 0
+         |      return node->Real64
+         |
+         |    method _string_arg( relative:Int32 )->String
+         |      local node = _node_arg( relative )
+         |      if (node is null) return null
+         |      return node->String
+         |
+         |    method _string_to_Logical( st:String )->Logical
+         |      return st->Logical
+         |
+         |    method _string_to_Character( st:String )->Character
+         |      if (st.count == 0) return Character(0)
+         |      return st[0]
+         |
+         |    method _string_to_Integer( st:String )->Int32
+         |      return st->Int32
+         |
+         |    method _string_to_Real( st:String )->Real64
+         |      return st->Real64
          |
          |    method _throw_syntax_error( message=null:String, expected=null:TokenType? )
          |      if (message is null)

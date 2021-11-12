@@ -24,7 +24,7 @@ class CmdRogueGen : RogueSourceWriter
     method update_content( content:String )->String
       if (not String.exists(content))
         content =  "# Generated and updated by Froley. Custom changes will not be overwritten; customize as desired.\n"
-        content += "module $\n"(generator.program.project_name)
+        content += "module $\n"(program.project_name)
       endIf
 
       scan_node_types( content )
@@ -49,6 +49,21 @@ class CmdRogueGen : RogueSourceWriter
              |
              |    method get( index:Int32 )->Cmd
              |      throw UnsupportedOperationError()
+             |
+             |    method to->Character
+             |      return Character(this->Int32)
+             |
+             |    method to->Int32
+             |      return 0
+             |
+             |    method to->Logical
+             |      return (this->Int32)?
+             |
+             |    method to->Real64
+             |      return this->Int32
+             |
+             |    method to->String
+             |      return description
              |endClass
         endIf
 
@@ -97,18 +112,20 @@ class CmdRogueGen : RogueSourceWriter
              |endClass
         endIf
 
-        forEach (node_info in generator.program.node_type)
-          if (not node_types.contains(node_info.name))
-            node_types.add( node_info.name )
+        forEach (node_type in program.node_type)
+          if (node_type.is_built_in) nextIteration
+
+          if (not node_types.contains(node_type.name))
+            node_types.add( node_type.name )
 
             builder.println
-            builder.print( "class " ).print( node_info.name )
-            if (node_info.base_type)
-              builder.print( " : " ).print( node_info.base_type.name )
+            builder.print( "class " ).print( node_type.name )
+            if (node_type.base_type)
+              builder.print( " : " ).print( node_type.base_type.name )
             endIf
             builder.println
 
-            local properties = node_info.extended_properties
+            local properties = node_type.extended_properties
             if (properties.count)
               builder.println "  PROPERTIES"
               local w = 0
@@ -117,14 +134,14 @@ class CmdRogueGen : RogueSourceWriter
               forEach (p in properties)
                 builder.print( "    " ).print( p.name )
                 loop (w - p.name.count) builder.print ' '
-                builder.print( " : " ).println( p.type )
+                builder.print( " : " ).println( rogue_name(p.type) )
               endForEach
               builder.println
             endIf
 
             builder.println "  METHODS"
             if (properties.count)  # else we inherit the base class constructors
-              forEach (constructor in node_info.constructors)
+              forEach (constructor in node_type.constructors)
                 builder.print( "    method init( t" )
                 if (constructor.args)
                   local args = constructor.args as Args
@@ -140,12 +157,12 @@ class CmdRogueGen : RogueSourceWriter
             endIf
 
             builder.println "    method description->String"
-            if (node_info.is_list)
-              builder.print  ''      return "$" + list'' (node_info.name)
+            if (node_type.is_list)
+              builder.print  ''      return "$" + list'' (node_type.name)
             else
-              properties = node_info.properties
+              properties = node_type.properties
               if (properties.count)
-                builder.print  ''      return "$('' (node_info.name)
+                builder.print  ''      return "$('' (node_type.name)
                 forEach (i of properties)
                   if (i > 0) builder.print ','
                   builder.print '$'
@@ -157,7 +174,7 @@ class CmdRogueGen : RogueSourceWriter
                 endForEach
                 builder.println ')'
               else
-                builder.print  ''      return "$"'' (node_info.name)
+                builder.print  ''      return "$"'' (node_type.name)
               endIf
             endIf
             builder.println

@@ -9,6 +9,7 @@ class Cmd( t:Token )
         case Type.LOGICAL:    return CastToLogical( t, this )
         case Type.CHARACTER:  return CastToCharacter( t, this )
         case Type.INTEGER:    return CastToInteger( t, this )
+        case Type.REAL:       return CastToReal( t, this )
         case Type.TOKEN_TYPE: return CastToTokenType( t, this )
         case Type.STRING:     return CastToString( t, this )
         case Type.PATTERN:    return CastToPattern( t, this )
@@ -128,6 +129,7 @@ class LiteralInteger( t, value:Int32 ) : Literal
       which (to_type)
         case Type.LOGICAL:    return LiteralLogical( t, value->Logical )
         case Type.CHARACTER:  return LiteralCharacter( t, value->Character )
+        case Type.REAL:       return LiteralReal( t, value->Real64 )
         case Type.STRING:     return LiteralString( t, value->String )
         others
           return prior.cast_to( to_type )
@@ -154,6 +156,7 @@ class LiteralLogical( t, value:Logical ) : Literal
       which (to_type)
         case Type.CHARACTER:  return LiteralCharacter( t, which{value:'1'||'0'} )
         case Type.INTEGER:    return LiteralInteger( t, which{value:1||0} )
+        case Type.REAL:       return LiteralReal( t, which{value:1||0} )
         case Type.STRING:     return LiteralString( t, which{value:"true"||"false"} )
         others
           return prior.cast_to( to_type )
@@ -175,6 +178,35 @@ class LiteralLogical( t, value:Logical ) : Literal
       return Type.LOGICAL
 endClass
 
+class LiteralReal( t, value:Real64 ) : Literal
+  METHODS
+    method init( t, string_value:String )
+      value = string_value->Real64
+
+    method cast_to( to_type:Type )->Cmd
+      if (to_type == Type.REAL) return this
+      which (to_type)
+        case Type.LOGICAL:    return LiteralLogical( t, value->Logical )
+        case Type.CHARACTER:  return LiteralCharacter( t, value->Character )
+        case Type.INTEGER:    return LiteralInteger( t, value->Int32 )
+        case Type.STRING:     return LiteralString( t, value->String )
+        others
+          return prior.cast_to( to_type )
+      endWhich
+
+    method to->Int32
+      return value
+
+    method to->Real64
+      return value
+
+    method to->String
+      return value->String
+
+    method type->Type
+      return Type.REAL
+endClass
+
 class LiteralString( t, value:String ) : Literal
   METHODS
     method cast_to( to_type:Type )->Cmd
@@ -184,6 +216,7 @@ class LiteralString( t, value:String ) : Literal
         case Type.LOGICAL:    return LiteralLogical( t, value->Logical )
         case Type.CHARACTER:  return LiteralCharacter( t, value[0] )
         case Type.INTEGER:    return LiteralInteger( t, value->Int32 )
+        case Type.REAL:       return LiteralReal( t, value->Real64 )
         others
           return prior.cast_to( to_type )
       endWhich
@@ -209,6 +242,7 @@ class LiteralCharacter( t, value:Character ) : Literal
       which (to_type)
         case Type.LOGICAL:    return LiteralLogical( t, value->Logical )
         case Type.INTEGER:    return LiteralInteger( t, value->Int32 )
+        case Type.REAL:       return LiteralReal( t, value->Real64 )
         case Type.STRING:     return LiteralString( t, value->String )
         others
           return prior.cast_to( to_type )
@@ -606,6 +640,15 @@ class CastToInteger : Unary
 
     method type->Type
       return Type.INTEGER
+endClass
+
+class CastToReal : Unary
+  METHODS
+    method to->String [override]
+      return "$->Real64"(operand->String)
+
+    method type->Type
+      return Type.REAL
 endClass
 
 class CastToTokenType : Unary

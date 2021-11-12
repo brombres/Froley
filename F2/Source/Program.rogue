@@ -26,6 +26,13 @@ class Program
       type("CmdList")
       type("Unary").[ add_property("operand","Cmd") ]
       type("Binary").[ add_property("left","Cmd"), add_property("right","Cmd") ]
+
+      type("Logical").is_built_in = true
+      type("Character").is_built_in = true
+      type("Integer").is_built_in = true
+      type("Real").is_built_in = true
+      type("String").is_built_in = true
+
       nodes.dispatch( Collector(this) )
       nodes.dispatch( TokenOrganizer(this) )
       nodes.dispatch( Organizer(this) )

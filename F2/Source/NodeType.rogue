@@ -3,9 +3,11 @@ module F2
 class NodeType
   PROPERTIES
     name         : String
+    name_lc      : String
     program      : Program
     base_type    : NodeType
     is_list      : Logical
+    is_built_in  : Logical   # String etc.
     constructors = StringTable<<CreateCmd>>()
     properties   : NameAndType[]
 
@@ -29,6 +31,10 @@ class NodeType
       forEach (p in properties) types[p.name] = p
       forEach (p in base_type.properties) types.remove(p.name)
       return types.values.to_list
+
+    method name_lc->String
+      if (not @name_lc) @name_lc = name.to_lowercase
+      return @name_lc
 
     method properties->NameAndType[]
       if (@properties) return @properties

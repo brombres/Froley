@@ -75,6 +75,17 @@ class CmdRogueGen : RogueSourceWriter
              |endClass
         endIf
 
+        if (not node_types.contains("Unary"))
+          node_types.add( "Unary" )
+          builder.println ...
+            @|
+             |class Unary( operand:Cmd ) : Cmd
+             |  METHODS
+             |    method description->String
+             |      return "Unary($)"(operand)
+             |endClass
+        endIf
+
         if (not node_types.contains("Binary"))
           node_types.add( "Binary" )
           builder.println ...
@@ -86,7 +97,7 @@ class CmdRogueGen : RogueSourceWriter
              |endClass
         endIf
 
-        forEach (node_info in generator.program.cmd_node_info)
+        forEach (node_info in generator.program.node_type)
           if (not node_types.contains(node_info.name))
             node_types.add( node_info.name )
 

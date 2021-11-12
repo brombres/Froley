@@ -6,7 +6,7 @@
 $requireRogue "1.9.4"
 
 $include "BranchAnalyzer.rogue"
-$include "CmdNodeInfo.rogue"
+$include "NodeType.rogue"
 $include "Collector.rogue"
 $include "FroleyVisitor.rogue"
 $include "Organizer.rogue"

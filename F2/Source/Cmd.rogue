@@ -336,8 +336,8 @@ class Routine : Cmd
     statements       : Statements
 
     ip               : Int32
+    is_primer        : Logical
     is_binary        : Logical
-    is_binary_primer : Logical
     is_right_binary  : Logical
     is_pre_unary     : Logical
     is_post_unary    : Logical
@@ -350,7 +350,7 @@ class Routine : Cmd
       if (attributes)
         which (attributes)
           case "[binary]":       is_binary = true
-          case "[binaryPrimer]": is_binary_primer = true
+          case "[primer]":       is_primer = true
           case "[rightBinary]":  is_right_binary = true
           case "[preUnary]":     is_pre_unary = true
           case "[postUnary]":    is_post_unary = true

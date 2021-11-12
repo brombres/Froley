@@ -7,6 +7,7 @@ NUMBER     number     [content]
 #-------------------------------------------------------------------------------
 tokens Symbols
 #-------------------------------------------------------------------------------
+SYMBOL_BANG        !
 SYMBOL_CARET       ^
 SYMBOL_CLOSE_PAREN )
 SYMBOL_EQUALS      =
@@ -71,9 +72,11 @@ parser
   on "+" -> Add
   on "-" -> Subtract
 
-#- assign
-#  term
-#  on "=" assign: produce Assign(left,right)
+- factorial [postUnary]
+  on "!" -> Factorial(operand)
+
+- negate [preUnary]
+  on "-" -> Negate(operand)
 
 #{
 - add_subtract : Binary

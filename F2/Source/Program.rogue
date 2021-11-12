@@ -14,7 +14,7 @@ class Program
     scan_patterns         = StringTable<<String>>()
     scanner_user_calls    = Set<<String>>()
     parser_user_calls     = Set<<String>>()
-    cmd_node_info         = StringTable<<CmdNodeInfo>>()
+    node_type         = StringTable<<NodeType>>()
 
   METHODS
     method init( froley_file:File )
@@ -24,6 +24,7 @@ class Program
     method init( nodes )
       type("Cmd")
       type("CmdList")
+      type("Unary").[ add_property("operand","Cmd") ]
       type("Binary").[ add_property("left","Cmd"), add_property("right","Cmd") ]
       nodes.dispatch( Collector(this) )
       nodes.dispatch( TokenOrganizer(this) )
@@ -37,12 +38,12 @@ class Program
     method generate_rogue( folder:String )
       RogueGenerator( this, folder )
 
-    method type( name:String )->CmdNodeInfo
-      local info = cmd_node_info[ name ]
+    method type( name:String )->NodeType
+      local info = node_type[ name ]
       if (info) return info
 
-      info = CmdNodeInfo( name, this )
-      cmd_node_info[name] = info
+      info = NodeType( name, this )
+      node_type[name] = info
       return info
 
 endClass

@@ -1,10 +1,10 @@
 module F2
 
-class CmdNodeInfo
+class NodeType
   PROPERTIES
     name         : String
     program      : Program
-    base_type    : CmdNodeInfo
+    base_type    : NodeType
     constructors = StringTable<<CreateCmd>>()
     properties   : NameAndType[]
 
@@ -73,10 +73,10 @@ class CmdNodeInfo
     method set_base_type( @base_type )
 
     method set_base_type( base_type_name:String )
-      local info = program.cmd_node_info[ base_type_name ]
+      local info = program.node_type[ base_type_name ]
       if (not info)
-        info = CmdNodeInfo( base_type_name, program )
-        program.cmd_node_info[ base_type_name ] = info
+        info = NodeType( base_type_name, program )
+        program.node_type[ base_type_name ] = info
       endIf
       @base_type = info
 

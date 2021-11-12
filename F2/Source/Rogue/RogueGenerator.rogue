@@ -144,6 +144,10 @@ class RogueGenerator : FroleyVisitor
       write ")"
       return cmd
 
+    method visit( cmd:ConsumeEOLs )->Cmd  [override]
+      write "_consume_eols"
+      return cmd
+
     method visit( cmd:ConsumePattern )->Cmd  [override]
       dispatch( cmd.pattern )
       write ".scan(_scanner)"

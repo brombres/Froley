@@ -13,6 +13,9 @@ class Resolver : FroleyVisitor
       if (not program.tokens_by_name.contains("EOI"))
         program.tokens_by_name//EOI = TokenDef( t, "EOI", "end of input", null_attr )
       endIf
+      if (not program.tokens_by_name.contains("EOL"))
+        program.tokens_by_name//EOL = TokenDef( t, "EOL", "end of line", null_attr )
+      endIf
       if (not program.tokens_by_name.contains("SYNTAX_ERROR"))
         program.tokens_by_name//SYNTAX_ERROR = TokenDef( t, "SYNTAX_ERROR", "compile error", null_attr )
       endIf
@@ -213,7 +216,12 @@ class Resolver : FroleyVisitor
         if (def)
           cmd.statements.insert( MustConsumeToken(ttype.t,def) )
         else
-          cmd.statements.insert( Access(ttype.t,ttype->String) )
+          local name = ttype->String
+          if (name == "_consume_eols()")
+            cmd.statements.insert( ConsumeEOLs(ttype.t) )
+          else
+            cmd.statements.insert( Access(ttype.t,ttype->String) )
+          endIf
         endIf
       endWhile
       return prior.visit( cmd )

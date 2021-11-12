@@ -1117,3 +1117,10 @@ class ElseOn( t, token_type:Cmd, token_types:Args, statements:Statements ) : Cmd
       return "ElseOn($,$)"(token_types,statements)
 endClass
 
+
+
+class ConsumeEOLs : Cmd
+  METHODS
+    method to->String
+      return "ConsumeEOLs"
+endClass

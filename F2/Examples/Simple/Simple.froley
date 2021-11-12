@@ -1,8 +1,14 @@
 #-------------------------------------------------------------------------------
 tokens
 #-------------------------------------------------------------------------------
+EOL(end of line)
 IDENTIFIER identifier [content]
 NUMBER     number     [content]
+
+#-------------------------------------------------------------------------------
+tokens Keywords
+#-------------------------------------------------------------------------------
+KEYWORD_PRINTLN println
 
 #-------------------------------------------------------------------------------
 tokens Symbols
@@ -22,7 +28,8 @@ SYMBOL_STAR        *
 scanner
 #-------------------------------------------------------------------------------
 - main
-  consume [ \n\r\t]*  # whitespace
+  consume [ \r\t]*  # whitespace
+  if (consume('\n')) produce EOL
 
   # single-line comment
   if consume("#" [^\n]*) restart
@@ -31,6 +38,7 @@ scanner
   markPosition
 
   match
+    produceAny Keywords
     produceAny Symbols
   endMatch
 
@@ -62,6 +70,9 @@ scanner
 #-------------------------------------------------------------------------------
 parser
 #-------------------------------------------------------------------------------
+- statements
+  expression
+
 - expression
   assign
 
@@ -72,27 +83,18 @@ parser
   on "+" -> Add
   on "-" -> Subtract
 
+- multiply_divide [binary]
+  on "*" -> Multiply
+  on "/" -> Divide
+
+- power [binary]
+  on "^" -> Power
+
 - factorial [postUnary]
   on "!" -> Factorial(operand)
 
 - negate [preUnary]
   on "-" -> Negate(operand)
-
-#{
-- add_subtract : Binary
-  on "+" -> Add
-  on "-" -> Subtract
-
-- multiply_divide : Binary
-  on "*" -> Multiply
-  on "/" -> Divide
-
-- power : Binary
-  on "^" -> Power
-
-- pre_unary : PreUnary
-  on "-" -> Negate
-}#
 
 - term
   on '(' expression ')': return

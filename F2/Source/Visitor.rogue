@@ -465,4 +465,7 @@ class Visitor
       cmd.statements = cmd.statements.dispatch( this ) as Statements
 
       return cmd
+
+    method visit( cmd:ConsumeEOLs )->Cmd
+      return cmd
 endClass

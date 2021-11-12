@@ -71,7 +71,16 @@ scanner
 parser
 #-------------------------------------------------------------------------------
 - statements
-  expression
+  consume_eols
+  beginList
+    while (hasAnother)
+      expression
+      consume_eols
+    endWhile
+  produceList Statements
+
+- consume_eols
+  while (consume(EOL)) noAction
 
 - expression
   assign

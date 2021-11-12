@@ -468,4 +468,13 @@ class Visitor
 
     method visit( cmd:ConsumeEOLs )->Cmd
       return cmd
+
+    method visit( cmd:BeginList )->Cmd
+      return cmd
+
+    method visit( cmd:CreateList )->Cmd
+      return cmd
+
+    method visit( cmd:ProduceList )->Cmd
+      return cmd
 endClass

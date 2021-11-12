@@ -79,7 +79,7 @@ class CmdRogueGen : RogueSourceWriter
           node_types.add( "Unary" )
           builder.println ...
             @|
-             |class Unary( operand:Cmd ) : Cmd
+             |class Unary( t, operand:Cmd ) : Cmd
              |  METHODS
              |    method description->String
              |      return "Unary($)"(operand)
@@ -90,7 +90,7 @@ class CmdRogueGen : RogueSourceWriter
           node_types.add( "Binary" )
           builder.println ...
             @|
-             |class Binary( left:Cmd, right:Cmd ) : Cmd
+             |class Binary( t, left:Cmd, right:Cmd ) : Cmd
              |  METHODS
              |    method description->String
              |      return "Binary($,$)"(left,right)
@@ -123,36 +123,42 @@ class CmdRogueGen : RogueSourceWriter
             endIf
 
             builder.println "  METHODS"
-            forEach (constructor in node_info.constructors)
-              builder.print( "    method init( t" )
-              if (constructor.args)
-                local args = constructor.args as Args
-                forEach (arg in args)
-                  block arg = arg as CreateCmdArg
-                    builder.print( ", " ).print( arg.arg_name )
-                  endBlock
-                endForEach
-              endIf
-              builder.println " )"
-              builder.println
-            endForEach
+            if (properties.count)  # else we inherit the base class constructors
+              forEach (constructor in node_info.constructors)
+                builder.print( "    method init( t" )
+                if (constructor.args)
+                  local args = constructor.args as Args
+                  forEach (arg in args)
+                    block arg = arg as CreateCmdArg
+                      builder.print( ", " ).print( arg.arg_name )
+                    endBlock
+                  endForEach
+                endIf
+                builder.println " )"
+                builder.println
+              endForEach
+            endIf
 
             builder.println "    method description->String"
-            properties = node_info.properties
-            if (properties.count)
-              builder.print  ''      return "$('' (node_info.name)
-              forEach (i of properties)
-                if (i > 0) builder.print ','
-                builder.print '$'
-              endForEach
-              builder.print ")\" ("
-              forEach (p at i in properties)
-                if (i > 0) builder.print ','
-                builder.print p.name
-              endForEach
-              builder.println ')'
+            if (node_info.is_list)
+              builder.print  ''      return "$" + list'' (node_info.name)
             else
-              builder.print  ''      return "$"'' (node_info.name)
+              properties = node_info.properties
+              if (properties.count)
+                builder.print  ''      return "$('' (node_info.name)
+                forEach (i of properties)
+                  if (i > 0) builder.print ','
+                  builder.print '$'
+                endForEach
+                builder.print ")\" ("
+                forEach (p at i in properties)
+                  if (i > 0) builder.print ','
+                  builder.print p.name
+                endForEach
+                builder.println ')'
+              else
+                builder.print  ''      return "$"'' (node_info.name)
+              endIf
             endIf
             builder.println
 

@@ -26,10 +26,13 @@ KEYWORD_MATCH            match
 KEYWORD_RESTART          restart
 
 [parser_keywords]
-KEYWORD_ON               on
+KEYWORD_BEGIN_LIST       beginList
+KEYWORD_CREATE_LIST      createList
 KEYWORD_ELSE_ON          elseOn       [structural]
 KEYWORD_ELSE_ON_OTHERS   elseOnOthers [structural]
 KEYWORD_END_ON           endOn        [structural]
+KEYWORD_ON               on
+KEYWORD_PRODUCE_LIST     produceList
 
 [common_keywords]
 KEYWORD_AND              and
@@ -1070,10 +1073,9 @@ SYMBOL_T_CONTENT      t.content
   endOn
 
 + parser_statement
-#{
-  on "collect", parser_args   -> Collect(args:ParserArgs)
-}#
-  on "create", parser_product -> ParserCreate(arg:CreateCmd)
+  on "beginList" -> BeginList
+  on "create",     parser_product -> ParserCreate(arg:CreateCmd)
+  on "createList", list_type -> CreateList(list_type:String)
 #{
   on "discardPosition"     -> DiscardPosition
   on "halt"                -> Halt
@@ -1099,6 +1101,7 @@ SYMBOL_T_CONTENT      t.content
   #endOn
 }#
   on "produce", parser_product    -> ParserProduce(arg:CreateCmd)
+  on "produceList", list_type     -> ProduceList(list_type:String)
   on "->",      parser_product    -> ParserProduce(arg:CreateCmd)
 #{
   on "restart"
@@ -1133,6 +1136,10 @@ SYMBOL_T_CONTENT      t.content
   on "++", parser_expression -> Increment(target)
   on "--", parser_expression -> Decrement(target)
 }#
+
++ list_type
+  if (nextIs(IDENTIFIER)) identifier
+  else                    produceNull
 
 + parser_args
   if (consume('('))
@@ -1241,8 +1248,8 @@ SYMBOL_T_CONTENT      t.content
 }#
   on "consume", string_or_id_arg -> ParserConsume(token_type)
   on "false"                     -> LiteralLogical(value="false":Logical)
-#{
   on "hasAnother"                -> ParserHasAnother
+#{
   on "nextIs", parser_args       -> ParserNextIs(args:ParserArgs)
 }#
   on "read"                      -> ParserRead

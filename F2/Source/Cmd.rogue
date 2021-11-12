@@ -1038,6 +1038,9 @@ class ParserHasAnother : Cmd
   METHODS
     method to->String
       return "hasAnother"
+
+    method type->Type
+      return Type.LOGICAL
 endClass
 
 class ParserNextIs( t, args:ParserArgs ) : Cmd
@@ -1123,4 +1126,23 @@ class ConsumeEOLs : Cmd
   METHODS
     method to->String
       return "ConsumeEOLs"
+endClass
+
+
+class BeginList : Cmd
+  METHODS
+    method to->String
+      return "beginList"
+endClass
+
+class CreateList( t, list_type:String ) : Cmd
+  METHODS
+    method to->String
+      return "CreateList($)"(list_type)
+endClass
+
+class ProduceList( t, list_type:String ) : Cmd
+  METHODS
+    method to->String
+      return "ProduceList($)"(list_type)
 endClass

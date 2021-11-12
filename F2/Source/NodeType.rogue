@@ -5,6 +5,7 @@ class NodeType
     name         : String
     program      : Program
     base_type    : NodeType
+    is_list      : Logical
     constructors = StringTable<<CreateCmd>>()
     properties   : NameAndType[]
 
@@ -79,6 +80,9 @@ class NodeType
         program.node_type[ base_type_name ] = info
       endIf
       @base_type = info
+
+    method set_is_list( @is_list )
+      if (is_list) base_type = "CmdList"
 
 endClass
 

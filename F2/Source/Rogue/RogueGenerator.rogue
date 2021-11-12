@@ -43,6 +43,10 @@ class RogueGenerator : FroleyVisitor
         MainRogueGen( this, program.main_filename ).create_missing
       endIf
 
+    method visit( cmd:BeginList )->Cmd  [override]
+      write   "_begin_list"
+      return cmd
+
     method visit( cmd:Call )->Cmd  [override]
       if (is_scanner)
         write "if (not _execute(ip_"
@@ -160,7 +164,7 @@ class RogueGenerator : FroleyVisitor
       return cmd
 
     method visit( cmd:CreateCmd )->Cmd  [override]
-      write "_add( "
+      write "_push( "
       write cmd.name
       write "(_cur_t"
       cmd.args.dispatch( this )
@@ -176,6 +180,10 @@ class RogueGenerator : FroleyVisitor
       else
         write "_stack_arg($)"(cmd.stack_offset)
       endIf
+      return cmd
+
+    method visit( cmd:CreateList )->Cmd  [override]
+      write "_push_list( $(_list_t) )" (cmd.list_type)
       return cmd
 
     method visit( cmd:MustConsumeCharacters )->Cmd  [override]
@@ -196,6 +204,10 @@ class RogueGenerator : FroleyVisitor
       write ")) _throw_syntax_error( &expected=TokenType."
       write cmd.token_type.name
       write " )"
+      return cmd
+
+    method visit( cmd:ParserHasAnother )->Cmd  [override]
+      write "(_position < _limit)"
       return cmd
 
     method visit( cmd:Pattern )->Cmd  [override]
@@ -400,6 +412,11 @@ class RogueGenerator : FroleyVisitor
         write ")"
       endForEach
       write ".println"
+      return cmd
+
+    method visit( cmd:ProduceList )->Cmd  [override]
+      writeln "_push_list( $(_list_t) )" (cmd.list_type)
+      write   "return"
       return cmd
 
     method visit( cmd:ScanCharacters )->Cmd  [override]

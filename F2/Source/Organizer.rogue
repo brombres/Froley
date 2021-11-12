@@ -88,6 +88,11 @@ class Organizer : FroleyVisitor
 
       return prior.visit( cmd )
 
+    method visit( cmd:CreateList )->Cmd [override]
+      if (not cmd.list_type) cmd.list_type = "CmdList"
+      program.type(cmd.list_type).is_list = true
+      return prior.visit(cmd)
+
     method visit( cmd:Identifier )->Cmd
       if (is_parser and cmd.name == "content") return TokenContent(cmd.t).dispatch(this)
       return cmd
@@ -176,6 +181,11 @@ class Organizer : FroleyVisitor
         _case.dispatch( this )
       endForEach
       return null
+
+    method visit( cmd:ProduceList )->Cmd [override]
+      if (not cmd.list_type) cmd.list_type = "CmdList"
+      program.type(cmd.list_type).is_list = true
+      return prior.visit(cmd)
 
     method visit( cmd:Routine )->Cmd [override]
       if (not cmd.is_organized)

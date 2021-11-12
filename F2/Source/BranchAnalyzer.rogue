@@ -52,6 +52,10 @@ class BranchAnalyzer : FroleyVisitor [singleton]
       _all_paths_return = true
       return cmd
 
+    method visit( cmd:ProduceList )->Cmd  [override]
+      _all_paths_return = true
+      return cmd
+
     method visit( cmd:Restart )->Cmd  [override]
       _all_paths_return = true
       return cmd

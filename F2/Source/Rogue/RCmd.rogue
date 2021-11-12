@@ -125,13 +125,13 @@ class CmdRogueGen : RogueSourceWriter
             endIf
             builder.println
 
-            local properties = node_type.extended_properties
-            if (properties.count)
+            local extended_properties = node_type.extended_properties
+            if (extended_properties.count)
               builder.println "  PROPERTIES"
               local w = 0
-              w .= or_larger( (forEach in properties).name.count )
+              w .= or_larger( (forEach in extended_properties).name.count )
 
-              forEach (p in properties)
+              forEach (p in extended_properties)
                 builder.print( "    " ).print( p.name )
                 loop (w - p.name.count) builder.print ' '
                 builder.print( " : " ).println( rogue_name(p.type) )
@@ -140,7 +140,7 @@ class CmdRogueGen : RogueSourceWriter
             endIf
 
             builder.println "  METHODS"
-            if (properties.count)  # else we inherit the base class constructors
+            if (extended_properties.count)  # else we inherit the base class constructors
               forEach (constructor in node_type.constructors)
                 builder.print( "    method init( t" )
                 if (constructor.args)
@@ -156,11 +156,11 @@ class CmdRogueGen : RogueSourceWriter
               endForEach
             endIf
 
+            local properties = node_type.properties
             builder.println "    method description->String"
             if (node_type.is_list)
-              builder.print  ''      return "$" + list'' (node_type.name)
+              builder.print  ''      return "$" + %list'' (node_type.name)
             else
-              properties = node_type.properties
               if (properties.count)
                 builder.print  ''      return "$('' (node_type.name)
                 forEach (i of properties)
@@ -170,6 +170,7 @@ class CmdRogueGen : RogueSourceWriter
                 builder.print ")\" ("
                 forEach (p at i in properties)
                   if (i > 0) builder.print ','
+                  builder.print '%'
                   builder.print p.name
                 endForEach
                 builder.println ')'
@@ -178,6 +179,40 @@ class CmdRogueGen : RogueSourceWriter
               endIf
             endIf
             builder.println
+
+            if (properties.count == 1 and extended_properties.count == 1)
+              local name = properties.first.name
+              which (properties.first.type)
+                case "Logical"
+                  builder.println ''    method to->Int32:   return which{$:1 || 0}'' (name)
+                  builder.println ''    method to->Logical: return $'' (name)
+                  builder.println ''    method to->String:  return which{$:"true" || "false"}'' (name)
+                  builder.println
+                case "Character"
+                  builder.println ''    method to->Character: return $'' (name)
+                  builder.println ''    method to->Int32:     return $'' (name)
+                  builder.println ''    method to->String:    return $'' (name)
+                  builder.println
+                case "Integer"
+                  builder.println ''    method to->Int32:     return $'' (name)
+                  builder.println ''    method to->String:    return $'' (name)
+                  builder.println
+                case "Real"
+                  builder.println ''    method to->Int32:  return $'' (name)
+                  builder.println ''    method to->Real64: return $'' (name)
+                  builder.println ''    method to->String: return $'' (name)
+                  builder.println
+                case "String"
+                  builder.println ''    method to->Character''
+                  builder.println ''      if ($ is null or $.count == 0) return Character(0)''(name,name)
+                  builder.println ''      return $[0]''(name)
+                  builder.println
+                  builder.println ''    method to->Int32:  return $'' (name)
+                  builder.println ''    method to->Logical: return $?'' (name)
+                  builder.println ''    method to->String: return $'' (name)
+                  builder.println
+              endWhich
+            endIf
 
             builder.println "endClass"
           endIf

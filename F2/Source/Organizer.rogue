@@ -149,6 +149,10 @@ class Organizer : FroleyVisitor
       endIf
       return prior.visit( cmd )
 
+    method visit( cmd:ParserCallUserMethod )->Cmd [override]
+      program.parser_user_calls.add( cmd.fn_name )
+      return cmd
+
     method visit( cmd:ParserDef )->Cmd [override]
       if (not cmd.name) cmd.name = "Parser"
       if (program.parser and program.parser is not cmd)

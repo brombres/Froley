@@ -1222,12 +1222,8 @@ SYMBOL_T_CONTENT      t.content
   on "not" -> LogicalNot
 
 - parser_term
-#{
   on '(' parser_expression ')':     return
-  on '{' pattern_sequence '}':      return
-  on "buffer"                    -> ReadBuffer
   on "call", identifier          -> ParserCallUserMethod(fn_name:String)
-}#
   on "consume", string_or_id_arg -> ParserConsume(token_type)
   on "false"                     -> LiteralLogical(value="false":Logical)
   on "hasAnother"                -> ParserHasAnother

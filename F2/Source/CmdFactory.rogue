@@ -87,9 +87,10 @@ class CmdFactory
         case 76: return ProduceList( t, args.cmd_to<<String>>(0) )
         case 77: return ParserArgs( t, args )
         case 78: return CreateCmd( t, args.cmd_to<<String>>(0), args.cmd_as<<Args>>(1) )
-        case 79: return ParserConsume( t, args[0] )
-        case 80: return ParserHasAnother( t )
-        case 81: return ParserRead( t )
+        case 79: return ParserCallUserMethod( t, args.cmd_to<<String>>(0) )
+        case 80: return ParserConsume( t, args[0] )
+        case 81: return ParserHasAnother( t )
+        case 82: return ParserRead( t )
         others
           throw Error( "[INTERNAL] CmdFactory.create_cmd() constructor index out of bounds: " + constructor_index )
       endWhich

@@ -389,6 +389,12 @@ class RogueGenerator : FroleyVisitor
       write ".is_next(_scanner)"
       return cmd
 
+    method visit( cmd:ParserCallUserMethod )->Cmd  [override]
+      writeln "this.ip = ip"
+      writeln cmd.fn_name
+      write   "ip = this.ip"
+      return cmd
+
     method visit( cmd:ParserCreate )->Cmd  [override]
       cmd.arg.dispatch( this )
       return cmd

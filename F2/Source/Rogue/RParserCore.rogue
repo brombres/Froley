@@ -46,7 +46,14 @@ class ParserCoreRogueGen( generator, parser_def:ParserDef ) : RogueSourceWriter
          |      _cmd_stack.clear
          |      _token_stack.clear
          |      output.clear
-         |
+
+      forEach (fn_name in generator.program.parser_user_calls)
+        writeln
+        writeln  "    method $ [abstract]" (fn_name)
+      endForEach
+
+      writeln ...
+        @|
          |    method has_another->Logical
          |      return _position < _limit
          |

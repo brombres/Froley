@@ -18,19 +18,20 @@ class ParserCoreRogueGen( generator, parser_def:ParserDef ) : RogueSourceWriter
       writeln ...
         @|
          |  PROPERTIES
-         |    _tokens       : Token[]
-         |    _position     : Int32
-         |    _limit        : Int32
-         |    _cmd_stack    = Cmd[]
-         |    _token_stack  = Token[]
-         |    _token_frames = Int32[]
-         |    _list_starts  = Int32[]
-         |    _list_tokens  = Token[]
-         |    _next_t       : Token
-         |    _cur_t        : Token
-         |    start_ip      = 0
-         |    ip            = 0
-         |    output        = StringBuilder()
+         |    _tokens          : Token[]
+         |    _position        : Int32
+         |    _limit           : Int32
+         |    _cmd_stack       = Cmd[]
+         |    _token_stack     = Token[]
+         |    _token_frames    = Int32[]
+         |    _list_starts     = Int32[]
+         |    _list_tokens     = Token[]
+         |    _next_t          : Token
+         |    _cur_t           : Token
+         |    _saved_positions = ParserPosition[]
+         |    start_ip         = 0
+         |    ip               = 0
+         |    output           = StringBuilder()
          |
          |  METHODS
          |    method init( file:File )
@@ -83,6 +84,12 @@ class ParserCoreRogueGen( generator, parser_def:ParserDef ) : RogueSourceWriter
          |      if (type.symbol[0].is_letter) return type.symbol
          |      return "'$'" (type.symbol)
          |
+         |    method _discard_position
+         |      if (_saved_positions.is_empty)
+         |        throw _peek.error( "[INTERNAL] No savePosition to discard." )
+         |      endIf
+         |      _saved_positions.remove_last
+         |
          |    method _list_t->Token
          |      if (_list_tokens.is_empty)
          |        throw _peek.error( "[INTERNAL] createList/produceList without corresponding beginList." )
@@ -119,6 +126,19 @@ class ParserCoreRogueGen( generator, parser_def:ParserDef ) : RogueSourceWriter
          |      if (_position < _limit) ++_position; _next_t = _peek
          |      return result
          |
+         |    method _restore_position
+         |      if (_saved_positions.is_empty)
+         |        throw _peek.error( "[INTERNAL] No savePosition to restore." )
+         |      endIf
+         |      local pos = _saved_positions.remove_last
+         |      _position = pos.position
+         |      _cmd_stack.discard_from( pos.cmd_stack_count )
+         |      _cur_t = pos.cur_t
+         |      _next_t = _peek
+         |
+         |    method _save_position
+         |      _saved_positions.add( ParserPosition(_position,_cmd_stack.count,_cur_t) )
+         |
          |    method _stack_arg( relative:Int32 )->Cmd
          |      local i = _cmd_stack.count + relative
          |      if (i < 0) throw _peek.error( "[INTERNAL] Not enough nodes on stack to create new Cmd." )
@@ -148,9 +168,12 @@ class ParserCoreRogueGen( generator, parser_def:ParserDef ) : RogueSourceWriter
 
       parser_def.code.dispatch( generator )
 
-      writeln @|          others
-               |            return
-               |        endWhich
-               |      endLoop
-               |endClass
+      writeln ...
+        @|          others
+         |            return
+         |        endWhich
+         |      endLoop
+         |endClass
+         |
+         |class ParserPosition( position:Int32, cmd_stack_count:Int32, cur_t:Token ) [compound];
 endClass

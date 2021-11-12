@@ -1074,14 +1074,9 @@ SYMBOL_T_CONTENT      t.content
 
 + parser_statement
   on "beginList" -> BeginList
-  on "create",     parser_product -> ParserCreate(arg:CreateCmd)
-  on "createList", list_type -> CreateList(list_type:String)
-#{
-  on "discardPosition"     -> DiscardPosition
-  on "halt"                -> Halt
-  on "markPosition"        -> MarkPosition
-  on "mode", identifier    -> Mode(routine_name:String)
-}#
+  on "create",     parser_product      -> ParserCreate(arg:CreateCmd)
+  on "createList", list_type           -> CreateList(list_type:String)
+  on "discardPosition"                 -> DiscardPosition
   on "mustConsume", string_or_id_arg   -> ParserMustConsume(token_type)
   on "noAction": return
 #{
@@ -1095,30 +1090,17 @@ SYMBOL_T_CONTENT      t.content
     endIf
     produce Println(args:ParserArgs)
   endOn
-  #on "on"
-  #  identifier_or_string
-  #  additional_elements
-  #endOn
 }#
   on "produce", parser_product    -> ParserProduce(arg:CreateCmd)
   on "produceList", list_type     -> ProduceList(list_type:String)
   on "->",      parser_product    -> ParserProduce(arg:CreateCmd)
-#{
-  on "restart"
-    if (nextIs(EOL)) createNull
-    else             identifier
-    produce Restart(start_ip:String)
-  endOn
   on "restorePosition" -> RestorePosition
-}#
   on "return"
     if (nextIs(EOL)) createNull
     else             parser_expression
     produce          Return(value)
   endOn
-#{
   on "savePosition"    -> SavePosition
-}#
   on "syntaxError"
     if (nextIs(EOL)) createNull
     else             parser_args

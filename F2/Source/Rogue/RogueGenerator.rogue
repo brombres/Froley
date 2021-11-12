@@ -220,7 +220,11 @@ class RogueGenerator : FroleyVisitor
       return cmd
 
     method visit( cmd:DiscardPosition )->Cmd  [override]
-      write @|if (_position_stack.count) _position_stack.remove_last
+      if (is_scanner)
+        write @|if (_position_stack.count) _position_stack.remove_last
+      else
+        write "_discard_position"
+      endIf
       return cmd
 
     method visit( cmd:If )->Cmd  [override]
@@ -462,7 +466,11 @@ class RogueGenerator : FroleyVisitor
       return cmd
 
     method visit( cmd:RestorePosition )->Cmd  [override]
-      write @|if (_position_stack.count) _scanner.seek( _position_stack.remove_last )
+      if (is_scanner)
+        write "if (_position_stack.count) _scanner.seek( _position_stack.remove_last )"
+      else
+        write "_restore_position"
+      endIf
       return cmd
 
     method visit( cmd:Return )->Cmd  [override]
@@ -487,7 +495,11 @@ class RogueGenerator : FroleyVisitor
       return cmd
 
     method visit( cmd:SavePosition )->Cmd  [override]
-      write "_position_stack.add( _scanner.position )"
+      if (is_scanner)
+        write "_position_stack.add( _scanner.position )"
+      else
+        write "_save_position"
+      endIf
       return cmd
 
     method visit( cmd:ScannerDef )->Cmd  [override]

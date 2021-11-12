@@ -352,13 +352,13 @@ SYMBOL_T_CONTENT      t.content
     createNull
     must_consume_eols
     scanner_routines
-    produce ScannerDef(name:String,code)
+    produce ScannerDef(name:String,code:CmdList)
 
   elseOn "parser"
     createNull
     must_consume_eols
     parser_routines
-    produce ParserDef(name:String,code)
+    produce ParserDef(name:String,code:CmdList)
 
   elseOn "tokens"
     if (consume(EOL)) createNull
@@ -884,8 +884,8 @@ SYMBOL_T_CONTENT      t.content
 
 + parser_single_line_statements
   beginList
-
   if (consume(EOL)) produceList Statements
+
   parser_statement
   while (consume(';'))
     consume_eols
@@ -1199,7 +1199,7 @@ SYMBOL_T_CONTENT      t.content
     beginList
     createList Args
   endIf
-  produce CreateCmd(name=t.content:String,args:Args)
+  produce CreateCmd(name:String,args:Args)
 
 + parser_expression
 

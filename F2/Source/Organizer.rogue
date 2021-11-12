@@ -15,8 +15,15 @@ class Organizer : FroleyVisitor
       if (not cmd.is_organized)
         cmd.is_organized = true
 
-        if (this_routine.is_right_binary)
-          # See visit(Routine) for details
+        if (this_routine.is_binary)
+          # See visit(Routine) for more details
+          local args = cmd.args
+          if (args.count == 0) args.add( CreateCmdArg(cmd.t,"left",null,"Cmd") )
+          if (args.count == 1) args.add( CreateCmdArg(cmd.t,"right",null,"Cmd") )
+          cmd_node_info.base_type = "Binary"
+
+        elseIf (this_routine.is_right_binary)
+          # See visit(Routine) for more details
           local args = cmd.args
           if (args.count == 0) args.add( CreateCmdArg(cmd.t,"left",null,"Cmd") )
           if (args.count == 1) args.add( CreateCmdArg(cmd.t,"right",null,"Cmd") )
@@ -88,8 +95,12 @@ class Organizer : FroleyVisitor
     method visit( cmd:On )->Cmd [override]
       if (not cmd.is_organized)
         cmd.is_organized = true
-        # See visit(Routine) for details
-        if (this_routine.is_right_binary)
+        # See visit(Routine) for more details
+        if (this_routine.is_binary)
+          cmd.token_types.add( Identifier(cmd.t,this_routine.next_routine.name) )
+          cmd.statements.add( Access(cmd.t,this_routine.name) )
+          cmd.statements.add( Return(cmd.t,null) )
+        elseIf (this_routine.is_right_binary)
           cmd.token_types.add( Identifier(cmd.t,this_routine.name) )
         endIf
       endIf
@@ -98,7 +109,10 @@ class Organizer : FroleyVisitor
     method visit( cmd:ElseOn )->Cmd [override]
       if (not cmd.is_organized)
         cmd.is_organized = true
-        if (this_routine.is_right_binary)
+        if (this_routine.is_binary)
+          cmd.token_types.add( Identifier(cmd.t,this_routine.next_routine.name) )
+          cmd.statements.add( Access(cmd.t,this_routine.name) )
+        elseIf (this_routine.is_right_binary)
           cmd.token_types.add( Identifier(cmd.t,this_routine.name) )
         endIf
       endIf
@@ -111,6 +125,15 @@ class Organizer : FroleyVisitor
       endIf
       program.parser = cmd
       return prior.visit( cmd )
+
+    method visit( cmd:ParserProduce )->Cmd [override]
+      cmd.arg = cmd.arg.dispatch(this) as CreateCmd
+      if (this_routine.is_binary)
+        # Change 'produce X' to 'create X'
+        # See visit(Routine) for more details
+        return visit( ParserCreate(cmd.t,cmd.arg) )
+      endIf
+      return prior.visit(cmd)
 
     method visit( cmd:ProduceAny )->Cmd [override]
       # Add a scan case for each token in the named group
@@ -137,7 +160,33 @@ class Organizer : FroleyVisitor
               "A $ routine requires a following routine that will be implicitly called."(cmd.attributes) )
           endIf
           cmd.next_routine = this_element.routines.at(cmd.ip+1)
-          if (cmd.is_binary)
+          if (cmd.is_binary_primer)
+            # ORIGINAL
+            #   - parse_add [binaryPrimer]
+            #
+            #   - parse_add_body [binary]
+            #     ...
+            #
+            #   - parse_next
+            #
+            # ORGANIZED
+            #   - parse_add [binaryPrimer]
+            #     parse_next
+            #     parse_add_body
+            #
+            #   - parse_add_body [binary]
+            #     ...
+            #
+            #   - parse_next
+            #
+            if (cmd.ip + 2 == this_element.routines.count)
+              throw cmd.t.error(
+                "A $ routine requires a following routine that will be implicitly called."(cmd.attributes) )
+            endIf
+            local next_next_routine = this_element.routines.at(cmd.ip+2)
+            cmd.statements.add( Access(cmd.t,next_next_routine.name) )
+            cmd.statements.add( Access(cmd.t,cmd.next_routine.name) )
+
           elseIf (cmd.is_right_binary)
             # ORIGINAL
             #   - assign [rightBinary]

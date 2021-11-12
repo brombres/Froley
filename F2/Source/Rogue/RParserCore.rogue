@@ -74,6 +74,12 @@ class ParserCoreRogueGen( generator, parser_def:ParserDef ) : RogueSourceWriter
          |      if (type.symbol[0].is_letter) return type.symbol
          |      return "'$'" (type.symbol)
          |
+         |    method _on_t
+         |     _tokens.add( _cur_t )
+         |     _cur_t = _next_t
+         |     ++_position
+         |     _next_t = _peek
+         |
          |    method _peek->Token
          |      if (_position < _limit) return _tokens[ _position ]
          |      return Token( TokenType.EOI, null, null, 0, 0 )

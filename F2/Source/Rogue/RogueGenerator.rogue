@@ -320,10 +320,7 @@ class RogueGenerator : FroleyVisitor
       dispatch( cmd.token_type )
       writeln ")"
       indent += 2
-      writeln @|_tokens.add( _cur_t )
-               |_cur_t = _next_t
-               |++_position
-               |_next_t = _peek
+      writeln "_on_t"
       dispatch( cmd.statements )
       indent -= 2
 
@@ -344,10 +341,7 @@ class RogueGenerator : FroleyVisitor
       dispatch( cmd.token_type )
       writeln ")"
       indent += 2
-      writeln @|_tokens.add( _cur_t )
-               |_cur_t = _next_t
-               |++_position
-               |_next_t = _peek
+      writeln "_on_t"
       dispatch( cmd.statements )
       indent -= 2
       return cmd

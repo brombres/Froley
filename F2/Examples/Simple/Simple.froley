@@ -67,6 +67,10 @@ parser
 - assign [rightBinary]
   on "=" -> Assign
 
+- add_subtract [binary]
+  on "+" -> Add
+  on "-" -> Subtract
+
 #- assign
 #  term
 #  on "=" assign: produce Assign(left,right)

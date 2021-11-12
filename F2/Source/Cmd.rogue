@@ -82,6 +82,9 @@ class CmdList : Cmd
     method add( cmd:Cmd )
       list.add( cmd )
 
+    method clear
+      list.clear
+
     method count->Int32
       return list.count
 
@@ -283,8 +286,8 @@ endClass
 
 class Element : Cmd
   PROPERTIES
-    routines = StringTable<<Routine>>()
-    vars     = StringTable<<Var>>()
+    routines     = StringTable<<Routine>>()
+    vars         = StringTable<<Var>>()
 
   METHODS
     method define_var( t:Token, name:String, type=Type.NONE:Type )->Var
@@ -313,13 +316,13 @@ class Element : Cmd
       return entry.value.type
 endClass
 
-class ParserDef( t, name:String, code:Cmd ) : Element
+class ParserDef( t, name:String, code:CmdList ) : Element
   METHODS
     method to->String
-      return "ParserDef($)"(name)
+      return "ParserDef($,$)"(name,code)
 endClass
 
-class ScannerDef( t, name:String, code:Cmd ) : Element
+class ScannerDef( t, name:String, code:CmdList ) : Element
   METHODS
     method to->String
       return "ScannerDef($,$)"(name,code)
@@ -328,31 +331,32 @@ endClass
 
 class Routine : Cmd
   PROPERTIES
-    name            : String
-    attributes      : String
-    statements      : Statements
+    name             : String
+    attributes       : String
+    statements       : Statements
 
-    ip              : Int32
-    is_binary       : Logical
-    is_right_binary : Logical
-    is_pre_unary    : Logical
-    is_post_unary   : Logical
-    is_organized    : Logical
+    ip               : Int32
+    is_binary        : Logical
+    is_binary_primer : Logical
+    is_right_binary  : Logical
+    is_pre_unary     : Logical
+    is_post_unary    : Logical
+    is_organized     : Logical
 
-    next_routine    : Routine
+    next_routine     : Routine
 
   METHODS
     method init( t, name, attributes, statements )
       if (attributes)
         which (attributes)
-          case "[binary]":      is_binary = true
-          case "[rightBinary]": is_right_binary = true
-          case "[preUnary]":    is_pre_unary = true
-          case "[postUnary]":   is_post_unary = true
-          others:               throw t.error( "Unrecognized routine attribute $."(attributes) )
+          case "[binary]":       is_binary = true
+          case "[binaryPrimer]": is_binary_primer = true
+          case "[rightBinary]":  is_right_binary = true
+          case "[preUnary]":     is_pre_unary = true
+          case "[postUnary]":    is_post_unary = true
+          others:                throw t.error( "Unrecognized routine attribute $."(attributes) )
         endWhich
       endIf
-
 
     method to->String
       return "Routine($,$,$)"(name,attributes,statements)

@@ -1,4 +1,4 @@
-a = b = c
+x = a + b - c
 #inches = 12
 #cm = inches * 2.54
 #cm

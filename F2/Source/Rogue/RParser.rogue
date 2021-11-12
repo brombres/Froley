@@ -1,6 +1,6 @@
 module F2
 
-class ParserRogueGen : RogueSourceWriter
+class RParser : RogueSourceWriter
   METHODS
     method init_object
       class_name = "Parser"

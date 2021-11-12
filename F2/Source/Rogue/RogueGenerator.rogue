@@ -10,6 +10,7 @@ $include "RScannerCore.rogue"
 $include "RSyntaxError.rogue"
 $include "RToken.rogue"
 $include "RTokenType.rogue"
+$include "RVisitor.rogue"
 $include "RogueSourceWriter.rogue"
 $include "ScanTableDeclarationWriter.rogue"
 
@@ -33,14 +34,14 @@ class RogueGenerator : FroleyVisitor
 
       program.nodes.dispatch( this )
 
-      SyntaxErrorRogueGen(this).create_missing
-      ScanTableRogueGen(this).create_missing
-      TokenTypeRogueGen(this).overwrite
-      TokenRogueGen(this).create_missing
+      RSyntaxError(this).create_missing
+      RScanTable(this).create_missing
+      RTokenType(this).overwrite
+      RToken(this).create_missing
 
       # Main
       if (program.main_filename)
-        MainRogueGen( this, program.main_filename ).create_missing
+        RMain( this, program.main_filename ).create_missing
       endIf
 
     method visit( cmd:BeginList )->Cmd  [override]
@@ -529,8 +530,8 @@ class RogueGenerator : FroleyVisitor
       is_scanner = true
       is_parser = false
 
-      ScannerRogueGen(this).create_missing
-      ScannerCoreRogueGen(this,cmd).overwrite
+      RScanner(this).create_missing
+      RScannerCore(this,cmd).overwrite
       return cmd
 
     method visit( cmd:Statements )->Cmd  [override]
@@ -652,9 +653,9 @@ class RogueGenerator : FroleyVisitor
       is_parser = true
       is_scanner = false
 
-      CmdRogueGen(this).update
-      ParserRogueGen(this).create_missing
-      ParserCoreRogueGen(this,cmd).overwrite
+      RCmd(this).update
+      RParser(this).create_missing
+      RParserCore(this,cmd).overwrite
 
       return cmd
 endClass

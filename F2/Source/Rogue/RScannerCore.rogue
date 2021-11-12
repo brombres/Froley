@@ -1,6 +1,6 @@
 module F2
 
-class ScannerCoreRogueGen( generator, scanner_def:ScannerDef ) : RogueSourceWriter
+class RScannerCore( generator, scanner_def:ScannerDef ) : RogueSourceWriter
   METHODS
     method init_object
       class_name = "ScannerCore"

@@ -1,6 +1,6 @@
 module F2
 
-class CmdRogueGen : RogueSourceWriter
+class RCmd : RogueSourceWriter
   PROPERTIES
     node_types = Set<<String>>()
 

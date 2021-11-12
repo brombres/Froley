@@ -247,6 +247,10 @@ class Resolver : FroleyVisitor
       local t = cmd.t
       return MustConsumeToken( t, resolve_token_type(cmd.token_type) ).dispatch( this )
 
+    method visit( cmd:ParserNextIs )->Cmd [override]
+      local t = cmd.t
+      return NextIsTokenType( t, resolve_token_type(cmd.token_type) ).dispatch( this )
+
     method visit( cmd:ScannerNextIs )->Cmd [override]
       local seq = resolve_sequence( cmd.args )
       which (seq.require_type)

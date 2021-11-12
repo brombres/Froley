@@ -412,7 +412,7 @@ class Visitor
       return cmd
 
     method visit( cmd:ParserNextIs )->Cmd
-      if (cmd.args) cmd.args = cmd.args.dispatch( this ) as ParserArgs
+      cmd.token_type = cmd.token_type.dispatch( this )
 
       return cmd
 
@@ -476,5 +476,10 @@ class Visitor
       return cmd
 
     method visit( cmd:ProduceList )->Cmd
+      return cmd
+
+    method visit( cmd:NextIsTokenType )->Cmd
+      if (cmd.token_type) cmd.token_type = cmd.token_type.dispatch( this ) as TokenDef
+
       return cmd
 endClass

@@ -399,6 +399,12 @@ class RogueGenerator : FroleyVisitor
       cmd.arg.dispatch( this )
       return cmd
 
+    method visit( cmd:NextIsTokenType )->Cmd  [override]
+      write "(_next_t.type == TokenType."
+      write cmd.token_type.name
+      write ")"
+      return cmd
+
     method visit( cmd:ParserProduce )->Cmd  [override]
       cmd.arg.dispatch( this )
       writeln

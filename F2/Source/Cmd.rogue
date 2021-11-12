@@ -1043,10 +1043,10 @@ class ParserHasAnother : Cmd
       return Type.LOGICAL
 endClass
 
-class ParserNextIs( t, args:ParserArgs ) : Cmd
+class ParserNextIs( t, token_type:Cmd ) : Cmd
   METHODS
     method to->String
-      return "ParserNextIs($)"(args)
+      return "ParserNextIs($)"(token_type)
 endClass
 
 class ParserRead : Cmd
@@ -1145,4 +1145,14 @@ class ProduceList( t, list_type:String ) : Cmd
   METHODS
     method to->String
       return "ProduceList($)"(list_type)
+endClass
+
+
+class NextIsTokenType( t, token_type:TokenDef ) : Cmd
+  METHODS
+    method to->String
+      return "NextIsTokenType($)"(token_type)
+
+    method type->Type
+      return Type.LOGICAL
 endClass

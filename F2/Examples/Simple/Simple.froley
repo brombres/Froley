@@ -72,6 +72,7 @@ parser
 #-------------------------------------------------------------------------------
 - statements
   consume_eols
+
   beginList
     while (hasAnother)
       expression

@@ -1079,7 +1079,7 @@ SYMBOL_T_CONTENT      t.content
   on "discardPosition"                 -> DiscardPosition
   on "mustConsume", string_or_id_arg   -> ParserMustConsume(token_type)
   on "noAction": return
-#{
+
   on "print",   parser_args       -> Print(args:ParserArgs)
   on "println"
     if (not hasAnother or nextHasAttribute(structural))
@@ -1090,7 +1090,7 @@ SYMBOL_T_CONTENT      t.content
     endIf
     produce Println(args:ParserArgs)
   endOn
-}#
+
   on "produce", parser_product    -> ParserProduce(arg:CreateCmd)
   on "produceList", list_type     -> ProduceList(list_type:String)
   on "->",      parser_product    -> ParserProduce(arg:CreateCmd)
@@ -1106,18 +1106,15 @@ SYMBOL_T_CONTENT      t.content
     else             parser_args
     produce ThrowSyntaxError(args:Args)
   endOn
-#{
+
   on "++", parser_expression -> Increment(target)
   on "--", parser_expression -> Decrement(target)
-}#
 
   parser_expression
 
-#{
   on "=",  parser_expression -> Assign(target,new_value)
   on "++", parser_expression -> Increment(target)
   on "--", parser_expression -> Decrement(target)
-}#
 
 + list_type
   if (nextIs(IDENTIFIER)) identifier
@@ -1227,9 +1224,7 @@ SYMBOL_T_CONTENT      t.content
   on "consume", string_or_id_arg -> ParserConsume(token_type)
   on "false"                     -> LiteralLogical(value="false":Logical)
   on "hasAnother"                -> ParserHasAnother
-#{
-  on "nextIs", parser_args       -> ParserNextIs(args:ParserArgs)
-}#
+  on "nextIs", string_or_id_arg  -> ParserNextIs(token_type)
   on "read"                      -> ParserRead
   on "true"                      -> LiteralLogical(value="true":Logical)
   on IDENTIFIER          -> Access( name=t.content:String )

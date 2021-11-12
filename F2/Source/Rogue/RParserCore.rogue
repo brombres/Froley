@@ -33,6 +33,34 @@ class ParserCoreRogueGen( generator, parser_def:ParserDef ) : RogueSourceWriter
          |    ip               = 0
          |    output           = StringBuilder()
          |
+
+      if (parser_def.vars.count)
+        indent += 4
+
+        local max_w = 0
+        max_w .= or_larger( (forEach in parser_def.vars).name.count )
+
+        forEach (v in parser_def.vars)
+          write "$ : "(v.name.left_justified(max_w))
+          which (v.type)
+            case Type.LOGICAL
+              writeln "Logical"
+            case Type.CHARACTER
+              writeln "Character"
+            case Type.INTEGER
+              writeln "Int32"
+            case Type.STRING
+              writeln "String"
+            others
+              throw v.t.error( "[INTERNAL] Unhandled type '$' (1)."(v.type) )
+          endWhich
+        endForEach
+
+        indent -= 4
+      endIf
+
+      writeln ...
+        @|
          |  METHODS
          |    method init( file:File )
          |      local scanner = Scanner( file )

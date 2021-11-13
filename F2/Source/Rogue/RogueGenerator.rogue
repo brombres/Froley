@@ -198,6 +198,10 @@ class RogueGenerator : FroleyVisitor
       write "_push_list( $(_list_t) )" (cmd.list_type)
       return cmd
 
+    method visit( cmd:CreateNull )->Cmd  [override]
+      write "_push( null, 0 )"
+      return cmd
+
     method visit( cmd:MustConsumeCharacters )->Cmd  [override]
       write "_must_consume( "
       dispatch( cmd.value )
@@ -229,6 +233,10 @@ class RogueGenerator : FroleyVisitor
     method visit( cmd:Decrement )->Cmd  [override]
       write "--"
       dispatch( cmd.target )
+      return cmd
+
+    method visit( cmd:DiscardList )->Cmd  [override]
+      write "_discard_list"
       return cmd
 
     method visit( cmd:DiscardPosition )->Cmd  [override]

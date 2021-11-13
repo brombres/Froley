@@ -121,6 +121,13 @@ class RParserCore( generator, parser_def:ParserDef ) : RogueSourceWriter
          |      if (type.symbol[0].is_letter) return type.symbol
          |      return "'$'" (type.symbol)
          |
+         |    method _discard_list
+         |      if (_list_tokens.is_empty)
+         |        throw _peek.error( "[INTERNAL] discardList without corresponding beginList." )
+         |      endIf
+         |      _list_starts.remove_last
+         |      _list_tokens.remove_last
+         |
          |    method _discard_position
          |      if (_saved_positions.is_empty)
          |        throw _peek.error( "[INTERNAL] No savePosition to discard." )

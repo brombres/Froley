@@ -482,4 +482,10 @@ class Visitor
       if (cmd.token_type) cmd.token_type = cmd.token_type.dispatch( this ) as TokenDef
 
       return cmd
+
+    method visit( cmd:CreateNull )->Cmd
+      return cmd
+
+    method visit( cmd:DiscardList )->Cmd
+      return cmd
 endClass

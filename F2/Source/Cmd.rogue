@@ -1199,3 +1199,17 @@ class NextIsTokenType( t, token_type:TokenDef ) : Cmd
     method type->Type
       return Type.LOGICAL
 endClass
+
+
+class CreateNull : Cmd
+  METHODS
+    method to->String
+      return "createNull"
+endClass
+
+
+class DiscardList : Cmd
+  METHODS
+    method to->String
+      return "discardList"
+endClass

@@ -28,11 +28,14 @@ KEYWORD_RESTART          restart
 [parser_keywords]
 KEYWORD_BEGIN_LIST       beginList
 KEYWORD_CREATE_LIST      createList
+KEYWORD_CREATE_NULL      createNull
+KEYWORD_DISCARD_LIST     discardList
 KEYWORD_ELSE_ON          elseOn       [structural]
 KEYWORD_ELSE_ON_OTHERS   elseOnOthers [structural]
 KEYWORD_END_ON           endOn        [structural]
 KEYWORD_ON               on
 KEYWORD_PRODUCE_LIST     produceList
+KEYWORD_PRODUCE_NULL     produceNull
 
 [common_keywords]
 KEYWORD_AND              and
@@ -1076,6 +1079,8 @@ SYMBOL_T_CONTENT      t.content
   on "beginList" -> BeginList
   on "create",     parser_product      -> ParserCreate(arg:CreateCmd)
   on "createList", list_type           -> CreateList(list_type:String)
+  on "createNull"                      -> CreateNull
+  on "discardList"                     -> DiscardList
   on "discardPosition"                 -> DiscardPosition
   on "mustConsume", string_or_id_arg   -> ParserMustConsume(token_type)
   on "noAction": return
@@ -1093,6 +1098,11 @@ SYMBOL_T_CONTENT      t.content
 
   on "produce", parser_product    -> ParserProduce(arg:CreateCmd)
   on "produceList", list_type     -> ProduceList(list_type:String)
+  on "produceNull"
+    create CreateNull
+    createNull
+    create Return(value)
+  endOn
   on "->",      parser_product    -> ParserProduce(arg:CreateCmd)
   on "restorePosition" -> RestorePosition
   on "return"

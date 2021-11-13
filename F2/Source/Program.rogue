@@ -14,7 +14,7 @@ class Program
     scan_patterns         = StringTable<<String>>()
     scanner_user_calls    = Set<<String>>()
     parser_user_calls     = Set<<String>>()
-    node_type         = StringTable<<NodeType>>()
+    node_types            = StringTable<<NodeType>>()
 
   METHODS
     method init( froley_file:File )
@@ -46,11 +46,11 @@ class Program
       RogueGenerator( this, folder )
 
     method type( name:String )->NodeType
-      local info = node_type[ name ]
+      local info = node_types[ name ]
       if (info) return info
 
       info = NodeType( name, this )
-      node_type[name] = info
+      node_types[name] = info
       return info
 
 endClass

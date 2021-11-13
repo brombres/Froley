@@ -6,10 +6,10 @@ class Organizer : FroleyVisitor
 
   METHODS
     method visit( cmd:CreateCmd )->Cmd [override]
-      local node_type = program.node_type[ cmd.name ]
+      local node_type = program.node_types[ cmd.name ]
       if (not node_type)
         node_type = NodeType( cmd.name, program )
-        program.node_type[ cmd.name ] = node_type
+        program.node_types[ cmd.name ] = node_type
       endIf
 
       if (not cmd.is_organized)

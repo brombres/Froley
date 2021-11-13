@@ -8,11 +8,6 @@ class RCmd : RogueSourceWriter
     method init_object
       class_name = "Cmd"
 
-    method add( content:String, name:String, definition:String )->String
-      node_types.add( name )
-      content += definition
-      return content
-
     method scan_node_types( content:String )
       forEach (line in LineReader(content))
         if (line.begins_with("class "))
@@ -29,197 +24,202 @@ class RCmd : RogueSourceWriter
 
       scan_node_types( content )
 
-      use builder = StringBuilder.pool
-        builder.print( content )
+      local builder = StringBuilder(content.count)
+      builder.print( content )
 
-        if (not node_types.contains("Cmd"))
-          node_types.add( "Cmd" )
-          builder.println ...
-            @|
-             |class Cmd( t:Token )
-             |  METHODS
-             |    method add( cmd:Cmd )
-             |      throw UnsupportedOperationError()
-             |
-             |    method count->Int32
-             |      return 0
-             |
-             |    method description->String
-             |      return "Cmd"
-             |
-             |    method get( index:Int32 )->Cmd
-             |      throw UnsupportedOperationError()
-             |
-             |    method to->Character
-             |      return Character(this->Int32)
-             |
-             |    method to->Int32
-             |      return 0
-             |
-             |    method to->Logical
-             |      return (this->Int32)?
-             |
-             |    method to->Real64
-             |      return this->Int32
-             |
-             |    method to->String
-             |      return description
-             |endClass
-        endIf
+      if (not node_types.contains("Cmd"))
+        node_types.add( "Cmd" )
+        builder.println ...
+          @|
+           |class Cmd( t:Token )
+           |  METHODS
+           |    method add( cmd:Cmd )
+           |      throw UnsupportedOperationError()
+           |
+           |    method count->Int32
+           |      return 0
+           |
+           |    method description->String
+           |      return "Cmd"
+           |
+           |    method dispatch<<$VisitorType>>( visitor:$VisitorType ) [propagated]
+           |      visitor.dispatch( this )
+           |
+           |    method dispatch<<$VisitorType,$ReturnType>>( visitor:$VisitorType )->$ReturnType [propagated]
+           |      return visitor.visit( this )
+           |
+           |    method get( index:Int32 )->Cmd
+           |      throw UnsupportedOperationError()
+           |
+           |    method to->Character
+           |      return Character(this->Int32)
+           |
+           |    method to->Int32
+           |      return 0
+           |
+           |    method to->Logical
+           |      return (this->Int32)?
+           |
+           |    method to->Real64
+           |      return this->Int32
+           |
+           |    method to->String
+           |      return description
+           |endClass
+      endIf
 
-        if (not node_types.contains("CmdList"))
-          node_types.add( "CmdList" )
-          builder.println ...
-            @|
-             |class CmdList : Cmd
-             |  PROPERTIES
-             |    list = Cmd[]
-             |
-             |  METHODS
-             |    method add( cmd:Cmd )
-             |      list.add( cmd )
-             |
-             |    method count->Int32
-             |      return list.count
-             |
-             |    method description->String
-             |      return "CmdList" + list
-             |
-             |    method get( index:Int32 )->Cmd
-             |      return list[index]
-             |endClass
-        endIf
+      if (not node_types.contains("CmdList"))
+        node_types.add( "CmdList" )
+        builder.println ...
+          @|
+           |class CmdList : Cmd
+           |  PROPERTIES
+           |    list = Cmd[]
+           |
+           |  METHODS
+           |    method add( cmd:Cmd )
+           |      list.add( cmd )
+           |
+           |    method count->Int32
+           |      return list.count
+           |
+           |    method description->String
+           |      return "CmdList" + list
+           |
+           |    method get( index:Int32 )->Cmd
+           |      return list[index]
+           |endClass
+      endIf
 
-        if (not node_types.contains("Unary"))
-          node_types.add( "Unary" )
-          builder.println ...
-            @|
-             |class Unary( t, operand:Cmd ) : Cmd
-             |  METHODS
-             |    method description->String
-             |      return "Unary($)"(operand)
-             |endClass
-        endIf
+      if (not node_types.contains("Unary"))
+        node_types.add( "Unary" )
+        builder.println ...
+          @|
+           |class Unary( t, operand:Cmd ) : Cmd
+           |  METHODS
+           |    method description->String
+           |      return "Unary($)"(operand)
+           |endClass
+      endIf
 
-        if (not node_types.contains("Binary"))
-          node_types.add( "Binary" )
-          builder.println ...
-            @|
-             |class Binary( t, left:Cmd, right:Cmd ) : Cmd
-             |  METHODS
-             |    method description->String
-             |      return "Binary($,$)"(left,right)
-             |endClass
-        endIf
+      if (not node_types.contains("Binary"))
+        node_types.add( "Binary" )
+        builder.println ...
+          @|
+           |class Binary( t, left:Cmd, right:Cmd ) : Cmd
+           |  METHODS
+           |    method description->String
+           |      return "Binary($,$)"(left,right)
+           |endClass
+      endIf
 
-        forEach (node_type in program.node_type)
-          if (node_type.is_built_in) nextIteration
+      forEach (node_type in program.node_types)
+        if (node_type.is_built_in) nextIteration
 
-          if (not node_types.contains(node_type.name))
-            node_types.add( node_type.name )
+        if (not node_types.contains(node_type.name))
+          node_types.add( node_type.name )
 
-            builder.println
-            builder.print( "class " ).print( node_type.name )
-            if (node_type.base_type)
-              builder.print( " : " ).print( node_type.base_type.name )
-            endIf
-            builder.println
-
-            local extended_properties = node_type.extended_properties
-            if (extended_properties.count)
-              builder.println "  PROPERTIES"
-              local w = 0
-              w .= or_larger( (forEach in extended_properties).name.count )
-
-              forEach (p in extended_properties)
-                builder.print( "    " ).print( p.name )
-                loop (w - p.name.count) builder.print ' '
-                builder.print( " : " ).println( rogue_name(p.type) )
-              endForEach
-              builder.println
-            endIf
-
-            builder.println "  METHODS"
-            if (extended_properties.count)  # else we inherit the base class constructors
-              forEach (constructor in node_type.constructors)
-                builder.print( "    method init( t" )
-                if (constructor.args)
-                  local args = constructor.args as Args
-                  forEach (arg in args)
-                    block arg = arg as CreateCmdArg
-                      builder.print( ", " ).print( arg.arg_name )
-                    endBlock
-                  endForEach
-                endIf
-                builder.println " )"
-                builder.println
-              endForEach
-            endIf
-
-            local properties = node_type.properties
-            builder.println "    method description->String"
-            if (node_type.is_list)
-              builder.print  ''      return "$" + %list'' (node_type.name)
-            else
-              if (properties.count)
-                builder.print  ''      return "$('' (node_type.name)
-                forEach (i of properties)
-                  if (i > 0) builder.print ','
-                  builder.print '$'
-                endForEach
-                builder.print ")\" ("
-                forEach (p at i in properties)
-                  if (i > 0) builder.print ','
-                  builder.print '%'
-                  builder.print p.name
-                endForEach
-                builder.println ')'
-              else
-                builder.print  ''      return "$"'' (node_type.name)
-              endIf
-            endIf
-            builder.println
-
-            if (properties.count == 1 and extended_properties.count == 1)
-              local name = properties.first.name
-              which (properties.first.type)
-                case "Logical"
-                  builder.println ''    method to->Int32:   return which{$:1 || 0}'' (name)
-                  builder.println ''    method to->Logical: return $'' (name)
-                  builder.println ''    method to->String:  return which{$:"true" || "false"}'' (name)
-                  builder.println
-                case "Character"
-                  builder.println ''    method to->Character: return $'' (name)
-                  builder.println ''    method to->Int32:     return $'' (name)
-                  builder.println ''    method to->String:    return $'' (name)
-                  builder.println
-                case "Integer"
-                  builder.println ''    method to->Int32:     return $'' (name)
-                  builder.println ''    method to->String:    return $'' (name)
-                  builder.println
-                case "Real"
-                  builder.println ''    method to->Int32:  return $'' (name)
-                  builder.println ''    method to->Real64: return $'' (name)
-                  builder.println ''    method to->String: return $'' (name)
-                  builder.println
-                case "String"
-                  builder.println ''    method to->Character''
-                  builder.println ''      if ($ is null or $.count == 0) return Character(0)''(name,name)
-                  builder.println ''      return $[0]''(name)
-                  builder.println
-                  builder.println ''    method to->Int32:  return $'' (name)
-                  builder.println ''    method to->Logical: return $?'' (name)
-                  builder.println ''    method to->String: return $'' (name)
-                  builder.println
-              endWhich
-            endIf
-
-            builder.println "endClass"
+          builder.println
+          builder.print( "class " ).print( node_type.name )
+          if (node_type.base_type)
+            builder.print( " : " ).print( node_type.base_type.name )
           endIf
-        endForEach
+          builder.println
 
-        content = builder->String
-      endUse
+          local extended_properties = node_type.extended_properties
+          if (extended_properties.count)
+            builder.println "  PROPERTIES"
+            local w = 0
+            w .= or_larger( (forEach in extended_properties).name.count )
+
+            forEach (p in extended_properties)
+              builder.print( "    " ).print( p.name )
+              loop (w - p.name.count) builder.print ' '
+              builder.print( " : " ).println( rogue_name(p.type) )
+            endForEach
+            builder.println
+          endIf
+
+          builder.println "  METHODS"
+          if (extended_properties.count)  # else we inherit the base class constructors
+            forEach (constructor in node_type.constructors)
+              builder.print( "    method init( t" )
+              if (constructor.args)
+                local args = constructor.args as Args
+                forEach (arg in args)
+                  block arg = arg as CreateCmdArg
+                    builder.print( ", " ).print( arg.arg_name )
+                  endBlock
+                endForEach
+              endIf
+              builder.println " )"
+              builder.println
+            endForEach
+          endIf
+
+          local properties = node_type.properties
+          builder.println "    method description->String"
+          if (node_type.is_list)
+            builder.print  ''      return "$" + %list'' (node_type.name)
+          else
+            if (properties.count)
+              builder.print  ''      return "$('' (node_type.name)
+              forEach (i of properties)
+                if (i > 0) builder.print ','
+                builder.print '$'
+              endForEach
+              builder.print ")\" ("
+              forEach (p at i in properties)
+                if (i > 0) builder.print ','
+                builder.print '%'
+                builder.print p.name
+              endForEach
+              builder.println ')'
+            else
+              builder.print  ''      return "$"'' (node_type.name)
+            endIf
+          endIf
+          builder.println
+
+          if (properties.count == 1 and extended_properties.count == 1)
+            local name = properties.first.name
+            which (properties.first.type)
+              case "Logical"
+                builder.println ''    method to->Int32:   return which{$:1 || 0}'' (name)
+                builder.println ''    method to->Logical: return $'' (name)
+                builder.println ''    method to->String:  return which{$:"true" || "false"}'' (name)
+                builder.println
+              case "Character"
+                builder.println ''    method to->Character: return $'' (name)
+                builder.println ''    method to->Int32:     return $'' (name)
+                builder.println ''    method to->String:    return $'' (name)
+                builder.println
+              case "Integer"
+                builder.println ''    method to->Int32:     return $'' (name)
+                builder.println ''    method to->String:    return $'' (name)
+                builder.println
+              case "Real"
+                builder.println ''    method to->Int32:  return $'' (name)
+                builder.println ''    method to->Real64: return $'' (name)
+                builder.println ''    method to->String: return $'' (name)
+                builder.println
+              case "String"
+                builder.println ''    method to->Character''
+                builder.println ''      if ($ is null or $.count == 0) return Character(0)''(name,name)
+                builder.println ''      return $[0]''(name)
+                builder.println
+                builder.println ''    method to->Int32:  return $'' (name)
+                builder.println ''    method to->Logical: return $?'' (name)
+                builder.println ''    method to->String: return $'' (name)
+                builder.println
+            endWhich
+          endIf
+
+          builder.println "endClass"
+        endIf
+      endForEach
+
+      content = builder->String
 
       return content
 endClass

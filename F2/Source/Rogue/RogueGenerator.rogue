@@ -656,6 +656,7 @@ class RogueGenerator : FroleyVisitor
       RCmd(this).update
       RParser(this).create_missing
       RParserCore(this,cmd).overwrite
+      RVisitor(this).update
 
       return cmd
 endClass

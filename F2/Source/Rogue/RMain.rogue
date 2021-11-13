@@ -7,7 +7,7 @@ class RMain : RogueSourceWriter
     method write_content
       local content =
         @|$include "Scanner.rogue"
-         |$include "Parser.rogue"
+         |$include "Parser.rogue" [optional]
          |uses $ProjectName
          |uses Utility/CommandLineParser
          |
@@ -19,9 +19,12 @@ class RMain : RogueSourceWriter
          |endTry
          |
          |class $ClassName
+         |  PROPERTIES
+         |    command : Value
+         |
          |  METHODS
          |    method init( args:String[] )
-         |      local command = parse_args( args )
+         |      command = parse_args( args )
          |
          |      # trace command
          |      # has //options and possibly //args
@@ -31,27 +34,29 @@ class RMain : RogueSourceWriter
          |        System.exit 0
          |      endIf
          |
-         |      #local tokens = Token[]
-         |      #forEach (arg in command//args)
-         |      #  local scanner = Scanner( File(arg) )
-         |      #  tokens.add( scanner.tokenize )
-         |      #  if (scanner.output.count) print scanner.output; flush
-         |      #endForEach
-         |      #println (forEach in tokens)
+         |      $if (defined(PARSER_EXISTS)) parse_files
+         |      $else                        scan_files
          |
+         |    method scan_files
          |      forEach (arg in command//args)
-         |        parse( File(arg) )
+         |        local scanner = Scanner( File(arg) )
+         |        local tokens = scanner.tokenize
+         |        if (scanner.output.count) print scanner.output; flush
+         |        println (forEach in tokens)
          |      endForEach
          |
-         |    method parse( file:File )
-         |      local parser = Parser( file )
-         |      if (parser.has_another)
-         |        local cmd = parser.parse
+         |    $if (defined(PARSER_EXISTS))
+         |    method parse_files
+         |      forEach (arg in command//args)
+         |        local parser = Parser( File(arg) )
+         |        local ast = parser.parse
          |        if (parser.output.count) print parser.output; flush
-         |        println cmd
-         |      endIf
+         |        @trace ast
+         |      endForEach
+         |    $endIf
          |
          |    method parse_args( args:String[] )->Value
+         |      # This method is unrelated to the Froley Parser
          |      local command = CommandLineParser().
          |      [
          |        option( "--flag",     &alias="-f" )

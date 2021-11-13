@@ -1213,3 +1213,35 @@ class DiscardList : Cmd
     method to->String
       return "discardList"
 endClass
+
+
+class ConsumeContent( t, content:String ) : Cmd
+  METHODS
+    method to->String
+      return "ConsumeContent(@$)"(content)
+
+    method type->Type
+      return Type.LOGICAL
+endClass
+
+
+class MustConsumeContent( t, content:String ) : Cmd
+  METHODS
+    method to->String
+      return "MustConsume(@$)"(content)
+endClass
+
+class NextIsContent( t, content:String ) : Cmd
+  METHODS
+    method to->String
+      return "NextIs(@$)"(content)
+
+    method type->Type
+      return Type.LOGICAL
+endClass
+
+class LiteralContent( t, value:String ) : Cmd
+  METHODS
+    method to->String
+      return value
+endClass

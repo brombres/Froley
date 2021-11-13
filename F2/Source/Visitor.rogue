@@ -488,4 +488,16 @@ class Visitor
 
     method visit( cmd:DiscardList )->Cmd
       return cmd
+
+    method visit( cmd:ConsumeContent )->Cmd
+      return cmd
+
+    method visit( cmd:MustConsumeContent )->Cmd
+      return cmd
+
+    method visit( cmd:NextIsContent )->Cmd
+      return cmd
+
+    method visit( cmd:LiteralContent )->Cmd
+      return cmd
 endClass

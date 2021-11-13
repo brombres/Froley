@@ -71,6 +71,7 @@ scanner
 parser
 #-------------------------------------------------------------------------------
 - statements
+  println "next is inches:" nextIs(@inches)
   consume_eols
 
   beginList

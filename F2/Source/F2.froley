@@ -1082,7 +1082,7 @@ SYMBOL_T_CONTENT      t.content
   on "createNull"                      -> CreateNull
   on "discardList"                     -> DiscardList
   on "discardPosition"                 -> DiscardPosition
-  on "mustConsume", string_or_id_arg   -> ParserMustConsume(token_type)
+  on "mustConsume", ttype_or_literal   -> ParserMustConsume(token_type)
   on "noAction": return
 
   on "print",   parser_args       -> Print(args:ParserArgs)
@@ -1158,10 +1158,18 @@ SYMBOL_T_CONTENT      t.content
 
   produceList ParserArgs
 
-+ string_or_id_arg
++ ttype_or_literal
   if (consume('('))
-    string_or_id
+    ttype_or_literal_inner
     mustConsume(')')
+  else
+    ttype_or_literal_inner
+  endIf
+
++ ttype_or_literal_inner
+  if (consume('@'))
+    string_or_id
+    create LiteralContent(value:String)
   else
     string_or_id
   endIf
@@ -1231,10 +1239,10 @@ SYMBOL_T_CONTENT      t.content
 - parser_term
   on '(' parser_expression ')':     return
   on "call", identifier          -> ParserCallUserMethod(fn_name:String)
-  on "consume", string_or_id_arg -> ParserConsume(token_type)
+  on "consume", ttype_or_literal -> ParserConsume(token_type)
   on "false"                     -> LiteralLogical(value="false":Logical)
   on "hasAnother"                -> ParserHasAnother
-  on "nextIs", string_or_id_arg  -> ParserNextIs(token_type)
+  on "nextIs", ttype_or_literal  -> ParserNextIs(token_type)
   on "read"                      -> ParserRead
   on "true"                      -> LiteralLogical(value="true":Logical)
   on IDENTIFIER          -> Access( name=t.content:String )

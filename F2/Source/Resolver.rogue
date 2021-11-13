@@ -241,14 +241,20 @@ class Resolver : FroleyVisitor
 
     method visit( cmd:ParserConsume )->Cmd [override]
       local t = cmd.t
+      local literal_content = cmd.token_type as LiteralContent
+      if (literal_content) return ConsumeContent( t, literal_content.value )
       return ConsumeToken( t, resolve_token_type(cmd.token_type) ).dispatch( this )
 
     method visit( cmd:ParserMustConsume )->Cmd [override]
       local t = cmd.t
+      local literal_content = cmd.token_type as LiteralContent
+      if (literal_content) return MustConsumeContent( t, literal_content.value )
       return MustConsumeToken( t, resolve_token_type(cmd.token_type) ).dispatch( this )
 
     method visit( cmd:ParserNextIs )->Cmd [override]
       local t = cmd.t
+      local literal_content = cmd.token_type as LiteralContent
+      if (literal_content) return NextIsContent( t, literal_content.value )
       return NextIsTokenType( t, resolve_token_type(cmd.token_type) ).dispatch( this )
 
     method visit( cmd:ScannerNextIs )->Cmd [override]

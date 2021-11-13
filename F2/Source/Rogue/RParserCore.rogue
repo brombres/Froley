@@ -111,6 +111,11 @@ class RParserCore( generator, parser_def:ParserDef ) : RogueSourceWriter
          |      if (_position < _limit) ++_position; _next_t = _peek
          |      return true
          |
+         |    method _consume_content( content:String )->Logical
+         |      if (not _next_t.content or _next_t.content != content) return false
+         |      if (_position < _limit) ++_position; _next_t = _peek
+         |      return true
+         |
          |    method _consume_eols
          |      while (_next_t.type == TokenType.EOL)
          |        ++_position
@@ -139,6 +144,17 @@ class RParserCore( generator, parser_def:ParserDef ) : RogueSourceWriter
          |        throw _peek.error( "[INTERNAL] createList/produceList without corresponding beginList." )
          |      endIf
          |      return _list_tokens.remove_last
+         |
+         |    method _must_consume_content( content:String )
+         |      if (_consume_content(content)) return
+         |      local expected = which{ content.contains('\''):content || "'$'"(content.to_escaped_ascii) }
+         |      local next = _describe( _peek.type )
+         |      _throw_syntax_error( "Expected $, found $." (expected,next) )
+         |
+         |    method _next_is( content:String )->Logical
+         |      if (not _next_t.content or _next_t.content != content) return false
+         |      if (_position < _limit) ++_position; _next_t = _peek
+         |      return true
          |
          |    method _on_t
          |     _tokens.add( _cur_t )

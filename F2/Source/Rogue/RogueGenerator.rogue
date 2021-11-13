@@ -149,6 +149,12 @@ class RogueGenerator : FroleyVisitor
       write ")"
       return cmd
 
+    method visit( cmd:ConsumeContent )->Cmd  [override]
+      write "_consume_content("
+      write ''"$"'' (to_escaped_ascii(cmd.content,"\""))
+      write ")"
+      return cmd
+
     method visit( cmd:ConsumeEOLs )->Cmd  [override]
       write "_consume_eols"
       return cmd
@@ -392,6 +398,12 @@ class RogueGenerator : FroleyVisitor
       write   "ip = this.ip"
       return cmd
 
+    method visit( cmd:MustConsumeContent )->Cmd  [override]
+      write "_must_consume_content("
+      write ''"$"'' (to_escaped_ascii(cmd.content, "\""))
+      write ")"
+      return cmd
+
     method visit( cmd:NextIsCharacters )->Cmd  [override]
       if (cmd.value.type == Type.CHARACTER)
         write "_scanner.next_is("
@@ -402,6 +414,12 @@ class RogueGenerator : FroleyVisitor
         dispatch( cmd.value )
         write ")"
       endIf
+      return cmd
+
+    method visit( cmd:NextIsContent )->Cmd  [override]
+      write ''(_next_t.content and _next_t.content == "''
+      write to_escaped_ascii( cmd.content, "\"" )
+      write ''")''
       return cmd
 
     method visit( cmd:NextIsPattern )->Cmd  [override]

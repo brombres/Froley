@@ -404,6 +404,10 @@ class RogueGenerator : FroleyVisitor
       write ")"
       return cmd
 
+    method visit( cmd:NextHasAttribute )->Cmd  [override]
+      write "(_next_t.type.attributes & TokenType.ATTRIBUTE_$)?"(cmd.name.to_uppercase)
+      return cmd
+
     method visit( cmd:NextIsCharacters )->Cmd  [override]
       if (cmd.value.type == Type.CHARACTER)
         write "_scanner.next_is("

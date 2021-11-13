@@ -26,16 +26,17 @@ KEYWORD_MATCH            match
 KEYWORD_RESTART          restart
 
 [parser_keywords]
-KEYWORD_BEGIN_LIST       beginList
-KEYWORD_CREATE_LIST      createList
-KEYWORD_CREATE_NULL      createNull
-KEYWORD_DISCARD_LIST     discardList
-KEYWORD_ELSE_ON          elseOn       [structural]
-KEYWORD_ELSE_ON_OTHERS   elseOnOthers [structural]
-KEYWORD_END_ON           endOn        [structural]
-KEYWORD_ON               on
-KEYWORD_PRODUCE_LIST     produceList
-KEYWORD_PRODUCE_NULL     produceNull
+KEYWORD_BEGIN_LIST         beginList
+KEYWORD_CREATE_LIST        createList
+KEYWORD_CREATE_NULL        createNull
+KEYWORD_DISCARD_LIST       discardList
+KEYWORD_ELSE_ON            elseOn       [structural]
+KEYWORD_ELSE_ON_OTHERS     elseOnOthers [structural]
+KEYWORD_END_ON             endOn        [structural]
+KEYWORD_NEXT_HAS_ATTRIBUTE nextHasAttribute
+KEYWORD_ON                 on
+KEYWORD_PRODUCE_LIST       produceList
+KEYWORD_PRODUCE_NULL       produceNull
 
 [common_keywords]
 KEYWORD_AND              and
@@ -923,7 +924,7 @@ SYMBOL_T_CONTENT      t.content
   endOn
 
   on "on"
-    string_or_id
+    token_id
     collect_parse_list
     if (consume(EOL))
       parser_multi_line_statements
@@ -1025,7 +1026,7 @@ SYMBOL_T_CONTENT      t.content
   while (nextIs("elseOn"))
     savePosition
     on "elseOn"
-      string_or_id
+      token_id
       collect_parse_list
       if (nextIs(EOL)) discardPosition
       else             restorePosition; produceList
@@ -1052,7 +1053,7 @@ SYMBOL_T_CONTENT      t.content
   while (nextIs("elseOn"))
     savePosition
     on "elseOn"
-      string_or_id
+      token_id
       collect_parse_list
       if (nextIs(EOL)) restorePosition; produceList
       else             discardPosition
@@ -1168,13 +1169,28 @@ SYMBOL_T_CONTENT      t.content
 
 + ttype_or_literal_inner
   if (consume('@'))
-    string_or_id
+    token_id
     create LiteralContent(value:String)
   else
-    string_or_id
+    token_id
   endIf
 
-+ string_or_id
++ attr_name_arg
+  if (consume('('))
+    attribute_name
+    mustConsume(')')
+  else
+    attribute_name
+  endIf
+
++ attribute_name
+  on IDENTIFIER          -> Identifier( name=t.content:String )
+  on STRING              -> LiteralString( value=t.content:String )
+  on STRING_OR_CHARACTER -> LiteralString( value=t.content:String )
+  syntaxError "Attribute name expected."
+
+
++ token_id
   on IDENTIFIER          -> Identifier( name=t.content:String )
   on STRING              -> LiteralString( value=t.content:String )
   on STRING_OR_CHARACTER -> LiteralString( value=t.content:String )
@@ -1237,17 +1253,18 @@ SYMBOL_T_CONTENT      t.content
   on "not" -> LogicalNot
 
 - parser_term
-  on '(' parser_expression ')':     return
-  on "call", identifier          -> ParserCallUserMethod(fn_name:String)
-  on "consume", ttype_or_literal -> ParserConsume(token_type)
-  on "false"                     -> LiteralLogical(value="false":Logical)
-  on "hasAnother"                -> ParserHasAnother
-  on "nextIs", ttype_or_literal  -> ParserNextIs(token_type)
-  on "read"                      -> ParserRead
-  on "true"                      -> LiteralLogical(value="true":Logical)
-  on IDENTIFIER          -> Access( name=t.content:String )
-  on INTEGER             -> LiteralInteger( value=t.content:Int32 )
-  on STRING              -> LiteralString( value=t.content:String )
-  on STRING_OR_CHARACTER -> LiteralStringOrCharacter( value=t.content:String )
+  on '(' parser_expression ')':           return
+  on "call", identifier                 -> ParserCallUserMethod(fn_name:String)
+  on "consume", ttype_or_literal        -> ParserConsume(token_type)
+  on "false"                            -> LiteralLogical(value="false":Logical)
+  on "hasAnother"                       -> ParserHasAnother
+  on "nextHasAttribute", attr_name_arg  -> NextHasAttribute(name:String)
+  on "nextIs", ttype_or_literal         -> ParserNextIs(token_type)
+  on "read"                             -> ParserRead
+  on "true"                             -> LiteralLogical(value="true":Logical)
+  on IDENTIFIER                         -> Access( name=t.content:String )
+  on INTEGER                            -> LiteralInteger( value=t.content:Int32 )
+  on STRING                             -> LiteralString( value=t.content:String )
+  on STRING_OR_CHARACTER                -> LiteralStringOrCharacter( value=t.content:String )
   syntaxError
 

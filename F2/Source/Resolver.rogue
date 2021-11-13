@@ -239,6 +239,12 @@ class Resolver : FroleyVisitor
       endWhile
       return prior.visit( cmd )
 
+    method visit( cmd:NextHasAttribute )->Cmd  [override]
+      if (not program.token_attributes.contains(cmd.name))
+        throw cmd.t.error( "No token has the attribute '$'."(cmd.name) )
+      endIf
+      return cmd
+
     method visit( cmd:ParserConsume )->Cmd [override]
       local t = cmd.t
       local literal_content = cmd.token_type as LiteralContent

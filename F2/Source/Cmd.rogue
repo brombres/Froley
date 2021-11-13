@@ -1245,3 +1245,13 @@ class LiteralContent( t, value:String ) : Cmd
     method to->String
       return value
 endClass
+
+
+class NextHasAttribute( t, name:String ) : Cmd
+  METHODS
+    method to->String
+      return "NextHasAttribute($)"(name)
+
+    method type->Type
+      return Type.LOGICAL
+endClass

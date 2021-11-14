@@ -94,7 +94,7 @@ class RCmd : RogueSourceWriter
            |        builder.print '['
            |        forEach (element at index in list)
            |          if (index > 0) builder.print ','
-           |          builder.print %element
+           |          builder.print( %element )
            |        endForEach
            |        builder.print ']'
            |        return builder->String

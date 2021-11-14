@@ -31,7 +31,7 @@ KEYWORD_CREATE_LIST        createList
 KEYWORD_CREATE_NULL        createNull
 KEYWORD_DISCARD_LIST       discardList
 KEYWORD_ELSE_ON            elseOn       [structural]
-KEYWORD_ELSE_ON_OTHERS     elseOnOthers [structural]
+KEYWORD_ELSE_OTHERS        elseOthers   [structural]
 KEYWORD_END_ON             endOn        [structural]
 KEYWORD_NEXT_HAS_ATTRIBUTE nextHasAttribute
 KEYWORD_ON                 on
@@ -1040,9 +1040,9 @@ SYMBOL_T_CONTENT      t.content
   produceList
 
 + parser_multi_line_else_on_others
-  if (not nextIs("elseOnOthers")) produceNull
+  if (not nextIs("elseOthers")) produceNull
   savePosition
-  on "elseOnOthers"
+  on "elseOthers"
     if (not consume(EOL)) restorePosition; produceNull
     parser_multi_line_statements
     discardPosition
@@ -1068,9 +1068,9 @@ SYMBOL_T_CONTENT      t.content
   produceList
 
 + parser_single_line_else_on_others
-  if (not nextIs("elseOnOthers")) produceNull
+  if (not nextIs("elseOthers")) produceNull
   savePosition
-  on "elseOnOthers"
+  on "elseOthers"
     if (consume(EOL)) restorePosition; produceNull
     consume(':')
     parser_single_line_statements

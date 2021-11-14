@@ -4,6 +4,7 @@ tokens
 EOL(end of line)
 IDENTIFIER identifier [content]
 NUMBER     number     [content]
+STRING     string     [content]
 
 #-------------------------------------------------------------------------------
 tokens Keywords
@@ -44,6 +45,7 @@ scanner
 
   if (scan([_a-zA-Z][_a-zA-Z0-9]*)) produce IDENTIFIER
   scan_number
+  scan_string
 
   syntaxError
 
@@ -67,6 +69,16 @@ scanner
   endWhile
   return
 
+- scan_string
+  if (not consume('"')) return
+  while (hasAnother and not nextIs('\n'))
+    ch = read
+    if (ch == '"') produce STRING
+    elseIf (ch == '\\' and hasAnother) ch = read
+    collect ch
+  endWhile
+  syntaxError "Unterminated string."
+
 #-------------------------------------------------------------------------------
 parser
 #-------------------------------------------------------------------------------
@@ -75,13 +87,25 @@ parser
 
   beginList
     while (hasAnother)
-      expression
+      on "println"
+        arg_list
+        create Println(args)
+      elseOthers
+        expression
+      endOn
       consume_eols
     endWhile
   produceList Statements
 
 - consume_eols
   while (consume(EOL)) noAction
+
+- arg_list
+  beginList
+    while (hasAnother and not nextIs(EOL))
+      expression
+    endWhile
+  produceList
 
 - expression
   assign
@@ -107,13 +131,9 @@ parser
   on "-" -> Negate(operand)
 
 - term
-  #on '(' expression ')': return
-  on '('
-    expression
-    mustConsume ')'
-    return
-  endOn
+  on '(' expression ')': return
   on IDENTIFIER -> Access(name=content)
   on NUMBER     -> Number(value=content:Real)
+  on STRING     -> LiteralString(value=content)
   syntaxError
 

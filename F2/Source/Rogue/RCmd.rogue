@@ -84,10 +84,21 @@ class RCmd : RogueSourceWriter
            |      return list.count
            |
            |    method description->String
-           |      return "CmdList" + list
+           |      return "CmdList" + list_description
            |
            |    method get( index:Int32 )->Cmd
            |      return list[index]
+           |
+           |    method list_description->String
+           |      use builder = StringBuilder.pool
+           |        builder.print '['
+           |        forEach (element at index in list)
+           |          if (index > 0) builder.print ','
+           |          builder.print %element
+           |        endForEach
+           |        builder.print ']'
+           |        return builder->String
+           |      endUse
            |endClass
       endIf
 
@@ -98,7 +109,7 @@ class RCmd : RogueSourceWriter
            |class Unary( t, operand:Cmd ) : Cmd
            |  METHODS
            |    method description->String
-           |      return "Unary($)"(operand)
+           |      return "Unary($)"(%operand)
            |endClass
       endIf
 
@@ -109,7 +120,7 @@ class RCmd : RogueSourceWriter
            |class Binary( t, left:Cmd, right:Cmd ) : Cmd
            |  METHODS
            |    method description->String
-           |      return "Binary($,$)"(left,right)
+           |      return "Binary($,$)"(%left,%right)
            |endClass
       endIf
 
@@ -160,7 +171,7 @@ class RCmd : RogueSourceWriter
           local properties = node_type.properties
           builder.println "    method description->String"
           if (node_type.is_list)
-            builder.print  ''      return "$" + %list'' (node_type.name)
+            builder.print  ''      return "$" + list_description'' (node_type.name)
           else
             if (properties.count)
               builder.print  ''      return "$('' (node_type.name)

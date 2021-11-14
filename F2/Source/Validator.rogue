@@ -18,6 +18,16 @@ class Validator : FroleyVisitor
     method visit( cmd:Println )->Cmd  [override]
       return prior.visit( cmd )
 
+    method visit( cmd:ParserDef )->Cmd  [override]
+      if (cmd.vars.count)
+        forEach (v in cmd.vars)
+          if (v.type == Type.NONE)
+            throw v.t.error( "Reference to undefined routine or variable '$'."(v.name) )
+          endIf
+        endForEach
+      endIf
+      return prior.visit( cmd )
+
     method visit( cmd:ScannerDef )->Cmd  [override]
       if (cmd.vars.count)
         forEach (v in cmd.vars)

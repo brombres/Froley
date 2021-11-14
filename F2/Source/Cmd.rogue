@@ -293,6 +293,9 @@ class Unary( t, operand:Cmd ) : Cmd
       local op = this.op
       local space = which{ op.count and op[op.count-1].is_letter:" " || "" }
       return "($$$)" (op,space,operand)
+
+    method type->Type
+      return operand.type
 endClass
 
 class PostUnary : Unary
@@ -310,6 +313,9 @@ class Binary( t, left:Cmd, right:Cmd ) : Cmd
 
     method to->String
       return "($ $ $)" (left,op,right)
+
+    method type->Type
+      return Type( left.type->Int32.or_larger(right.type->Int32) )
 endClass
 
 class Identifier( t, name:String ) : Cmd
@@ -785,7 +791,7 @@ class ReadBuffer : Cmd
       return "ReadBuffer"
 
     method resolve_assignment( cmd:Assign, resolver:Resolver )->Cmd
-      throw t.error( "Illegal assignment." )
+      return WriteBuffer( t, cmd.new_value ).dispatch( resolver )
 
     method type->Type
       return Type.STRING

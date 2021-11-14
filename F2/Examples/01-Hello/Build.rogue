@@ -22,6 +22,16 @@ augment Build
     RELEASE_MODE      = false  # default; 'rogo debug' temporarily sets to false and rebuilds
 endAugment
 
+routine rogo_default
+  rogo_build
+  #rogo_install  # Uncomment to automatically install a /usr/local/bin/hello launcher
+  rogo_run
+endRoutine
+
+routine rogo_run
+  execute "$ Test.$" (File.esc(exe_filepath),Build.PROJECT.to_lowercase)
+endRoutine
+
 routine exe_filepath->String
   if (System.is_windows) return "Build/$.exe" (Build.LAUNCHER_NAME)
   return "Build/$-$" (Build.PROJECT,System.os)
@@ -33,18 +43,14 @@ routine launcher_folder->String
   return File.without_trailing_separator( result )
 endRoutine
 
-routine rogo_default
-    trace
-  rogo_build
-  #rogo_install  # Uncomment to automatically install a /usr/local/bin/hello launcher
-  rogo_run
-endRoutine
-
 routine rogo_build
   localize exe_filepath
-  if (File.is_newer_than(Build.PROJECT+".froley",exe_filepath) or Files("Source/*.rogue").count < 7)
+  contingent
+    sufficient (File.is_newer_than("Source/$.froley"(Build.PROJECT),exe_filepath))
+    necessary  (Files("Source/*.rogue").count < 7)
+  satisfied
     compile_froley
-  endIf
+  endContingent
 
   local source_files = Files( "Source", "**/*.rogue" )
   if (source_files.any_newer_than(exe_filepath))
@@ -72,6 +78,7 @@ routine rogo_debug
 endRoutine
 
 routine rogo_rebuild
+  compile_froley
   compile_rogue
   compile_cpp
 endRoutine
@@ -107,10 +114,6 @@ routine compile_cpp
       (flags,File.esc(cpp_filepath),File.esc(exe_filepath),libs)
     execute cc
   endIf
-endRoutine
-
-routine rogo_run
-  execute "$ Test.$" (File.esc(exe_filepath),Build.PROJECT.to_lowercase)
 endRoutine
 
 routine rogo_install

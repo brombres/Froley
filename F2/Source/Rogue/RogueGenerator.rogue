@@ -689,5 +689,51 @@ class RogueGenerator : FroleyVisitor
       RVisitor(this).update
 
       return cmd
+
+    method visit( cmd:Add )->Cmd [override]
+      write "("
+      dispatch( cmd.left )
+      write " + "
+      dispatch( cmd.right )
+      write ")"
+      return cmd
+
+    method visit( cmd:Subtract )->Cmd [override]
+      write "("
+      dispatch( cmd.left )
+      write " - "
+      dispatch( cmd.right )
+      write ")"
+      return cmd
+
+    method visit( cmd:Multiply )->Cmd [override]
+      write "("
+      dispatch( cmd.left )
+      write " * "
+      dispatch( cmd.right )
+      write ")"
+      return cmd
+
+    method visit( cmd:Divide )->Cmd [override]
+      write "("
+      dispatch( cmd.left )
+      write " / "
+      dispatch( cmd.right )
+      write ")"
+      return cmd
+
+    method visit( cmd:Power )->Cmd [override]
+      write "("
+      dispatch( cmd.left )
+      write " ^ "
+      dispatch( cmd.right )
+      write ")"
+      return cmd
+
+    method visit( cmd:Negate )->Cmd [override]
+      write "-"
+      dispatch( cmd.operand )
+      return cmd
+
 endClass
 

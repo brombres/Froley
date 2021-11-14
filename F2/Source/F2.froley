@@ -461,7 +461,6 @@ SYMBOL_T_CONTENT      t.content
   if (consume(EOL)) produceList Statements
   scanner_statement
   while (consume(';'))
-    consume_eols
     scanner_statement
   endWhile
   must_consume_eols
@@ -661,9 +660,13 @@ SYMBOL_T_CONTENT      t.content
 
   scanner_expression
 
-  on "=",  scanner_expression -> Assign(target,new_value)
-  on "++", scanner_expression -> Increment(target)
-  on "--", scanner_expression -> Decrement(target)
+  on "=", scanner_expression -> Assign(target,new_value)
+  on "++"
+    produce Increment(target)
+  endOn
+  on "--"
+    produce Decrement(target)
+  endOn
 
 + scanner_product
   identifier
@@ -895,7 +898,6 @@ SYMBOL_T_CONTENT      t.content
 
   parser_statement
   while (consume(';'))
-    consume_eols
     parser_statement
   endWhile
   must_consume_eols
@@ -1124,8 +1126,13 @@ SYMBOL_T_CONTENT      t.content
   parser_expression
 
   on "=",  parser_expression -> Assign(target,new_value)
-  on "++", parser_expression -> Increment(target)
-  on "--", parser_expression -> Decrement(target)
+
+  on "++"
+    produce Increment(target)
+  endOn
+  on "--"
+    produce Decrement(target)
+  endOn
 
 + list_type
   if (nextIs(IDENTIFIER)) identifier

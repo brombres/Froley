@@ -8,10 +8,18 @@ description( "default", "The default action is performed when no other actions a
 description( "help",    "Displays a list of all actions that can be performed by Rogo." )
 
 augment Build
+  # You can create a Local.settings file with overrides for these values, e.g.:
+  # LAUNCHER_FOLDER = "~/bin"
   PROPERTIES
-    PROJECT       = "HelloWorld"
-    LAUNCHER_NAME = PROJECT.to_lowercase : String
-    FROLEY_EXE    = "f2"
+    PROJECT           = "Hello"
+    FROLEY_EXE        = "f2"
+
+    LAUNCHER_NAME     = PROJECT.to_lowercase : String
+    LAUNCHER_FOLDER   = "/usr/local/bin"
+    ROGUEC_FLAGS      = ""
+    CPP_FLAGS_UNIX    = ""
+    CPP_FLAGS_WINDOWS = ""
+    RELEASE_MODE      = false  # default; 'rogo debug' temporarily sets to false and rebuilds
 endAugment
 
 routine exe_filepath->String
@@ -19,46 +27,148 @@ routine exe_filepath->String
   return "Build/$-$" (Build.PROJECT,System.os)
 endRoutine
 
+routine launcher_folder->String
+  local result = Build.LAUNCHER_FOLDER
+  result = File.expand_path( result )
+  return File.without_trailing_separator( result )
+endRoutine
+
 routine rogo_default
+    trace
   rogo_build
+  #rogo_install  # Uncomment to automatically install a /usr/local/bin/hello launcher
   rogo_run
 endRoutine
 
 routine rogo_build
-  local src = Files(".","*.froley").add("Source/*")
-  if (src.any_newer_than(exe_filepath))
+  localize exe_filepath
+  if (File.is_newer_than(Build.PROJECT+".froley",exe_filepath) or Files("Source/*.rogue").count < 7)
     compile_froley
-    compile_rogue
+  endIf
+
+  local source_files = Files( "Source", "**/*.rogue" )
+  if (source_files.any_newer_than(exe_filepath))
+    local cpp_filepath = "Build/$-$.cpp" (Build.PROJECT,System.os)
+    if (source_files.any_newer_than(cpp_filepath))
+      compile_rogue
+    endIf
+    compile_cpp
   endIf
 endRoutine
 
-routine rogo_rebuild
-  compile_froley
-  compile_rogue
-endRoutine
-
 routine compile_froley
-  local froley_src = File( "$.froley"(Build.PROJECT) )
-  #execute "$ $ Build --main"(File.esc(Build.FROLEY_EXE),froley_src.esc)
-  execute "$ $ Build"(File.esc(Build.FROLEY_EXE),froley_src.esc)
-  File.copy( "Source/HelloWorld.rogue", "Build", &if_different, &verbose )
-endRoutine
-
-routine compile_rogue
-  local src_filepath = "Build/$.rogue" (Build.PROJECT)
-  local cpp_filepath = "Build/$-$.cpp" (Build.PROJECT,System.os)
-  local flags = "--debug --compile"
-  execute "roguec $ $ --main --output=$ --target=Console,C++,$"...
-          (File.esc(src_filepath),flags,File.esc(cpp_filepath),System.os)
-endRoutine
-
-routine rogo_run
-  execute File.esc(exe_filepath)
-  #execute "$ Test.$" (File.esc(exe_filepath),Build.PROJECT.to_lowercase)
+  local froley_src = File( "Source/$.froley"(Build.PROJECT) )
+  execute "$ $ Source --main"(File.esc(Build.FROLEY_EXE),froley_src.esc)
 endRoutine
 
 routine rogo_clean
   File.delete( "Build" )
+  Files( "Source/*.rogue" ).delete
+endRoutine
+
+routine rogo_debug
+  Build.RELEASE_MODE = false
+  rogo_rebuild
+endRoutine
+
+routine rogo_rebuild
+  compile_rogue
+  compile_cpp
+endRoutine
+
+routine compile_rogue
+  local src_filepath = "Source/$.rogue" (Build.PROJECT)
+  local cpp_filepath = "Build/$-$.cpp" (Build.PROJECT,System.os)
+  local flags = Build.ROGUEC_FLAGS
+  if (flags != "") flags += " "
+  flags += which{ Build.RELEASE_MODE:"--release" || "--debug" }
+  execute "roguec $ $ --main --output=$ --target=Console,C++,$"...
+          (File.esc(src_filepath),flags,File.esc(cpp_filepath),System.os)
+endRoutine
+
+routine compile_cpp
+  local cpp_filepath = File.esc( "Build/$-$.cpp" (Build.PROJECT,System.os) )
+  local exe_filepath = File.esc( exe_filepath )
+  if (System.is_windows)
+    local libs = ""
+    local flags = Build.CPP_FLAGS_WINDOWS
+    if (flags != "") flags += " "
+    flags += which{ Build.RELEASE_MODE:"/Ob2ity /GF /Gy" || "/Od" }
+    local obj_filepath = File.esc( "Build/$-Windows.obj"(Build.PROJECT) )
+    local cc = "cl $ /EHsc /nologo $ /Fo$ /Fe$ $" (flags,cpp_filepath,obj_filepath,exe_filepath,libs)
+    #cc += " /link /LTCG"   # uncomment this if there are errors linking libraries
+    execute cc
+  else
+    local libs = ""
+    local flags = Build.CPP_FLAGS_UNIX
+    if (flags != "") flags += " "
+    flags += which{ Build.RELEASE_MODE:"-O3" || "-O0" }
+    local cc = "c++ $ -Wall -std=gnu++11 -fno-strict-aliasing -Wno-invalid-offsetof $ -o $$"...
+      (flags,File.esc(cpp_filepath),File.esc(exe_filepath),libs)
+    execute cc
+  endIf
+endRoutine
+
+routine rogo_run
+  execute "$ Test.$" (File.esc(exe_filepath),Build.PROJECT.to_lowercase)
+endRoutine
+
+routine rogo_install
+  rogo_build
+  local exe_filepath = File.abs( exe_filepath )
+  if (System.is_windows)
+    local exe_folder = File.conventional_filepath( File.folder(exe_filepath) )
+    local path = System.environment//PATH
+    if (not path.to_lowercase.contains(exe_folder.to_lowercase))
+      println
+      println ''Add the following to your system PATH then reopen this command prompt to be able''
+      println ''to launch $ by typing "$":'' (Build.PROJECT,Build.LAUNCHER_NAME)
+      println
+      println "  ADD THIS TO YOUR PATH"
+      println "  " + exe_folder
+    endIf
+  else
+    contingent
+      local result = Process.run( "which " + Build.LAUNCHER_NAME, &env )
+      necessary (result.success)
+      local launcher_filepath = result->String.trimmed
+      necessary launcher_filepath
+      necessary File.load_as_string( launcher_filepath ).contains( exe_filepath )
+
+    unsatisfied
+      local launcher_filepath = "$/$" (launcher_folder,Build.LAUNCHER_NAME)
+      println "Creating launcher " + launcher_filepath
+      local sudo = ""
+      loop
+        try
+          if (not File.exists(launcher_folder)) execute( "$mkdir $"(sudo,launcher_folder) )
+          File.save( "$.launcher"(Build.LAUNCHER_NAME), ''#!/bin/sh\nexec "$" "$@"\n''(exe_filepath,'$') )
+          execute( "$mv $.launcher $"(sudo,Build.LAUNCHER_NAME,launcher_filepath) )
+          execute( "$chmod a+x $"(sudo,launcher_filepath) )
+          escapeLoop
+        catch (err:Error)
+          if (sudo != "") throw err
+          sudo = "sudo "
+        endTry
+      endLoop
+    endContingent
+  endIf
+endRoutine
+
+routine rogo_uninstall
+  verbose_delete( "Build" )
+  if (not System.is_windows) verbose_delete( "$/$"(launcher_folder,Build.LAUNCHER_NAME) )
+endRoutine
+
+routine verbose_delete( filepath:String )
+  if (File.exists(filepath))
+    println "> Delete " + filepath
+    if (not File.delete(filepath))
+      println "*** Failed to delete - retrying with sudo"
+      local cmd = ''sudo rm -rf $'' (File.shell_escaped(filepath))
+      execute cmd
+    endIf
+  endIf
 endRoutine
 
 routine execute( commands:String, error_message=null:String, &suppress_error )->Logical

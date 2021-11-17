@@ -196,6 +196,7 @@ class RogueGenerator : FroleyVisitor
           write "_$_arg($)"(arg_type.name_lc,cmd.stack_offset)
         else
           write "_node_arg($)"(cmd.stack_offset)
+          if (arg_type.name != "Cmd") write " as "; write arg_type.name
         endIf
       endIf
       return cmd

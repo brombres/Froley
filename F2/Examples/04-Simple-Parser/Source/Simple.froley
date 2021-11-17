@@ -79,3 +79,61 @@ scanner
   endWhile
   syntaxError "Unterminated string."
 
+#-------------------------------------------------------------------------------
+parser
+#-------------------------------------------------------------------------------
+- statements
+  consume_eols
+
+  beginList
+    while (hasAnother)
+      on "println"
+        arg_list
+        create Println(args)
+      elseOthers
+        expression
+      endOn
+      consume_eols
+    endWhile
+  produceList Statements
+
+- consume_eols
+  while (consume(EOL)) noAction
+
+- arg_list
+  beginList
+    while (hasAnother and not nextIs(EOL))
+      expression
+    endWhile
+  produceList
+
+- expression
+  assign
+
+- assign [rightBinary]
+  on "=" -> Assign
+
+- add_subtract [binary]
+  on "+" -> Add
+  on "-" -> Subtract
+
+- multiply_divide [binary]
+  on "*" -> Multiply
+  on "/" -> Divide
+
+- power [binary]
+  on "^" -> Power
+
+- factorial [postUnary]
+  on "!" -> Factorial(operand)
+
+- negate [preUnary]
+  on "-" -> Negate(operand)
+
+- term
+  on '(' expression ')': return
+  on IDENTIFIER -> Access(name=content)
+  on NUMBER     -> Number(value=content:Real)
+  on STRING     -> LiteralString(value=content)
+  syntaxError
+

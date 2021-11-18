@@ -634,8 +634,8 @@ SYMBOL_T_CONTENT      t.content
   endOn
 
 + scanner_statement
-  on "collect", scanner_args -> Collect(args:Args)
-  #on "create", scanner_product      -> ScannerProduce(arg:Cmd)
+  on "collect", scanner_args    -> Collect(args:Args)
+  on "create",  scanner_product -> ScannerCreate(arg)
   on "discardPosition"       -> DiscardPosition
   on "halt"                  -> Halt
   on "markPosition"          -> MarkPosition

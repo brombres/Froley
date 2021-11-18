@@ -173,17 +173,17 @@ scanner
 - consume_comment
   if (consume('#'))
     if (consume('{'))
-      @count = 1
+      count = 1
       while (hasAnother)
         ch = read
         if (ch == '\n')
           create EOL
         elseIf (ch == '#')
-          if (consume('{')) @count += 1
+          if (consume('{')) ++count
         elseIf (ch == '}')
           if (consume('#'))
-            @count -= 1
-            if (@count == 0) restart
+            --count
+            if (count == 0) restart
           endIf
         endIf
       endWhile

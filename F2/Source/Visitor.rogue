@@ -503,4 +503,8 @@ class Visitor
 
     method visit( cmd:NextHasAttribute )->Cmd
       return cmd
+
+    method visit( cmd:ScannerCreate )->Cmd
+      if (cmd.arg) cmd.arg = cmd.arg.dispatch( this )
+      return cmd
 endClass

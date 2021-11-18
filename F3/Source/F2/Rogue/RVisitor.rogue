@@ -1,0 +1,134 @@
+module F3
+
+class RVisitor : RogueSourceWriter
+  PROPERTIES
+    handled_node_types = Set<<String>>()
+
+  METHODS
+    method init_object
+      class_name = "Visitor"
+
+    method scan_node_types( content:String )
+      forEach (line in LineReader(content))
+        if (line.contains("method visit("))
+          local node_type = line.after_first('(').before_first(')').after_first(':').trimmed
+          handled_node_types.add( node_type )
+        endIf
+      endForEach
+
+    method update_content( content:String )->String
+      if (not String.exists(content) or not content.contains("class Visitor<<"))
+        if (content is null) content = ""
+        content +=  "# Generated and updated by Froley. Custom changes will not be overwritten; customize as desired.\n"
+        content += "module $\n\n"(program.project_name)
+        content += @|class Visitor : Visitor<<Logical>>
+                    |  # Extend this simple convenience class to use a non-rebuilding, "non-value-returning"
+                    |  # Visitor. It uses return type Logical as a dummy value, but just overide on(CmdType)
+                    |  # methods as needed.
+                    |endClass
+                    |
+                    |class Visitor<<$ReturnType>>
+                    |  # Visitor is a Froley-generated triple-dispatch implementation of the visitor pattern.
+                    |  METHODS
+                    |    method on( cmd:Cmd )
+                    |      local this_name = type_name.after_any("::")
+                    |      local cmd_name = cmd.type_name.after_any("::")
+                    |      throw UnsupportedOperationError(
+                    |        "$ does not support node type $. Override $.on($) or $.visit($) " ...
+                    |        "- or override on(Cmd) to be a noAction." ...
+                    |        (this_name,cmd_name,this_name,cmd_name,this_name,cmd_name) )
+                    |
+                    |    method dispatch( cmd:Cmd )->$ReturnType
+                    |      if ($ReturnType instanceOf Cmd)
+                    |        if (cmd is null) return null
+                    |      else
+                    |        if (cmd is null) return $ReturnType.meta.default_value
+                    |      endIf
+                    |      return cmd.dispatch<<ThisType,$ReturnType>>( this )
+                    |
+                    |    method visit_children( cmd:CmdList )
+                    |      if ($ReturnType instanceOf Cmd)
+                    |        forEach (element in writer=cmd.list.rewriter)
+                    |          local visited_element = dispatch( element )
+                    |          if (visited_element) writer.write( visited_element )
+                    |        endForEach
+                    |      else
+                    |        dispatch( forEach in cmd.list )
+                    |      endIf
+                    |
+      endIf
+
+      scan_node_types( content )
+
+      local end_class_location = content.locate( "endClass", content.locate("class Visitor<<").value )
+      local bottom = "endClass\n"
+      if (end_class_location)
+        bottom = content.from( end_class_location.value )
+        content = content.leftmost( end_class_location.value ).trimmed
+      endIf
+
+      local builder = StringBuilder()
+      builder.print( content )
+      builder.indent = 4
+
+      forEach (node_type in program.node_types)
+        if (node_type.is_built_in) nextIteration
+
+        if (not handled_node_types.contains(node_type.name))
+          handled_node_types.add( node_type.name )
+
+          local properties = node_type.properties
+          properties .= discarding( (p) with (program) => program.type(p.type).is_built_in )
+          local extended_properties = node_type.extended_properties
+          extended_properties .= discarding( (p) with (program) => program.type(p.type).is_built_in )
+
+          builder.println
+          builder.print(  "method visit( cmd:" ).print( node_type.name ).println( " )->$ReturnType" )
+          builder.println "  on( cmd )"
+          if (properties.count or node_type.is_list)
+            builder.println "  visit_children( cmd )"
+          endIf
+          builder.println "  if ($ReturnType instanceOf Cmd) return cmd"
+          builder.println "  else                            return $ReturnType.meta.default_value"
+
+          if (extended_properties.count)
+            builder.println
+            builder.print(  "method visit_children( cmd:" ).print( node_type.name ).println( " )" )
+            if (node_type.is_list and node_type.name != "CmdList")
+              builder.println "  prior.visit_children( cmd )"
+            endIf
+
+            builder.println "  if ($ReturnType instanceOf Cmd)"
+            if (properties.count)
+              forEach (p in properties)
+                local type = program.type(p.type)
+                if (not type.is_built_in)
+                  builder.print   "    cmd.$ = dispatch(cmd.$)"(p.name,p.name)
+                  if (type.name != "Cmd")
+                    builder.print   " as "
+                    builder.print   type.name
+                  endIf
+                  builder.println
+                endIf
+              endForEach
+            endIf
+
+            builder.println "  else"
+            if (properties.count)
+              forEach (p in properties)
+                local type = program.type(p.type)
+                if (not type.is_built_in)
+                  builder.println "    cmd.$.dispatch(this)"(p.name)
+                endIf
+              endForEach
+            endIf
+            builder.println "  endIf"
+          endIf
+        endIf
+      endForEach
+
+      builder.println
+
+      content = builder->String + bottom
+      return content
+endClass

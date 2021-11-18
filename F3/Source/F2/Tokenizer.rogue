@@ -1,0 +1,20 @@
+module F3
+
+$include "TokenizerVM.rogue"
+
+class Tokenizer : TokenizerVM
+  METHODS
+    method init
+      prior.init
+      load( Code.tokenizer_code )
+
+    method init( file:File )
+      init
+      open( file )
+
+    method init( filepath:String, source:String )
+      init
+      open( filepath, source )
+
+endClass
+

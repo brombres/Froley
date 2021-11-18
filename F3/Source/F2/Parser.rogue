@@ -1,0 +1,10 @@
+module F3
+
+$include "ParserVM.rogue"
+
+class Parser : ParserVM
+  METHODS
+    method init
+      load( Code.parser_code )
+endClass
+

@@ -1,4 +1,6 @@
-[tokens]
+--------------------------------------------------------------------------------
+tokens
+--------------------------------------------------------------------------------
 EOL                 EOL
 CHARSET             charset    [content]
 IDENTIFIER          identifier [content]
@@ -7,15 +9,17 @@ STRING              string     [content]
 STRING_OR_CHARACTER string     [content]
 SYMBOL              symbol     [content]
 
-[attributes]
-structural
 
-[section_keywords]
+--------------------------------------------------------------------------------
+tokens SectionKeywords
+--------------------------------------------------------------------------------
 KEYWORD_PARSER          parser      [structural]
 KEYWORD_SCANNER         scanner     [structural]
 KEYWORD_TOKENS          tokens      [structural]
 
-[scanner_keywords]
+--------------------------------------------------------------------------------
+tokens ScannerKeywords
+--------------------------------------------------------------------------------
 KEYWORD_BUFFER           buffer
 KEYWORD_CASE             case
 KEYWORD_COLLECT          collect
@@ -25,7 +29,9 @@ KEYWORD_PRODUCE_ANY      produceAny
 KEYWORD_MATCH            match
 KEYWORD_RESTART          restart
 
-[parser_keywords]
+--------------------------------------------------------------------------------
+tokens ParserKeywords
+--------------------------------------------------------------------------------
 KEYWORD_BEGIN_LIST         beginList
 KEYWORD_CREATE_LIST        createList
 KEYWORD_CREATE_NULL        createNull
@@ -38,7 +44,9 @@ KEYWORD_ON                 on
 KEYWORD_PRODUCE_LIST       produceList
 KEYWORD_PRODUCE_NULL       produceNull
 
-[common_keywords]
+--------------------------------------------------------------------------------
+tokens CommonKeywords
+--------------------------------------------------------------------------------
 KEYWORD_AND              and
 KEYWORD_CALL             call
 KEYWORD_CONSUME          consume
@@ -73,7 +81,9 @@ KEYWORD_SYNTAX_ERROR     syntaxError
 KEYWORD_TRUE             true
 KEYWORD_WHILE            while
 
-[symbols]
+--------------------------------------------------------------------------------
+tokens Symbols
+--------------------------------------------------------------------------------
 SYMBOL_ARROW          ->  [structural]
 SYMBOL_ASSIGN         =
 SYMBOL_AT             @
@@ -105,14 +115,16 @@ SYMBOL_SLASH          /
 SYMBOL_STAR           *
 SYMBOL_T_CONTENT      t.content
 
-[tokenizer]
-+ scan_standard_token
+--------------------------------------------------------------------------------
+scanner
+--------------------------------------------------------------------------------
+- scan_standard_token
   if (not hasAnother) halt
 
   consume_whitespace
   consume_comment
 
-  markSourcePosition
+  markPosition
 
   if (consume('\n')) produce EOL
 
@@ -121,15 +133,15 @@ SYMBOL_T_CONTENT      t.content
   scan_double_quoted_string
   scan_charset
 
-  which (input)
-    produceAny [symbols]
+  match (input)
+    produceAny Symbols
     others
       ch = peek
-      if (ch is '0'..'9')
+      if (nextIs [0-9])
         scan_integer
         produce INTEGER
       endIf
-  endWhich
+  endMatch
 
   syntaxError
 
@@ -185,7 +197,7 @@ SYMBOL_T_CONTENT      t.content
       restart
     endIf
 
-  elseIf (consume("---") or consume("==="))
+  elseIf (consume("----") or consume("===="))
     # Single line comment
     while (hasAnother)
       ch = read
@@ -203,7 +215,7 @@ SYMBOL_T_CONTENT      t.content
   consume_comment
   if (not hasAnother) halt
 
-  markSourcePosition
+  markPosition
   mode scan_token_name
 
   if (consume('\n')) produce EOL
@@ -218,7 +230,7 @@ SYMBOL_T_CONTENT      t.content
 
   if (nextIs('-')) restart scan_standard_token
 
-  markSourcePosition
+  markPosition
   mode scan_token_symbol
   scan_identifier
 
@@ -256,21 +268,19 @@ SYMBOL_T_CONTENT      t.content
   consume_comment
   if (not hasAnother) halt
 
-  which (input)
+  match (input)
     case '\n': mode scan_token_name; produce EOL
     case '[':  produce SYMBOL_OPEN_SQUARE
     case ']':  produce SYMBOL_CLOSE_SQUARE
     case ',':  produce SYMBOL_COMMA
-  endWhich
+  endMatch
 
   must_scan_attribute_identifier
 
 - scan_identifier
   ch = peek
-  if (ch is 'a'..'z' or ch is 'A'..'Z' or ch == '_')
-    collect_identifier
-
-    which (buffer)
+  if (scan [a-zA-Z_][a-zA-Z0-9_]*)
+    match (buffer)
       case "parser"
         mode scan_standard_token
         produce KEYWORD_PARSER
@@ -280,42 +290,21 @@ SYMBOL_T_CONTENT      t.content
       case "tokens"
         mode scan_tokens_id
         produce KEYWORD_TOKENS
-      produceAny [common_keywords]
-      produceAny [parser_keywords]
-      produceAny [scanner_keywords]
+      produceAny CommonKeywords
+      produceAny ParserKeywords
+      produceAny ScannerKeywords
       others
         produce IDENTIFIER
-    endWhich
+    endMatch
   endIf
   return
 
 - must_scan_attribute_identifier
-  ch = peek
-  if (ch is 'a'..'z' or ch is 'A'..'Z' or ch == '_')
-    collect_identifier
-    produce IDENTIFIER
-  endIf
+  if (scan [a-zA-Z_][a-zA-Z0-9_]*) produce IDENTIFIER
   syntaxError "Identifier expected."
 
-- collect_identifier
-  clear buffer
-
-  ch = peek
-  while (ch is 'a'..'z' or ch is 'A'..'Z' or ch is '0'..'9' or ch == '_')
-    ch = read
-    collect ch
-    ch = peek
-    if (ch == '/')
-      ch = peek(1)
-      if (ch == '/') ch = read; collect ch; ch = read; collect ch
-      ch = peek
-    endIf
-  endWhile
-
-  return
-
 - scan_integer
-  while (ch is '0'..'9' or ch == '_')
+  while (nextIs [0-9_])
     ch = read
     if (ch != '_') collect ch
     if (not hasAnother) return
@@ -354,8 +343,9 @@ SYMBOL_T_CONTENT      t.content
   collect ch
   return
 
+#{
 [parser]
-+ program
+- program
   beginList
 
   while (consume(EOL)) noAction
@@ -367,7 +357,7 @@ SYMBOL_T_CONTENT      t.content
 
   produceList
 
-+ element
+- element
   on "scanner"
     createNull
     must_consume_eols
@@ -388,11 +378,11 @@ SYMBOL_T_CONTENT      t.content
   endOn
   syntaxError
 
-+ identifier
+- identifier
   on IDENTIFIER -> Identifier(name=t.content:String)
   syntaxError "Identifier expected."
 
-+ scanner_routines
+- scanner_routines
   beginList
 
   consume_eols
@@ -407,16 +397,16 @@ SYMBOL_T_CONTENT      t.content
 
   produceList
 
-+ routine_name_and_attributes
+- routine_name_and_attributes
   identifier
   on CHARSET
     create LiteralString(value=t.content:String)
-  else
+  elseOthers
     createNull
   endOn
   must_consume_eols
 
-+ token_definitions
+- token_definitions
   beginList
 
   consume_eols
@@ -434,7 +424,7 @@ SYMBOL_T_CONTENT      t.content
 
   produceList
 
-+ attributes
+- attributes
   if (not consume('[')) produceNull
   if (consume(']'))     produceNull
 
@@ -447,28 +437,28 @@ SYMBOL_T_CONTENT      t.content
   mustConsume(']')
   produceList
 
-+ symbol
+- symbol
   on SYMBOL -> Symbol(name=t.content:String)
   syntaxError "Symbol expected."
 
-+ consume_eols
+- consume_eols
   while (consume(EOL)) noAction
 
-+ must_consume_eols
+- must_consume_eols
   mustConsume(EOL)
   while (consume(EOL)) noAction
 
-+ scanner_multi_line_statements
+- scanner_multi_line_statements
   consume_eols
+  if (not hasAnother) syntaxError
   beginList
-  if (not hasAnother) produceList Statements
   while (hasAnother and not (nextIs('+') or nextIs('-') or nextHasAttribute(structural)))
     scanner_control_structure
     consume_eols
   endWhile
   produceList Statements
 
-+ scanner_single_line_statements
+- scanner_single_line_statements
   beginList
 
   if (consume(EOL)) produceList Statements
@@ -480,7 +470,7 @@ SYMBOL_T_CONTENT      t.content
 
   produceList Statements
 
-+ scanner_control_structure
+- scanner_control_structure
   on "if"
     if (consume("("))
       scanner_expression
@@ -535,7 +525,7 @@ SYMBOL_T_CONTENT      t.content
 
   scanner_statement
 
-+ cases
+- cases
   beginList
     consume_eols
     while (hasAnother)
@@ -556,22 +546,22 @@ SYMBOL_T_CONTENT      t.content
       elseOn "produceAny"
         identifier
         create ProduceAny(token_group_name:String)
-      else
+      elseOthers
         produceList
       endOn
     endWhile
   produceList
 
-+ _others
+- _others
   on "others"
     consume(":")
     consume_eols
     scanner_multi_line_statements
-  else
+  elseOthers
     createNull
   endOn
 
-+ scanner_multi_line_else_ifs
+- scanner_multi_line_else_ifs
   beginList
 
   while (nextIs("elseIf"))
@@ -592,7 +582,7 @@ SYMBOL_T_CONTENT      t.content
 
   produceList
 
-+ scanner_multi_line_else
+- scanner_multi_line_else
   if (not nextIs("else")) produceNull
   savePosition
   on "else"
@@ -602,7 +592,7 @@ SYMBOL_T_CONTENT      t.content
     return
   endOn
 
-+ scanner_single_line_else_ifs
+- scanner_single_line_else_ifs
   beginList
 
   while (nextIs("elseIf"))
@@ -623,7 +613,7 @@ SYMBOL_T_CONTENT      t.content
 
   produceList
 
-+ scanner_single_line_else
+- scanner_single_line_else
   if (not nextIs("else")) produceNull
   savePosition
   on "else"
@@ -633,7 +623,7 @@ SYMBOL_T_CONTENT      t.content
     return
   endOn
 
-+ scanner_statement
+- scanner_statement
   on "collect", scanner_args -> Collect(args:Args)
   #on "create", scanner_product      -> ScannerProduce(arg:Cmd)
   on "discardPosition"       -> DiscardPosition
@@ -685,11 +675,11 @@ SYMBOL_T_CONTENT      t.content
     produce Decrement(target)
   endOn
 
-+ scanner_product
+- scanner_product
   identifier
   produce Access( name=t.content:String )
 
-+ cmd_args
+- cmd_args
   beginList
     consume_eols
     if (consume(')')) produceList Args
@@ -701,7 +691,7 @@ SYMBOL_T_CONTENT      t.content
     endWhile
   produceList Args
 
-+ cmd_arg
+- cmd_arg
   identifier
   if (consume('='))
     on IDENTIFIER
@@ -718,7 +708,7 @@ SYMBOL_T_CONTENT      t.content
   else              createNull
   produce CreateCmdArg(arg_name:String,arg_value,arg_type:String)
 
-+ scanner_args
+- scanner_args
   if (consume('('))
     consume_eols
     scanner_arg_list
@@ -728,7 +718,7 @@ SYMBOL_T_CONTENT      t.content
     scanner_arg_list
   endIf
 
-+ scanner_arg_list
+- scanner_arg_list
   beginList
   if (nextHasAttribute(structural)) produceList Args
 
@@ -746,7 +736,7 @@ SYMBOL_T_CONTENT      t.content
 
   produceList Args
 
-+ sequence_args
+- sequence_args
   if (consume('('))
     consume_eols
     sequence_arg_list
@@ -756,7 +746,7 @@ SYMBOL_T_CONTENT      t.content
     sequence_arg_list
   endIf
 
-+ sequence_arg_list
+- sequence_arg_list
   beginList
   if (nextHasAttribute(structural)) produceList SequenceArgs
 
@@ -774,7 +764,7 @@ SYMBOL_T_CONTENT      t.content
 
   produceList SequenceArgs
 
-+ pattern_sequence
+- pattern_sequence
   beginList
   if (nextHasAttribute(structural)) produceList PatternSequence
 
@@ -798,7 +788,7 @@ SYMBOL_T_CONTENT      t.content
 
   produceList PatternSequence
 
-+ sequence_item
+- sequence_item
   on '{' pattern_sequence '}': return
   on CHARSET
     create CharSet(characters=t.content:String)
@@ -809,11 +799,11 @@ SYMBOL_T_CONTENT      t.content
   on STRING_OR_CHARACTER -> LiteralStringOrCharacter( value=t.content:String )
   syntaxError
 
-+ empty_statements
+- empty_statements
   beginList
   createList Statements
 
-+ scanner_expression
+- scanner_expression
 
 - scanner_logical_or : Binary
   on "or" -> LogicalOr
@@ -874,7 +864,7 @@ SYMBOL_T_CONTENT      t.content
   endOn
   syntaxError
 
-+ repeat_count
+- repeat_count
   on "*"
     produce ZeroOrMore(pattern:Cmd)
   elseOn "+"
@@ -884,7 +874,7 @@ SYMBOL_T_CONTENT      t.content
   endOn
   # else just the CharSet
 
-+ parser_routines
+- parser_routines
   beginList
 
   consume_eols
@@ -899,17 +889,17 @@ SYMBOL_T_CONTENT      t.content
 
   produceList
 
-+ parser_multi_line_statements
+- parser_multi_line_statements
   consume_eols
+  if (not hasAnother) syntaxError
   beginList
-  if (not hasAnother) produceList Statements
   while (hasAnother and not (nextIs('+') or nextIs('-') or nextHasAttribute(structural)))
     parser_control_structure
     consume_eols
   endWhile
   produceList Statements
 
-+ parser_single_line_statements
+- parser_single_line_statements
   beginList
   if (consume(EOL)) produceList Statements
 
@@ -921,7 +911,7 @@ SYMBOL_T_CONTENT      t.content
 
   produceList Statements
 
-+ parser_control_structure
+- parser_control_structure
   on "if"
     if (consume("("))
       parser_expression
@@ -977,7 +967,7 @@ SYMBOL_T_CONTENT      t.content
 
   parser_statement
 
-+ parser_multi_line_else_ifs
+- parser_multi_line_else_ifs
   beginList
 
   while (nextIs("elseIf"))
@@ -998,7 +988,7 @@ SYMBOL_T_CONTENT      t.content
 
   produceList
 
-+ parser_multi_line_else
+- parser_multi_line_else
   if (not nextIs("else")) produceNull
   savePosition
   on "else"
@@ -1008,7 +998,7 @@ SYMBOL_T_CONTENT      t.content
     return
   endOn
 
-+ parser_single_line_else_ifs
+- parser_single_line_else_ifs
   beginList
 
   while (nextIs("elseIf"))
@@ -1029,7 +1019,7 @@ SYMBOL_T_CONTENT      t.content
 
   produceList
 
-+ parser_single_line_else
+- parser_single_line_else
   if (not nextIs("else")) produceNull
   savePosition
   on "else"
@@ -1039,7 +1029,7 @@ SYMBOL_T_CONTENT      t.content
     return
   endOn
 
-+ parser_multi_line_else_ons
+- parser_multi_line_else_ons
   beginList
 
   while (nextIs("elseOn"))
@@ -1056,7 +1046,7 @@ SYMBOL_T_CONTENT      t.content
 
   produceList
 
-+ parser_multi_line_else_on_others
+- parser_multi_line_else_on_others
   if (not nextIs("elseOthers")) produceNull
   savePosition
   on "elseOthers"
@@ -1066,7 +1056,7 @@ SYMBOL_T_CONTENT      t.content
     return
   endOn
 
-+ parser_single_line_else_ons
+- parser_single_line_else_ons
   beginList
 
   while (nextIs("elseOn"))
@@ -1084,7 +1074,7 @@ SYMBOL_T_CONTENT      t.content
 
   produceList
 
-+ parser_single_line_else_on_others
+- parser_single_line_else_on_others
   if (not nextIs("elseOthers")) produceNull
   savePosition
   on "elseOthers"
@@ -1095,7 +1085,7 @@ SYMBOL_T_CONTENT      t.content
     return
   endOn
 
-+ parser_statement
+- parser_statement
   on "beginList" -> BeginList
   on "create",     parser_product      -> ParserCreate(arg:CreateCmd)
   on "createList", list_type           -> CreateList(list_type:String)
@@ -1151,11 +1141,11 @@ SYMBOL_T_CONTENT      t.content
     produce Decrement(target)
   endOn
 
-+ list_type
+- list_type
   if (nextIs(IDENTIFIER)) identifier
   else                    produceNull
 
-+ parser_args
+- parser_args
   if (consume('('))
     consume_eols
     parser_arg_list
@@ -1165,7 +1155,7 @@ SYMBOL_T_CONTENT      t.content
     parser_arg_list
   endIf
 
-+ parser_arg_list
+- parser_arg_list
   beginList
   if (nextHasAttribute(structural)) produceList ParserArgs
 
@@ -1183,7 +1173,7 @@ SYMBOL_T_CONTENT      t.content
 
   produceList ParserArgs
 
-+ ttype_or_literal
+- ttype_or_literal
   if (consume('('))
     ttype_or_literal_inner
     mustConsume(')')
@@ -1191,7 +1181,7 @@ SYMBOL_T_CONTENT      t.content
     ttype_or_literal_inner
   endIf
 
-+ ttype_or_literal_inner
+- ttype_or_literal_inner
   if (consume('@'))
     token_id
     create LiteralContent(value:String)
@@ -1199,7 +1189,7 @@ SYMBOL_T_CONTENT      t.content
     token_id
   endIf
 
-+ attr_name_arg
+- attr_name_arg
   if (consume('('))
     attribute_name
     mustConsume(')')
@@ -1207,20 +1197,20 @@ SYMBOL_T_CONTENT      t.content
     attribute_name
   endIf
 
-+ attribute_name
+- attribute_name
   on IDENTIFIER          -> Identifier( name=t.content:String )
   on STRING              -> LiteralString( value=t.content:String )
   on STRING_OR_CHARACTER -> LiteralString( value=t.content:String )
   syntaxError "Attribute name expected."
 
 
-+ token_id
+- token_id
   on IDENTIFIER          -> Identifier( name=t.content:String )
   on STRING              -> LiteralString( value=t.content:String )
   on STRING_OR_CHARACTER -> LiteralString( value=t.content:String )
   syntaxError "TOKEN_ID or \"token_name\" expected."
 
-+ collect_parse_list
+- collect_parse_list
   beginList
     while (hasAnother and not nextIs(EOL) and not nextHasAttribute(structural))
       consume ","
@@ -1228,13 +1218,13 @@ SYMBOL_T_CONTENT      t.content
     endWhile
   produceList Args
 
-+ string_id_or_routine
+- string_id_or_routine
   on IDENTIFIER          -> Identifier( name=t.content:String )
   on STRING              -> LiteralString( value=t.content:String )
   on STRING_OR_CHARACTER -> LiteralString( value=t.content:String )
   syntaxError "TOKEN_ID, \"token_name\", or routine_name expected."
 
-+ parser_product
+- parser_product
   identifier
   if (consume('('))
     cmd_args
@@ -1245,7 +1235,7 @@ SYMBOL_T_CONTENT      t.content
   endIf
   produce CreateCmd(name:String,args:Args)
 
-+ parser_expression
+- parser_expression
 
 - parser_logical_or : Binary
   on "or" -> LogicalOr
@@ -1292,3 +1282,4 @@ SYMBOL_T_CONTENT      t.content
   on STRING_OR_CHARACTER                -> LiteralStringOrCharacter( value=t.content:String )
   syntaxError
 
+}#

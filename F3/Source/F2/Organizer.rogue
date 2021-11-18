@@ -1,0 +1,278 @@
+module F3
+
+class Organizer : FroleyVisitor
+  PROPERTIES
+    this_match      : Match
+
+  METHODS
+    method visit( cmd:CreateCmd )->Cmd [override]
+      local node_type = program.node_types[ cmd.name ]
+      if (not node_type)
+        node_type = NodeType( cmd.name, program )
+        program.node_types[ cmd.name ] = node_type
+      endIf
+
+      if (not cmd.is_organized)
+        cmd.is_organized = true
+
+        # See Collector.visit(Routine) for more details on the following.
+        if (this_routine.is_binary)
+          local args = cmd.args
+          if (args.count == 0) args.add( CreateCmdArg(cmd.t,"left",null,"Cmd") )
+          if (args.count == 1) args.add( CreateCmdArg(cmd.t,"right",null,"Cmd") )
+          node_type.base_type = "Binary"
+
+        elseIf (this_routine.is_right_binary)
+          local args = cmd.args
+          if (args.count == 0) args.add( CreateCmdArg(cmd.t,"left",null,"Cmd") )
+          if (args.count == 1) args.add( CreateCmdArg(cmd.t,"right",null,"Cmd") )
+          node_type.base_type = "Binary"
+
+        elseIf (this_routine.is_pre_unary)
+          local args = cmd.args
+          if (args.count == 0) args.add( CreateCmdArg(cmd.t,"operand",null,"Cmd") )
+          node_type.base_type = "Unary"
+
+        elseIf (this_routine.is_post_unary)
+          if (cmd.args.count == 0) cmd.args.add( CreateCmdArg(cmd.t,"operand",null,"Cmd") )
+          node_type.base_type = "Unary"
+
+        endIf
+
+        cmd.args.dispatch( this )
+
+        # Count number of args
+        local args = cmd.args as Args
+        cmd.arg_count = args.count
+        forEach (arg at index in args)
+          block arg = arg as CreateCmdArg
+            arg.index = index
+            if (arg.arg_value)
+              if (not arg.arg_type) arg.arg_type = "String"
+            else
+              ++cmd.node_arg_count
+              arg.is_node_arg = true
+              if (not arg.arg_type) arg.arg_type = "Cmd"
+            endIf
+          endBlock
+        endForEach
+
+        # Assign stack-relative offsets
+        local stack_offset = -(cmd.node_arg_count)
+        forEach (arg in args)
+          block arg = arg as CreateCmdArg
+            if (arg.is_node_arg)
+              arg.stack_offset = stack_offset
+              ++stack_offset
+            endIf
+          endBlock
+        endForEach
+
+        use sig_builder = StringBuilder.pool
+          sig_builder.print( cmd.name )
+          sig_builder.print( "(" )
+          if (cmd.args)
+            forEach (arg at index in cmd.args as Args)
+              block arg = arg as CreateCmdArg
+                if (index > 0) sig_builder.print ','
+                sig_builder.print(arg.arg_type)
+              endBlock
+            endForEach
+          endIf
+          sig_builder.print( ")" )
+          cmd.signature = sig_builder->String
+        endUse
+
+        node_type.add( cmd )
+      endIf
+
+      return prior.visit( cmd )
+
+    method visit( cmd:CreateList )->Cmd [override]
+      if (not cmd.list_type) cmd.list_type = "CmdList"
+      program.type(cmd.list_type).is_list = true
+      return prior.visit(cmd)
+
+    method visit( cmd:Identifier )->Cmd
+      if (is_parser and cmd.name == "content") return TokenContent(cmd.t).dispatch(this)
+      return cmd
+
+    method visit( cmd:LiteralStringOrCharacter )->Cmd [override]
+      if (cmd.value.count == 1) return LiteralCharacter( cmd.t, cmd.value[0] ).dispatch( this )
+      else                      return LiteralString( cmd.t, cmd.value ).dispatch( this )
+
+    method visit( cmd:Match )->Cmd [override]
+      temporarily this_match = cmd
+        return prior.visit( cmd )
+      endTemporarily
+
+    method visit( cmd:On )->Cmd [override]
+      if (not cmd.is_organized)
+        cmd.is_organized = true
+        # See visit(Routine) for more details
+        if (this_routine.is_binary)
+          cmd.token_types.add( Identifier(cmd.t,"_consume_eols()") )
+          cmd.token_types.add( Identifier(cmd.t,this_routine.next_routine.name) )
+          cmd.statements.add( Access(cmd.t,this_routine.name) )
+          cmd.statements.add( Return(cmd.t,null) )
+        elseIf (this_routine.is_right_binary)
+          cmd.token_types.add( Identifier(cmd.t,"_consume_eols()") )
+          cmd.token_types.add( Identifier(cmd.t,this_routine.name) )
+        elseIf (this_routine.is_pre_unary)
+          cmd.token_types.add( Identifier(cmd.t,"_consume_eols()") )
+          cmd.token_types.add( Identifier(cmd.t,this_routine.name) )
+        elseIf (this_routine.is_post_unary)
+          cmd.statements.add( Access(cmd.t,this_routine.name) )
+          cmd.statements.add( Return(cmd.t,null) )
+        endIf
+      endIf
+      return prior.visit( cmd )
+
+    method visit( cmd:ElseOn )->Cmd [override]
+      if (not cmd.is_organized)
+        cmd.is_organized = true
+        if (this_routine.is_binary)
+          cmd.token_types.add( Identifier(cmd.t,"_consume_eols()") )
+          cmd.token_types.add( Identifier(cmd.t,this_routine.next_routine.name) )
+          cmd.statements.add( Access(cmd.t,this_routine.name) )
+          cmd.statements.add( Return(cmd.t,null) )
+        elseIf (this_routine.is_right_binary)
+          cmd.token_types.add( Identifier(cmd.t,"_consume_eols()") )
+          cmd.token_types.add( Identifier(cmd.t,this_routine.name) )
+        elseIf (this_routine.is_pre_unary)
+          cmd.token_types.add( Identifier(cmd.t,"_consume_eols()") )
+          cmd.token_types.add( Identifier(cmd.t,this_routine.name) )
+        elseIf (this_routine.is_post_unary)
+          cmd.statements.add( Access(cmd.t,this_routine.name) )
+          cmd.statements.add( Return(cmd.t,null) )
+        endIf
+      endIf
+      return prior.visit( cmd )
+
+    method visit( cmd:ParserCallUserMethod )->Cmd [override]
+      program.parser_user_calls.add( cmd.fn_name )
+      return cmd
+
+    method visit( cmd:ParserDef )->Cmd [override]
+      if (not cmd.name) cmd.name = "Parser"
+      if (program.parser and program.parser is not cmd)
+        throw cmd.t.error( "Multiple parsers defined - only one parser can be defined." )
+      endIf
+      program.parser = cmd
+      return prior.visit( cmd )
+
+    method visit( cmd:ParserProduce )->Cmd [override]
+      cmd.arg = cmd.arg.dispatch(this) as CreateCmd
+      if (this_routine.is_binary or this_routine.is_post_unary)
+        # Change 'produce X' to 'create X'
+        # See visit(Routine) for more details
+        return visit( ParserCreate(cmd.t,cmd.arg) )
+      endIf
+      return prior.visit(cmd)
+
+    method visit( cmd:ProduceAny )->Cmd [override]
+      # Add a scan case for each token in the named group
+      local t = cmd.t
+      local group = program.token_groups[ cmd.token_group_name ]
+      if (not group)
+        throw t.error( ''No such token group "$".''(cmd.token_group_name) )
+      endIf
+      forEach (item in group.definitions)
+        local def = item as TokenDef
+        local expr = LiteralString( t, def.symbol )
+        local _case = MatchCase( t, expr, Statements(t,ScannerProduce(t,Access(t,def.name))) )
+        this_match.cases.add( _case )
+        _case.dispatch( this )
+      endForEach
+      return null
+
+    method visit( cmd:ProduceList )->Cmd [override]
+      if (not cmd.list_type) cmd.list_type = "CmdList"
+      program.type(cmd.list_type).is_list = true
+      return prior.visit(cmd)
+
+    method visit( cmd:Routine )->Cmd [override]
+      if (not cmd.is_organized)
+        cmd.is_organized = true
+        if (cmd.attributes)
+          if (cmd.ip + 1 == this_element.routines.count)
+            throw cmd.t.error(
+              "A $ routine requires a following routine that will be implicitly called."(cmd.attributes) )
+          endIf
+
+          cmd.next_routine = this_element.routines.at(cmd.ip+1)
+
+          if (cmd.is_primer)
+            # ORIGINAL
+            #   - parse_add [primer]
+            #
+            #   - parse_add_body [binary/postUnary]
+            #     ...
+            #
+            #   - parse_next
+            #
+            # ORGANIZED
+            #   - parse_add [primer]
+            #     parse_next
+            #     parse_add_body
+            #
+            #   - parse_add_body [binary/postUnary]
+            #     ...
+            #
+            #   - parse_next
+            #
+            if (cmd.ip + 2 == this_element.routines.count)
+              throw cmd.t.error(
+                "A $ routine requires a following routine that will be implicitly called."(cmd.attributes) )
+            endIf
+            local next_next_routine = this_element.routines.at(cmd.ip+2)
+            cmd.statements.add( Access(cmd.t,next_next_routine.name) )
+            cmd.statements.add( Access(cmd.t,cmd.next_routine.name) )
+
+          elseIf (cmd.is_right_binary)
+            # ORIGINAL
+            #   - assign [rightBinary]
+            #     on "=" -> Assign
+            #
+            #   - parse_next
+            #
+            # ORGANIZED
+            #   - assign [rightBinary]
+            #     parse_next                      # added in Routine
+            #     on "=" assign ...               # added in On/ElseOn
+            #       -> Assign(left,right):Binary  # added in CreateCmd
+            cmd.statements.insert( Access(cmd.t,cmd.next_routine.name) )
+
+          elseIf (cmd.is_pre_unary)
+            # ORIGINAL
+            #   - negate [preUnary]
+            #     on "-" -> Negate
+            #
+            #   - parse_next
+            #
+            # ORGANIZED
+            #   - negate [preUnary]
+            #     on "-" negate ...     # added in On/ElseOn
+            #       -> Negate(operand)  # added in CreateCmd
+            #     parse_next            # added in Routine
+            cmd.statements.add( Access(cmd.t,cmd.next_routine.name) )
+
+          endIf
+        endIf
+      endIf
+      return prior.visit( cmd )
+
+    method visit( cmd:ScannerCallUserMethod )->Cmd [override]
+      program.scanner_user_calls.add( cmd.fn_name )
+      return cmd
+
+    method visit( cmd:ScannerDef )->Cmd [override]
+      if (not cmd.name) cmd.name = "Scanner"
+      if (program.scanner and program.scanner is not cmd)
+        throw cmd.t.error( "Multiple scanners defined - only one scanner can be defined." )
+      endIf
+      program.scanner = cmd
+      return prior.visit( cmd )
+
+endClass
+

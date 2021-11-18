@@ -1,0 +1,1263 @@
+module F3
+
+class Cmd( t:Token )
+  METHODS
+    method cast_to( to_type:Type )->Cmd
+      if (require_type == to_type) return this  # no cast needed
+
+      which (to_type)
+        case Type.LOGICAL:    return CastToLogical( t, this )
+        case Type.CHARACTER:  return CastToCharacter( t, this )
+        case Type.INTEGER:    return CastToInteger( t, this )
+        case Type.REAL:       return CastToReal( t, this )
+        case Type.TOKEN_TYPE: return CastToTokenType( t, this )
+        case Type.STRING:     return CastToString( t, this )
+        case Type.PATTERN:    return CastToPattern( t, this )
+        others
+          throw t.error( "Cannot cast type $ to type: $."(type,to_type) )
+      endWhich
+
+    method common_type( other:Cmd )->Type
+      local a = require_type
+      local b = other.require_type
+      return Type( a->Int32.or_larger(b->Int32) )
+
+    method dispatch( visitor:Visitor )->Cmd [propagated]
+      return visitor.visit( this )
+
+    method require_type->Type
+      localize type
+      if (not type.exists)
+        throw t.error( "Value expected.($,$)"(type_name,type) ) #FIXME
+      endIf
+      return type
+
+    method require_value->Cmd
+      require_type
+      return this
+
+    method resolve_assignment( cmd:Assign, resolver:Resolver )->Cmd
+      throw t.error( "Illegal assignment." )
+
+    method to->CmdList
+      return CmdList(t).[ add(this) ]
+
+    method to->Int32
+      return this->String->Int32
+
+    method to->Logical
+      return this->Int32 != 0
+
+    method to->Real64
+      return this->Int32
+
+    method to->ScanPattern
+      #trace type_name #FIXME
+      throw t.error( ''Pattern expected.'' )
+
+    method type->Type
+      return Type.NONE
+endClass
+
+class CmdList : Cmd
+  PROPERTIES
+    list : Cmd[]
+
+  METHODS
+    method init( t )
+      list = Cmd[](5)
+
+    method init( t, args:CmdInitArgs )
+      list = Cmd[]( args.count )
+      list.add( forEach in args )
+
+    method init( t, arg:Cmd )
+      init( t )
+      add( arg )
+
+    method init( t, arg1:Cmd, arg2:Cmd )
+      init( t )
+      add( arg1 )
+      add( arg2 )
+
+    method add( cmd:Cmd )
+      list.add( cmd )
+
+    method clear
+      list.clear
+
+    method count->Int32
+      return list.count
+
+    method first->Cmd
+      return list.first
+
+    method get( index:Int32 )->Cmd
+      return list[ index ]
+
+    method insert( cmd:Cmd )
+      list.insert( cmd )
+
+    method last->Cmd
+      return list.last
+
+    method remove_last->Cmd
+      return list.remove_last
+
+    method set( index:Int32, value:Cmd )->this
+      list[ index ] = value
+      return this
+
+    method to->CmdList
+      return this
+
+    method to->String
+      return list->String
+endClass
+
+class Literal : Cmd
+  METHODS
+endClass
+
+class LiteralInteger( t, value:Int32 ) : Literal
+  METHODS
+    method init( t, string_value:String )
+      value = string_value->Int32
+
+    method cast_to( to_type:Type )->Cmd
+      if (to_type == Type.INTEGER) return this
+      which (to_type)
+        case Type.LOGICAL:    return LiteralLogical( t, value->Logical )
+        case Type.CHARACTER:  return LiteralCharacter( t, value->Character )
+        case Type.REAL:       return LiteralReal( t, value->Real64 )
+        case Type.STRING:     return LiteralString( t, value->String )
+        others
+          return prior.cast_to( to_type )
+      endWhich
+
+    method to->Int32
+      return value
+
+    method to->Real64
+      return value
+
+    method to->String
+      return value->String
+
+    method type->Type
+      return Type.INTEGER
+endClass
+
+class LiteralLogical( t, value:Logical ) : Literal
+  METHODS
+    method cast_to( to_type:Type )->Cmd
+      if (to_type == Type.LOGICAL) return this
+
+      which (to_type)
+        case Type.CHARACTER:  return LiteralCharacter( t, which{value:'1'||'0'} )
+        case Type.INTEGER:    return LiteralInteger( t, which{value:1||0} )
+        case Type.REAL:       return LiteralReal( t, which{value:1||0} )
+        case Type.STRING:     return LiteralString( t, which{value:"true"||"false"} )
+        others
+          return prior.cast_to( to_type )
+      endWhich
+
+    method to->Int32
+      return which{ value:1 || 0 }
+
+    method to->Logical
+      return value
+
+    method to->Real64
+      return which{ value:1 || 0 }
+
+    method to->String
+      return which{ value:"true" || "false" }
+
+    method type->Type
+      return Type.LOGICAL
+endClass
+
+class LiteralReal( t, value:Real64 ) : Literal
+  METHODS
+    method init( t, string_value:String )
+      value = string_value->Real64
+
+    method cast_to( to_type:Type )->Cmd
+      if (to_type == Type.REAL) return this
+      which (to_type)
+        case Type.LOGICAL:    return LiteralLogical( t, value->Logical )
+        case Type.CHARACTER:  return LiteralCharacter( t, value->Character )
+        case Type.INTEGER:    return LiteralInteger( t, value->Int32 )
+        case Type.STRING:     return LiteralString( t, value->String )
+        others
+          return prior.cast_to( to_type )
+      endWhich
+
+    method to->Int32
+      return value
+
+    method to->Real64
+      return value
+
+    method to->String
+      return value->String
+
+    method type->Type
+      return Type.REAL
+endClass
+
+class LiteralString( t, value:String ) : Literal
+  METHODS
+    method cast_to( to_type:Type )->Cmd
+      if (to_type == Type.STRING) return this
+
+      which (to_type)
+        case Type.LOGICAL:    return LiteralLogical( t, value->Logical )
+        case Type.CHARACTER:  return LiteralCharacter( t, value[0] )
+        case Type.INTEGER:    return LiteralInteger( t, value->Int32 )
+        case Type.REAL:       return LiteralReal( t, value->Real64 )
+        others
+          return prior.cast_to( to_type )
+      endWhich
+
+    method description->String
+      return value.to_escaped_ascii
+
+    method to->ScanPattern
+      return LiteralStringScanPattern( value )
+
+    method to->String
+      return value
+
+    method type->Type
+      return Type.STRING
+endClass
+
+class LiteralCharacter( t, value:Character ) : Literal
+  METHODS
+    method cast_to( to_type:Type )->Cmd
+      if (to_type == Type.CHARACTER) return this
+
+      which (to_type)
+        case Type.LOGICAL:    return LiteralLogical( t, value->Logical )
+        case Type.INTEGER:    return LiteralInteger( t, value->Int32 )
+        case Type.REAL:       return LiteralReal( t, value->Real64 )
+        case Type.STRING:     return LiteralString( t, value->String )
+        others
+          return prior.cast_to( to_type )
+      endWhich
+
+    method description->String
+      return value.to_escaped_ascii
+
+    method to->ScanPattern
+      return LiteralStringScanPattern( ""+value )
+
+    method to->String
+      return value->String
+
+    method type->Type
+      return Type.CHARACTER
+endClass
+
+class LiteralStringOrCharacter( t, value:String ) : Literal
+  METHODS
+    method cast_to( to_type:Type )->Cmd
+      which (to_type)
+        case Type.CHARACTER
+          if (value.count == 0) return LiteralCharacter( t, 0 )
+          return LiteralCharacter( t, value[0] )
+        case Type.STRING
+          return LiteralString( t, value )
+        others
+          return prior.cast_to( to_type )
+      endWhich
+
+    method description->String
+      return value.to_escaped_ascii
+
+    method to->String
+      return value
+
+    method type->Type
+      return Type.STRING
+endClass
+
+class Unary( t, operand:Cmd ) : Cmd
+  METHODS
+    method op->String
+      throw UnsupportedOperationError()
+
+    method to->String
+      local op = this.op
+      local space = which{ op.count and op[op.count-1].is_letter:" " || "" }
+      return "($$$)" (op,space,operand)
+
+    method type->Type
+      return operand.type
+endClass
+
+class PostUnary : Unary
+  METHODS
+    method to->String
+      local op = this.op
+      local space = which{ op.count and op[0].is_letter:" " || "" }
+      return "($$$)" (operand,space,op)
+endClass
+
+class Binary( t, left:Cmd, right:Cmd ) : Cmd
+  METHODS
+    method op->String
+      throw UnsupportedOperationError()
+
+    method to->String
+      return "($ $ $)" (left,op,right)
+
+    method type->Type
+      return Type( left.type->Int32.or_larger(right.type->Int32) )
+endClass
+
+class Identifier( t, name:String ) : Cmd
+  METHODS
+    method to->String
+      return name
+endClass
+
+class Element : Cmd
+  PROPERTIES
+    routines     = StringTable<<Routine>>()
+    vars         = StringTable<<Var>>()
+
+  METHODS
+    method define_var( t:Token, name:String, type=Type.NONE:Type )->Var
+      local entry = vars.find( name )
+      if (not entry)
+        local v = Var( t, name, type )
+        vars[name] = v
+        return v
+      endIf
+
+      local existing = entry.value
+      if (type != existing.type)
+        if (not existing.type.exists)
+          existing.type = type
+        elseIf (type.exists)
+          throw t.error( "Conflicting implicit types $ and $ for variable '$'."...
+                         (existing.type,type,name) )
+        endIf
+      endIf
+
+      return existing
+
+    method var_type( name:String )->Type
+      local entry = vars.find( name )
+      if (not entry) return Type.NONE
+      return entry.value.type
+endClass
+
+class ParserDef( t, name:String, code:CmdList ) : Element
+  METHODS
+    method to->String
+      return "ParserDef($,$)"(name,code)
+endClass
+
+class ScannerDef( t, name:String, code:CmdList ) : Element
+  METHODS
+    method to->String
+      return "ScannerDef($,$)"(name,code)
+endClass
+
+
+class Routine : Cmd
+  PROPERTIES
+    name             : String
+    attributes       : String
+    statements       : Statements
+
+    ip               : Int32
+    is_primer        : Logical
+    is_binary        : Logical
+    is_right_binary  : Logical
+    is_pre_unary     : Logical
+    is_post_unary    : Logical
+    is_organized     : Logical
+
+    next_routine     : Routine
+
+  METHODS
+    method init( t, name, attributes, statements )
+      if (attributes)
+        which (attributes)
+          case "[binary]":       is_binary = true
+          case "[primer]":       is_primer = true
+          case "[rightBinary]":  is_right_binary = true
+          case "[preUnary]":     is_pre_unary = true
+          case "[postUnary]":    is_post_unary = true
+          others:                throw t.error( "Unrecognized routine attribute $."(attributes) )
+        endWhich
+      endIf
+
+    method to->String
+      return "Routine($,$,$)"(name,attributes,statements)
+endClass
+
+
+class Add : Binary
+  METHODS
+    method op->String
+      return "+"
+endClass
+
+class Subtract : Binary
+  METHODS
+    method op->String
+      return "-"
+endClass
+
+class Multiply : Binary
+  METHODS
+    method op->String
+      return "*"
+endClass
+
+class Divide : Binary
+  METHODS
+    method op->String
+      return "/"
+endClass
+
+class Power : Binary
+  METHODS
+    method op->String
+      return "^"
+endClass
+
+class Negate : Unary
+  METHODS
+    method op->String
+      return "-"
+endClass
+
+class Access( t, name:String ) : Cmd
+  METHODS
+    method resolve_assignment( cmd:Assign, resolver:Resolver )->Cmd
+      local r = resolver.this_element.routines[name]
+      if (r) throw t.error( "Illegal assignment to a routine." )
+      local v = resolver.this_element.define_var( t, name, cmd.new_value.type )
+      return WriteVar( v, cmd.new_value ).dispatch( resolver )
+
+    method to->String
+      return "$"(name)
+endClass
+
+
+class Assign( t, target:Cmd, new_value:Cmd ) : Cmd
+  METHODS
+    method to->String
+      return "Assign($,$)"(target,new_value)
+endClass
+
+
+class Statements : CmdList
+  METHODS
+endClass
+
+class While( t, condition:Cmd, statements:Cmd ) : Cmd
+  METHODS
+    method to->String
+      return "While($,$)"(condition,statements)
+endClass
+
+
+class If( t, condition:Cmd, statements:Cmd, else_ifs:CmdList, _else:Statements ) : Cmd
+  METHODS
+    method to->String
+      return "If($,$,$,$)"(condition,statements,else_ifs,_else)
+endClass
+
+class ElseIf( t, condition:Cmd, statements:Statements ) : Cmd
+  METHODS
+    method to->String
+      return "ElseIf($,$)"(condition,statements)
+endClass
+
+class LogicalOr : Binary
+  METHODS
+    method op->String
+      return "or"
+
+    method type->Type
+      return Type.LOGICAL
+endClass
+
+class LogicalAnd : Binary
+  METHODS
+    method op->String
+      return "and"
+
+    method type->Type
+      return Type.LOGICAL
+endClass
+
+class CompareEQ : Binary
+  METHODS
+    method op->String
+      return "=="
+endClass
+
+class CompareNE : Binary
+  METHODS
+    method op->String
+      return "!="
+endClass
+
+class CompareLT : Binary
+  METHODS
+    method op->String
+      return "<"
+endClass
+
+class CompareGT : Binary
+  METHODS
+    method op->String
+      return ">"
+endClass
+
+class CompareLE : Binary
+  METHODS
+    method op->String
+      return "<="
+endClass
+
+class CompareGE : Binary
+  METHODS
+    method op->String
+      return ">="
+endClass
+
+
+class Increment( t, target:Cmd ) : Cmd
+  METHODS
+    method to->String
+      return "Increment($)"(target)
+endClass
+
+class Decrement( t, target:Cmd ) : Cmd
+  METHODS
+    method to->String
+      return "Decrement($)"(target)
+endClass
+
+class Print( t, args:Args ) : Cmd
+  METHODS
+    method to->String
+      return "Print($)"(args)
+endClass
+
+class Println( t, args:Args ) : Cmd
+  METHODS
+    method to->String
+      return "Println($)"(args)
+endClass
+
+
+class ScannerHasAnother : Cmd
+  METHODS
+    method to->String
+      return "hasAnother"
+
+    method type->Type
+      return Type.LOGICAL
+endClass
+
+
+class ScannerRead : Cmd
+  METHODS
+    method to->String
+      return "read"
+
+    method type->Type
+      return Type.CHARACTER
+endClass
+
+class Collect( t, args:Args ) : Cmd
+  METHODS
+    method to->String
+      return "Collect($)"(args)
+endClass
+
+class WriteVar : Cmd
+  PROPERTIES
+    var       : Var
+    new_value : Cmd
+
+  METHODS
+    method init( var, new_value )
+      t = var.t
+
+    method to->String
+      return "WriteVar($,$)"(var.name,new_value)
+endClass
+
+class ReadVar : Cmd
+  PROPERTIES
+    var : Var
+
+  METHODS
+    method init( var )
+      t = var.t
+
+    method to->String
+      return "ReadVar($)"(var.name)
+
+    method type->Type
+      return var.type
+endClass
+
+class ThrowSyntaxError( t, args:Args ) : Cmd
+  METHODS
+    method to->String
+      return "ThrowSyntaxError($)"(args)
+endClass
+
+class CastToLogical : Unary
+  METHODS
+    method to->String [override]
+      return "$->Logical"(operand->String)
+
+    method type->Type
+      return Type.LOGICAL
+endClass
+
+class CastToCharacter : Unary
+  METHODS
+    method to->String [override]
+      return "$->Character"(operand->String)
+
+    method type->Type
+      return Type.CHARACTER
+endClass
+
+class CastToInteger : Unary
+  METHODS
+    method to->String [override]
+      return "$->Int32"(operand->String)
+
+    method type->Type
+      return Type.INTEGER
+endClass
+
+class CastToReal : Unary
+  METHODS
+    method to->String [override]
+      return "$->Real64"(operand->String)
+
+    method type->Type
+      return Type.REAL
+endClass
+
+class CastToTokenType : Unary
+  METHODS
+    method to->String [override]
+      return "$->TokenType"(operand->String)
+
+    method type->Type
+      return Type.TOKEN_TYPE
+endClass
+
+class CastToString : Unary
+  METHODS
+    method to->String [override]
+      return "$->String"(operand->String)
+
+    method type->Type
+      return Type.STRING
+endClass
+
+class CastToPattern : Unary
+  METHODS
+    method type->Type
+      return Type.PATTERN
+endClass
+
+
+class TokenGroup( t, name:String, definitions:CmdList ) : Cmd
+  METHODS
+    method to->String
+      return "TokenGroup($,$)"(name,definitions)
+endClass
+
+
+class TokenDef( t, name:String, symbol:String, attributes:String[] ) : Cmd
+  METHODS
+    method init( t, name, symbol, attribute_cmd_list:CmdList )
+      if (not String.exists(symbol)) symbol = name
+      if (attribute_cmd_list)
+        attributes = attribute_cmd_list.list.map<<String>>( $->String )
+      endIf
+
+    method has_attribute( attribute_name:String )->Logical
+      if (not attributes) return false
+      return attributes.locate(attribute_name)?
+
+    method to->String
+      return "TokenDef($,$,$)"(name,symbol,attributes)
+endClass
+
+
+class Symbol( t, name:String ) : Cmd
+  METHODS
+    method to->String
+      return "$"(name)
+endClass
+
+
+class LogicalNot : Unary
+  METHODS
+    method op->String
+      return "not"
+
+    method type->Type
+      return Type.LOGICAL
+endClass
+
+
+class ScannerConsume( t, args:SequenceArgs ) : Cmd
+  METHODS
+    method to->String
+      return "ScannerConsume($)"(args)
+endClass
+
+class ConsumeCharacters( t, value:Cmd ) : Cmd
+  METHODS
+    method to->String
+      return "ConsumeCharacters($)"(value)
+
+    method type->Type
+      return Type.LOGICAL
+endClass
+
+class ConsumePattern( t, pattern:Cmd ) : Cmd
+  METHODS
+    method to->String
+      return "ConsumePattern($)"(pattern)
+
+    method type->Type
+      return Type.LOGICAL
+endClass
+
+class Call( t, routine_def:Routine ) : Cmd
+  METHODS
+    method to->String
+      return "Call($)"(routine_def.name)
+endClass
+
+
+class Return( t, value:Cmd ) : Cmd
+  METHODS
+    method to->String
+      return "Return($)"(value)
+endClass
+
+
+class ScannerProduce( t, arg:Cmd ) : Cmd
+  METHODS
+    method to->String
+      return "ScannerProduce($)"(arg)
+endClass
+
+class LiteralTokenType( t, token_type:TokenDef ) : Literal
+  METHODS
+    method to->String
+      return "LiteralTokenType($)"(token_type.name)
+
+    method type->Type
+      return Type.TOKEN_TYPE
+endClass
+
+
+
+class Halt : Cmd
+  METHODS
+    method to->String
+      return "halt"
+endClass
+
+
+class ReadBuffer : Cmd
+  METHODS
+    method to->String
+      return "ReadBuffer"
+
+    method resolve_assignment( cmd:Assign, resolver:Resolver )->Cmd
+      return WriteBuffer( t, cmd.new_value ).dispatch( resolver )
+
+    method type->Type
+      return Type.STRING
+endClass
+
+
+class WriteBuffer( t, new_value:Cmd ) : Cmd
+  METHODS
+    method to->String
+      return "WriteBuffer($)"(new_value)
+endClass
+
+class Args : CmdList
+  METHODS
+endClass
+
+class SequenceArgs : Args
+  METHODS
+endClass
+
+class Match( t, expression:Cmd, cases:CmdList, _others:Cmd ) : Cmd
+  PROPERTIES
+    id              : String
+    table_builder   = ScanTableBuilder()
+    statement_lists = CmdList[]
+
+  METHODS
+    method to->String
+      return "Match($,$,$)"(expression,cases,_others)
+endClass
+
+class MatchCase( t, expression:Cmd, statements:CmdList ) : Cmd
+  PROPERTIES
+    is_resolved : Logical
+
+  METHODS
+    method to->String
+      return "MatchCase($,$)"(expression,statements)
+endClass
+
+
+
+class ProduceAny( t, token_group_name:String ) : Cmd
+  METHODS
+    method to->String
+      return "ProduceAny($)"(token_group_name)
+endClass
+
+
+class Restart( t, start_ip:String ) : Cmd
+  METHODS
+    method to->String
+      return "Restart($)"(start_ip)
+endClass
+
+
+class MarkPosition : Cmd
+  METHODS
+    method to->String
+      return "markPosition"
+endClass
+
+class DiscardPosition : Cmd
+  METHODS
+    method to->String
+      return "discardPosition"
+endClass
+
+class RestorePosition : Cmd
+  METHODS
+    method to->String
+      return "restorePosition"
+endClass
+
+class SavePosition : Cmd
+  METHODS
+    method to->String
+      return "savePosition"
+endClass
+
+
+class CharSet : Cmd
+  PROPERTIES
+    characters : String
+
+  METHODS
+    method init( t, characters )
+
+    method to->ScanPattern
+      return ScanPatternParser.charset_to_scan_pattern( characters.from(1,characters.count-2) )
+
+    method to->String
+      return "$"(characters)
+
+    method type->Type
+      return Type.PATTERN
+endClass
+
+class ZeroOrMore : Cmd
+  PROPERTIES
+    pattern : Cmd
+
+  METHODS
+    method init( t, pattern )
+
+    method to->ScanPattern
+      return ZeroOrMoreScanPattern( pattern->ScanPattern )
+
+    method to->String
+      return "*($)"(pattern)
+
+    method type->Type
+      return Type.PATTERN
+endClass
+
+class OneOrMore( t, pattern:Cmd ) : Cmd
+  METHODS
+    method to->ScanPattern
+      return OneOrMoreScanPattern( pattern->ScanPattern )
+
+    method to->String
+      return "+($)"(pattern)
+
+    method type->Type
+      return Type.PATTERN
+endClass
+
+class Pattern( t, scan_pattern:ScanPattern ) : Cmd
+  PROPERTIES
+    reference_name : String
+
+  METHODS
+    method to->String
+      return "Pattern"
+
+    method type->Type
+      return Type.PATTERN
+endClass
+
+class OptionalPattern( t, pattern:Cmd ) : Cmd
+  METHODS
+    method to->String
+      return "OptionalPattern($)"(pattern)
+
+    method to->ScanPattern
+      return OptionalScanPattern( pattern->ScanPattern )
+
+    method type->Type
+      return Type.PATTERN
+endClass
+
+class PatternSequence : CmdList
+  METHODS
+    method to->ScanPattern
+      local result = ScanPatternList( ScanPattern[] )
+      result.add( (forEach in this)->ScanPattern )
+      return result
+
+    method type->Type
+      return Type.PATTERN
+endClass
+
+class Scan( t, args:SequenceArgs ) : Cmd
+  METHODS
+    method to->String
+      return "Scan($)"(args)
+
+    method type->Type
+      return Type.LOGICAL
+endClass
+
+class ScanCharacters( t, value:Cmd ) : Cmd
+  METHODS
+    method to->String
+      return "ScanCharacters($)"(value)
+
+    method type->Type
+      return Type.LOGICAL
+endClass
+
+class ScanPatternCmd( t, pattern:Cmd ) : Cmd
+  METHODS
+    method to->String
+      return "ScanPatternCmd($)"(pattern)
+
+    method type->Type
+      return Type.LOGICAL
+endClass
+
+
+
+class ScannerNextIs( t, args:SequenceArgs ) : Cmd
+  METHODS
+    method to->String
+      return "ScannerNextIs($)"(args)
+
+    method type->Type
+      return Type.LOGICAL
+endClass
+
+
+class NextIsCharacters( t, value:Cmd ) : Cmd
+  METHODS
+    method to->String
+      return "NextIsCharacters($)"(value)
+
+    method type->Type
+      return Type.LOGICAL
+endClass
+
+class NextIsPattern( t, pattern:Cmd ) : Cmd
+  METHODS
+    method to->String
+      return "NextIsPattern($)"(pattern)
+
+    method type->Type
+      return Type.LOGICAL
+endClass
+
+
+class ScannerCallUserMethod( t, fn_name:String ) : Cmd
+  METHODS
+    method to->String
+      return "ScannerCallUserMethod($)"(fn_name)
+endClass
+
+class Mode( t, routine_name:String ) : Cmd
+  METHODS
+    method to->String
+      return "$"(routine_name)
+endClass
+
+class ScannerMustConsume( t, args:SequenceArgs ) : Cmd
+  METHODS
+    method to->String
+      return "ScannerMustConsume($)"(args)
+endClass
+
+class MustConsumeCharacters( t, value:Cmd ) : Cmd
+  METHODS
+    method to->String
+      return "MustConsumeCharacters($)"(value)
+endClass
+
+class MustConsumePattern( t, pattern:Cmd ) : Cmd
+  METHODS
+    method to->String
+      return "MustConsumePattern($)"(pattern)
+endClass
+
+class CreateCmd( t, name:String, args:Args ) : Cmd
+  PROPERTIES
+    is_organized   = false
+    arg_count      = 0
+    node_arg_count = 0  # number of node-based args (vs 'content')
+    signature      : String
+
+  METHODS
+    method to->String
+      return "CreateCmd($,$)"(name,args)
+endClass
+
+class CreateCmdArg( t, arg_name:String, arg_value:Cmd, arg_type:String ) : Cmd
+  PROPERTIES
+    is_node_arg  = false   # versus 'content'
+    index        : Int32   # arg index 0, 1, ...
+    stack_offset : Int32   # back into cmd stack; most recent = -1, one back = -2, ...
+
+  METHODS
+    method to->String
+      return "CreateCmdArg($,$,$)"(arg_name,arg_value,arg_type)
+endClass
+
+
+
+class ParserArgs : Args
+  METHODS
+endClass
+
+class ParserCallUserMethod( t, fn_name:String ) : Cmd
+  METHODS
+    method to->String
+      return "ParserCallUserMethod($)"(fn_name)
+endClass
+
+class ParserConsume( t, token_type:Cmd ) : Cmd
+  METHODS
+    method to->String
+      return "ParserConsume($)"(token_type)
+endClass
+
+class ParserHasAnother : Cmd
+  METHODS
+    method to->String
+      return "hasAnother"
+
+    method type->Type
+      return Type.LOGICAL
+endClass
+
+class ParserNextIs( t, token_type:Cmd ) : Cmd
+  METHODS
+    method to->String
+      return "ParserNextIs($)"(token_type)
+endClass
+
+class ParserRead : Cmd
+  METHODS
+    method to->String
+      return "read"
+
+    method type->Type
+      return Type.TOKEN
+endClass
+
+class ConsumeToken( t, token_type:TokenDef ) : Cmd
+  METHODS
+    method to->String
+      return "ConsumeToken($)"(token_type)
+endClass
+
+
+class ParserMustConsume( t, token_type:Cmd ) : Cmd
+  METHODS
+    method to->String
+      return "ParserMustConsume($)"(token_type)
+endClass
+
+
+class MustConsumeToken( t, token_type:TokenDef ) : Cmd
+  METHODS
+    method to->String
+      return "MustConsumeToken($)"(token_type)
+endClass
+
+
+class ParserProduce( t, arg:CreateCmd ) : Cmd
+  METHODS
+    method to->String
+      return "ParserProduce($)"(arg)
+endClass
+
+
+class TokenContent : Cmd
+  METHODS
+    method to->String
+      return "TokenContent"
+
+    method type->Type
+      return Type.STRING
+endClass
+
+
+class ParserCreate( t, arg:CreateCmd ) : Cmd
+  METHODS
+    method to->String
+      return "ParserCreate($)"(arg)
+endClass
+
+class On( t, token_type:Cmd, token_types:Args, statements:Statements, else_ons:CmdList, _else_on_others:Statements ) : Cmd
+  PROPERTIES
+    is_organized : Logical
+
+  METHODS
+    method to->String
+      return "On($,$,$,$,$)"(token_type,token_types,statements,else_ons,_else_on_others)
+endClass
+
+class ElseOn( t, token_type:Cmd, token_types:Args, statements:Statements ) : Cmd
+  PROPERTIES
+    is_organized : Logical
+
+  METHODS
+    method to->String
+      return "ElseOn($,$)"(token_types,statements)
+endClass
+
+
+
+class ConsumeEOLs : Cmd
+  METHODS
+    method to->String
+      return "ConsumeEOLs"
+endClass
+
+
+class BeginList : Cmd
+  METHODS
+    method to->String
+      return "beginList"
+endClass
+
+class CreateList( t, list_type:String ) : Cmd
+  METHODS
+    method to->String
+      return "CreateList($)"(list_type)
+endClass
+
+class ProduceList( t, list_type:String ) : Cmd
+  METHODS
+    method to->String
+      return "ProduceList($)"(list_type)
+endClass
+
+
+class NextIsTokenType( t, token_type:TokenDef ) : Cmd
+  METHODS
+    method to->String
+      return "NextIsTokenType($)"(token_type)
+
+    method type->Type
+      return Type.LOGICAL
+endClass
+
+
+class CreateNull : Cmd
+  METHODS
+    method to->String
+      return "createNull"
+endClass
+
+
+class DiscardList : Cmd
+  METHODS
+    method to->String
+      return "discardList"
+endClass
+
+
+class ConsumeContent( t, content:String ) : Cmd
+  METHODS
+    method to->String
+      return "ConsumeContent(@$)"(content)
+
+    method type->Type
+      return Type.LOGICAL
+endClass
+
+
+class MustConsumeContent( t, content:String ) : Cmd
+  METHODS
+    method to->String
+      return "MustConsume(@$)"(content)
+endClass
+
+class NextIsContent( t, content:String ) : Cmd
+  METHODS
+    method to->String
+      return "NextIs(@$)"(content)
+
+    method type->Type
+      return Type.LOGICAL
+endClass
+
+class LiteralContent( t, value:String ) : Cmd
+  METHODS
+    method to->String
+      return value
+endClass
+
+
+class NextHasAttribute( t, name:String ) : Cmd
+  METHODS
+    method to->String
+      return "NextHasAttribute($)"(name)
+
+    method type->Type
+      return Type.LOGICAL
+endClass

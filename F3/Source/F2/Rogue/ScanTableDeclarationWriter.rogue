@@ -1,0 +1,14 @@
+module F3
+
+class ScanTableDeclarationWriter : FroleyVisitor
+  PROPERTIES
+    generator : RogueGenerator
+
+  METHODS
+    method init( program:Program, generator )
+      prior.init( program )
+
+    method visit( cmd:Match )->Cmd [override]
+      generator.writeln ''$ = ScanTable("$")'' (cmd.id,cmd.table_builder.to_encoded_scan_table)
+      return cmd
+endClass

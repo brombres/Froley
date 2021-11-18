@@ -1,0 +1,38 @@
+module F3
+
+class Collector : FroleyVisitor
+  METHODS
+    method visit( cmd:ParserDef )->Cmd [override]
+      prior.visit( cmd )
+
+      # this_element.routines now has additional routines that are in the correct order.
+      cmd.code.clear
+      cmd.code.add( forEach in this_element.routines )
+      return cmd
+
+    method visit( cmd:Routine )->Cmd [override]
+      if (cmd.is_binary or cmd.is_post_unary)
+        # CONVERT THIS:
+        #   - parse_op [binary/postUnary]
+        #     on "op" ...
+        #
+        # INTO THIS
+        #   - parse_op [primer]
+        #
+        #   - parse_op__inner [binary/postUnary]
+        #     on "op" ...
+        local primer = Routine( cmd.t, cmd.name, "[primer]", Statements(cmd.t) )
+        primer.ip = this_element.routines.count
+        this_element.routines[primer.name] = primer
+        temporarily this_routine = primer
+          prior.visit( primer )
+        endTemporarily
+
+        cmd.name += "__inner"
+      endIf
+
+      cmd.ip = this_element.routines.count
+      this_element.routines[cmd.name] = cmd
+      return prior.visit( cmd )
+endClass
+

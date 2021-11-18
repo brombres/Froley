@@ -1,0 +1,740 @@
+module F3
+
+$include "RCmd.rogue"
+$include "RMain.rogue"
+$include "RParser.rogue"
+$include "RParserCore.rogue"
+$include "RScanTable.rogue"
+$include "RScanner.rogue"
+$include "RScannerCore.rogue"
+$include "RSyntaxError.rogue"
+$include "RToken.rogue"
+$include "RTokenType.rogue"
+$include "RVisitor.rogue"
+$include "RogueSourceWriter.rogue"
+$include "ScanTableDeclarationWriter.rogue"
+
+class RogueGenerator : FroleyVisitor
+  GLOBAL METHODS
+    method to_escaped_ascii( st:String, additional_escapes:String )->String
+      return st.to_escaped_ascii( additional_escapes )
+
+  PROPERTIES
+    folder     : String
+    writer     : PrintWriter
+    class_name = ""
+
+    indent     = 0
+    at_newline = true
+    write_replacements = StringTable<<String>>()
+
+  METHODS
+    method init( program, folder )
+      File.create_folder( folder )
+
+      program.nodes.dispatch( this )
+
+      RSyntaxError(this).create_missing
+      RScanTable(this).create_missing
+      RTokenType(this).overwrite
+      RToken(this).create_missing
+
+      # Main
+      if (program.main_filename)
+        RMain( this, program.main_filename ).create_missing
+      endIf
+
+    method visit( cmd:BeginList )->Cmd  [override]
+      write   "_begin_list"
+      return cmd
+
+    method visit( cmd:Call )->Cmd  [override]
+      if (is_scanner)
+        write "if (not _execute(ip_"
+        write cmd.routine_def.name
+        write ")) return false"
+      else
+        write   "_execute(ip_"
+        write   cmd.routine_def.name
+        writeln ")"
+        write   "_pop_frame"
+      endIf
+      return cmd
+
+    method visit( cmd:CastToLogical )->Cmd  [override]
+      cmd.operand.dispatch( this )
+      write "->Logical"
+      return cmd
+
+    method visit( cmd:CastToCharacter )->Cmd  [override]
+      cmd.operand.dispatch( this )
+      write "->Character"
+      return cmd
+
+    method visit( cmd:CastToInteger )->Cmd  [override]
+      cmd.operand.dispatch( this )
+      write "->Int32"
+      return cmd
+
+    method visit( cmd:CastToString )->Cmd  [override]
+      cmd.operand.dispatch( this )
+      write "->String"
+      return cmd
+
+    method visit( cmd:CharSet )->Cmd  [override]
+      trace cmd.characters
+      println StackTrace()
+      return cmd
+
+    method visit( cmd:Collect )->Cmd  [override]
+      write "buffer"
+      forEach (arg in cmd.args)
+        write ".print("
+        arg.dispatch( this )
+        write ")"
+      endForEach
+      return cmd
+
+    method visit( cmd:CompareEQ )->Cmd  [override]
+      write "("
+      dispatch( cmd.left )
+      write "=="
+      dispatch( cmd.right )
+      write ")"
+      return cmd
+
+    method visit( cmd:CompareGE )->Cmd  [override]
+      write "("
+      dispatch( cmd.left )
+      write ">="
+      dispatch( cmd.right )
+      write ")"
+      return cmd
+
+    method visit( cmd:CompareGT )->Cmd  [override]
+      write "("
+      dispatch( cmd.left )
+      write ">"
+      dispatch( cmd.right )
+      write ")"
+      return cmd
+
+    method visit( cmd:CompareLE )->Cmd  [override]
+      write "("
+      dispatch( cmd.left )
+      write "<="
+      dispatch( cmd.right )
+      write ")"
+      return cmd
+
+    method visit( cmd:CompareLT )->Cmd  [override]
+      write "("
+      dispatch( cmd.left )
+      write "<"
+      dispatch( cmd.right )
+      write ")"
+      return cmd
+
+    method visit( cmd:CompareNE )->Cmd  [override]
+      write "("
+      dispatch( cmd.left )
+      write "!="
+      dispatch( cmd.right )
+      write ")"
+      return cmd
+
+    method visit( cmd:ConsumeCharacters )->Cmd  [override]
+      write "_scanner.consume("
+      dispatch( cmd.value )
+      write ")"
+      return cmd
+
+    method visit( cmd:ConsumeContent )->Cmd  [override]
+      write "_consume_content("
+      write ''"$"'' (to_escaped_ascii(cmd.content,"\""))
+      write ")"
+      return cmd
+
+    method visit( cmd:ConsumeEOLs )->Cmd  [override]
+      write "_consume_eols"
+      return cmd
+
+    method visit( cmd:ConsumePattern )->Cmd  [override]
+      dispatch( cmd.pattern )
+      write ".scan(_scanner)"
+      return cmd
+
+    method visit( cmd:ConsumeToken )->Cmd  [override]
+      write "_consume(TokenType."
+      write cmd.token_type.name
+      write ")"
+      return cmd
+
+    method visit( cmd:CreateCmd )->Cmd  [override]
+      write "_push( "
+      write cmd.name
+      write "(_cur_t"
+      cmd.args.dispatch( this )
+      write "), "
+      write cmd.node_arg_count
+      write " )"
+      return cmd
+
+    method visit( cmd:CreateCmdArg )->Cmd  [override]
+      write ","
+      local arg_type = program.type( cmd.arg_type )
+      if (cmd.arg_value)
+        if (arg_type.is_built_in and arg_type.name != "String")
+          write "_string_to_$(" (arg_type.name)
+          cmd.arg_value.dispatch( this )
+          write ")"
+        else
+          cmd.arg_value.dispatch( this )
+        endIf
+      else
+        if (arg_type.is_built_in)
+          write "_$_arg($)"(arg_type.name_lc,cmd.stack_offset)
+        else
+          write "_node_arg($)"(cmd.stack_offset)
+          if (arg_type.name != "Cmd") write " as "; write arg_type.name
+        endIf
+      endIf
+      return cmd
+
+    method visit( cmd:CreateList )->Cmd  [override]
+      write "_push_list( $(_list_t) )" (cmd.list_type)
+      return cmd
+
+    method visit( cmd:CreateNull )->Cmd  [override]
+      write "_push( null, 0 )"
+      return cmd
+
+    method visit( cmd:MustConsumeCharacters )->Cmd  [override]
+      write "_must_consume( "
+      dispatch( cmd.value )
+      write " )"
+      return cmd
+
+    method visit( cmd:MustConsumePattern )->Cmd  [override]
+      write "_must_consume( "
+      dispatch( cmd.pattern )
+      write " )"
+      return cmd
+
+    method visit( cmd:MustConsumeToken )->Cmd  [override]
+      write "if (not _consume(TokenType."
+      write cmd.token_type.name
+      write ")) _throw_syntax_error( &expected=TokenType."
+      write cmd.token_type.name
+      write " )"
+      return cmd
+
+    method visit( cmd:ParserHasAnother )->Cmd  [override]
+      write "(_position < _limit)"
+      return cmd
+
+    method visit( cmd:Pattern )->Cmd  [override]
+      write cmd.reference_name
+      return cmd
+
+    method visit( cmd:Decrement )->Cmd  [override]
+      write "--"
+      dispatch( cmd.target )
+      return cmd
+
+    method visit( cmd:DiscardList )->Cmd  [override]
+      write "_discard_list"
+      return cmd
+
+    method visit( cmd:DiscardPosition )->Cmd  [override]
+      if (is_scanner)
+        write @|if (_position_stack.count) _position_stack.remove_last
+      else
+        write "_discard_position"
+      endIf
+      return cmd
+
+    method visit( cmd:If )->Cmd  [override]
+      write   "if ("
+      dispatch( cmd.condition )
+      writeln ")"
+      indent += 2
+      dispatch( cmd.statements )
+      indent -= 2
+
+      dispatch( cmd.else_ifs )
+
+      if (cmd._else)
+        writeln "else"
+        indent += 2
+        dispatch( cmd._else )
+        indent -= 2
+      endIf
+
+      write   "endIf"
+      return cmd
+
+    method visit( cmd:ElseIf )->Cmd  [override]
+      write   "elseIf ("
+      dispatch( cmd.condition )
+      writeln ")"
+      indent += 2
+      dispatch( cmd.statements )
+      indent -= 2
+      return cmd
+
+    method visit( cmd:Halt )->Cmd  [override]
+      writeln "halt = true"
+      write   "return false"
+      return cmd
+
+    method visit( cmd:Increment )->Cmd  [override]
+      write "++"
+      dispatch( cmd.target )
+      return cmd
+
+    method visit( cmd:ScannerHasAnother )->Cmd  [override]
+      write "_scanner.has_another"
+      return cmd
+
+    method visit( cmd:LiteralCharacter )->Cmd  [override]
+      which (cmd.value)
+        case '\\': write @|'\\'
+        case '\n': write @|'\n'
+        case '\r': write @|'\r'
+        case '\t': write @|'\t'
+        others
+          write( "'$'"(to_escaped_ascii(cmd.value,"'")) )
+      endWhich
+      return cmd
+
+    method visit( cmd:LiteralInteger )->Cmd  [override]
+      writer.print( cmd.value )
+      return cmd
+
+    method visit( cmd:LiteralLogical )->Cmd  [override]
+      writer.print( cmd.value )
+      return cmd
+
+    method visit( cmd:LiteralString )->Cmd  [override]
+      writer.print( ''"$"''(to_escaped_ascii(cmd.value,''"'')) )
+      #if (cmd.value.count == 1)
+      #  writer.print( "'$'"(to_escaped_ascii(cmd.value,"'")) )
+      #else
+      #  writer.print( ''"$"''(to_escaped_ascii(cmd.value,''"'')) )
+      #endIf
+      return cmd
+
+    method visit( cmd:LiteralTokenType )->Cmd  [override]
+      write "TokenType."
+      write cmd.token_type.name
+      return cmd
+
+    method visit( cmd:LogicalAnd )->Cmd  [override]
+      write "("
+      cmd.left.dispatch( this )
+      write " and "
+      cmd.right.dispatch( this )
+      write ")"
+      return cmd
+
+    method visit( cmd:LogicalNot )->Cmd  [override]
+      write "(not "
+      cmd.operand.dispatch( this )
+      write ")"
+      return cmd
+
+    method visit( cmd:LogicalOr )->Cmd  [override]
+      write "("
+      cmd.left.dispatch( this )
+      write " or "
+      cmd.right.dispatch( this )
+      write ")"
+      return cmd
+
+    method visit( cmd:MarkPosition )->Cmd  [override]
+      writeln "_src_line   = _scanner.line"
+      write   "_src_column = _scanner.column"
+      return cmd
+
+    method visit( cmd:Mode )->Cmd  [override]
+      write "start_ip = ip_"
+      write cmd.routine_name
+      return cmd
+
+    method visit( cmd:On )->Cmd  [override]
+      write   "if (_next_t.type == "
+      dispatch( cmd.token_type )
+      writeln ")"
+      indent += 2
+      writeln "_on_t"
+      dispatch( cmd.statements )
+      indent -= 2
+
+      dispatch( cmd.else_ons )
+
+      if (cmd._else_on_others)
+        writeln "else"
+        indent += 2
+        dispatch( cmd._else_on_others )
+        indent -= 2
+      endIf
+
+      write   "endIf"
+      return cmd
+
+    method visit( cmd:ElseOn )->Cmd  [override]
+      write   "elseIf (_next_t.type == "
+      dispatch( cmd.token_type )
+      writeln ")"
+      indent += 2
+      writeln "_on_t"
+      dispatch( cmd.statements )
+      indent -= 2
+      return cmd
+
+    method visit( cmd:ScannerCallUserMethod )->Cmd  [override]
+      writeln "this.ip = ip"
+      writeln cmd.fn_name
+      write   "ip = this.ip"
+      return cmd
+
+    method visit( cmd:MustConsumeContent )->Cmd  [override]
+      write "_must_consume_content("
+      write ''"$"'' (to_escaped_ascii(cmd.content, "\""))
+      write ")"
+      return cmd
+
+    method visit( cmd:NextHasAttribute )->Cmd  [override]
+      write "(_next_t.type.attributes & TokenType.ATTRIBUTE_$)?"(cmd.name.to_uppercase)
+      return cmd
+
+    method visit( cmd:NextIsCharacters )->Cmd  [override]
+      if (cmd.value.type == Type.CHARACTER)
+        write "_scanner.next_is("
+        dispatch( cmd.value )
+        write ")"
+      else
+        write "_next_is("
+        dispatch( cmd.value )
+        write ")"
+      endIf
+      return cmd
+
+    method visit( cmd:NextIsContent )->Cmd  [override]
+      write ''(_next_t.content and _next_t.content == "''
+      write to_escaped_ascii( cmd.content, "\"" )
+      write ''")''
+      return cmd
+
+    method visit( cmd:NextIsPattern )->Cmd  [override]
+      dispatch( cmd.pattern )
+      write ".is_next(_scanner)"
+      return cmd
+
+    method visit( cmd:ParserCallUserMethod )->Cmd  [override]
+      writeln "this.ip = ip"
+      writeln cmd.fn_name
+      write   "ip = this.ip"
+      return cmd
+
+    method visit( cmd:ParserCreate )->Cmd  [override]
+      cmd.arg.dispatch( this )
+      return cmd
+
+    method visit( cmd:NextIsTokenType )->Cmd  [override]
+      write "(_next_t.type == TokenType."
+      write cmd.token_type.name
+      write ")"
+      return cmd
+
+    method visit( cmd:ParserProduce )->Cmd  [override]
+      cmd.arg.dispatch( this )
+      writeln
+      write "return"
+      return cmd
+
+    method visit( cmd:Print )->Cmd  [override]
+      write "output"
+      forEach (arg in cmd.args)
+        write ".print("
+        arg.require_value.dispatch( this )
+        write ")"
+      endForEach
+      return cmd
+
+    method visit( cmd:Println )->Cmd  [override]
+      write "output"
+      forEach (arg in cmd.args)
+        write ".print("
+        arg.require_value.dispatch( this )
+        write ")"
+      endForEach
+      write ".println"
+      return cmd
+
+    method visit( cmd:ProduceList )->Cmd  [override]
+      writeln "_push_list( $(_list_t) )" (cmd.list_type)
+      write   "return"
+      return cmd
+
+    method visit( cmd:ScanCharacters )->Cmd  [override]
+      write "_scan("
+      dispatch( cmd.value )
+      write ")"
+      return cmd
+
+    method visit( cmd:ScanPatternCmd )->Cmd  [override]
+      dispatch( cmd.pattern )
+      write ".scan(_scanner,buffer)"
+      return cmd
+
+    method visit( cmd:ParserRead )->Cmd  [override]
+      write "_read"
+      return cmd
+
+    method visit( cmd:ScannerProduce )->Cmd  [override]
+      write   "_add( "
+      cmd.arg.dispatch( this )
+      writeln " )"
+      write   "return false"
+      return cmd
+
+    method visit( cmd:ScannerRead )->Cmd  [override]
+      write "_scanner.read"
+      return cmd
+
+    method visit( cmd:ReadBuffer )->Cmd  [override]
+      write "buffer"
+      return cmd
+
+    method visit( cmd:ReadVar )->Cmd  [override]
+      write cmd.var.name
+      return cmd
+
+    method visit( cmd:Restart )->Cmd  [override]
+      if (cmd.start_ip)
+        write "start_ip = ip_"
+        write cmd.start_ip
+      endIf
+      write "return false"
+      return cmd
+
+    method visit( cmd:RestorePosition )->Cmd  [override]
+      if (is_scanner)
+        write "if (_position_stack.count) _scanner.seek( _position_stack.remove_last )"
+      else
+        write "_restore_position"
+      endIf
+      return cmd
+
+    method visit( cmd:Return )->Cmd  [override]
+      if (is_scanner) write   "return true"
+      else            write   "return"
+      return cmd
+
+    method visit( cmd:Routine )->Cmd  [override]
+      writeln "          case ip_$"(cmd.name)
+
+      indent += 12
+      prior.visit( cmd )
+
+      if (is_parser)
+        if (not BranchAnalyzer.all_paths_return(cmd))
+          writeln "return"
+        endIf
+      endIf
+
+      indent -= 12
+
+      return cmd
+
+    method visit( cmd:SavePosition )->Cmd  [override]
+      if (is_scanner)
+        write "_position_stack.add( _scanner.position )"
+      else
+        write "_save_position"
+      endIf
+      return cmd
+
+    method visit( cmd:ScannerDef )->Cmd  [override]
+      is_scanner = true
+      is_parser = false
+
+      RScanner(this).create_missing
+      RScannerCore(this,cmd).overwrite
+      return cmd
+
+    method visit( cmd:Statements )->Cmd  [override]
+      forEach (element in cmd)
+        if (element)
+          element.dispatch( this )
+          writeln
+        endIf
+      endForEach
+      return cmd
+
+    method visit( cmd:Match )->Cmd  [override]
+      write_replacements["$scan_table"] = cmd.id
+
+      writeln @|$scan_table.reset
+               |contingent
+      if (cmd.expression)
+        # ScannerRead from string; must accept all characters.
+        write @|  necessary ($scan_table.accept(forEach in
+        write " "
+        cmd.expression.dispatch(this)
+        writeln @|))
+      else
+        # ScannerRead longest match from input
+        indent += 2
+        writeln @|block n=1
+                 |  while (_scanner.has_another(n))
+                 |    if (not $scan_table.accept(_scanner.peek(n-1)))
+                 |      escapeWhile
+                 |    endIf
+                 |    ++n
+                 |  endWhile
+                 |  necessary ($scan_table.has_product)
+                 |  loop ($scan_table.match_count) _scanner.read
+                 |endBlock
+        indent -= 2
+      endIf
+
+      writeln @|  which ($scan_table.product)
+      indent += 4
+      forEach (statements at i in cmd.statement_lists)
+        writeln "case "+i
+        indent += 2
+        statements.dispatch(this)
+        indent -= 2
+      endForEach
+      indent -= 4
+      write @|  endWhich
+             |endContingent
+
+      write_replacements.remove( "$scan_table" )
+      return cmd
+
+    method visit( cmd:ThrowSyntaxError )->Cmd  [override]
+      write "_throw_syntax_error"
+      if (cmd.args and cmd.args.count)
+        write "("
+        forEach (arg at i in cmd.args)
+          if (i > 0) write "+"
+          cmd.args.dispatch( this )
+        endForEach
+        write ")"
+      endIf
+      return cmd
+
+    method visit( cmd:TokenContent )->Cmd  [override]
+      write "_cur_t.content"
+      return cmd
+
+    method visit( cmd:WriteBuffer )->Cmd  [override]
+      write "buffer.clear.print "
+      dispatch( cmd.new_value )
+      return cmd
+
+    method visit( cmd:WriteVar )->Cmd  [override]
+      write "$ = " (cmd.var.name)
+      dispatch( cmd.new_value )
+      return cmd
+
+    method visit( cmd:While )->Cmd  [override]
+      write   "while ("
+      dispatch( cmd.condition )
+      writeln ")"
+      indent += 2
+      dispatch( cmd.statements )
+      indent -= 2
+      write   "endWhile"
+      return cmd
+
+    method write( content:String )
+      if (content.contains('\n'))
+        forEach (line at i in content.split('\n'))
+          if (i > 0) writeln
+          write( line )
+        endForEach
+        return
+      endIf
+
+      if (at_newline and indent)
+        loop (indent) writer.print(' ')
+      endIf
+
+      if (content.contains('$'))
+        content .= replacing( "$module", "module $\n" (program.project_name) )
+        forEach (entry in write_replacements.entries)
+          content .= replacing( entry.key, entry.value )
+        endForEach
+      endIf
+      writer.print( content )
+
+      at_newline = false
+
+    method writeln( content="":String )
+      if (String.exists(content)) write( content )
+      writer.println
+      at_newline = true
+
+    method visit( cmd:ParserDef )->Cmd  [override]
+      is_parser = true
+      is_scanner = false
+
+      RCmd(this).update
+      RParser(this).create_missing
+      RParserCore(this,cmd).overwrite
+      RVisitor(this).update
+
+      return cmd
+
+    method visit( cmd:Add )->Cmd [override]
+      write "("
+      dispatch( cmd.left )
+      write " + "
+      dispatch( cmd.right )
+      write ")"
+      return cmd
+
+    method visit( cmd:Subtract )->Cmd [override]
+      write "("
+      dispatch( cmd.left )
+      write " - "
+      dispatch( cmd.right )
+      write ")"
+      return cmd
+
+    method visit( cmd:Multiply )->Cmd [override]
+      write "("
+      dispatch( cmd.left )
+      write " * "
+      dispatch( cmd.right )
+      write ")"
+      return cmd
+
+    method visit( cmd:Divide )->Cmd [override]
+      write "("
+      dispatch( cmd.left )
+      write " / "
+      dispatch( cmd.right )
+      write ")"
+      return cmd
+
+    method visit( cmd:Power )->Cmd [override]
+      write "("
+      dispatch( cmd.left )
+      write " ^ "
+      dispatch( cmd.right )
+      write ")"
+      return cmd
+
+    method visit( cmd:Negate )->Cmd [override]
+      write "-"
+      dispatch( cmd.operand )
+      return cmd
+
+endClass
+

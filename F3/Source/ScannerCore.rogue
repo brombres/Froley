@@ -272,6 +272,8 @@ class ScannerCore [abstract]
                 case 30
                   _add( TokenType.SYMBOL_T_CONTENT )
                   return false
+                others
+                  necessary (false)
               endWhich
             unsatisfied
               ch = _scanner.peek 
@@ -421,6 +423,8 @@ class ScannerCore [abstract]
 
                     _add( TokenType.KEYWORD_TOKENS )
                     return false
+                  others
+                    necessary (false)
                 endWhich
               unsatisfied
 
@@ -494,6 +498,8 @@ class ScannerCore [abstract]
 
                   _add( TokenType.SYMBOL_COMMA )
                   return false
+                others
+                  necessary (false)
               endWhich
             endContingent
             if (not _execute(ip_must_scan_attribute_identifier)) return false
@@ -675,6 +681,8 @@ class ScannerCore [abstract]
                   case 55
                     _add( TokenType.KEYWORD_RESTART )
                     return false
+                  others
+                    necessary (false)
                 endWhich
               unsatisfied
 

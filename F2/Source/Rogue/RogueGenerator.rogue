@@ -626,6 +626,8 @@ class RogueGenerator : FroleyVisitor
         statements.dispatch(this)
         indent -= 2
       endForEach
+      writeln @|others
+               |  necessary (false)
       indent -= 4
       writeln @|  endWhich
 

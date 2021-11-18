@@ -17,11 +17,11 @@ KEYWORD_TOKENS          tokens      [structural]
 
 [scanner_keywords]
 KEYWORD_BUFFER           buffer
-KEYWORD_CASE             case
+KEYWORD_CASE             case        [structural]
 KEYWORD_COLLECT          collect
 KEYWORD_END_MATCH        endMatch    [structural]
 KEYWORD_INPUT            input
-KEYWORD_PRODUCE_ANY      produceAny
+KEYWORD_PRODUCE_ANY      produceAny  [structural]
 KEYWORD_MATCH            match
 KEYWORD_RESTART          restart
 
@@ -454,17 +454,20 @@ SYMBOL_T_CONTENT      t.content
 + consume_eols
   while (consume(EOL)) noAction
 
++ consume_eols_and_semicolons
+  while (consume(EOL) or consume(';')) noAction
+
 + must_consume_eols
   mustConsume(EOL)
   while (consume(EOL)) noAction
 
 + scanner_multi_line_statements
-  consume_eols
+  consume_eols_and_semicolons
   beginList
   if (not hasAnother) produceList Statements
-  while (hasAnother and not (nextIs('+') or nextIs('-') or nextHasAttribute(structural)))
+  while (hasAnother and not (nextIs('-') or nextHasAttribute(structural)))
     scanner_control_structure
-    consume_eols
+    consume_eols_and_semicolons
   endWhile
   produceList Statements
 
@@ -900,12 +903,12 @@ SYMBOL_T_CONTENT      t.content
   produceList
 
 + parser_multi_line_statements
-  consume_eols
+  consume_eols_and_semicolons
   beginList
   if (not hasAnother) produceList Statements
-  while (hasAnother and not (nextIs('+') or nextIs('-') or nextHasAttribute(structural)))
+  while (hasAnother and not (nextIs('-') or nextHasAttribute(structural)))
     parser_control_structure
-    consume_eols
+    consume_eols_and_semicolons
   endWhile
   produceList Statements
 

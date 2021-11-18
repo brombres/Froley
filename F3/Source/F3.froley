@@ -21,11 +21,11 @@ KEYWORD_TOKENS          tokens      [structural]
 tokens ScannerKeywords
 --------------------------------------------------------------------------------
 KEYWORD_BUFFER           buffer
-KEYWORD_CASE             case
+KEYWORD_CASE             case        [structural]
 KEYWORD_COLLECT          collect
 KEYWORD_END_MATCH        endMatch    [structural]
 KEYWORD_INPUT            input
-KEYWORD_PRODUCE_ANY      produceAny
+KEYWORD_PRODUCE_ANY      produceAny  [structural]
 KEYWORD_MATCH            match
 KEYWORD_RESTART          restart
 
@@ -452,7 +452,7 @@ scanner
   consume_eols
   if (not hasAnother) syntaxError
   beginList
-  while (hasAnother and not (nextIs('+') or nextIs('-') or nextHasAttribute(structural)))
+  while (hasAnother and not (nextIs('-') or nextHasAttribute(structural)))
     scanner_control_structure
     consume_eols
   endWhile
@@ -624,8 +624,8 @@ scanner
   endOn
 
 - scanner_statement
-  on "collect", scanner_args -> Collect(args:Args)
-  #on "create", scanner_product      -> ScannerProduce(arg:Cmd)
+  on "collect", scanner_args    -> Collect(args:Args)
+  on "create",  scanner_product -> ScannerCreate(arg)
   on "discardPosition"       -> DiscardPosition
   on "halt"                  -> Halt
   on "markPosition"          -> MarkPosition
@@ -893,7 +893,7 @@ scanner
   consume_eols
   if (not hasAnother) syntaxError
   beginList
-  while (hasAnother and not (nextIs('+') or nextIs('-') or nextHasAttribute(structural)))
+  while (hasAnother and not (nextIs('-') or nextHasAttribute(structural)))
     parser_control_structure
     consume_eols
   endWhile

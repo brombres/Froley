@@ -470,7 +470,8 @@ class RogueGenerator : FroleyVisitor
         arg.require_value.dispatch( this )
         write ")"
       endForEach
-      write ".println"
+      writeln ".println"
+      write "_on_output_line"
       return cmd
 
     method visit( cmd:ProduceList )->Cmd  [override]
@@ -499,6 +500,15 @@ class RogueGenerator : FroleyVisitor
       writeln " )"
       return cmd
 
+    method visit( cmd:ScannerPeek )->Cmd  [override]
+      write   "_scanner.peek "
+      if (cmd.lookahead)
+        write "("
+        cmd.lookahead.dispatch( this )
+        write ")"
+      endIf
+      return cmd
+
     method visit( cmd:ScannerProduce )->Cmd  [override]
       write   "_add( "
       cmd.arg.dispatch( this )
@@ -521,7 +531,7 @@ class RogueGenerator : FroleyVisitor
     method visit( cmd:Restart )->Cmd  [override]
       if (cmd.start_ip)
         write "start_ip = ip_"
-        write cmd.start_ip
+        writeln cmd.start_ip
       endIf
       write "return false"
       return cmd
@@ -609,15 +619,24 @@ class RogueGenerator : FroleyVisitor
 
       writeln @|  which ($scan_table.product)
       indent += 4
-      forEach (statements at i in cmd.statement_lists)
+      local i1 = which{ cmd._others:1 || 0 }
+      forEach (statements at i in cmd.statement_lists from i1)
         writeln "case "+i
         indent += 2
         statements.dispatch(this)
         indent -= 2
       endForEach
       indent -= 4
-      write @|  endWhich
-             |endContingent
+      writeln @|  endWhich
+
+      if (cmd._others)
+        writeln "unsatisfied"
+        indent += 2
+        cmd.statement_lists[0].dispatch(this)
+        indent -= 2
+      endIf
+
+      write @|endContingent
 
       write_replacements.remove( "$scan_table" )
       return cmd

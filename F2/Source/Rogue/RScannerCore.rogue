@@ -135,6 +135,11 @@ class RScannerCore( generator, scanner_def:ScannerDef ) : RogueSourceWriter
          |      if (pattern.scan(_scanner)) return
          |      _throw_expected_string_error( pattern->String )
          |
+         |    method _on_output_line
+         |      # Default behavior: print out 'output' and clear it. Can override this method.
+         |      print output
+         |      output.clear
+         |
          |    method _scan( ch:Character )->Logical
          |      if (not _scanner.consume(ch)) return false
          |      buffer.print ch

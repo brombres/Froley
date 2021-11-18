@@ -507,4 +507,8 @@ class Visitor
     method visit( cmd:ScannerCreate )->Cmd
       if (cmd.arg) cmd.arg = cmd.arg.dispatch( this )
       return cmd
+
+    method visit( cmd:ScannerPeek )->Cmd
+      if (cmd.lookahead) cmd.lookahead = cmd.lookahead.dispatch( this )
+      return cmd
 endClass

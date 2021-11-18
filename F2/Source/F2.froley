@@ -16,14 +16,15 @@ KEYWORD_SCANNER         scanner     [structural]
 KEYWORD_TOKENS          tokens      [structural]
 
 [scanner_keywords]
-KEYWORD_BUFFER           buffer
-KEYWORD_CASE             case        [structural]
-KEYWORD_COLLECT          collect
-KEYWORD_END_MATCH        endMatch    [structural]
-KEYWORD_INPUT            input
-KEYWORD_PRODUCE_ANY      produceAny  [structural]
-KEYWORD_MATCH            match
-KEYWORD_RESTART          restart
+KEYWORD_BUFFER             buffer
+KEYWORD_CASE               case        [structural]
+KEYWORD_COLLECT            collect
+KEYWORD_END_MATCH          endMatch    [structural]
+KEYWORD_INPUT              input
+KEYWORD_PEEK               peek
+KEYWORD_PRODUCE_ANY        produceAny  [structural]
+KEYWORD_MATCH              match
+KEYWORD_RESTART            restart
 
 [parser_keywords]
 KEYWORD_BEGIN_LIST         beginList
@@ -856,6 +857,11 @@ SYMBOL_T_CONTENT      t.content
   on "false"                     -> LiteralLogical(value="false":Logical)
   on "hasAnother"                -> ScannerHasAnother
   on "nextIs", sequence_args     -> ScannerNextIs(args:SequenceArgs)
+  on "peek"
+    if (consume('(')) scanner_expression; mustConsume(')')
+    else              createNull
+    produce ScannerPeek(lookahead)
+  endOn
   on "read"                      -> ScannerRead
   on "scan", sequence_args       -> Scan(args:SequenceArgs)
   on "true"                      -> LiteralLogical(value="true":Logical)

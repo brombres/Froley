@@ -210,6 +210,10 @@ scanner
 
   endIf
 
+- scan_optional_plain_id
+  if (not scan [a-zA-Z_][a-zA-Z_0-9]*) return
+  produce IDENTIFIER
+
 - scan_tokens_id
   consume_whitespace
   consume_comment
@@ -220,23 +224,37 @@ scanner
 
   if (consume('\n')) produce EOL
 
-  scan_identifier
-  syntaxError "Identifier expected."
+  scan_optional_plain_id
+  syntaxError "1 Identifier expected."
 
 - scan_token_name
   consume_whitespace
   consume_comment
   if (not hasAnother) halt
 
-  if (nextIs('-')) restart scan_standard_token
-
   markPosition
   mode scan_token_symbol
-  scan_identifier
+
+  if (scan [a-zA-Z_][a-zA-Z_0-9]*)
+    # May switch sections here
+    match (buffer)
+      case "parser"
+        mode scan_standard_token
+        produce KEYWORD_PARSER
+      case "scanner"
+        mode scan_standard_token
+        produce KEYWORD_SCANNER
+      case "tokens"
+        mode scan_tokens_id
+        produce KEYWORD_TOKENS
+      others
+        produce IDENTIFIER
+    endMatch
+  endIf
 
   mode scan_token_name
   if (consume('\n')) produce EOL
-  syntaxError "Identifier expected."
+  syntaxError "2 Identifier expected."
 
 - scan_token_symbol
   # TOKEN_ID(symbol)
@@ -843,6 +861,11 @@ scanner
   on "false"                     -> LiteralLogical(value="false":Logical)
   on "hasAnother"                -> ScannerHasAnother
   on "nextIs", sequence_args     -> ScannerNextIs(args:SequenceArgs)
+  on "peek"
+    if (consume('(')) scanner_expression; mustConsume(')')
+    else              createNull
+    produce ScannerPeek(lookahead)
+  endOn
   on "read"                      -> ScannerRead
   on "scan", sequence_args       -> Scan(args:SequenceArgs)
   on "true"                      -> LiteralLogical(value="true":Logical)

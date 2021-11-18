@@ -1267,3 +1267,13 @@ class ScannerCreate( t, arg:Cmd ) : Cmd
     method to->String
       return "ScannerCreate($)"(arg)
 endClass
+
+
+class ScannerPeek( t, lookahead:Cmd ) : Cmd
+  METHODS
+    method to->String
+      return "ScannerPeek($)"(lookahead)
+
+    method type->Type
+      return Type.CHARACTER
+endClass

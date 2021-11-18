@@ -158,6 +158,11 @@ class RParserCore( generator, parser_def:ParserDef ) : RogueSourceWriter
          |      if (_position < _limit) ++_position; _next_t = _peek
          |      return true
          |
+         |    method _on_output_line
+         |      # Default behavior: print out 'output' and clear it. Can override this method.
+         |      print output
+         |      output.clear
+         |
          |    method _on_t
          |     _tokens.add( _cur_t )
          |     _cur_t = _next_t

@@ -137,7 +137,7 @@ class RScannerCore( generator, scanner_def:ScannerDef ) : RogueSourceWriter
          |
          |    method _on_output_line
          |      # Default behavior: print out 'output' and clear it. Can override this method.
-         |      print output
+         |      print( output ).flush
          |      output.clear
          |
          |    method _scan( ch:Character )->Logical

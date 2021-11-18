@@ -1,0 +1,1089 @@
+# Generated and updated by Froley. Custom changes will not be overwritten; customize as desired.
+module F3
+
+class Cmd( t:Token )
+  METHODS
+    method add( cmd:Cmd )
+      throw UnsupportedOperationError()
+
+    method count->Int32
+      return 0
+
+    method description->String
+      return "Cmd"
+
+    method dispatch<<$VisitorType>>( visitor:$VisitorType ) [propagated]
+      visitor.dispatch( this )
+
+    method dispatch<<$VisitorType,$ReturnType>>( visitor:$VisitorType )->$ReturnType [propagated]
+      return visitor.visit( this )
+
+    method get( index:Int32 )->Cmd
+      throw UnsupportedOperationError()
+
+    method to->Character
+      return Character(this->Int32)
+
+    method to->Int32
+      return 0
+
+    method to->Logical
+      return (this->Int32)?
+
+    method to->Real64
+      return this->Int32
+
+    method to->String
+      return description
+endClass
+
+class CmdList : Cmd
+  PROPERTIES
+    list = Cmd[]
+
+  METHODS
+    method add( cmd:Cmd )
+      list.add( cmd )
+
+    method count->Int32
+      return list.count
+
+    method description->String
+      return "CmdList" + list_description
+
+    method get( index:Int32 )->Cmd
+      return list[index]
+
+    method list_description->String
+      use builder = StringBuilder.pool
+        builder.print '['
+        forEach (element at index in list)
+          if (index > 0) builder.print ','
+          builder.print( %element )
+        endForEach
+        builder.print ']'
+        return builder->String
+      endUse
+endClass
+
+class Unary( t, operand:Cmd ) : Cmd
+  METHODS
+    method description->String
+      return "Unary($)"(%operand)
+endClass
+
+class Binary( t, left:Cmd, right:Cmd ) : Cmd
+  METHODS
+    method description->String
+      return "Binary($,$)"(%left,%right)
+endClass
+
+class ScannerDef : Cmd
+  PROPERTIES
+    name : String
+    code : CmdList
+
+  METHODS
+    method init( t, name, code )
+
+    method description->String
+      return "ScannerDef($,$)" (%name,%code)
+
+endClass
+
+class ParserDef : Cmd
+  PROPERTIES
+    name : String
+    code : CmdList
+
+  METHODS
+    method init( t, name, code )
+
+    method description->String
+      return "ParserDef($,$)" (%name,%code)
+
+endClass
+
+class TokenGroup : Cmd
+  PROPERTIES
+    name        : String
+    definitions : CmdList
+
+  METHODS
+    method init( t, name, definitions )
+
+    method description->String
+      return "TokenGroup($,$)" (%name,%definitions)
+
+endClass
+
+class Identifier : Cmd
+  PROPERTIES
+    name : String
+
+  METHODS
+    method init( t, name )
+
+    method description->String
+      return "Identifier($)" (%name)
+
+    method to->Character
+      if (name is null or name.count == 0) return Character(0)
+      return name[0]
+
+    method to->Int32:  return name
+    method to->Logical: return name?
+    method to->String: return name
+
+endClass
+
+class Routine : Cmd
+  PROPERTIES
+    name       : String
+    attributes : String
+    statements : Statements
+
+  METHODS
+    method init( t, name, attributes, statements )
+
+    method description->String
+      return "Routine($,$,$)" (%name,%attributes,%statements)
+
+endClass
+
+class LiteralString : Cmd
+  PROPERTIES
+    value : String
+
+  METHODS
+    method init( t, value )
+
+    method description->String
+      return "LiteralString($)" (%value)
+
+    method to->Character
+      if (value is null or value.count == 0) return Character(0)
+      return value[0]
+
+    method to->Int32:  return value
+    method to->Logical: return value?
+    method to->String: return value
+
+endClass
+
+class TokenDef : Cmd
+  PROPERTIES
+    name       : String
+    symbol     : String
+    attributes : CmdList
+
+  METHODS
+    method init( t, name, symbol, attributes )
+
+    method description->String
+      return "TokenDef($,$,$)" (%name,%symbol,%attributes)
+
+endClass
+
+class Symbol : Cmd
+  PROPERTIES
+    name : String
+
+  METHODS
+    method init( t, name )
+
+    method description->String
+      return "Symbol($)" (%name)
+
+    method to->Character
+      if (name is null or name.count == 0) return Character(0)
+      return name[0]
+
+    method to->Int32:  return name
+    method to->Logical: return name?
+    method to->String: return name
+
+endClass
+
+class Statements : CmdList
+  METHODS
+    method description->String
+      return "Statements" + list_description
+endClass
+
+class If : Cmd
+  PROPERTIES
+    condition  : Cmd
+    statements : Statements
+    else_ifs   : CmdList
+    _else      : Statements
+
+  METHODS
+    method init( t, condition, statements, else_ifs, _else )
+
+    method description->String
+      return "If($,$,$,$)" (%condition,%statements,%else_ifs,%_else)
+
+endClass
+
+class Match : Cmd
+  PROPERTIES
+    scanner_expression : Cmd
+    cases              : CmdList
+    _others            : Cmd
+
+  METHODS
+    method init( t, scanner_expression, cases, _others )
+
+    method description->String
+      return "Match($,$,$)" (%scanner_expression,%cases,%_others)
+
+endClass
+
+class While : Cmd
+  PROPERTIES
+    condition  : Cmd
+    statements : Statements
+
+  METHODS
+    method init( t, condition, statements )
+
+    method description->String
+      return "While($,$)" (%condition,%statements)
+
+endClass
+
+class ScannerProduce : Cmd
+  PROPERTIES
+    arg : Cmd
+
+  METHODS
+    method init( t, arg )
+
+    method description->String
+      return "ScannerProduce($)" (%arg)
+
+endClass
+
+class MatchCase : Cmd
+  PROPERTIES
+    scanner_expression : Cmd
+    statements         : CmdList
+
+  METHODS
+    method init( t, scanner_expression, statements )
+
+    method description->String
+      return "MatchCase($,$)" (%scanner_expression,%statements)
+
+endClass
+
+class ProduceAny : Cmd
+  PROPERTIES
+    token_group_name : String
+
+  METHODS
+    method init( t, token_group_name )
+
+    method description->String
+      return "ProduceAny($)" (%token_group_name)
+
+    method to->Character
+      if (token_group_name is null or token_group_name.count == 0) return Character(0)
+      return token_group_name[0]
+
+    method to->Int32:  return token_group_name
+    method to->Logical: return token_group_name?
+    method to->String: return token_group_name
+
+endClass
+
+class ElseIf : Cmd
+  PROPERTIES
+    condition  : Cmd
+    statements : Statements
+
+  METHODS
+    method init( t, condition, statements )
+
+    method description->String
+      return "ElseIf($,$)" (%condition,%statements)
+
+endClass
+
+class Collect : Cmd
+  PROPERTIES
+    args : Args
+
+  METHODS
+    method init( t, args )
+
+    method description->String
+      return "Collect($)" (%args)
+
+endClass
+
+class ScannerCreate : Cmd
+  PROPERTIES
+    arg : Cmd
+
+  METHODS
+    method init( t, arg )
+
+    method description->String
+      return "ScannerCreate($)" (%arg)
+
+endClass
+
+class DiscardPosition : Cmd
+  METHODS
+    method description->String
+      return "DiscardPosition"
+endClass
+
+class Halt : Cmd
+  METHODS
+    method description->String
+      return "Halt"
+endClass
+
+class MarkPosition : Cmd
+  METHODS
+    method description->String
+      return "MarkPosition"
+endClass
+
+class Mode : Cmd
+  PROPERTIES
+    routine_name : String
+
+  METHODS
+    method init( t, routine_name )
+
+    method description->String
+      return "Mode($)" (%routine_name)
+
+    method to->Character
+      if (routine_name is null or routine_name.count == 0) return Character(0)
+      return routine_name[0]
+
+    method to->Int32:  return routine_name
+    method to->Logical: return routine_name?
+    method to->String: return routine_name
+
+endClass
+
+class ScannerMustConsume : Cmd
+  PROPERTIES
+    args : SequenceArgs
+
+  METHODS
+    method init( t, args )
+
+    method description->String
+      return "ScannerMustConsume($)" (%args)
+
+endClass
+
+class Print : Cmd
+  PROPERTIES
+    args : Args
+
+  METHODS
+    method init( t, args )
+
+    method description->String
+      return "Print($)" (%args)
+
+endClass
+
+class Args : CmdList
+  METHODS
+    method description->String
+      return "Args" + list_description
+endClass
+
+class Println : Cmd
+  PROPERTIES
+    args : Args
+
+  METHODS
+    method init( t, args )
+
+    method description->String
+      return "Println($)" (%args)
+
+endClass
+
+class Restart : Cmd
+  PROPERTIES
+    start_ip : String
+
+  METHODS
+    method init( t, start_ip )
+
+    method description->String
+      return "Restart($)" (%start_ip)
+
+    method to->Character
+      if (start_ip is null or start_ip.count == 0) return Character(0)
+      return start_ip[0]
+
+    method to->Int32:  return start_ip
+    method to->Logical: return start_ip?
+    method to->String: return start_ip
+
+endClass
+
+class RestorePosition : Cmd
+  METHODS
+    method description->String
+      return "RestorePosition"
+endClass
+
+class Return : Cmd
+  PROPERTIES
+    value : Cmd
+
+  METHODS
+    method init( t, value )
+
+    method description->String
+      return "Return($)" (%value)
+
+endClass
+
+class SavePosition : Cmd
+  METHODS
+    method description->String
+      return "SavePosition"
+endClass
+
+class ThrowSyntaxError : Cmd
+  PROPERTIES
+    args : Args
+
+  METHODS
+    method init( t, args )
+
+    method description->String
+      return "ThrowSyntaxError($)" (%args)
+
+endClass
+
+class Increment : Cmd
+  PROPERTIES
+    target : Cmd
+
+  METHODS
+    method init( t, target )
+
+    method description->String
+      return "Increment($)" (%target)
+
+endClass
+
+class Decrement : Cmd
+  PROPERTIES
+    target : Cmd
+
+  METHODS
+    method init( t, target )
+
+    method description->String
+      return "Decrement($)" (%target)
+
+endClass
+
+class Assign : Cmd
+  PROPERTIES
+    target    : Cmd
+    new_value : Cmd
+
+  METHODS
+    method init( t, target, new_value )
+
+    method description->String
+      return "Assign($,$)" (%target,%new_value)
+
+endClass
+
+class Access : Cmd
+  PROPERTIES
+    name : String
+
+  METHODS
+    method init( t, name )
+
+    method description->String
+      return "Access($)" (%name)
+
+    method to->Character
+      if (name is null or name.count == 0) return Character(0)
+      return name[0]
+
+    method to->Int32:  return name
+    method to->Logical: return name?
+    method to->String: return name
+
+endClass
+
+class CreateCmdArg : Cmd
+  PROPERTIES
+    arg_name  : String
+    arg_value : Cmd
+    arg_type  : String
+
+  METHODS
+    method init( t, arg_name, arg_value, arg_type )
+
+    method description->String
+      return "CreateCmdArg($,$,$)" (%arg_name,%arg_value,%arg_type)
+
+endClass
+
+class SequenceArgs : CmdList
+  METHODS
+    method description->String
+      return "SequenceArgs" + list_description
+endClass
+
+class PatternSequence : CmdList
+  METHODS
+    method description->String
+      return "PatternSequence" + list_description
+endClass
+
+class ZeroOrMore : Cmd
+  PROPERTIES
+    pattern : Cmd
+
+  METHODS
+    method init( t, pattern )
+
+    method description->String
+      return "ZeroOrMore($)" (%pattern)
+
+endClass
+
+class OneOrMore : Cmd
+  PROPERTIES
+    pattern : Cmd
+
+  METHODS
+    method init( t, pattern )
+
+    method description->String
+      return "OneOrMore($)" (%pattern)
+
+endClass
+
+class OptionalPattern : Cmd
+  PROPERTIES
+    pattern : Cmd
+
+  METHODS
+    method init( t, pattern )
+
+    method description->String
+      return "OptionalPattern($)" (%pattern)
+
+endClass
+
+class CharSet : Cmd
+  PROPERTIES
+    characters : String
+
+  METHODS
+    method init( t, characters )
+
+    method description->String
+      return "CharSet($)" (%characters)
+
+    method to->Character
+      if (characters is null or characters.count == 0) return Character(0)
+      return characters[0]
+
+    method to->Int32:  return characters
+    method to->Logical: return characters?
+    method to->String: return characters
+
+endClass
+
+class LiteralStringOrCharacter : Cmd
+  PROPERTIES
+    value : String
+
+  METHODS
+    method init( t, value )
+
+    method description->String
+      return "LiteralStringOrCharacter($)" (%value)
+
+    method to->Character
+      if (value is null or value.count == 0) return Character(0)
+      return value[0]
+
+    method to->Int32:  return value
+    method to->Logical: return value?
+    method to->String: return value
+
+endClass
+
+class LogicalOr : Binary
+  METHODS
+    method description->String
+      return "LogicalOr($,$)" (%left,%right)
+
+endClass
+
+class LogicalAnd : Binary
+  METHODS
+    method description->String
+      return "LogicalAnd($,$)" (%left,%right)
+
+endClass
+
+class CompareEQ : Binary
+  METHODS
+    method description->String
+      return "CompareEQ($,$)" (%left,%right)
+
+endClass
+
+class CompareNE : Binary
+  METHODS
+    method description->String
+      return "CompareNE($,$)" (%left,%right)
+
+endClass
+
+class CompareLT : Binary
+  METHODS
+    method description->String
+      return "CompareLT($,$)" (%left,%right)
+
+endClass
+
+class CompareGT : Binary
+  METHODS
+    method description->String
+      return "CompareGT($,$)" (%left,%right)
+
+endClass
+
+class CompareLE : Binary
+  METHODS
+    method description->String
+      return "CompareLE($,$)" (%left,%right)
+
+endClass
+
+class CompareGE : Binary
+  METHODS
+    method description->String
+      return "CompareGE($,$)" (%left,%right)
+
+endClass
+
+class Add : Binary
+  METHODS
+    method description->String
+      return "Add($,$)" (%left,%right)
+
+endClass
+
+class Subtract : Binary
+  METHODS
+    method description->String
+      return "Subtract($,$)" (%left,%right)
+
+endClass
+
+class Multiply : Binary
+  METHODS
+    method description->String
+      return "Multiply($,$)" (%left,%right)
+
+endClass
+
+class Divide : Binary
+  METHODS
+    method description->String
+      return "Divide($,$)" (%left,%right)
+
+endClass
+
+class Power : Binary
+  METHODS
+    method description->String
+      return "Power($,$)" (%left,%right)
+
+endClass
+
+class Negate : Unary
+  METHODS
+    method description->String
+      return "Negate($)" (%operand)
+
+endClass
+
+class LogicalNot : Unary
+  METHODS
+    method description->String
+      return "LogicalNot($)" (%operand)
+
+endClass
+
+class ReadBuffer : Cmd
+  METHODS
+    method description->String
+      return "ReadBuffer"
+endClass
+
+class ScannerCallUserMethod : Cmd
+  PROPERTIES
+    fn_name : String
+
+  METHODS
+    method init( t, fn_name )
+
+    method description->String
+      return "ScannerCallUserMethod($)" (%fn_name)
+
+    method to->Character
+      if (fn_name is null or fn_name.count == 0) return Character(0)
+      return fn_name[0]
+
+    method to->Int32:  return fn_name
+    method to->Logical: return fn_name?
+    method to->String: return fn_name
+
+endClass
+
+class ScannerConsume : Cmd
+  PROPERTIES
+    args : SequenceArgs
+
+  METHODS
+    method init( t, args )
+
+    method description->String
+      return "ScannerConsume($)" (%args)
+
+endClass
+
+class LiteralLogical : Cmd
+  PROPERTIES
+    value : Logical
+
+  METHODS
+    method init( t, value )
+
+    method description->String
+      return "LiteralLogical($)" (%value)
+
+    method to->Int32:   return which{value:1 || 0}
+    method to->Logical: return value
+    method to->String:  return which{value:"true" || "false"}
+
+endClass
+
+class ScannerHasAnother : Cmd
+  METHODS
+    method description->String
+      return "ScannerHasAnother"
+endClass
+
+class ScannerNextIs : Cmd
+  PROPERTIES
+    args : SequenceArgs
+
+  METHODS
+    method init( t, args )
+
+    method description->String
+      return "ScannerNextIs($)" (%args)
+
+endClass
+
+class ScannerPeek : Cmd
+  PROPERTIES
+    lookahead : Cmd
+
+  METHODS
+    method init( t, lookahead )
+
+    method description->String
+      return "ScannerPeek($)" (%lookahead)
+
+endClass
+
+class ScannerRead : Cmd
+  METHODS
+    method description->String
+      return "ScannerRead"
+endClass
+
+class Scan : Cmd
+  PROPERTIES
+    args : SequenceArgs
+
+  METHODS
+    method init( t, args )
+
+    method description->String
+      return "Scan($)" (%args)
+
+endClass
+
+class LiteralInteger : Cmd
+  PROPERTIES
+    value : Int32
+
+  METHODS
+    method init( t, value )
+
+    method description->String
+      return "LiteralInteger($)" (%value)
+
+endClass
+
+class On : Cmd
+  PROPERTIES
+    token_type      : Cmd
+    token_types     : Args
+    statements      : Statements
+    else_ons        : CmdList
+    _else_on_others : Statements
+
+  METHODS
+    method init( t, token_type, token_types, statements, else_ons, _else_on_others )
+
+    method description->String
+      return "On($,$,$,$,$)" (%token_type,%token_types,%statements,%else_ons,%_else_on_others)
+
+endClass
+
+class ElseOn : Cmd
+  PROPERTIES
+    token_type  : Cmd
+    token_types : Args
+    statements  : Statements
+
+  METHODS
+    method init( t, token_type, token_types, statements )
+
+    method description->String
+      return "ElseOn($,$,$)" (%token_type,%token_types,%statements)
+
+endClass
+
+class BeginList : Cmd
+  METHODS
+    method description->String
+      return "BeginList"
+endClass
+
+class ParserCreate : Cmd
+  PROPERTIES
+    arg : CreateCmd
+
+  METHODS
+    method init( t, arg )
+
+    method description->String
+      return "ParserCreate($)" (%arg)
+
+endClass
+
+class CreateList : Cmd
+  PROPERTIES
+    list_type : String
+
+  METHODS
+    method init( t, list_type )
+
+    method description->String
+      return "CreateList($)" (%list_type)
+
+    method to->Character
+      if (list_type is null or list_type.count == 0) return Character(0)
+      return list_type[0]
+
+    method to->Int32:  return list_type
+    method to->Logical: return list_type?
+    method to->String: return list_type
+
+endClass
+
+class CreateNull : Cmd
+  METHODS
+    method description->String
+      return "CreateNull"
+endClass
+
+class DiscardList : Cmd
+  METHODS
+    method description->String
+      return "DiscardList"
+endClass
+
+class ParserMustConsume : Cmd
+  PROPERTIES
+    token_type : Cmd
+
+  METHODS
+    method init( t, token_type )
+
+    method description->String
+      return "ParserMustConsume($)" (%token_type)
+
+endClass
+
+class ParserArgs : CmdList
+  METHODS
+    method description->String
+      return "ParserArgs" + list_description
+endClass
+
+class ParserProduce : Cmd
+  PROPERTIES
+    arg : CreateCmd
+
+  METHODS
+    method init( t, arg )
+
+    method description->String
+      return "ParserProduce($)" (%arg)
+
+endClass
+
+class ProduceList : Cmd
+  PROPERTIES
+    list_type : String
+
+  METHODS
+    method init( t, list_type )
+
+    method description->String
+      return "ProduceList($)" (%list_type)
+
+    method to->Character
+      if (list_type is null or list_type.count == 0) return Character(0)
+      return list_type[0]
+
+    method to->Int32:  return list_type
+    method to->Logical: return list_type?
+    method to->String: return list_type
+
+endClass
+
+class LiteralContent : Cmd
+  PROPERTIES
+    value : String
+
+  METHODS
+    method init( t, value )
+
+    method description->String
+      return "LiteralContent($)" (%value)
+
+    method to->Character
+      if (value is null or value.count == 0) return Character(0)
+      return value[0]
+
+    method to->Int32:  return value
+    method to->Logical: return value?
+    method to->String: return value
+
+endClass
+
+class CreateCmd : Cmd
+  PROPERTIES
+    name : String
+    args : Args
+
+  METHODS
+    method init( t, name, args )
+
+    method description->String
+      return "CreateCmd($,$)" (%name,%args)
+
+endClass
+
+class ParserCallUserMethod : Cmd
+  PROPERTIES
+    fn_name : String
+
+  METHODS
+    method init( t, fn_name )
+
+    method description->String
+      return "ParserCallUserMethod($)" (%fn_name)
+
+    method to->Character
+      if (fn_name is null or fn_name.count == 0) return Character(0)
+      return fn_name[0]
+
+    method to->Int32:  return fn_name
+    method to->Logical: return fn_name?
+    method to->String: return fn_name
+
+endClass
+
+class ParserConsume : Cmd
+  PROPERTIES
+    token_type : Cmd
+
+  METHODS
+    method init( t, token_type )
+
+    method description->String
+      return "ParserConsume($)" (%token_type)
+
+endClass
+
+class ParserHasAnother : Cmd
+  METHODS
+    method description->String
+      return "ParserHasAnother"
+endClass
+
+class NextHasAttribute : Cmd
+  PROPERTIES
+    name : String
+
+  METHODS
+    method init( t, name )
+
+    method description->String
+      return "NextHasAttribute($)" (%name)
+
+    method to->Character
+      if (name is null or name.count == 0) return Character(0)
+      return name[0]
+
+    method to->Int32:  return name
+    method to->Logical: return name?
+    method to->String: return name
+
+endClass
+
+class ParserNextIs : Cmd
+  PROPERTIES
+    token_type : Cmd
+
+  METHODS
+    method init( t, token_type )
+
+    method description->String
+      return "ParserNextIs($)" (%token_type)
+
+endClass
+
+class ParserRead : Cmd
+  METHODS
+    method description->String
+      return "ParserRead"
+endClass

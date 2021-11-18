@@ -42,10 +42,10 @@ class ScannerCore [abstract]
     _scan_pattern_1 = ScanPattern( "{[a-zA-Z_][a-zA-Z_0-9]*}" )
     _scan_pattern_2 = ScanPattern( "{[a-zA-Z_][a-zA-Z0-9_]*}" )
     _scan_pattern_3 = ScanPattern( "[0-9_]" )
-    scan_table_0 = ScanTable("gS4AFy0wPTpAQF5CfUQpRl1IOkosTC5OW1Q+WjxgIWZ7bChuK3A/djt4J3ovgQgqgQp0gQwSAj42LTgBABMAAgE9PgwAAwAEAAUABgAHAAgACQD/AS5SCgAWAV1YCwAOAT1eDQAQAT1kDwD/AT1qEQAUABUAFwErdBgAGQAaAP8BXH7/ASeBAv8BJ4EGGwAcAB0A/wEugRD/AWOBFP8Bb4EY/wFugRz/AXSBIP8BZYEk/wFugSj/AXSBLB4A")
-    scan_table_1 = ScanTable("TgADcAhzHnQ4/wFhDP8BchD/AXMU/wFlGP8BchwBAP8BYyL/AWEm/wFuKv8Bbi7/AWUy/wFyNgIA/wFvPP8Ba0D/AWVE/wFuSP8Bc0wDAA==")
-    scan_table_2 = ScanTable("Ev8ECgpbDF0OLBAAAAEAAgADAA==")
-    scan_table_3 = ScanTable("iFYAEHAic4EQdIF+YYIgY4IqZIMsZYN2ZoRoaIR6aYUobYU+boYsb4cScocwd4gOYogg/wJhKHI6/wFyLP8BczD/AWU0/wFyOAEA/wJpQG9S/wFuRP8BdEgaAWxM/wFuUBsA/wFkVv8BdVr/AWNe/wFlYhwDTGpOeEGBBv8BaW7/AXNy/wF0di4A/wF1fP8BbIEA/wFsgQQvAP8BboEK/wF5gQ41AP8DY4EYYYEueYFY/wFhgRz/AW6BICEBboEk/wFlgSj/AXKBLAIA/wF2gTL/AWWBNv8BUIE6/wFvgT7/AXOBQv8BaYFG/wF0gUr/AWmBTv8Bb4FS/wFugVYgAP8BboFc/wF0gWD/AWGBZP8BeIFo/wFFgWz/AXKBcP8BcoF0/wFvgXj/AXKBfCIA/wJvggRyghb/AWuCCP8BZYIM/wFughD/AXOCFAMA/wF1ghr/AWWCHiMA/wFugiT/AWSCKAQA/wNhgjJvgkRygnr/AmyCOHOCPv8BbII8BQD/AWWCQjEA/wJugkpsgmj/AXOCTv8BdYJS/wFtglb/AWWCWgYBQYJe/wFugmL/AXmCZgcA/wFsgmz/AWWCcP8BY4J0/wF0gngyAP8BZYJ+/wFhgwL/AXSDBv8BZYMKCAJMgxBOgx7/AWmDFP8Bc4MY/wF0gxwmAP8BdYMi/wFsgyb/AWyDKicA/wFpgzD/AXODNP8BY4M4/wFhgzz/AXKDQP8BZINE/wJQg0pMg2j/AW+DTv8Bc4NS/wFpg1b/AXSDWv8BaYNe/wFvg2L/AW6DZgkA/wFpg2z/AXODcP8BdIN0KAD/AmyDfG6EKv8Bc4QA/wFlhAQKAkmECk+EEP8BZoQOCwD/Am6EFnSEGCkA/wFohBz/AWWEIP8BcoQk/wFzhCgqAP8BZIQu/wRJhDhXhD5PhFBNhFb/AWaEPAwA/wFohEL/AWmERv8BbIRK/wFlhE4NAP8BboRUKwD/AWGEWv8BdIRe/wFjhGL/AWiEZjMA/wFhhGz/AWyEcP8Bc4R0/wFlhHgOAP8BYYR+/wJshQRzhQr/AXSFCA8A/wFBhQ7/AW6FEv8Bb4UW/wF0hRr/AWiFHv8BZYUi/wFyhSYQAP8CZoUuboUwEQD/AXCFNP8BdYU4/wF0hTw0AP8DYYVGb4V8dYYG/wJyhUx0hXL/AWuFUP8BUIVU/wFvhVj/AXOFXP8BaYVg/wF0hWT/AWmFaP8Bb4Vs/wFuhXASAP8BY4V2/wFohXo2AP8BZIYA/wFlhgQTAP8Bc4YK/wF0hg7/AUOGEv8Bb4YW/wFuhhr/AXOGHv8BdYYi/wFthib/AWWGKhQA/wJlhjJvhnT/AXiGNv8BdIY6/wJJhkBIhkb/AXOGRBUA/wFhhkr/AXOGTv8BQYZS/wF0hlb/AXSGWv8BcoZe/wFphmL/AWKGZv8BdYZq/wF0hm7/AWWGciwA/wJBhnp0hxD/AWOGfv8BdIcC/wFphwb/AW+HCv8BbocOFgAXAP8DcocadIccbocuGAD/AWiHIP8BZYck/wFyhyj/AXOHLBkALQD/AWWHNP8DYYc8c4dCdIgA/wFkh0AdAP8BdIdG/wJvh0xhh3b/AXKHUP8BZYdU/wFQh1j/AW+HXP8Bc4dg/wFph2T/AXSHaP8BaYds/wFvh3D/AW6HdB4A/wFyh3r/AXSHfjcA/wF1iAT/AXKICP8BbogMHwD/AWiIEv8BaYgW/wFsiBr/AWWIHiQA/wJliCZ1iET/AWeIKv8BaYgu/wFuiDL/AUyINv8BaYg6/wFziD7/AXSIQiUA/wFmiEj/AWaITP8BZYhQ/wFyiFQwAA==")
+    _scan_table_0 = ScanTable("gQoAFi0uPThAPl5AfUIpRF1GOkgsSi5MW1I+WDxeIWR7aihsK24/dDt2J3gvgQYqgQgSAj40LTYBABMAAgE9PAwAAwAEAAUABgAHAAgACQD/AS5QCgAWAV1WCwAOAT1cDQAQAT1iDwD/AT1oEQAUABUAFwErchgAGQAaAP8BXHz/ASeBAP8BJ4EEGwAcAB0A")
+    _scan_table_1 = ScanTable("TgADcAhzHnQ4/wFhDP8BchD/AXMU/wFlGP8BchwBAP8BYyL/AWEm/wFuKv8Bbi7/AWUy/wFyNgIA/wFvPP8Ba0D/AWVE/wFuSP8Bc0wDAA==")
+    _scan_table_2 = ScanTable("Ev8ECgpbDF0OLBAAAAEAAgADAA==")
+    _scan_table_3 = ScanTable("iGIAEHAic4EcdIIKYYIsY4I2ZIM4ZYQCZoR0aIUGaYU0bYVKboY4b4cecoc8d4gaYogs/wNhKnI8ZYES/wFyLv8BczL/AWU2/wFyOgEA/wJpQm9U/wFuRv8BdEoaAWxO/wFuUhsA/wFkWP8BdVz/AWNg/wFlZBwDTGxOekGBCP8BaXD/AXN0/wF0eC4A/wF1fv8BbIEC/wFsgQYvAP8BboEM/wF5gRA2AP8BZYEW/wFrgRo1AP8DY4EkYYE6eYFk/wFhgSj/AW6BLCEBboEw/wFlgTT/AXKBOAIA/wF2gT7/AWWBQv8BUIFG/wFvgUr/AXOBTv8BaYFS/wF0gVb/AWmBWv8Bb4Fe/wFugWIgAP8BboFo/wF0gWz/AWGBcP8BeIF0/wFFgXj/AXKBfP8BcoIA/wFvggT/AXKCCCIA/wJvghBygiL/AWuCFP8BZYIY/wFughz/AXOCIAMA/wF1gib/AWWCKiMA/wFugjD/AWSCNAQA/wNhgj5vglBygwb/AmyCRHOCSv8BbIJIBQD/AWWCTjEA/wJuglZsgnT/AXOCWv8BdYJe/wFtgmL/AWWCZgYBQYJq/wFugm7/AXmCcgcA/wFsgnj/AWWCfP8BY4MA/wF0gwQyAP8BZYMK/wFhgw7/AXSDEv8BZYMWCAJMgxxOgyr/AWmDIP8Bc4Mk/wF0gygmAP8BdYMu/wFsgzL/AWyDNicA/wFpgzz/AXODQP8BY4NE/wFhg0j/AXKDTP8BZINQ/wJQg1ZMg3T/AW+DWv8Bc4Ne/wFpg2L/AXSDZv8BaYNq/wFvg27/AW6DcgkA/wFpg3j/AXODfP8BdIQAKAD/AmyECG6ENv8Bc4QM/wFlhBAKAkmEFk+EHP8BZoQaCwD/Am6EInSEJCkA/wFohCj/AWWELP8BcoQw/wFzhDQqAP8BZIQ6/wRJhERXhEpPhFxNhGL/AWaESAwA/wFohE7/AWmEUv8BbIRW/wFlhFoNAP8BboRgKwD/AWGEZv8BdIRq/wFjhG7/AWiEcjMA/wFhhHj/AWyEfP8Bc4UA/wFlhQQOAP8BYYUK/wJshRBzhRb/AXSFFA8A/wFBhRr/AW6FHv8Bb4Ui/wF0hSb/AWiFKv8BZYUu/wFyhTIQAP8CZoU6boU8EQD/AXCFQP8BdYVE/wF0hUg0AP8DYYVSb4YIdYYS/wJyhVh0hX7/AWuFXP8BUIVg/wFvhWT/AXOFaP8BaYVs/wF0hXD/AWmFdP8Bb4V4/wFuhXwSAP8BY4YC/wFohgY3AP8BZIYM/wFlhhATAP8Bc4YW/wF0hhr/AUOGHv8Bb4Yi/wFuhib/AXOGKv8BdYYu/wFthjL/AWWGNhQA/wJlhj5vhwD/AXiGQv8BdIZG/wJJhkxIhlL/AXOGUBUA/wFhhlb/AXOGWv8BQYZe/wF0hmL/AXSGZv8BcoZq/wFphm7/AWKGcv8BdYZ2/wF0hnr/AWWGfiwA/wJBhwZ0hxz/AWOHCv8BdIcO/wFphxL/AW+HFv8BbocaFgAXAP8DcocmdIcoboc6GAD/AWiHLP8BZYcw/wFyhzT/AXOHOBkALQD/AWWHQP8DYYdIc4dOdIgM/wFkh0wdAP8BdIdS/wJvh1hhiAL/AXKHXP8BZYdg/wFQh2T/AW+HaP8Bc4ds/wFph3D/AXSHdP8BaYd4/wFvh3z/AW6IAB4A/wFyiAb/AXSICjgA/wF1iBD/AXKIFP8BbogYHwD/AWiIHv8BaYgi/wFsiCb/AWWIKiQA/wJliDJ1iFD/AWeINv8BaYg6/wFuiD7/AUyIQv8BaYhG/wFziEr/AXSITiUA/wFmiFT/AWaIWP8BZYhc/wFyiGAwAA==")
 
   METHODS
     method init( file:File )
@@ -112,7 +112,7 @@ class ScannerCore [abstract]
 
     method _on_output_line
       # Default behavior: print out 'output' and clear it. Can override this method.
-      print output
+      print( output ).flush
       output.clear
 
     method _scan( ch:Character )->Logical
@@ -169,19 +169,19 @@ class ScannerCore [abstract]
             if (not _execute(ip_scan_single_quoted_string)) return false
             if (not _execute(ip_scan_double_quoted_string)) return false
             if (not _execute(ip_scan_charset)) return false
-            scan_table_0.reset
+            _scan_table_0.reset
             contingent
               block n=1
                 while (_scanner.has_another(n))
-                  if (not scan_table_0.accept(_scanner.peek(n-1)))
+                  if (not _scan_table_0.accept(_scanner.peek(n-1)))
                     escapeWhile
                   endIf
                   ++n
                 endWhile
-                necessary (scan_table_0.has_product)
-                loop (scan_table_0.match_count) _scanner.read
+                necessary (_scan_table_0.has_product)
+                loop (_scan_table_0.match_count) _scanner.read
               endBlock
-              which (scan_table_0.product)
+              which (_scan_table_0.product)
                 case 1
                   _add( TokenType.SYMBOL_ARROW )
                   return false
@@ -268,9 +268,6 @@ class ScannerCore [abstract]
                   return false
                 case 29
                   _add( TokenType.SYMBOL_STAR )
-                  return false
-                case 30
-                  _add( TokenType.SYMBOL_T_CONTENT )
                   return false
                 others
                   necessary (false)
@@ -404,10 +401,10 @@ class ScannerCore [abstract]
             _src_column = _scanner.column
             start_ip = ip_scan_token_symbol
             if (_scan_pattern_1.scan(_scanner,buffer))
-              scan_table_1.reset
+              _scan_table_1.reset
               contingent
-                necessary (scan_table_1.accept(forEach in buffer))
-                which (scan_table_1.product)
+                necessary (_scan_table_1.accept(forEach in buffer))
+                which (_scan_table_1.product)
                   case 1
                     start_ip = ip_scan_standard_token
 
@@ -468,19 +465,19 @@ class ScannerCore [abstract]
               halt = true
               return false
             endIf
-            scan_table_2.reset
+            _scan_table_2.reset
             contingent
               block n=1
                 while (_scanner.has_another(n))
-                  if (not scan_table_2.accept(_scanner.peek(n-1)))
+                  if (not _scan_table_2.accept(_scanner.peek(n-1)))
                     escapeWhile
                   endIf
                   ++n
                 endWhile
-                necessary (scan_table_2.has_product)
-                loop (scan_table_2.match_count) _scanner.read
+                necessary (_scan_table_2.has_product)
+                loop (_scan_table_2.match_count) _scanner.read
               endBlock
-              which (scan_table_2.product)
+              which (_scan_table_2.product)
                 case 0
                   start_ip = ip_scan_token_name
 
@@ -506,10 +503,10 @@ class ScannerCore [abstract]
           case ip_scan_identifier
             ch = _scanner.peek 
             if (_scan_pattern_2.scan(_scanner,buffer))
-              scan_table_3.reset
+              _scan_table_3.reset
               contingent
-                necessary (scan_table_3.accept(forEach in buffer))
-                which (scan_table_3.product)
+                necessary (_scan_table_3.accept(forEach in buffer))
+                which (_scan_table_3.product)
                   case 1
                     start_ip = ip_scan_standard_token
 
@@ -673,12 +670,15 @@ class ScannerCore [abstract]
                     _add( TokenType.KEYWORD_INPUT )
                     return false
                   case 53
-                    _add( TokenType.KEYWORD_PRODUCE_ANY )
+                    _add( TokenType.KEYWORD_PEEK )
                     return false
                   case 54
-                    _add( TokenType.KEYWORD_MATCH )
+                    _add( TokenType.KEYWORD_PRODUCE_ANY )
                     return false
                   case 55
+                    _add( TokenType.KEYWORD_MATCH )
+                    return false
+                  case 56
                     _add( TokenType.KEYWORD_RESTART )
                     return false
                   others

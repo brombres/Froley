@@ -1,6 +1,7 @@
 module F2
 
 $include "RCmd.rogue"
+$include "RFrameStack.rogue"
 $include "RMain.rogue"
 $include "RParser.rogue"
 $include "RParserCore.rogue"
@@ -38,6 +39,7 @@ class RogueGenerator : FroleyVisitor
       RScanTable(this).create_missing
       RTokenType(this).overwrite
       RToken(this).create_missing
+      RFrameStack(this).create_missing
 
       # Main
       if (program.main_filename)

@@ -61,7 +61,7 @@ routine rogo_build_parser
   if (def.is_newer_than("Source/TokenizerVM.rogue"))
     println "Compiling F3 language parser"
     #execute "f2 $ --target=rogue --output=Source/" (def.esc)
-    execute "f2 $ Source/" (def.esc)
+    execute "f2 --main $ Source/" (def.esc)
   endIf
 endRoutine
 

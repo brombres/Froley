@@ -25,6 +25,7 @@ KEYWORD_CASE             case        [structural]
 KEYWORD_COLLECT          collect
 KEYWORD_END_MATCH        endMatch    [structural]
 KEYWORD_INPUT            input
+KEYWORD_PEEK             peek
 KEYWORD_PRODUCE_ANY      produceAny  [structural]
 KEYWORD_MATCH            match
 KEYWORD_RESTART          restart
@@ -113,7 +114,6 @@ SYMBOL_SEMICOLON      ;    [structural]
 SYMBOL_SINGLE_QUOTE   '\''
 SYMBOL_SLASH          /
 SYMBOL_STAR           *
-SYMBOL_T_CONTENT      t.content
 
 --------------------------------------------------------------------------------
 scanner
@@ -361,8 +361,9 @@ scanner
   collect ch
   return
 
-#{
-[parser]
+--------------------------------------------------------------------------------
+parser
+--------------------------------------------------------------------------------
 - program
   beginList
 
@@ -397,7 +398,7 @@ scanner
   syntaxError
 
 - identifier
-  on IDENTIFIER -> Identifier(name=t.content:String)
+  on IDENTIFIER -> Identifier(name=content)
   syntaxError "Identifier expected."
 
 - scanner_routines
@@ -418,7 +419,7 @@ scanner
 - routine_name_and_attributes
   identifier
   on CHARSET
-    create LiteralString(value=t.content:String)
+    create LiteralString(value=content)
   elseOthers
     createNull
   endOn
@@ -456,23 +457,26 @@ scanner
   produceList
 
 - symbol
-  on SYMBOL -> Symbol(name=t.content:String)
+  on SYMBOL -> Symbol(name=content)
   syntaxError "Symbol expected."
 
 - consume_eols
   while (consume(EOL)) noAction
+
+- consume_eols_and_semicolons
+  while (consume(EOL) or consume(';')) noAction
 
 - must_consume_eols
   mustConsume(EOL)
   while (consume(EOL)) noAction
 
 - scanner_multi_line_statements
-  consume_eols
+  consume_eols_and_semicolons
   if (not hasAnother) syntaxError
   beginList
   while (hasAnother and not (nextIs('-') or nextHasAttribute(structural)))
     scanner_control_structure
-    consume_eols
+    consume_eols_and_semicolons
   endWhile
   produceList Statements
 
@@ -644,10 +648,10 @@ scanner
 - scanner_statement
   on "collect", scanner_args    -> Collect(args:Args)
   on "create",  scanner_product -> ScannerCreate(arg)
-  on "discardPosition"       -> DiscardPosition
-  on "halt"                  -> Halt
-  on "markPosition"          -> MarkPosition
-  on "mode", identifier      -> Mode(routine_name:String)
+  on "discardPosition"          -> DiscardPosition
+  on "halt"                     -> Halt
+  on "markPosition"             -> MarkPosition
+  on "mode", identifier         -> Mode(routine_name:String)
   on "mustConsume", sequence_args   -> ScannerMustConsume(args:SequenceArgs)
   on "noAction": return
   on "print",   scanner_args       -> Print(args:Args)
@@ -695,7 +699,7 @@ scanner
 
 - scanner_product
   identifier
-  produce Access( name=t.content:String )
+  produce Access( name=content )
 
 - cmd_args
   beginList
@@ -713,10 +717,10 @@ scanner
   identifier
   if (consume('='))
     on IDENTIFIER
-      create Identifier( value=t.content:String )
+      create Identifier( value=content )
     elseOn STRING
-      create LiteralString( value=t.content:String )
-    else
+      create LiteralString( value=content )
+    elseOthers
       syntaxError "content or \"quoted expression\" expected."
     endOn
   else
@@ -809,12 +813,12 @@ scanner
 - sequence_item
   on '{' pattern_sequence '}': return
   on CHARSET
-    create CharSet(characters=t.content:String)
+    create CharSet(characters=content)
     repeat_count
     return  # just the CharSet
   endOn
-  on STRING              -> LiteralString( value=t.content:String )
-  on STRING_OR_CHARACTER -> LiteralStringOrCharacter( value=t.content:String )
+  on STRING              -> LiteralString( value=content )
+  on STRING_OR_CHARACTER -> LiteralStringOrCharacter( value=content )
   syntaxError
 
 - empty_statements
@@ -822,14 +826,15 @@ scanner
   createList Statements
 
 - scanner_expression
+  scanner_logical_or
 
-- scanner_logical_or : Binary
+- scanner_logical_or [binary]
   on "or" -> LogicalOr
 
-- scanner_logical_and : Binary
+- scanner_logical_and [binary]
   on "and" -> LogicalAnd
 
-- scanner_comparison : Binary
+- scanner_comparison [binary]
   on "==" -> CompareEQ
   on "!=" -> CompareNE
   on "<"  -> CompareLT
@@ -837,18 +842,18 @@ scanner
   on "<=" -> CompareLE
   on ">=" -> CompareGE
 
-- scanner_add_subtract : Binary
+- scanner_add_subtract [binary]
   on "+" -> Add
   on "-" -> Subtract
 
-- scanner_multiply_divide : Binary
+- scanner_multiply_divide [binary]
   on "*" -> Multiply
   on "/" -> Divide
 
-- scanner_power : Binary
+- scanner_power [binary]
   on "^" -> Power
 
-- scanner_pre_unary : PreUnary
+- scanner_pre_unary [preUnary]
   on "-"   -> Negate
   on "not" -> LogicalNot
 
@@ -870,18 +875,18 @@ scanner
   on "scan", sequence_args       -> Scan(args:SequenceArgs)
   on "true"                      -> LiteralLogical(value="true":Logical)
   on CHARSET
-    create CharSet(characters=t.content:String)
+    create CharSet(characters=content)
     repeat_count
     return
   endOn
-  on IDENTIFIER          -> Access( name=t.content:String )
-  on INTEGER             -> LiteralInteger( value=t.content:Int32 )
+  on IDENTIFIER          -> Access( name=content )
+  on INTEGER             -> LiteralInteger( value=content:Int32 )
   on STRING
-    create LiteralString( value=t.content:String )
+    create LiteralString( value=content )
     repeat_count
     return
   elseOn STRING_OR_CHARACTER
-    create LiteralStringOrCharacter( value=t.content:String )
+    create LiteralStringOrCharacter( value=content )
     repeat_count
     return
   endOn
@@ -913,12 +918,13 @@ scanner
   produceList
 
 - parser_multi_line_statements
-  consume_eols
+  consume_eols_and_semicolons
   if (not hasAnother) syntaxError
+
   beginList
   while (hasAnother and not (nextIs('-') or nextHasAttribute(structural)))
     parser_control_structure
-    consume_eols
+    consume_eols_and_semicolons
   endWhile
   produceList Statements
 
@@ -1109,7 +1115,7 @@ scanner
   endOn
 
 - parser_statement
-  on "beginList" -> BeginList
+  on "beginList"                       -> BeginList
   on "create",     parser_product      -> ParserCreate(arg:CreateCmd)
   on "createList", list_type           -> CreateList(list_type:String)
   on "createNull"                      -> CreateNull
@@ -1118,7 +1124,7 @@ scanner
   on "mustConsume", ttype_or_literal   -> ParserMustConsume(token_type)
   on "noAction": return
 
-  on "print",   parser_args       -> Print(args:ParserArgs)
+  on "print",   parser_args       -> Print(args:Args)
   on "println"
     if (not hasAnother or nextHasAttribute(structural))
       beginList
@@ -1126,7 +1132,7 @@ scanner
     else
       parser_args
     endIf
-    produce Println(args:ParserArgs)
+    produce Println(args:Args)
   endOn
 
   on "produce", parser_product    -> ParserProduce(arg:CreateCmd)
@@ -1134,7 +1140,7 @@ scanner
   on "produceNull"
     create CreateNull
     createNull
-    create Return(value)
+    produce Return(value)
   endOn
   on "->",      parser_product    -> ParserProduce(arg:CreateCmd)
   on "restorePosition" -> RestorePosition
@@ -1221,16 +1227,16 @@ scanner
   endIf
 
 - attribute_name
-  on IDENTIFIER          -> Identifier( name=t.content:String )
-  on STRING              -> LiteralString( value=t.content:String )
-  on STRING_OR_CHARACTER -> LiteralString( value=t.content:String )
+  on IDENTIFIER          -> Identifier( name=content )
+  on STRING              -> LiteralString( value=content )
+  on STRING_OR_CHARACTER -> LiteralString( value=content )
   syntaxError "Attribute name expected."
 
 
 - token_id
-  on IDENTIFIER          -> Identifier( name=t.content:String )
-  on STRING              -> LiteralString( value=t.content:String )
-  on STRING_OR_CHARACTER -> LiteralString( value=t.content:String )
+  on IDENTIFIER          -> Identifier( name=content )
+  on STRING              -> LiteralString( value=content )
+  on STRING_OR_CHARACTER -> LiteralString( value=content )
   syntaxError "TOKEN_ID or \"token_name\" expected."
 
 - collect_parse_list
@@ -1242,9 +1248,9 @@ scanner
   produceList Args
 
 - string_id_or_routine
-  on IDENTIFIER          -> Identifier( name=t.content:String )
-  on STRING              -> LiteralString( value=t.content:String )
-  on STRING_OR_CHARACTER -> LiteralString( value=t.content:String )
+  on IDENTIFIER          -> Identifier( name=content )
+  on STRING              -> LiteralString( value=content )
+  on STRING_OR_CHARACTER -> LiteralString( value=content )
   syntaxError "TOKEN_ID, \"token_name\", or routine_name expected."
 
 - parser_product
@@ -1259,14 +1265,15 @@ scanner
   produce CreateCmd(name:String,args:Args)
 
 - parser_expression
+  parser_logical_or
 
-- parser_logical_or : Binary
+- parser_logical_or [binary]
   on "or" -> LogicalOr
 
-- parser_logical_and : Binary
+- parser_logical_and [binary]
   on "and" -> LogicalAnd
 
-- parser_comparison : Binary
+- parser_comparison [binary]
   on "==" -> CompareEQ
   on "!=" -> CompareNE
   on "<"  -> CompareLT
@@ -1274,18 +1281,18 @@ scanner
   on "<=" -> CompareLE
   on ">=" -> CompareGE
 
-- parser_add_subtract : Binary
+- parser_add_subtract [binary]
   on "+" -> Add
   on "-" -> Subtract
 
-- parser_multiply_divide : Binary
+- parser_multiply_divide [binary]
   on "*" -> Multiply
   on "/" -> Divide
 
-- parser_power : Binary
+- parser_power [binary]
   on "^" -> Power
 
-- parser_pre_unary : PreUnary
+- parser_pre_unary [preUnary]
   on "-"   -> Negate
   on "not" -> LogicalNot
 
@@ -1299,10 +1306,9 @@ scanner
   on "nextIs", ttype_or_literal         -> ParserNextIs(token_type)
   on "read"                             -> ParserRead
   on "true"                             -> LiteralLogical(value="true":Logical)
-  on IDENTIFIER                         -> Access( name=t.content:String )
-  on INTEGER                            -> LiteralInteger( value=t.content:Int32 )
-  on STRING                             -> LiteralString( value=t.content:String )
-  on STRING_OR_CHARACTER                -> LiteralStringOrCharacter( value=t.content:String )
+  on IDENTIFIER                         -> Access( name=content )
+  on INTEGER                            -> LiteralInteger( value=content:Int32 )
+  on STRING                             -> LiteralString( value=content )
+  on STRING_OR_CHARACTER                -> LiteralStringOrCharacter( value=content )
   syntaxError
 
-}#

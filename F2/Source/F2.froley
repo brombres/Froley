@@ -1114,7 +1114,7 @@ SYMBOL_T_CONTENT      t.content
   on "mustConsume", ttype_or_literal   -> ParserMustConsume(token_type)
   on "noAction": return
 
-  on "print",   parser_args       -> Print(args:ParserArgs)
+  on "print",   parser_args       -> Print(args:Args)
   on "println"
     if (not hasAnother or nextHasAttribute(structural))
       beginList
@@ -1130,7 +1130,7 @@ SYMBOL_T_CONTENT      t.content
   on "produceNull"
     create CreateNull
     createNull
-    create Return(value)
+    produce Return(value)
   endOn
   on "->",      parser_product    -> ParserProduce(arg:CreateCmd)
   on "restorePosition" -> RestorePosition

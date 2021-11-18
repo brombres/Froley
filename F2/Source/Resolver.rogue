@@ -181,7 +181,7 @@ class Resolver : FroleyVisitor
     method visit( cmd:Match )->Cmd [override]
       temporarily cur_match = cmd
         if (not cmd.id)
-          cmd.id = "scan_table_" + next_scan_table_id
+          cmd.id = "_scan_table_" + next_scan_table_id
           ++next_scan_table_id
         endIf
         if (cmd.expression)

@@ -55,9 +55,9 @@ class Visitor<<$ReturnType>>
 
     method visit_children( cmd:Unary )
       if ($ReturnType instanceOf Cmd)
-        cmd.operand = dispatch(cmd.operand)
+        if (cmd.operand) cmd.operand = dispatch(cmd.operand)
       else
-        cmd.operand.dispatch(this)
+        if (cmd.operand) cmd.operand.dispatch(this)
       endIf
 
     method visit( cmd:Binary )->$ReturnType
@@ -68,11 +68,11 @@ class Visitor<<$ReturnType>>
 
     method visit_children( cmd:Binary )
       if ($ReturnType instanceOf Cmd)
-        cmd.left = dispatch(cmd.left)
-        cmd.right = dispatch(cmd.right)
+        if (cmd.left) cmd.left = dispatch(cmd.left)
+        if (cmd.right) cmd.right = dispatch(cmd.right)
       else
-        cmd.left.dispatch(this)
-        cmd.right.dispatch(this)
+        if (cmd.left) cmd.left.dispatch(this)
+        if (cmd.right) cmd.right.dispatch(this)
       endIf
 
     method visit( cmd:ScannerDef )->$ReturnType
@@ -83,9 +83,9 @@ class Visitor<<$ReturnType>>
 
     method visit_children( cmd:ScannerDef )
       if ($ReturnType instanceOf Cmd)
-        cmd.code = dispatch(cmd.code) as CmdList
+        if (cmd.code) cmd.code = dispatch(cmd.code) as CmdList
       else
-        cmd.code.dispatch(this)
+        if (cmd.code) cmd.code.dispatch(this)
       endIf
 
     method visit( cmd:ParserDef )->$ReturnType
@@ -96,9 +96,9 @@ class Visitor<<$ReturnType>>
 
     method visit_children( cmd:ParserDef )
       if ($ReturnType instanceOf Cmd)
-        cmd.code = dispatch(cmd.code) as CmdList
+        if (cmd.code) cmd.code = dispatch(cmd.code) as CmdList
       else
-        cmd.code.dispatch(this)
+        if (cmd.code) cmd.code.dispatch(this)
       endIf
 
     method visit( cmd:TokenGroup )->$ReturnType
@@ -109,9 +109,9 @@ class Visitor<<$ReturnType>>
 
     method visit_children( cmd:TokenGroup )
       if ($ReturnType instanceOf Cmd)
-        cmd.definitions = dispatch(cmd.definitions) as CmdList
+        if (cmd.definitions) cmd.definitions = dispatch(cmd.definitions) as CmdList
       else
-        cmd.definitions.dispatch(this)
+        if (cmd.definitions) cmd.definitions.dispatch(this)
       endIf
 
     method visit( cmd:Identifier )->$ReturnType
@@ -127,9 +127,9 @@ class Visitor<<$ReturnType>>
 
     method visit_children( cmd:Routine )
       if ($ReturnType instanceOf Cmd)
-        cmd.statements = dispatch(cmd.statements) as Statements
+        if (cmd.statements) cmd.statements = dispatch(cmd.statements) as Statements
       else
-        cmd.statements.dispatch(this)
+        if (cmd.statements) cmd.statements.dispatch(this)
       endIf
 
     method visit( cmd:LiteralString )->$ReturnType
@@ -145,9 +145,9 @@ class Visitor<<$ReturnType>>
 
     method visit_children( cmd:TokenDef )
       if ($ReturnType instanceOf Cmd)
-        cmd.attributes = dispatch(cmd.attributes) as CmdList
+        if (cmd.attributes) cmd.attributes = dispatch(cmd.attributes) as CmdList
       else
-        cmd.attributes.dispatch(this)
+        if (cmd.attributes) cmd.attributes.dispatch(this)
       endIf
 
     method visit( cmd:Symbol )->$ReturnType
@@ -169,15 +169,15 @@ class Visitor<<$ReturnType>>
 
     method visit_children( cmd:If )
       if ($ReturnType instanceOf Cmd)
-        cmd.condition = dispatch(cmd.condition)
-        cmd.statements = dispatch(cmd.statements) as Statements
-        cmd.else_ifs = dispatch(cmd.else_ifs) as CmdList
-        cmd._else = dispatch(cmd._else) as Statements
+        if (cmd.condition) cmd.condition = dispatch(cmd.condition)
+        if (cmd.statements) cmd.statements = dispatch(cmd.statements) as Statements
+        if (cmd.else_ifs) cmd.else_ifs = dispatch(cmd.else_ifs) as CmdList
+        if (cmd._else) cmd._else = dispatch(cmd._else) as Statements
       else
-        cmd.condition.dispatch(this)
-        cmd.statements.dispatch(this)
-        cmd.else_ifs.dispatch(this)
-        cmd._else.dispatch(this)
+        if (cmd.condition) cmd.condition.dispatch(this)
+        if (cmd.statements) cmd.statements.dispatch(this)
+        if (cmd.else_ifs) cmd.else_ifs.dispatch(this)
+        if (cmd._else) cmd._else.dispatch(this)
       endIf
 
     method visit( cmd:Match )->$ReturnType
@@ -188,13 +188,13 @@ class Visitor<<$ReturnType>>
 
     method visit_children( cmd:Match )
       if ($ReturnType instanceOf Cmd)
-        cmd.scanner_expression = dispatch(cmd.scanner_expression)
-        cmd.cases = dispatch(cmd.cases) as CmdList
-        cmd._others = dispatch(cmd._others)
+        if (cmd.scanner_expression) cmd.scanner_expression = dispatch(cmd.scanner_expression)
+        if (cmd.cases) cmd.cases = dispatch(cmd.cases) as CmdList
+        if (cmd._others) cmd._others = dispatch(cmd._others)
       else
-        cmd.scanner_expression.dispatch(this)
-        cmd.cases.dispatch(this)
-        cmd._others.dispatch(this)
+        if (cmd.scanner_expression) cmd.scanner_expression.dispatch(this)
+        if (cmd.cases) cmd.cases.dispatch(this)
+        if (cmd._others) cmd._others.dispatch(this)
       endIf
 
     method visit( cmd:While )->$ReturnType
@@ -205,11 +205,11 @@ class Visitor<<$ReturnType>>
 
     method visit_children( cmd:While )
       if ($ReturnType instanceOf Cmd)
-        cmd.condition = dispatch(cmd.condition)
-        cmd.statements = dispatch(cmd.statements) as Statements
+        if (cmd.condition) cmd.condition = dispatch(cmd.condition)
+        if (cmd.statements) cmd.statements = dispatch(cmd.statements) as Statements
       else
-        cmd.condition.dispatch(this)
-        cmd.statements.dispatch(this)
+        if (cmd.condition) cmd.condition.dispatch(this)
+        if (cmd.statements) cmd.statements.dispatch(this)
       endIf
 
     method visit( cmd:ScannerProduce )->$ReturnType
@@ -220,9 +220,9 @@ class Visitor<<$ReturnType>>
 
     method visit_children( cmd:ScannerProduce )
       if ($ReturnType instanceOf Cmd)
-        cmd.arg = dispatch(cmd.arg)
+        if (cmd.arg) cmd.arg = dispatch(cmd.arg)
       else
-        cmd.arg.dispatch(this)
+        if (cmd.arg) cmd.arg.dispatch(this)
       endIf
 
     method visit( cmd:MatchCase )->$ReturnType
@@ -233,11 +233,11 @@ class Visitor<<$ReturnType>>
 
     method visit_children( cmd:MatchCase )
       if ($ReturnType instanceOf Cmd)
-        cmd.scanner_expression = dispatch(cmd.scanner_expression)
-        cmd.statements = dispatch(cmd.statements) as CmdList
+        if (cmd.scanner_expression) cmd.scanner_expression = dispatch(cmd.scanner_expression)
+        if (cmd.statements) cmd.statements = dispatch(cmd.statements) as CmdList
       else
-        cmd.scanner_expression.dispatch(this)
-        cmd.statements.dispatch(this)
+        if (cmd.scanner_expression) cmd.scanner_expression.dispatch(this)
+        if (cmd.statements) cmd.statements.dispatch(this)
       endIf
 
     method visit( cmd:ProduceAny )->$ReturnType
@@ -253,11 +253,11 @@ class Visitor<<$ReturnType>>
 
     method visit_children( cmd:ElseIf )
       if ($ReturnType instanceOf Cmd)
-        cmd.condition = dispatch(cmd.condition)
-        cmd.statements = dispatch(cmd.statements) as Statements
+        if (cmd.condition) cmd.condition = dispatch(cmd.condition)
+        if (cmd.statements) cmd.statements = dispatch(cmd.statements) as Statements
       else
-        cmd.condition.dispatch(this)
-        cmd.statements.dispatch(this)
+        if (cmd.condition) cmd.condition.dispatch(this)
+        if (cmd.statements) cmd.statements.dispatch(this)
       endIf
 
     method visit( cmd:Collect )->$ReturnType
@@ -268,9 +268,9 @@ class Visitor<<$ReturnType>>
 
     method visit_children( cmd:Collect )
       if ($ReturnType instanceOf Cmd)
-        cmd.args = dispatch(cmd.args) as Args
+        if (cmd.args) cmd.args = dispatch(cmd.args) as Args
       else
-        cmd.args.dispatch(this)
+        if (cmd.args) cmd.args.dispatch(this)
       endIf
 
     method visit( cmd:ScannerCreate )->$ReturnType
@@ -281,9 +281,9 @@ class Visitor<<$ReturnType>>
 
     method visit_children( cmd:ScannerCreate )
       if ($ReturnType instanceOf Cmd)
-        cmd.arg = dispatch(cmd.arg)
+        if (cmd.arg) cmd.arg = dispatch(cmd.arg)
       else
-        cmd.arg.dispatch(this)
+        if (cmd.arg) cmd.arg.dispatch(this)
       endIf
 
     method visit( cmd:DiscardPosition )->$ReturnType
@@ -314,9 +314,9 @@ class Visitor<<$ReturnType>>
 
     method visit_children( cmd:ScannerMustConsume )
       if ($ReturnType instanceOf Cmd)
-        cmd.args = dispatch(cmd.args) as SequenceArgs
+        if (cmd.args) cmd.args = dispatch(cmd.args) as SequenceArgs
       else
-        cmd.args.dispatch(this)
+        if (cmd.args) cmd.args.dispatch(this)
       endIf
 
     method visit( cmd:Print )->$ReturnType
@@ -327,9 +327,9 @@ class Visitor<<$ReturnType>>
 
     method visit_children( cmd:Print )
       if ($ReturnType instanceOf Cmd)
-        cmd.args = dispatch(cmd.args) as Args
+        if (cmd.args) cmd.args = dispatch(cmd.args) as Args
       else
-        cmd.args.dispatch(this)
+        if (cmd.args) cmd.args.dispatch(this)
       endIf
 
     method visit( cmd:Args )->$ReturnType
@@ -346,9 +346,9 @@ class Visitor<<$ReturnType>>
 
     method visit_children( cmd:Println )
       if ($ReturnType instanceOf Cmd)
-        cmd.args = dispatch(cmd.args) as Args
+        if (cmd.args) cmd.args = dispatch(cmd.args) as Args
       else
-        cmd.args.dispatch(this)
+        if (cmd.args) cmd.args.dispatch(this)
       endIf
 
     method visit( cmd:Restart )->$ReturnType
@@ -369,9 +369,9 @@ class Visitor<<$ReturnType>>
 
     method visit_children( cmd:Return )
       if ($ReturnType instanceOf Cmd)
-        cmd.value = dispatch(cmd.value)
+        if (cmd.value) cmd.value = dispatch(cmd.value)
       else
-        cmd.value.dispatch(this)
+        if (cmd.value) cmd.value.dispatch(this)
       endIf
 
     method visit( cmd:SavePosition )->$ReturnType
@@ -387,9 +387,9 @@ class Visitor<<$ReturnType>>
 
     method visit_children( cmd:ThrowSyntaxError )
       if ($ReturnType instanceOf Cmd)
-        cmd.args = dispatch(cmd.args) as Args
+        if (cmd.args) cmd.args = dispatch(cmd.args) as Args
       else
-        cmd.args.dispatch(this)
+        if (cmd.args) cmd.args.dispatch(this)
       endIf
 
     method visit( cmd:Increment )->$ReturnType
@@ -400,9 +400,9 @@ class Visitor<<$ReturnType>>
 
     method visit_children( cmd:Increment )
       if ($ReturnType instanceOf Cmd)
-        cmd.target = dispatch(cmd.target)
+        if (cmd.target) cmd.target = dispatch(cmd.target)
       else
-        cmd.target.dispatch(this)
+        if (cmd.target) cmd.target.dispatch(this)
       endIf
 
     method visit( cmd:Decrement )->$ReturnType
@@ -413,9 +413,9 @@ class Visitor<<$ReturnType>>
 
     method visit_children( cmd:Decrement )
       if ($ReturnType instanceOf Cmd)
-        cmd.target = dispatch(cmd.target)
+        if (cmd.target) cmd.target = dispatch(cmd.target)
       else
-        cmd.target.dispatch(this)
+        if (cmd.target) cmd.target.dispatch(this)
       endIf
 
     method visit( cmd:Assign )->$ReturnType
@@ -426,11 +426,11 @@ class Visitor<<$ReturnType>>
 
     method visit_children( cmd:Assign )
       if ($ReturnType instanceOf Cmd)
-        cmd.target = dispatch(cmd.target)
-        cmd.new_value = dispatch(cmd.new_value)
+        if (cmd.target) cmd.target = dispatch(cmd.target)
+        if (cmd.new_value) cmd.new_value = dispatch(cmd.new_value)
       else
-        cmd.target.dispatch(this)
-        cmd.new_value.dispatch(this)
+        if (cmd.target) cmd.target.dispatch(this)
+        if (cmd.new_value) cmd.new_value.dispatch(this)
       endIf
 
     method visit( cmd:Access )->$ReturnType
@@ -446,9 +446,9 @@ class Visitor<<$ReturnType>>
 
     method visit_children( cmd:CreateCmdArg )
       if ($ReturnType instanceOf Cmd)
-        cmd.arg_value = dispatch(cmd.arg_value)
+        if (cmd.arg_value) cmd.arg_value = dispatch(cmd.arg_value)
       else
-        cmd.arg_value.dispatch(this)
+        if (cmd.arg_value) cmd.arg_value.dispatch(this)
       endIf
 
     method visit( cmd:SequenceArgs )->$ReturnType
@@ -471,9 +471,9 @@ class Visitor<<$ReturnType>>
 
     method visit_children( cmd:ZeroOrMore )
       if ($ReturnType instanceOf Cmd)
-        cmd.pattern = dispatch(cmd.pattern)
+        if (cmd.pattern) cmd.pattern = dispatch(cmd.pattern)
       else
-        cmd.pattern.dispatch(this)
+        if (cmd.pattern) cmd.pattern.dispatch(this)
       endIf
 
     method visit( cmd:OneOrMore )->$ReturnType
@@ -484,9 +484,9 @@ class Visitor<<$ReturnType>>
 
     method visit_children( cmd:OneOrMore )
       if ($ReturnType instanceOf Cmd)
-        cmd.pattern = dispatch(cmd.pattern)
+        if (cmd.pattern) cmd.pattern = dispatch(cmd.pattern)
       else
-        cmd.pattern.dispatch(this)
+        if (cmd.pattern) cmd.pattern.dispatch(this)
       endIf
 
     method visit( cmd:OptionalPattern )->$ReturnType
@@ -497,9 +497,9 @@ class Visitor<<$ReturnType>>
 
     method visit_children( cmd:OptionalPattern )
       if ($ReturnType instanceOf Cmd)
-        cmd.pattern = dispatch(cmd.pattern)
+        if (cmd.pattern) cmd.pattern = dispatch(cmd.pattern)
       else
-        cmd.pattern.dispatch(this)
+        if (cmd.pattern) cmd.pattern.dispatch(this)
       endIf
 
     method visit( cmd:CharSet )->$ReturnType
@@ -620,9 +620,9 @@ class Visitor<<$ReturnType>>
 
     method visit_children( cmd:ScannerConsume )
       if ($ReturnType instanceOf Cmd)
-        cmd.args = dispatch(cmd.args) as SequenceArgs
+        if (cmd.args) cmd.args = dispatch(cmd.args) as SequenceArgs
       else
-        cmd.args.dispatch(this)
+        if (cmd.args) cmd.args.dispatch(this)
       endIf
 
     method visit( cmd:LiteralLogical )->$ReturnType
@@ -643,9 +643,9 @@ class Visitor<<$ReturnType>>
 
     method visit_children( cmd:ScannerNextIs )
       if ($ReturnType instanceOf Cmd)
-        cmd.args = dispatch(cmd.args) as SequenceArgs
+        if (cmd.args) cmd.args = dispatch(cmd.args) as SequenceArgs
       else
-        cmd.args.dispatch(this)
+        if (cmd.args) cmd.args.dispatch(this)
       endIf
 
     method visit( cmd:ScannerPeek )->$ReturnType
@@ -656,9 +656,9 @@ class Visitor<<$ReturnType>>
 
     method visit_children( cmd:ScannerPeek )
       if ($ReturnType instanceOf Cmd)
-        cmd.lookahead = dispatch(cmd.lookahead)
+        if (cmd.lookahead) cmd.lookahead = dispatch(cmd.lookahead)
       else
-        cmd.lookahead.dispatch(this)
+        if (cmd.lookahead) cmd.lookahead.dispatch(this)
       endIf
 
     method visit( cmd:ScannerRead )->$ReturnType
@@ -674,23 +674,15 @@ class Visitor<<$ReturnType>>
 
     method visit_children( cmd:Scan )
       if ($ReturnType instanceOf Cmd)
-        cmd.args = dispatch(cmd.args) as SequenceArgs
+        if (cmd.args) cmd.args = dispatch(cmd.args) as SequenceArgs
       else
-        cmd.args.dispatch(this)
+        if (cmd.args) cmd.args.dispatch(this)
       endIf
 
     method visit( cmd:LiteralInteger )->$ReturnType
       on( cmd )
-      visit_children( cmd )
       if ($ReturnType instanceOf Cmd) return cmd
       else                            return $ReturnType.meta.default_value
-
-    method visit_children( cmd:LiteralInteger )
-      if ($ReturnType instanceOf Cmd)
-        cmd.value = dispatch(cmd.value) as Int32
-      else
-        cmd.value.dispatch(this)
-      endIf
 
     method visit( cmd:On )->$ReturnType
       on( cmd )
@@ -700,17 +692,17 @@ class Visitor<<$ReturnType>>
 
     method visit_children( cmd:On )
       if ($ReturnType instanceOf Cmd)
-        cmd.token_type = dispatch(cmd.token_type)
-        cmd.token_types = dispatch(cmd.token_types) as Args
-        cmd.statements = dispatch(cmd.statements) as Statements
-        cmd.else_ons = dispatch(cmd.else_ons) as CmdList
-        cmd._else_on_others = dispatch(cmd._else_on_others) as Statements
+        if (cmd.token_type) cmd.token_type = dispatch(cmd.token_type)
+        if (cmd.token_types) cmd.token_types = dispatch(cmd.token_types) as Args
+        if (cmd.statements) cmd.statements = dispatch(cmd.statements) as Statements
+        if (cmd.else_ons) cmd.else_ons = dispatch(cmd.else_ons) as CmdList
+        if (cmd._else_on_others) cmd._else_on_others = dispatch(cmd._else_on_others) as Statements
       else
-        cmd.token_type.dispatch(this)
-        cmd.token_types.dispatch(this)
-        cmd.statements.dispatch(this)
-        cmd.else_ons.dispatch(this)
-        cmd._else_on_others.dispatch(this)
+        if (cmd.token_type) cmd.token_type.dispatch(this)
+        if (cmd.token_types) cmd.token_types.dispatch(this)
+        if (cmd.statements) cmd.statements.dispatch(this)
+        if (cmd.else_ons) cmd.else_ons.dispatch(this)
+        if (cmd._else_on_others) cmd._else_on_others.dispatch(this)
       endIf
 
     method visit( cmd:ElseOn )->$ReturnType
@@ -721,13 +713,13 @@ class Visitor<<$ReturnType>>
 
     method visit_children( cmd:ElseOn )
       if ($ReturnType instanceOf Cmd)
-        cmd.token_type = dispatch(cmd.token_type)
-        cmd.token_types = dispatch(cmd.token_types) as Args
-        cmd.statements = dispatch(cmd.statements) as Statements
+        if (cmd.token_type) cmd.token_type = dispatch(cmd.token_type)
+        if (cmd.token_types) cmd.token_types = dispatch(cmd.token_types) as Args
+        if (cmd.statements) cmd.statements = dispatch(cmd.statements) as Statements
       else
-        cmd.token_type.dispatch(this)
-        cmd.token_types.dispatch(this)
-        cmd.statements.dispatch(this)
+        if (cmd.token_type) cmd.token_type.dispatch(this)
+        if (cmd.token_types) cmd.token_types.dispatch(this)
+        if (cmd.statements) cmd.statements.dispatch(this)
       endIf
 
     method visit( cmd:BeginList )->$ReturnType
@@ -743,9 +735,9 @@ class Visitor<<$ReturnType>>
 
     method visit_children( cmd:ParserCreate )
       if ($ReturnType instanceOf Cmd)
-        cmd.arg = dispatch(cmd.arg) as CreateCmd
+        if (cmd.arg) cmd.arg = dispatch(cmd.arg) as CreateCmd
       else
-        cmd.arg.dispatch(this)
+        if (cmd.arg) cmd.arg.dispatch(this)
       endIf
 
     method visit( cmd:CreateList )->$ReturnType
@@ -771,9 +763,9 @@ class Visitor<<$ReturnType>>
 
     method visit_children( cmd:ParserMustConsume )
       if ($ReturnType instanceOf Cmd)
-        cmd.token_type = dispatch(cmd.token_type)
+        if (cmd.token_type) cmd.token_type = dispatch(cmd.token_type)
       else
-        cmd.token_type.dispatch(this)
+        if (cmd.token_type) cmd.token_type.dispatch(this)
       endIf
 
     method visit( cmd:ParserArgs )->$ReturnType
@@ -790,9 +782,9 @@ class Visitor<<$ReturnType>>
 
     method visit_children( cmd:ParserProduce )
       if ($ReturnType instanceOf Cmd)
-        cmd.arg = dispatch(cmd.arg) as CreateCmd
+        if (cmd.arg) cmd.arg = dispatch(cmd.arg) as CreateCmd
       else
-        cmd.arg.dispatch(this)
+        if (cmd.arg) cmd.arg.dispatch(this)
       endIf
 
     method visit( cmd:ProduceList )->$ReturnType
@@ -813,9 +805,9 @@ class Visitor<<$ReturnType>>
 
     method visit_children( cmd:CreateCmd )
       if ($ReturnType instanceOf Cmd)
-        cmd.args = dispatch(cmd.args) as Args
+        if (cmd.args) cmd.args = dispatch(cmd.args) as Args
       else
-        cmd.args.dispatch(this)
+        if (cmd.args) cmd.args.dispatch(this)
       endIf
 
     method visit( cmd:ParserCallUserMethod )->$ReturnType
@@ -831,9 +823,9 @@ class Visitor<<$ReturnType>>
 
     method visit_children( cmd:ParserConsume )
       if ($ReturnType instanceOf Cmd)
-        cmd.token_type = dispatch(cmd.token_type)
+        if (cmd.token_type) cmd.token_type = dispatch(cmd.token_type)
       else
-        cmd.token_type.dispatch(this)
+        if (cmd.token_type) cmd.token_type.dispatch(this)
       endIf
 
     method visit( cmd:ParserHasAnother )->$ReturnType
@@ -854,9 +846,9 @@ class Visitor<<$ReturnType>>
 
     method visit_children( cmd:ParserNextIs )
       if ($ReturnType instanceOf Cmd)
-        cmd.token_type = dispatch(cmd.token_type)
+        if (cmd.token_type) cmd.token_type = dispatch(cmd.token_type)
       else
-        cmd.token_type.dispatch(this)
+        if (cmd.token_type) cmd.token_type.dispatch(this)
       endIf
 
     method visit( cmd:ParserRead )->$ReturnType
@@ -864,8 +856,4 @@ class Visitor<<$ReturnType>>
       if ($ReturnType instanceOf Cmd) return cmd
       else                            return $ReturnType.meta.default_value
 
-    method visit( cmd:Int32 )->$ReturnType
-      on( cmd )
-      if ($ReturnType instanceOf Cmd) return cmd
-      else                            return $ReturnType.meta.default_value
 endClass

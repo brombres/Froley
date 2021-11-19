@@ -847,6 +847,9 @@ class LiteralInteger : Cmd
     method description->String
       return "LiteralInteger($)" (%value)
 
+    method to->Int32:     return value
+    method to->String:    return value
+
 endClass
 
 class On : Cmd

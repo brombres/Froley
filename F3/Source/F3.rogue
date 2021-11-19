@@ -50,6 +50,15 @@ class F3
         local ast = parser.parse
         if (parser.output.count) print parser.output; flush
         @trace ast
+        if (ast)
+          ast.dispatch(
+            Visitor() subclass
+              METHODS
+                method on( cmd:Cmd )
+                  println cmd.type_name
+            endSubclass
+          )
+        endIf
       endForEach
     $endIf
 

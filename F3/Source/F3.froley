@@ -880,7 +880,7 @@ parser
     return
   endOn
   on IDENTIFIER          -> Access( name=content )
-  on INTEGER             -> LiteralInteger( value=content:Int32 )
+  on INTEGER             -> LiteralInteger( value=content:Integer )
   on STRING
     create LiteralString( value=content )
     repeat_count
@@ -1307,7 +1307,7 @@ parser
   on "read"                             -> ParserRead
   on "true"                             -> LiteralLogical(value="true":Logical)
   on IDENTIFIER                         -> Access( name=content )
-  on INTEGER                            -> LiteralInteger( value=content:Int32 )
+  on INTEGER                            -> LiteralInteger( value=content:Integer )
   on STRING                             -> LiteralString( value=content )
   on STRING_OR_CHARACTER                -> LiteralStringOrCharacter( value=content )
   syntaxError

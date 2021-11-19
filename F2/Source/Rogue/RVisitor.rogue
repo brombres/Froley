@@ -103,7 +103,7 @@ class RVisitor : RogueSourceWriter
               forEach (p in properties)
                 local type = program.type(p.type)
                 if (not type.is_built_in)
-                  builder.print   "    cmd.$ = dispatch(cmd.$)"(p.name,p.name)
+                  builder.print   "    if (cmd.$) cmd.$ = dispatch(cmd.$)"(p.name,p.name,p.name)
                   if (type.name != "Cmd")
                     builder.print   " as "
                     builder.print   type.name
@@ -118,7 +118,7 @@ class RVisitor : RogueSourceWriter
               forEach (p in properties)
                 local type = program.type(p.type)
                 if (not type.is_built_in)
-                  builder.println "    cmd.$.dispatch(this)"(p.name)
+                  builder.println "    if (cmd.$) cmd.$.dispatch(this)"(p.name,p.name)
                 endIf
               endForEach
             endIf

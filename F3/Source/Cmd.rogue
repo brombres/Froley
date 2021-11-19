@@ -21,6 +21,9 @@ class Cmd( t:Token )
     method get( index:Int32 )->Cmd
       throw UnsupportedOperationError()
 
+    method get<<$AsType>>( index:Int32 )->$AsType
+      return get(index) as $AsType
+
     method to->Character
       return Character(this->Int32)
 
@@ -35,6 +38,9 @@ class Cmd( t:Token )
 
     method to->String
       return description
+
+    method type->Type
+      return Type.NONE
 endClass
 
 class CmdList : Cmd
@@ -54,6 +60,9 @@ class CmdList : Cmd
     method get( index:Int32 )->Cmd
       return list[index]
 
+    method get<<$AsType>>( index:Int32 )->$AsType
+      return list[index] as $AsType
+
     method list_description->String
       use builder = StringBuilder.pool
         builder.print '['
@@ -70,12 +79,18 @@ class Unary( t, operand:Cmd ) : Cmd
   METHODS
     method description->String
       return "Unary($)"(%operand)
+
+    method type->Type
+      return operand.type
 endClass
 
 class Binary( t, left:Cmd, right:Cmd ) : Cmd
   METHODS
     method description->String
       return "Binary($,$)"(%left,%right)
+
+    method type->Type
+      return Type( left.type->Int32.or_larger(right.type->Int32) )
 endClass
 
 class Program : Cmd
@@ -181,6 +196,8 @@ class LiteralString : Cmd
     method to->Logical: return value?
     method to->String: return value
 
+    method type->Type
+      return Type.STRING
 endClass
 
 class TokenDef : Cmd
@@ -552,6 +569,9 @@ class PatternSequence : CmdList
   METHODS
     method description->String
       return "PatternSequence" + list_description
+
+    method type->Type
+      return Type.PATTERN
 endClass
 
 class ZeroOrMore : Cmd
@@ -564,6 +584,8 @@ class ZeroOrMore : Cmd
     method description->String
       return "ZeroOrMore($)" (%pattern)
 
+    method type->Type
+      return Type.PATTERN
 endClass
 
 class OneOrMore : Cmd
@@ -576,6 +598,8 @@ class OneOrMore : Cmd
     method description->String
       return "OneOrMore($)" (%pattern)
 
+    method type->Type
+      return Type.PATTERN
 endClass
 
 class OptionalPattern : Cmd
@@ -588,6 +612,8 @@ class OptionalPattern : Cmd
     method description->String
       return "OptionalPattern($)" (%pattern)
 
+    method type->Type
+      return Type.PATTERN
 endClass
 
 class CharSet : Cmd
@@ -608,6 +634,8 @@ class CharSet : Cmd
     method to->Logical: return characters?
     method to->String: return characters
 
+    method type->Type
+      return Type.PATTERN
 endClass
 
 class LiteralStringOrCharacter : Cmd
@@ -628,58 +656,70 @@ class LiteralStringOrCharacter : Cmd
     method to->Logical: return value?
     method to->String: return value
 
+    method type->Type
+      return Type.STRING
+
 endClass
 
-class LogicalOr : Binary
+class LogicalBinary : Binary
+  METHODS
+    method description->String
+      return "LogicalBinary($,$)" (%left,%right)
+
+    method type->Type
+      return Type.LOGICAL
+endClass
+
+class LogicalOr : LogicalBinary
   METHODS
     method description->String
       return "LogicalOr($,$)" (%left,%right)
 
 endClass
 
-class LogicalAnd : Binary
+class LogicalAnd : LogicalBinary
   METHODS
     method description->String
       return "LogicalAnd($,$)" (%left,%right)
 
 endClass
 
-class CompareEQ : Binary
+class CompareEQ : LogicalBinary
   METHODS
     method description->String
       return "CompareEQ($,$)" (%left,%right)
 
 endClass
 
-class CompareNE : Binary
+class CompareNE : LogicalBinary
   METHODS
     method description->String
       return "CompareNE($,$)" (%left,%right)
 
 endClass
 
-class CompareLT : Binary
+class CompareLT : LogicalBinary
   METHODS
     method description->String
       return "CompareLT($,$)" (%left,%right)
 
 endClass
 
-class CompareGT : Binary
+class CompareGT : LogicalBinary
   METHODS
     method description->String
       return "CompareGT($,$)" (%left,%right)
 
 endClass
 
-class CompareLE : Binary
+class CompareLE : LogicalBinary
   METHODS
     method description->String
       return "CompareLE($,$)" (%left,%right)
 
 endClass
 
-class CompareGE : Binary
+class CompareGE : LogicalBinary
   METHODS
     method description->String
       return "CompareGE($,$)" (%left,%right)
@@ -733,12 +773,17 @@ class LogicalNot : Unary
     method description->String
       return "LogicalNot($)" (%operand)
 
+    method type->Type
+      return Type.LOGICAL
 endClass
 
 class ReadBuffer : Cmd
   METHODS
     method description->String
       return "ReadBuffer"
+
+    method type->Type
+      return Type.STRING
 endClass
 
 class ScannerCallUserMethod : Cmd
@@ -771,6 +816,8 @@ class ScannerConsume : Cmd
     method description->String
       return "ScannerConsume($)" (%args)
 
+    method type->Type
+      return Type.LOGICAL
 endClass
 
 class LiteralLogical : Cmd
@@ -787,12 +834,17 @@ class LiteralLogical : Cmd
     method to->Logical: return value
     method to->String:  return which{value:"true" || "false"}
 
+    method type->Type
+      return Type.LOGICAL
 endClass
 
 class ScannerHasAnother : Cmd
   METHODS
     method description->String
       return "ScannerHasAnother"
+
+    method type->Type
+      return Type.LOGICAL
 endClass
 
 class ScannerNextIs : Cmd
@@ -805,6 +857,8 @@ class ScannerNextIs : Cmd
     method description->String
       return "ScannerNextIs($)" (%args)
 
+    method type->Type
+      return Type.LOGICAL
 endClass
 
 class ScannerPeek : Cmd
@@ -817,12 +871,17 @@ class ScannerPeek : Cmd
     method description->String
       return "ScannerPeek($)" (%lookahead)
 
+    method type->Type
+      return Type.CHARACTER
 endClass
 
 class ScannerRead : Cmd
   METHODS
     method description->String
       return "ScannerRead"
+
+    method type->Type
+      return Type.CHARACTER
 endClass
 
 class Scan : Cmd
@@ -835,6 +894,8 @@ class Scan : Cmd
     method description->String
       return "Scan($)" (%args)
 
+    method type->Type
+      return Type.LOGICAL
 endClass
 
 class LiteralInteger : Cmd
@@ -850,6 +911,8 @@ class LiteralInteger : Cmd
     method to->Int32:     return value
     method to->String:    return value
 
+    method type->Type
+      return Type.INTEGER
 endClass
 
 class On : Cmd
@@ -1033,12 +1096,17 @@ class ParserConsume : Cmd
     method description->String
       return "ParserConsume($)" (%token_type)
 
+    method to->Type
+      return Type.LOGICAL
 endClass
 
 class ParserHasAnother : Cmd
   METHODS
     method description->String
       return "ParserHasAnother"
+
+    method type->Type
+      return Type.LOGICAL
 endClass
 
 class NextHasAttribute : Cmd
@@ -1059,6 +1127,8 @@ class NextHasAttribute : Cmd
     method to->Logical: return name?
     method to->String: return name
 
+    method type->Type
+      return Type.LOGICAL
 endClass
 
 class ParserNextIs : Cmd
@@ -1071,10 +1141,16 @@ class ParserNextIs : Cmd
     method description->String
       return "ParserNextIs($)" (%token_type)
 
+    method to->Type
+      return Type.LOGICAL
 endClass
 
 class ParserRead : Cmd
   METHODS
     method description->String
       return "ParserRead"
+
+    method type->Type
+      return Type.TOKEN
 endClass
+

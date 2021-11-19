@@ -1,5 +1,0 @@
-module F3
-
-class Var( t:Token, name:String, type=Type.NONE:Type )
-endClass
-

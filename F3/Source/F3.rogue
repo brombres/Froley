@@ -2,6 +2,7 @@ module F3
 
 $include "Scanner.rogue"
 $include "Parser.rogue" [optional]
+$include "Type.rogue"
 uses F3
 uses Utility/CommandLineParser
 

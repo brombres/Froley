@@ -1251,7 +1251,6 @@ class LiteralContent( t, value:String ) : Cmd
       return value
 endClass
 
-
 class NextHasAttribute( t, name:String ) : Cmd
   METHODS
     method to->String
@@ -1261,13 +1260,11 @@ class NextHasAttribute( t, name:String ) : Cmd
       return Type.LOGICAL
 endClass
 
-
 class ScannerCreate( t, arg:Cmd ) : Cmd
   METHODS
     method to->String
       return "ScannerCreate($)"(arg)
 endClass
-
 
 class ScannerPeek( t, lookahead:Cmd ) : Cmd
   METHODS

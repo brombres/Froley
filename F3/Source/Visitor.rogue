@@ -9,6 +9,9 @@ endClass
 
 class Visitor<<$ReturnType>>
   # Visitor is a Froley-generated triple-dispatch implementation of the visitor pattern.
+  PROPERTIES
+    program : Program
+
   METHODS
     method on( cmd:Cmd )
       local this_name = type_name.after_any("::")
@@ -76,8 +79,11 @@ class Visitor<<$ReturnType>>
       endIf
 
     method visit( cmd:Program )->$ReturnType
-      on( cmd )
-      visit_children( cmd )
+      temporarily program = cmd
+        on( cmd )
+        visit_children( cmd )
+      endTemporarily
+
       if ($ReturnType instanceOf Cmd) return cmd
       else                            return $ReturnType.meta.default_value
 
@@ -840,6 +846,11 @@ class Visitor<<$ReturnType>>
 
     method visit( cmd:ParserRead )->$ReturnType
       on( cmd )
+      if ($ReturnType instanceOf Cmd) return cmd
+      else                            return $ReturnType.meta.default_value
+    method visit( cmd:LogicalBinary )->$ReturnType
+      on( cmd )
+      visit_children( cmd )
       if ($ReturnType instanceOf Cmd) return cmd
       else                            return $ReturnType.meta.default_value
 endClass

@@ -1,7 +1,9 @@
 module F3
 
+$include "FType.rogue"
 $include "Scanner.rogue"
 $include "Parser.rogue" [optional]
+$include "Program.rogue" [optional]
 $include "Type.rogue"
 uses F3
 uses Utility/CommandLineParser
@@ -40,30 +42,12 @@ class F3
         throw Error( ''Unable to create folder "$".'' (output_folder) )
       endIf
 
-      local program = Parser(definition_file).parse as Program
-      if (not program)
+      local ast = Parser(definition_file).parse as ProgramDef
+      if (not ast)
         throw Error( ''No language definition found in file "$".'' (definition_file) )
       endIf
 
-      program.compile( command )
-
-    method scan_files
-      forEach (arg in command//args)
-        local scanner = Scanner( File(arg) )
-        local tokens = scanner.tokenize
-        if (scanner.output.count) print scanner.output; flush
-        println (forEach in tokens)
-      endForEach
-
-    $if (defined(PARSER_EXISTS))
-    method parse_files
-      forEach (arg in command//args)
-        local parser = Parser( File(arg) )
-        local ast = parser.parse
-        if (parser.output.count) print parser.output; flush
-        @trace ast
-      endForEach
-    $endIf
+      Program( command, ast )
 
     method parse_args( args:String[] )->Value
       # This method is unrelated to the Froley Parser

@@ -323,7 +323,7 @@ class ParserCore [abstract]
               _pop_frame
             endWhile
             _push_list( CmdList(_list_t) )
-            _push( Program(_cur_t,_node_arg(-1)), 1 )
+            _push( ProgramDef(_cur_t,_node_arg(-1)), 1 )
             return
           case ip_section
             if (_next_t.type == TokenType.KEYWORD_SCANNER)

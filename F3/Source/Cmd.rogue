@@ -39,8 +39,8 @@ class Cmd( t:Token )
     method to->String
       return description
 
-    method type->Type
-      return Type.NONE
+    method type->FType
+      return FType.NONE
 endClass
 
 class CmdList : Cmd
@@ -80,7 +80,7 @@ class Unary( t, operand:Cmd ) : Cmd
     method description->String
       return "Unary($)"(%operand)
 
-    method type->Type
+    method type->FType
       return operand.type
 endClass
 
@@ -89,35 +89,19 @@ class Binary( t, left:Cmd, right:Cmd ) : Cmd
     method description->String
       return "Binary($,$)"(%left,%right)
 
-    method type->Type
-      return Type( left.type->Int32.or_larger(right.type->Int32) )
+    method type->FType
+      return FType( left.type->Int32.or_larger(right.type->Int32) )
 endClass
 
-class Program : Cmd
+class ProgramDef : Cmd
   PROPERTIES
-    command       : Value
     sections      : Cmd
-    project_name  : String
-    output_folder : String
-
-    #node_types    = StringTable<<NodeType>>()
 
   METHODS
     method init( t, sections )
 
-    method compile( command )
-      project_name  = File.filename( command//args.first ).before_last('.')
-      output_folder = File( command//args.last )
-      trace
-
     method description->String
-      return "Program($)" (%sections)
-
-      #{
-    method node_type( name:String, &is_cmd )->NodeType
-      local type = node_types[ name ]
-      if (type)
-        }#
+      return "ProgramDef($)" (%sections)
 endClass
 
 class ScannerDef : Cmd
@@ -211,8 +195,8 @@ class LiteralString : Cmd
     method to->Logical: return value?
     method to->String: return value
 
-    method type->Type
-      return Type.STRING
+    method type->FType
+      return FType.STRING
 endClass
 
 class TokenDef : Cmd
@@ -560,11 +544,33 @@ class Access : Cmd
 
 endClass
 
+class CreateCmd : Cmd
+  PROPERTIES
+    name : String
+    args : Args
+
+    is_organized   = false
+    arg_count      = 0
+    node_arg_count = 0  # number of node-based args (vs 'content')
+    signature      : String
+
+  METHODS
+    method init( t, name, args )
+
+    method description->String
+      return "CreateCmd($,$)" (%name,%args)
+
+endClass
+
 class CreateCmdArg : Cmd
   PROPERTIES
     arg_name  : String
     arg_value : Cmd
     arg_type  : String
+
+    is_node_arg  = false   # versus 'content'
+    index        : Int32   # arg index 0, 1, ...
+    stack_offset : Int32   # back into cmd stack; most recent = -1, one back = -2, ...
 
   METHODS
     method init( t, arg_name, arg_value, arg_type )
@@ -585,8 +591,8 @@ class PatternSequence : CmdList
     method description->String
       return "PatternSequence" + list_description
 
-    method type->Type
-      return Type.PATTERN
+    method type->FType
+      return FType.PATTERN
 endClass
 
 class ZeroOrMore : Cmd
@@ -599,8 +605,8 @@ class ZeroOrMore : Cmd
     method description->String
       return "ZeroOrMore($)" (%pattern)
 
-    method type->Type
-      return Type.PATTERN
+    method type->FType
+      return FType.PATTERN
 endClass
 
 class OneOrMore : Cmd
@@ -613,8 +619,8 @@ class OneOrMore : Cmd
     method description->String
       return "OneOrMore($)" (%pattern)
 
-    method type->Type
-      return Type.PATTERN
+    method type->FType
+      return FType.PATTERN
 endClass
 
 class OptionalPattern : Cmd
@@ -627,8 +633,8 @@ class OptionalPattern : Cmd
     method description->String
       return "OptionalPattern($)" (%pattern)
 
-    method type->Type
-      return Type.PATTERN
+    method type->FType
+      return FType.PATTERN
 endClass
 
 class CharSet : Cmd
@@ -649,8 +655,8 @@ class CharSet : Cmd
     method to->Logical: return characters?
     method to->String: return characters
 
-    method type->Type
-      return Type.PATTERN
+    method type->FType
+      return FType.PATTERN
 endClass
 
 class LiteralStringOrCharacter : Cmd
@@ -671,8 +677,8 @@ class LiteralStringOrCharacter : Cmd
     method to->Logical: return value?
     method to->String: return value
 
-    method type->Type
-      return Type.STRING
+    method type->FType
+      return FType.STRING
 
 endClass
 
@@ -681,8 +687,8 @@ class LogicalBinary : Binary
     method description->String
       return "LogicalBinary($,$)" (%left,%right)
 
-    method type->Type
-      return Type.LOGICAL
+    method type->FType
+      return FType.LOGICAL
 endClass
 
 class LogicalOr : LogicalBinary
@@ -788,8 +794,8 @@ class LogicalNot : Unary
     method description->String
       return "LogicalNot($)" (%operand)
 
-    method type->Type
-      return Type.LOGICAL
+    method type->FType
+      return FType.LOGICAL
 endClass
 
 class ReadBuffer : Cmd
@@ -797,8 +803,8 @@ class ReadBuffer : Cmd
     method description->String
       return "ReadBuffer"
 
-    method type->Type
-      return Type.STRING
+    method type->FType
+      return FType.STRING
 endClass
 
 class ScannerCallUserMethod : Cmd
@@ -831,8 +837,8 @@ class ScannerConsume : Cmd
     method description->String
       return "ScannerConsume($)" (%args)
 
-    method type->Type
-      return Type.LOGICAL
+    method type->FType
+      return FType.LOGICAL
 endClass
 
 class LiteralLogical : Cmd
@@ -849,8 +855,8 @@ class LiteralLogical : Cmd
     method to->Logical: return value
     method to->String:  return which{value:"true" || "false"}
 
-    method type->Type
-      return Type.LOGICAL
+    method type->FType
+      return FType.LOGICAL
 endClass
 
 class ScannerHasAnother : Cmd
@@ -858,8 +864,8 @@ class ScannerHasAnother : Cmd
     method description->String
       return "ScannerHasAnother"
 
-    method type->Type
-      return Type.LOGICAL
+    method type->FType
+      return FType.LOGICAL
 endClass
 
 class ScannerNextIs : Cmd
@@ -872,8 +878,8 @@ class ScannerNextIs : Cmd
     method description->String
       return "ScannerNextIs($)" (%args)
 
-    method type->Type
-      return Type.LOGICAL
+    method type->FType
+      return FType.LOGICAL
 endClass
 
 class ScannerPeek : Cmd
@@ -886,8 +892,8 @@ class ScannerPeek : Cmd
     method description->String
       return "ScannerPeek($)" (%lookahead)
 
-    method type->Type
-      return Type.CHARACTER
+    method type->FType
+      return FType.CHARACTER
 endClass
 
 class ScannerRead : Cmd
@@ -895,8 +901,8 @@ class ScannerRead : Cmd
     method description->String
       return "ScannerRead"
 
-    method type->Type
-      return Type.CHARACTER
+    method type->FType
+      return FType.CHARACTER
 endClass
 
 class Scan : Cmd
@@ -909,8 +915,8 @@ class Scan : Cmd
     method description->String
       return "Scan($)" (%args)
 
-    method type->Type
-      return Type.LOGICAL
+    method type->FType
+      return FType.LOGICAL
 endClass
 
 class LiteralInteger : Cmd
@@ -926,8 +932,8 @@ class LiteralInteger : Cmd
     method to->Int32:     return value
     method to->String:    return value
 
-    method type->Type
-      return Type.INTEGER
+    method type->FType
+      return FType.INTEGER
 endClass
 
 class On : Cmd
@@ -1068,19 +1074,6 @@ class LiteralContent : Cmd
 
 endClass
 
-class CreateCmd : Cmd
-  PROPERTIES
-    name : String
-    args : Args
-
-  METHODS
-    method init( t, name, args )
-
-    method description->String
-      return "CreateCmd($,$)" (%name,%args)
-
-endClass
-
 class ParserCallUserMethod : Cmd
   PROPERTIES
     fn_name : String
@@ -1111,8 +1104,8 @@ class ParserConsume : Cmd
     method description->String
       return "ParserConsume($)" (%token_type)
 
-    method to->Type
-      return Type.LOGICAL
+    method to->FType
+      return FType.LOGICAL
 endClass
 
 class ParserHasAnother : Cmd
@@ -1120,8 +1113,8 @@ class ParserHasAnother : Cmd
     method description->String
       return "ParserHasAnother"
 
-    method type->Type
-      return Type.LOGICAL
+    method type->FType
+      return FType.LOGICAL
 endClass
 
 class NextHasAttribute : Cmd
@@ -1142,8 +1135,8 @@ class NextHasAttribute : Cmd
     method to->Logical: return name?
     method to->String: return name
 
-    method type->Type
-      return Type.LOGICAL
+    method type->FType
+      return FType.LOGICAL
 endClass
 
 class ParserNextIs : Cmd
@@ -1156,8 +1149,8 @@ class ParserNextIs : Cmd
     method description->String
       return "ParserNextIs($)" (%token_type)
 
-    method to->Type
-      return Type.LOGICAL
+    method to->FType
+      return FType.LOGICAL
 endClass
 
 class ParserRead : Cmd
@@ -1165,7 +1158,7 @@ class ParserRead : Cmd
     method description->String
       return "ParserRead"
 
-    method type->Type
-      return Type.TOKEN
+    method type->FType
+      return FType.TOKEN
 endClass
 

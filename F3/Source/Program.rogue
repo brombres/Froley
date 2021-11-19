@@ -1,0 +1,23 @@
+module F3
+
+class Program [singleton]
+  PROPERTIES
+    command       : Value
+    ast           : ProgramDef
+    project_name  : String
+    output_folder : String
+
+    types         = StringTable<<Type>>()
+
+  METHODS
+    method init( command, ast )
+      project_name  = File.filename( command//args.first ).before_last('.')
+      output_folder = File( command//args.last )
+
+    method type( name:String )->Type
+      local result = types[ name ]
+      if (result) return result
+      return Type( name )  # adds itself to types[]
+
+endClass
+

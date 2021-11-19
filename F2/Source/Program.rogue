@@ -2,6 +2,7 @@ module F2
 
 class Program
   PROPERTIES
+    t                     : Token
     nodes                 : Cmd
     project_name          = ""
     scanner               : ScannerDef
@@ -22,6 +23,9 @@ class Program
       init( Parser().[open(froley_file)].parse("program") )
 
     method init( nodes )
+      if (nodes) t = nodes.t
+      else       t = Token( TokenType.EOI, "[INTERNAL]", null, 0, 0 )
+
       type("Cmd")
       type("CmdList")
       type("Unary").[ add_property("operand","Cmd") ]
@@ -49,7 +53,7 @@ class Program
       local info = node_types[ name ]
       if (info) return info
 
-      info = NodeType( name, this )
+      info = NodeType( t, name, this )
       node_types[name] = info
       return info
 

@@ -1090,3 +1090,15 @@ class ParserRead : Cmd
     method description->String
       return "ParserRead"
 endClass
+
+class Test : Cmd
+  PROPERTIES
+    operand : Int32
+
+  METHODS
+    method init( t, operand )
+
+    method description->String
+      return "Test($)" (%operand)
+
+endClass

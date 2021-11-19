@@ -2286,6 +2286,7 @@ class ParserCore [abstract]
               return
             endIf
             _throw_syntax_error
+            _push( Test(_cur_t,_node_arg(-1) as Int32), 1 )
             return
           others
             return

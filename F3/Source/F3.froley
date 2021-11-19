@@ -1311,4 +1311,5 @@ parser
   on STRING                             -> LiteralString( value=content )
   on STRING_OR_CHARACTER                -> LiteralStringOrCharacter( value=content )
   syntaxError
+  create Test(operand:Int32)
 

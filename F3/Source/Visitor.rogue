@@ -855,5 +855,21 @@ class Visitor<<$ReturnType>>
       on( cmd )
       if ($ReturnType instanceOf Cmd) return cmd
       else                            return $ReturnType.meta.default_value
+    method visit( cmd:Test )->$ReturnType
+      on( cmd )
+      visit_children( cmd )
+      if ($ReturnType instanceOf Cmd) return cmd
+      else                            return $ReturnType.meta.default_value
 
+    method visit_children( cmd:Test )
+      if ($ReturnType instanceOf Cmd)
+        if (cmd.operand) cmd.operand = dispatch(cmd.operand) as Int32
+      else
+        if (cmd.operand) cmd.operand.dispatch(this)
+      endIf
+
+    method visit( cmd:Int32 )->$ReturnType
+      on( cmd )
+      if ($ReturnType instanceOf Cmd) return cmd
+      else                            return $ReturnType.meta.default_value
 endClass

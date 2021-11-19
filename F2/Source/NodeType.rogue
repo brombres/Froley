@@ -2,24 +2,26 @@ module F2
 
 class NodeType
   PROPERTIES
+    t            : Token
     name         : String
     name_lc      : String
     program      : Program
     base_type    : NodeType
     is_list      : Logical
     is_built_in  : Logical   # String etc.
+    is_defined   : Logical   # is create'd or produce'd
     constructors = StringTable<<CreateCmd>>()
     properties   : NameAndType[]
 
   METHODS
-    method init( name, program )
+    method init( t, name, program )
       if (name != "Cmd") base_type = "Cmd"
 
     method add( constructor:CreateCmd )
       constructors[ constructor.signature ] = constructor
 
     method add_property( name:String, type:String )
-      properties.add( NameAndType(name,type) )
+      properties.add( NameAndType(t,name,type) )
 
     method description->String
       return name
@@ -45,7 +47,7 @@ class NodeType
           local args = constructor.args as Args
           forEach (arg in args)
             block arg = arg as CreateCmdArg
-              local name_and_type = NameAndType( arg.arg_name, arg.arg_type )
+              local name_and_type = NameAndType( arg.t, arg.arg_name, arg.arg_type )
               if (types.contains(name_and_type.name))
                 local existing = types[ name_and_type.name ]
                 if (existing != name_and_type)
@@ -82,7 +84,7 @@ class NodeType
     method set_base_type( base_type_name:String )
       local info = program.node_types[ base_type_name ]
       if (not info)
-        info = NodeType( base_type_name, program )
+        info = NodeType( t, base_type_name, program )
         program.node_types[ base_type_name ] = info
       endIf
       @base_type = info
@@ -92,7 +94,7 @@ class NodeType
 
 endClass
 
-class NameAndType( name:String, type:String ) [compound]
+class NameAndType( t:Token, name:String, type:String ) [compound]
   METHODS
     method description->String
       return "$:$" (name,type)

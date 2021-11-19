@@ -144,7 +144,6 @@ class RCmd : RogueSourceWriter
             w .= or_larger( (forEach in extended_properties).name.count )
 
             forEach (p in extended_properties)
-              #if (not (p.type.is_built_in or p.type.is_defined)) trace "$ is not defined ------------"(p.name)
               builder.print( "    " ).print( p.name )
               loop (w - p.name.count) builder.print ' '
               builder.print( " : " ).println( rogue_name(p.type) )

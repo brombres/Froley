@@ -78,36 +78,48 @@ class Binary( t, left:Cmd, right:Cmd ) : Cmd
       return "Binary($,$)"(%left,%right)
 endClass
 
-class ScannerDef : Cmd
+class Program : Cmd
   PROPERTIES
-    name : String
-    code : CmdList
+    sections : Cmd
 
   METHODS
-    method init( t, name, code )
+    method init( t, sections )
 
     method description->String
-      return "ScannerDef($,$)" (%name,%code)
+      return "Program($)" (%sections)
+
+endClass
+
+class ScannerDef : Cmd
+  PROPERTIES
+    name     : String
+    routines : Cmd
+
+  METHODS
+    method init( t, name, routines )
+
+    method description->String
+      return "ScannerDef($,$)" (%name,%routines)
 
 endClass
 
 class ParserDef : Cmd
   PROPERTIES
-    name : String
-    code : CmdList
+    name     : String
+    routines : Cmd
 
   METHODS
-    method init( t, name, code )
+    method init( t, name, routines )
 
     method description->String
-      return "ParserDef($,$)" (%name,%code)
+      return "ParserDef($,$)" (%name,%routines)
 
 endClass
 
 class TokenGroup : Cmd
   PROPERTIES
     name        : String
-    definitions : CmdList
+    definitions : Cmd
 
   METHODS
     method init( t, name, definitions )
@@ -175,7 +187,7 @@ class TokenDef : Cmd
   PROPERTIES
     name       : String
     symbol     : String
-    attributes : CmdList
+    attributes : Cmd
 
   METHODS
     method init( t, name, symbol, attributes )
@@ -215,7 +227,7 @@ class If : Cmd
   PROPERTIES
     condition  : Cmd
     statements : Statements
-    else_ifs   : CmdList
+    else_ifs   : Cmd
     _else      : Statements
 
   METHODS
@@ -229,7 +241,7 @@ endClass
 class Match : Cmd
   PROPERTIES
     scanner_expression : Cmd
-    cases              : CmdList
+    cases              : Cmd
     _others            : Cmd
 
   METHODS
@@ -253,7 +265,7 @@ class While : Cmd
 
 endClass
 
-class ScannerProduce : Cmd
+class ScannerCreate : Cmd
   PROPERTIES
     arg : Cmd
 
@@ -261,14 +273,34 @@ class ScannerProduce : Cmd
     method init( t, arg )
 
     method description->String
-      return "ScannerProduce($)" (%arg)
+      return "ScannerCreate($)" (%arg)
+
+endClass
+
+class Restart : Cmd
+  PROPERTIES
+    start_ip : String
+
+  METHODS
+    method init( t, start_ip )
+
+    method description->String
+      return "Restart($)" (%start_ip)
+
+    method to->Character
+      if (start_ip is null or start_ip.count == 0) return Character(0)
+      return start_ip[0]
+
+    method to->Int32:  return start_ip
+    method to->Logical: return start_ip?
+    method to->String: return start_ip
 
 endClass
 
 class MatchCase : Cmd
   PROPERTIES
     scanner_expression : Cmd
-    statements         : CmdList
+    statements         : Cmd
 
   METHODS
     method init( t, scanner_expression, statements )
@@ -320,18 +352,6 @@ class Collect : Cmd
 
     method description->String
       return "Collect($)" (%args)
-
-endClass
-
-class ScannerCreate : Cmd
-  PROPERTIES
-    arg : Cmd
-
-  METHODS
-    method init( t, arg )
-
-    method description->String
-      return "ScannerCreate($)" (%arg)
 
 endClass
 
@@ -412,26 +432,6 @@ class Println : Cmd
 
     method description->String
       return "Println($)" (%args)
-
-endClass
-
-class Restart : Cmd
-  PROPERTIES
-    start_ip : String
-
-  METHODS
-    method init( t, start_ip )
-
-    method description->String
-      return "Restart($)" (%start_ip)
-
-    method to->Character
-      if (start_ip is null or start_ip.count == 0) return Character(0)
-      return start_ip[0]
-
-    method to->Int32:  return start_ip
-    method to->Logical: return start_ip?
-    method to->String: return start_ip
 
 endClass
 
@@ -857,7 +857,7 @@ class On : Cmd
     token_type      : Cmd
     token_types     : Args
     statements      : Statements
-    else_ons        : CmdList
+    else_ons        : Cmd
     _else_on_others : Statements
 
   METHODS
@@ -948,18 +948,6 @@ class ParserArgs : CmdList
   METHODS
     method description->String
       return "ParserArgs" + list_description
-endClass
-
-class ParserProduce : Cmd
-  PROPERTIES
-    arg : CreateCmd
-
-  METHODS
-    method init( t, arg )
-
-    method description->String
-      return "ParserProduce($)" (%arg)
-
 endClass
 
 class ProduceList : Cmd
@@ -1089,16 +1077,4 @@ class ParserRead : Cmd
   METHODS
     method description->String
       return "ParserRead"
-endClass
-
-class Test : Cmd
-  PROPERTIES
-    operand : Int32
-
-  METHODS
-    method init( t, operand )
-
-    method description->String
-      return "Test($)" (%operand)
-
 endClass

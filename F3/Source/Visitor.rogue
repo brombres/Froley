@@ -75,6 +75,19 @@ class Visitor<<$ReturnType>>
         if (cmd.right) cmd.right.dispatch(this)
       endIf
 
+    method visit( cmd:Program )->$ReturnType
+      on( cmd )
+      visit_children( cmd )
+      if ($ReturnType instanceOf Cmd) return cmd
+      else                            return $ReturnType.meta.default_value
+
+    method visit_children( cmd:Program )
+      if ($ReturnType instanceOf Cmd)
+        if (cmd.sections) cmd.sections = dispatch(cmd.sections)
+      else
+        if (cmd.sections) cmd.sections.dispatch(this)
+      endIf
+
     method visit( cmd:ScannerDef )->$ReturnType
       on( cmd )
       visit_children( cmd )
@@ -83,9 +96,9 @@ class Visitor<<$ReturnType>>
 
     method visit_children( cmd:ScannerDef )
       if ($ReturnType instanceOf Cmd)
-        if (cmd.code) cmd.code = dispatch(cmd.code) as CmdList
+        if (cmd.routines) cmd.routines = dispatch(cmd.routines)
       else
-        if (cmd.code) cmd.code.dispatch(this)
+        if (cmd.routines) cmd.routines.dispatch(this)
       endIf
 
     method visit( cmd:ParserDef )->$ReturnType
@@ -96,9 +109,9 @@ class Visitor<<$ReturnType>>
 
     method visit_children( cmd:ParserDef )
       if ($ReturnType instanceOf Cmd)
-        if (cmd.code) cmd.code = dispatch(cmd.code) as CmdList
+        if (cmd.routines) cmd.routines = dispatch(cmd.routines)
       else
-        if (cmd.code) cmd.code.dispatch(this)
+        if (cmd.routines) cmd.routines.dispatch(this)
       endIf
 
     method visit( cmd:TokenGroup )->$ReturnType
@@ -109,7 +122,7 @@ class Visitor<<$ReturnType>>
 
     method visit_children( cmd:TokenGroup )
       if ($ReturnType instanceOf Cmd)
-        if (cmd.definitions) cmd.definitions = dispatch(cmd.definitions) as CmdList
+        if (cmd.definitions) cmd.definitions = dispatch(cmd.definitions)
       else
         if (cmd.definitions) cmd.definitions.dispatch(this)
       endIf
@@ -145,7 +158,7 @@ class Visitor<<$ReturnType>>
 
     method visit_children( cmd:TokenDef )
       if ($ReturnType instanceOf Cmd)
-        if (cmd.attributes) cmd.attributes = dispatch(cmd.attributes) as CmdList
+        if (cmd.attributes) cmd.attributes = dispatch(cmd.attributes)
       else
         if (cmd.attributes) cmd.attributes.dispatch(this)
       endIf
@@ -171,7 +184,7 @@ class Visitor<<$ReturnType>>
       if ($ReturnType instanceOf Cmd)
         if (cmd.condition) cmd.condition = dispatch(cmd.condition)
         if (cmd.statements) cmd.statements = dispatch(cmd.statements) as Statements
-        if (cmd.else_ifs) cmd.else_ifs = dispatch(cmd.else_ifs) as CmdList
+        if (cmd.else_ifs) cmd.else_ifs = dispatch(cmd.else_ifs)
         if (cmd._else) cmd._else = dispatch(cmd._else) as Statements
       else
         if (cmd.condition) cmd.condition.dispatch(this)
@@ -189,7 +202,7 @@ class Visitor<<$ReturnType>>
     method visit_children( cmd:Match )
       if ($ReturnType instanceOf Cmd)
         if (cmd.scanner_expression) cmd.scanner_expression = dispatch(cmd.scanner_expression)
-        if (cmd.cases) cmd.cases = dispatch(cmd.cases) as CmdList
+        if (cmd.cases) cmd.cases = dispatch(cmd.cases)
         if (cmd._others) cmd._others = dispatch(cmd._others)
       else
         if (cmd.scanner_expression) cmd.scanner_expression.dispatch(this)
@@ -212,18 +225,23 @@ class Visitor<<$ReturnType>>
         if (cmd.statements) cmd.statements.dispatch(this)
       endIf
 
-    method visit( cmd:ScannerProduce )->$ReturnType
+    method visit( cmd:ScannerCreate )->$ReturnType
       on( cmd )
       visit_children( cmd )
       if ($ReturnType instanceOf Cmd) return cmd
       else                            return $ReturnType.meta.default_value
 
-    method visit_children( cmd:ScannerProduce )
+    method visit_children( cmd:ScannerCreate )
       if ($ReturnType instanceOf Cmd)
         if (cmd.arg) cmd.arg = dispatch(cmd.arg)
       else
         if (cmd.arg) cmd.arg.dispatch(this)
       endIf
+
+    method visit( cmd:Restart )->$ReturnType
+      on( cmd )
+      if ($ReturnType instanceOf Cmd) return cmd
+      else                            return $ReturnType.meta.default_value
 
     method visit( cmd:MatchCase )->$ReturnType
       on( cmd )
@@ -234,7 +252,7 @@ class Visitor<<$ReturnType>>
     method visit_children( cmd:MatchCase )
       if ($ReturnType instanceOf Cmd)
         if (cmd.scanner_expression) cmd.scanner_expression = dispatch(cmd.scanner_expression)
-        if (cmd.statements) cmd.statements = dispatch(cmd.statements) as CmdList
+        if (cmd.statements) cmd.statements = dispatch(cmd.statements)
       else
         if (cmd.scanner_expression) cmd.scanner_expression.dispatch(this)
         if (cmd.statements) cmd.statements.dispatch(this)
@@ -271,19 +289,6 @@ class Visitor<<$ReturnType>>
         if (cmd.args) cmd.args = dispatch(cmd.args) as Args
       else
         if (cmd.args) cmd.args.dispatch(this)
-      endIf
-
-    method visit( cmd:ScannerCreate )->$ReturnType
-      on( cmd )
-      visit_children( cmd )
-      if ($ReturnType instanceOf Cmd) return cmd
-      else                            return $ReturnType.meta.default_value
-
-    method visit_children( cmd:ScannerCreate )
-      if ($ReturnType instanceOf Cmd)
-        if (cmd.arg) cmd.arg = dispatch(cmd.arg)
-      else
-        if (cmd.arg) cmd.arg.dispatch(this)
       endIf
 
     method visit( cmd:DiscardPosition )->$ReturnType
@@ -350,11 +355,6 @@ class Visitor<<$ReturnType>>
       else
         if (cmd.args) cmd.args.dispatch(this)
       endIf
-
-    method visit( cmd:Restart )->$ReturnType
-      on( cmd )
-      if ($ReturnType instanceOf Cmd) return cmd
-      else                            return $ReturnType.meta.default_value
 
     method visit( cmd:RestorePosition )->$ReturnType
       on( cmd )
@@ -695,7 +695,7 @@ class Visitor<<$ReturnType>>
         if (cmd.token_type) cmd.token_type = dispatch(cmd.token_type)
         if (cmd.token_types) cmd.token_types = dispatch(cmd.token_types) as Args
         if (cmd.statements) cmd.statements = dispatch(cmd.statements) as Statements
-        if (cmd.else_ons) cmd.else_ons = dispatch(cmd.else_ons) as CmdList
+        if (cmd.else_ons) cmd.else_ons = dispatch(cmd.else_ons)
         if (cmd._else_on_others) cmd._else_on_others = dispatch(cmd._else_on_others) as Statements
       else
         if (cmd.token_type) cmd.token_type.dispatch(this)
@@ -774,19 +774,6 @@ class Visitor<<$ReturnType>>
       if ($ReturnType instanceOf Cmd) return cmd
       else                            return $ReturnType.meta.default_value
 
-    method visit( cmd:ParserProduce )->$ReturnType
-      on( cmd )
-      visit_children( cmd )
-      if ($ReturnType instanceOf Cmd) return cmd
-      else                            return $ReturnType.meta.default_value
-
-    method visit_children( cmd:ParserProduce )
-      if ($ReturnType instanceOf Cmd)
-        if (cmd.arg) cmd.arg = dispatch(cmd.arg) as CreateCmd
-      else
-        if (cmd.arg) cmd.arg.dispatch(this)
-      endIf
-
     method visit( cmd:ProduceList )->$ReturnType
       on( cmd )
       if ($ReturnType instanceOf Cmd) return cmd
@@ -852,23 +839,6 @@ class Visitor<<$ReturnType>>
       endIf
 
     method visit( cmd:ParserRead )->$ReturnType
-      on( cmd )
-      if ($ReturnType instanceOf Cmd) return cmd
-      else                            return $ReturnType.meta.default_value
-    method visit( cmd:Test )->$ReturnType
-      on( cmd )
-      visit_children( cmd )
-      if ($ReturnType instanceOf Cmd) return cmd
-      else                            return $ReturnType.meta.default_value
-
-    method visit_children( cmd:Test )
-      if ($ReturnType instanceOf Cmd)
-        if (cmd.operand) cmd.operand = dispatch(cmd.operand) as Int32
-      else
-        if (cmd.operand) cmd.operand.dispatch(this)
-      endIf
-
-    method visit( cmd:Int32 )->$ReturnType
       on( cmd )
       if ($ReturnType instanceOf Cmd) return cmd
       else                            return $ReturnType.meta.default_value

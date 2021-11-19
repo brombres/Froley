@@ -366,34 +366,32 @@ parser
 --------------------------------------------------------------------------------
 - program
   beginList
+    consume_eols
+    while (hasAnother)
+      section
+      consume_eols
+    endWhile
+  createList
+  produce Program(sections)
 
-  while (consume(EOL)) noAction
-
-  while (hasAnother)
-    element
-    while (consume(EOL)) noAction
-  endWhile
-
-  produceList
-
-- element
+- section
   on "scanner"
     createNull
     must_consume_eols
     scanner_routines
-    produce ScannerDef(name:String,code:CmdList)
+    produce ScannerDef(name:String,routines)
 
   elseOn "parser"
     createNull
     must_consume_eols
     parser_routines
-    produce ParserDef(name:String,code:CmdList)
+    produce ParserDef(name:String,routines)
 
   elseOn "tokens"
     if (consume(EOL)) createNull
     else              identifier
     token_definitions
-    produce TokenGroup(name:String,definitions:CmdList)
+    produce TokenGroup(name:String,definitions)
   endOn
   syntaxError
 
@@ -437,7 +435,7 @@ parser
 
     attributes
 
-    create TokenDef(name:String,symbol:String,attributes:CmdList)
+    create TokenDef(name:String,symbol:String,attributes)
     consume_eols
   endWhile
 
@@ -510,7 +508,7 @@ parser
       scanner_single_line_else_ifs
       scanner_single_line_else
     endIf
-    produce If( condition, statements:Statements, else_ifs:CmdList, _else:Statements )
+    produce If( condition, statements:Statements, else_ifs, _else:Statements )
   endOn
 
   on "match"
@@ -526,7 +524,7 @@ parser
     cases
     _others
     mustConsume "endMatch"
-    produce Match(scanner_expression,cases:CmdList,_others:Cmd)
+    produce Match(scanner_expression,cases,_others)
   endOn
 
   on "while"
@@ -557,14 +555,16 @@ parser
         if (consume("->"))
           beginList
             scanner_product
-            create ScannerProduce(arg:Cmd)
+            create ScannerCreate(arg)
+            createNull
+            create Restart(start_ip:String)
           createList Statements
         else
           consume(":")
           consume_eols
           scanner_multi_line_statements
         endIf
-        create MatchCase(scanner_expression,statements:CmdList)
+        create MatchCase(scanner_expression,statements)
       elseOn "produceAny"
         identifier
         create ProduceAny(token_group_name:String)
@@ -664,8 +664,15 @@ parser
     endIf
     produce Println(args:Args)
   endOn
-  on "produce", scanner_product    -> ScannerProduce(arg:Cmd)
-  on "->",      scanner_product    -> ScannerProduce(arg:Cmd)
+  on "produce"  scanner_product
+    create ScannerCreate(arg)
+    createNull
+    produce Restart(start_ip:String)
+  elseOn "->"
+    create ScannerCreate(arg)
+    createNull
+    produce Restart(start_ip:String)
+  endOn
   on "restart"
     if (nextIs(EOL)) createNull
     else             identifier
@@ -793,7 +800,7 @@ parser
   sequence_item
   while (hasAnother)
     if (consume('*'))
-      create ZeroOrMore(pattern:Cmd)
+      create ZeroOrMore(pattern)
     elseIf (consume('+'))
       create OneOrMore(pattern)
     elseIf (consume('?'))
@@ -894,7 +901,7 @@ parser
 
 - repeat_count
   on "*"
-    produce ZeroOrMore(pattern:Cmd)
+    produce ZeroOrMore(pattern)
   elseOn "+"
     produce OneOrMore(pattern)
   elseOn "?"
@@ -958,7 +965,7 @@ parser
       parser_single_line_else_ifs
       parser_single_line_else
     endIf
-    produce If( condition, statements:Statements, else_ifs:CmdList, _else:Statements )
+    produce If( condition, statements:Statements, else_ifs, _else:Statements )
   endOn
 
   on "on"
@@ -975,7 +982,7 @@ parser
       parser_single_line_else_ons
       parser_single_line_else_on_others
     endIf
-    produce On( token_type, token_types:Args, statements:Statements, else_ons:CmdList, _else_on_others:Statements )
+    produce On( token_type, token_types:Args, statements:Statements, else_ons, _else_on_others:Statements )
   endOn
 
   on "while"
@@ -1135,15 +1142,22 @@ parser
     produce Println(args:Args)
   endOn
 
-  on "produce", parser_product    -> ParserProduce(arg:CreateCmd)
-  on "produceList", list_type     -> ProduceList(list_type:String)
+  on "produce", parser_product
+    create ParserCreate(arg:CreateCmd)
+    createNull
+    produce Return(value)
+  elseOn "->", parser_product
+    create ParserCreate(arg:CreateCmd)
+    createNull
+    produce Return(value)
+  endOn
   on "produceNull"
     create CreateNull
     createNull
     produce Return(value)
   endOn
-  on "->",      parser_product    -> ParserProduce(arg:CreateCmd)
-  on "restorePosition" -> RestorePosition
+  on "produceList", list_type -> ProduceList(list_type:String)
+  on "restorePosition"        -> RestorePosition
   on "return"
     if (nextIs(EOL)) createNull
     else             parser_expression
@@ -1311,5 +1325,4 @@ parser
   on STRING                             -> LiteralString( value=content )
   on STRING_OR_CHARACTER                -> LiteralStringOrCharacter( value=content )
   syntaxError
-  create Test(operand:Int32)
 

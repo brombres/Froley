@@ -38,6 +38,9 @@ class RVisitor : RogueSourceWriter
                     |        "- or override on(Cmd) to be a noAction." ...
                     |        (this_name,cmd_name,this_name,cmd_name,this_name,cmd_name) )
                     |
+                    |    method after( cmd:Cmd )
+                    |      noAction
+                    |
                     |    method dispatch( cmd:Cmd )->$ReturnType
                     |      if ($ReturnType instanceOf Cmd)
                     |        if (cmd is null) return null
@@ -45,6 +48,12 @@ class RVisitor : RogueSourceWriter
                     |        if (cmd is null) return $ReturnType.meta.default_value
                     |      endIf
                     |      return cmd.dispatch<<ThisType,$ReturnType>>( this )
+                    |
+                    |    method dispatch_on( cmd:Cmd ) [propagated]
+                    |      on( cmd )
+                    |
+                    |    method dispatch_after( cmd:Cmd ) [propagated]
+                    |      on( cmd )
                     |
                     |    method visit_children( cmd:CmdList )
                     |      if ($ReturnType instanceOf Cmd)
@@ -71,7 +80,7 @@ class RVisitor : RogueSourceWriter
       builder.print( content )
       builder.indent = 4
 
-      forEach (node_type in program.node_types)
+      forEach (node_type in program.node_types.values.to_list.sorted((a,b)=>(a.name<b.name)))
         if (node_type.is_built_in) nextIteration
 
         if (not handled_node_types.contains(node_type.name))
@@ -84,10 +93,11 @@ class RVisitor : RogueSourceWriter
 
           builder.println
           builder.print(  "method visit( cmd:" ).print( node_type.name ).println( " )->$ReturnType" )
-          builder.println "  on( cmd )"
+          builder.println "  dispatch_on( cmd )"
           if (properties.count or node_type.is_list)
             builder.println "  visit_children( cmd )"
           endIf
+          builder.println "  dispatch_after( cmd )"
           builder.println "  if ($ReturnType instanceOf Cmd) return cmd"
           builder.println "  else                            return $ReturnType.meta.default_value"
 

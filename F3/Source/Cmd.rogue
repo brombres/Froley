@@ -104,29 +104,28 @@ class ProgramDef : Cmd
       return "ProgramDef($)" (%sections)
 endClass
 
-class ScannerDef : Cmd
+class Element : Cmd
   PROPERTIES
-    name     : String
-    routines : Cmd
+    name         : String
+    routine_defs : Cmd
+    routines     = StringTable<<Routine>>()
+    vars         = StringTable<<Var>>()
 
   METHODS
-    method init( t, name, routines )
+    method init( t, name, routine_defs )
+endClass
 
+class ScannerDef : Element
+  METHODS
     method description->String
-      return "ScannerDef($,$)" (%name,%routines)
+      return "ScannerDef($,$)" (%name,%routine_defs)
 
 endClass
 
-class ParserDef : Cmd
-  PROPERTIES
-    name     : String
-    routines : Cmd
-
+class ParserDef : Element
   METHODS
-    method init( t, name, routines )
-
     method description->String
-      return "ParserDef($,$)" (%name,%routines)
+      return "ParserDef($,$)" (%name,%routine_defs)
 
 endClass
 
@@ -165,16 +164,35 @@ endClass
 
 class Routine : Cmd
   PROPERTIES
-    name       : String
-    attributes : String
-    statements : Statements
+    name             : String
+    attributes       : String
+    statements       : Statements
+
+    ip               : Int32
+    is_primer        : Logical
+    is_binary        : Logical
+    is_right_binary  : Logical
+    is_pre_unary     : Logical
+    is_post_unary    : Logical
+    is_organized     : Logical
+
+    next_routine     : Routine
 
   METHODS
     method init( t, name, attributes, statements )
+      if (attributes)
+        which (attributes)
+          case "[binary]":       is_binary = true
+          case "[primer]":       is_primer = true
+          case "[rightBinary]":  is_right_binary = true
+          case "[preUnary]":     is_pre_unary = true
+          case "[postUnary]":    is_post_unary = true
+          others:                throw t.error( "Unrecognized routine attribute $."(attributes) )
+        endWhich
+      endIf
 
     method description->String
       return "Routine($,$,$)" (%name,%attributes,%statements)
-
 endClass
 
 class LiteralString : Cmd

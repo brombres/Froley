@@ -379,13 +379,13 @@ parser
     createNull
     must_consume_eols
     scanner_routines
-    produce ScannerDef(name:String,routines)
+    produce ScannerDef(name:String,routine_defs)
 
   elseOn "parser"
     createNull
     must_consume_eols
     parser_routines
-    produce ParserDef(name:String,routines)
+    produce ParserDef(name:String,routine_defs)
 
   elseOn "tokens"
     if (consume(EOL)) createNull

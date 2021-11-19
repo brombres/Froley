@@ -18,18 +18,14 @@ class Type
     method init( name )
       Program.types[ name ] = this
 
-      which (name)
-        case "Logical", "Character", "Integer", "Real", "String"
-          is_built_in = true
-      endWhich
-
-      if (name == "Cmd") is_node = true
-
     method add( constructor:CreateCmd )
       constructors[ constructor.signature ] = constructor
 
     method add_property( t:Token, name:String, type_name:String )
-      properties.add( NodeProperty(t,name,Program.type(type_name)) )
+      add_property( t, name, Program.type(type_name) )
+
+    method add_property( t:Token, name:String, type:Type )
+      properties.add( NodeProperty(t,name,type) )
 
     method description->String
       return name

@@ -10,7 +10,7 @@ endClass
 class Visitor<<$ReturnType>>
   # Visitor is a Froley-generated triple-dispatch implementation of the visitor pattern.
   PROPERTIES
-    program : ProgramDef
+    this_element : Element
 
   METHODS
     method on( cmd:Cmd )
@@ -21,6 +21,9 @@ class Visitor<<$ReturnType>>
         "- or override on(Cmd) to be a noAction." ...
         (this_name,cmd_name,this_name,cmd_name,this_name,cmd_name) )
 
+    method after( cmd:Cmd )
+      noAction
+
     method dispatch( cmd:Cmd )->$ReturnType
       if ($ReturnType instanceOf Cmd)
         if (cmd is null) return null
@@ -28,6 +31,12 @@ class Visitor<<$ReturnType>>
         if (cmd is null) return $ReturnType.meta.default_value
       endIf
       return cmd.dispatch<<ThisType,$ReturnType>>( this )
+
+    method dispatch_on( cmd:Cmd ) [propagated]
+      on( cmd )
+
+    method dispatch_after( cmd:Cmd ) [propagated]
+      on( cmd )
 
     method visit_children( cmd:CmdList )
       if ($ReturnType instanceOf Cmd)
@@ -39,33 +48,52 @@ class Visitor<<$ReturnType>>
         dispatch( forEach in cmd.list )
       endIf
 
-    method visit( cmd:Cmd )->$ReturnType
-      on( cmd )
+    method visit( cmd:Access )->$ReturnType
+      dispatch_on( cmd )
+      dispatch_after( cmd )
       if ($ReturnType instanceOf Cmd) return cmd
       else                            return $ReturnType.meta.default_value
 
-    method visit( cmd:CmdList )->$ReturnType
-      on( cmd )
+    method visit( cmd:Add )->$ReturnType
+      dispatch_on( cmd )
       visit_children( cmd )
+      dispatch_after( cmd )
       if ($ReturnType instanceOf Cmd) return cmd
       else                            return $ReturnType.meta.default_value
 
-    method visit( cmd:Unary )->$ReturnType
-      on( cmd )
+    method visit( cmd:Args )->$ReturnType
+      dispatch_on( cmd )
       visit_children( cmd )
+      dispatch_after( cmd )
       if ($ReturnType instanceOf Cmd) return cmd
       else                            return $ReturnType.meta.default_value
 
-    method visit_children( cmd:Unary )
+    method visit( cmd:Assign )->$ReturnType
+      dispatch_on( cmd )
+      visit_children( cmd )
+      dispatch_after( cmd )
+      if ($ReturnType instanceOf Cmd) return cmd
+      else                            return $ReturnType.meta.default_value
+
+    method visit_children( cmd:Assign )
       if ($ReturnType instanceOf Cmd)
-        if (cmd.operand) cmd.operand = dispatch(cmd.operand)
+        if (cmd.target) cmd.target = dispatch(cmd.target)
+        if (cmd.new_value) cmd.new_value = dispatch(cmd.new_value)
       else
-        if (cmd.operand) cmd.operand.dispatch(this)
+        if (cmd.target) cmd.target.dispatch(this)
+        if (cmd.new_value) cmd.new_value.dispatch(this)
       endIf
 
+    method visit( cmd:BeginList )->$ReturnType
+      dispatch_on( cmd )
+      dispatch_after( cmd )
+      if ($ReturnType instanceOf Cmd) return cmd
+      else                            return $ReturnType.meta.default_value
+
     method visit( cmd:Binary )->$ReturnType
-      on( cmd )
+      dispatch_on( cmd )
       visit_children( cmd )
+      dispatch_after( cmd )
       if ($ReturnType instanceOf Cmd) return cmd
       else                            return $ReturnType.meta.default_value
 
@@ -78,111 +106,204 @@ class Visitor<<$ReturnType>>
         if (cmd.right) cmd.right.dispatch(this)
       endIf
 
-    method visit( cmd:ProgramDef )->$ReturnType
-      temporarily program = cmd
-        on( cmd )
-        visit_children( cmd )
-      endTemporarily
-
+    method visit( cmd:CharSet )->$ReturnType
+      dispatch_on( cmd )
+      dispatch_after( cmd )
       if ($ReturnType instanceOf Cmd) return cmd
       else                            return $ReturnType.meta.default_value
 
-    method visit_children( cmd:ProgramDef )
+    method visit( cmd:Cmd )->$ReturnType
+      dispatch_on( cmd )
+      dispatch_after( cmd )
+      if ($ReturnType instanceOf Cmd) return cmd
+      else                            return $ReturnType.meta.default_value
+
+    method visit( cmd:CmdList )->$ReturnType
+      dispatch_on( cmd )
+      visit_children( cmd )
+      dispatch_after( cmd )
+      if ($ReturnType instanceOf Cmd) return cmd
+      else                            return $ReturnType.meta.default_value
+
+    method visit( cmd:Collect )->$ReturnType
+      dispatch_on( cmd )
+      visit_children( cmd )
+      dispatch_after( cmd )
+      if ($ReturnType instanceOf Cmd) return cmd
+      else                            return $ReturnType.meta.default_value
+
+    method visit_children( cmd:Collect )
       if ($ReturnType instanceOf Cmd)
-        if (cmd.sections) cmd.sections = dispatch(cmd.sections)
+        if (cmd.args) cmd.args = dispatch(cmd.args) as Args
       else
-        if (cmd.sections) cmd.sections.dispatch(this)
+        if (cmd.args) cmd.args.dispatch(this)
       endIf
 
-    method visit( cmd:ScannerDef )->$ReturnType
-      on( cmd )
+    method visit( cmd:CompareEQ )->$ReturnType
+      dispatch_on( cmd )
       visit_children( cmd )
+      dispatch_after( cmd )
       if ($ReturnType instanceOf Cmd) return cmd
       else                            return $ReturnType.meta.default_value
 
-    method visit_children( cmd:ScannerDef )
+    method visit( cmd:CompareGE )->$ReturnType
+      dispatch_on( cmd )
+      visit_children( cmd )
+      dispatch_after( cmd )
+      if ($ReturnType instanceOf Cmd) return cmd
+      else                            return $ReturnType.meta.default_value
+
+    method visit( cmd:CompareGT )->$ReturnType
+      dispatch_on( cmd )
+      visit_children( cmd )
+      dispatch_after( cmd )
+      if ($ReturnType instanceOf Cmd) return cmd
+      else                            return $ReturnType.meta.default_value
+
+    method visit( cmd:CompareLE )->$ReturnType
+      dispatch_on( cmd )
+      visit_children( cmd )
+      dispatch_after( cmd )
+      if ($ReturnType instanceOf Cmd) return cmd
+      else                            return $ReturnType.meta.default_value
+
+    method visit( cmd:CompareLT )->$ReturnType
+      dispatch_on( cmd )
+      visit_children( cmd )
+      dispatch_after( cmd )
+      if ($ReturnType instanceOf Cmd) return cmd
+      else                            return $ReturnType.meta.default_value
+
+    method visit( cmd:CompareNE )->$ReturnType
+      dispatch_on( cmd )
+      visit_children( cmd )
+      dispatch_after( cmd )
+      if ($ReturnType instanceOf Cmd) return cmd
+      else                            return $ReturnType.meta.default_value
+
+    method visit( cmd:CreateCmd )->$ReturnType
+      dispatch_on( cmd )
+      visit_children( cmd )
+      dispatch_after( cmd )
+      if ($ReturnType instanceOf Cmd) return cmd
+      else                            return $ReturnType.meta.default_value
+
+    method visit_children( cmd:CreateCmd )
       if ($ReturnType instanceOf Cmd)
-        if (cmd.routines) cmd.routines = dispatch(cmd.routines)
+        if (cmd.args) cmd.args = dispatch(cmd.args) as Args
       else
-        if (cmd.routines) cmd.routines.dispatch(this)
+        if (cmd.args) cmd.args.dispatch(this)
       endIf
 
-    method visit( cmd:ParserDef )->$ReturnType
-      on( cmd )
+    method visit( cmd:CreateCmdArg )->$ReturnType
+      dispatch_on( cmd )
       visit_children( cmd )
+      dispatch_after( cmd )
       if ($ReturnType instanceOf Cmd) return cmd
       else                            return $ReturnType.meta.default_value
 
-    method visit_children( cmd:ParserDef )
+    method visit_children( cmd:CreateCmdArg )
       if ($ReturnType instanceOf Cmd)
-        if (cmd.routines) cmd.routines = dispatch(cmd.routines)
+        if (cmd.arg_value) cmd.arg_value = dispatch(cmd.arg_value)
       else
-        if (cmd.routines) cmd.routines.dispatch(this)
+        if (cmd.arg_value) cmd.arg_value.dispatch(this)
       endIf
 
-    method visit( cmd:TokenGroup )->$ReturnType
-      on( cmd )
-      visit_children( cmd )
+    method visit( cmd:CreateList )->$ReturnType
+      dispatch_on( cmd )
+      dispatch_after( cmd )
       if ($ReturnType instanceOf Cmd) return cmd
       else                            return $ReturnType.meta.default_value
 
-    method visit_children( cmd:TokenGroup )
+    method visit( cmd:CreateNull )->$ReturnType
+      dispatch_on( cmd )
+      dispatch_after( cmd )
+      if ($ReturnType instanceOf Cmd) return cmd
+      else                            return $ReturnType.meta.default_value
+
+    method visit( cmd:Decrement )->$ReturnType
+      dispatch_on( cmd )
+      visit_children( cmd )
+      dispatch_after( cmd )
+      if ($ReturnType instanceOf Cmd) return cmd
+      else                            return $ReturnType.meta.default_value
+
+    method visit_children( cmd:Decrement )
       if ($ReturnType instanceOf Cmd)
-        if (cmd.definitions) cmd.definitions = dispatch(cmd.definitions)
+        if (cmd.target) cmd.target = dispatch(cmd.target)
       else
-        if (cmd.definitions) cmd.definitions.dispatch(this)
+        if (cmd.target) cmd.target.dispatch(this)
       endIf
 
-    method visit( cmd:Identifier )->$ReturnType
-      on( cmd )
+    method visit( cmd:DiscardList )->$ReturnType
+      dispatch_on( cmd )
+      dispatch_after( cmd )
       if ($ReturnType instanceOf Cmd) return cmd
       else                            return $ReturnType.meta.default_value
 
-    method visit( cmd:Routine )->$ReturnType
-      on( cmd )
+    method visit( cmd:DiscardPosition )->$ReturnType
+      dispatch_on( cmd )
+      dispatch_after( cmd )
+      if ($ReturnType instanceOf Cmd) return cmd
+      else                            return $ReturnType.meta.default_value
+
+    method visit( cmd:Divide )->$ReturnType
+      dispatch_on( cmd )
       visit_children( cmd )
+      dispatch_after( cmd )
       if ($ReturnType instanceOf Cmd) return cmd
       else                            return $ReturnType.meta.default_value
 
-    method visit_children( cmd:Routine )
+    method visit( cmd:ElseIf )->$ReturnType
+      dispatch_on( cmd )
+      visit_children( cmd )
+      dispatch_after( cmd )
+      if ($ReturnType instanceOf Cmd) return cmd
+      else                            return $ReturnType.meta.default_value
+
+    method visit_children( cmd:ElseIf )
       if ($ReturnType instanceOf Cmd)
+        if (cmd.condition) cmd.condition = dispatch(cmd.condition)
         if (cmd.statements) cmd.statements = dispatch(cmd.statements) as Statements
       else
+        if (cmd.condition) cmd.condition.dispatch(this)
         if (cmd.statements) cmd.statements.dispatch(this)
       endIf
 
-    method visit( cmd:LiteralString )->$ReturnType
-      on( cmd )
-      if ($ReturnType instanceOf Cmd) return cmd
-      else                            return $ReturnType.meta.default_value
-
-    method visit( cmd:TokenDef )->$ReturnType
-      on( cmd )
+    method visit( cmd:ElseOn )->$ReturnType
+      dispatch_on( cmd )
       visit_children( cmd )
+      dispatch_after( cmd )
       if ($ReturnType instanceOf Cmd) return cmd
       else                            return $ReturnType.meta.default_value
 
-    method visit_children( cmd:TokenDef )
+    method visit_children( cmd:ElseOn )
       if ($ReturnType instanceOf Cmd)
-        if (cmd.attributes) cmd.attributes = dispatch(cmd.attributes)
+        if (cmd.token_type) cmd.token_type = dispatch(cmd.token_type)
+        if (cmd.token_types) cmd.token_types = dispatch(cmd.token_types) as Args
+        if (cmd.statements) cmd.statements = dispatch(cmd.statements) as Statements
       else
-        if (cmd.attributes) cmd.attributes.dispatch(this)
+        if (cmd.token_type) cmd.token_type.dispatch(this)
+        if (cmd.token_types) cmd.token_types.dispatch(this)
+        if (cmd.statements) cmd.statements.dispatch(this)
       endIf
 
-    method visit( cmd:Symbol )->$ReturnType
-      on( cmd )
+    method visit( cmd:Halt )->$ReturnType
+      dispatch_on( cmd )
+      dispatch_after( cmd )
       if ($ReturnType instanceOf Cmd) return cmd
       else                            return $ReturnType.meta.default_value
 
-    method visit( cmd:Statements )->$ReturnType
-      on( cmd )
-      visit_children( cmd )
+    method visit( cmd:Identifier )->$ReturnType
+      dispatch_on( cmd )
+      dispatch_after( cmd )
       if ($ReturnType instanceOf Cmd) return cmd
       else                            return $ReturnType.meta.default_value
 
     method visit( cmd:If )->$ReturnType
-      on( cmd )
+      dispatch_on( cmd )
       visit_children( cmd )
+      dispatch_after( cmd )
       if ($ReturnType instanceOf Cmd) return cmd
       else                            return $ReturnType.meta.default_value
 
@@ -199,9 +320,81 @@ class Visitor<<$ReturnType>>
         if (cmd._else) cmd._else.dispatch(this)
       endIf
 
-    method visit( cmd:Match )->$ReturnType
-      on( cmd )
+    method visit( cmd:Increment )->$ReturnType
+      dispatch_on( cmd )
       visit_children( cmd )
+      dispatch_after( cmd )
+      if ($ReturnType instanceOf Cmd) return cmd
+      else                            return $ReturnType.meta.default_value
+
+    method visit_children( cmd:Increment )
+      if ($ReturnType instanceOf Cmd)
+        if (cmd.target) cmd.target = dispatch(cmd.target)
+      else
+        if (cmd.target) cmd.target.dispatch(this)
+      endIf
+
+    method visit( cmd:LiteralContent )->$ReturnType
+      dispatch_on( cmd )
+      dispatch_after( cmd )
+      if ($ReturnType instanceOf Cmd) return cmd
+      else                            return $ReturnType.meta.default_value
+
+    method visit( cmd:LiteralInteger )->$ReturnType
+      dispatch_on( cmd )
+      dispatch_after( cmd )
+      if ($ReturnType instanceOf Cmd) return cmd
+      else                            return $ReturnType.meta.default_value
+
+    method visit( cmd:LiteralLogical )->$ReturnType
+      dispatch_on( cmd )
+      dispatch_after( cmd )
+      if ($ReturnType instanceOf Cmd) return cmd
+      else                            return $ReturnType.meta.default_value
+
+    method visit( cmd:LiteralString )->$ReturnType
+      dispatch_on( cmd )
+      dispatch_after( cmd )
+      if ($ReturnType instanceOf Cmd) return cmd
+      else                            return $ReturnType.meta.default_value
+
+    method visit( cmd:LiteralStringOrCharacter )->$ReturnType
+      dispatch_on( cmd )
+      dispatch_after( cmd )
+      if ($ReturnType instanceOf Cmd) return cmd
+      else                            return $ReturnType.meta.default_value
+
+    method visit( cmd:LogicalAnd )->$ReturnType
+      dispatch_on( cmd )
+      visit_children( cmd )
+      dispatch_after( cmd )
+      if ($ReturnType instanceOf Cmd) return cmd
+      else                            return $ReturnType.meta.default_value
+
+    method visit( cmd:LogicalNot )->$ReturnType
+      dispatch_on( cmd )
+      visit_children( cmd )
+      dispatch_after( cmd )
+      if ($ReturnType instanceOf Cmd) return cmd
+      else                            return $ReturnType.meta.default_value
+
+    method visit( cmd:LogicalOr )->$ReturnType
+      dispatch_on( cmd )
+      visit_children( cmd )
+      dispatch_after( cmd )
+      if ($ReturnType instanceOf Cmd) return cmd
+      else                            return $ReturnType.meta.default_value
+
+    method visit( cmd:MarkPosition )->$ReturnType
+      dispatch_on( cmd )
+      dispatch_after( cmd )
+      if ($ReturnType instanceOf Cmd) return cmd
+      else                            return $ReturnType.meta.default_value
+
+    method visit( cmd:Match )->$ReturnType
+      dispatch_on( cmd )
+      visit_children( cmd )
+      dispatch_after( cmd )
       if ($ReturnType instanceOf Cmd) return cmd
       else                            return $ReturnType.meta.default_value
 
@@ -216,42 +409,10 @@ class Visitor<<$ReturnType>>
         if (cmd._others) cmd._others.dispatch(this)
       endIf
 
-    method visit( cmd:While )->$ReturnType
-      on( cmd )
-      visit_children( cmd )
-      if ($ReturnType instanceOf Cmd) return cmd
-      else                            return $ReturnType.meta.default_value
-
-    method visit_children( cmd:While )
-      if ($ReturnType instanceOf Cmd)
-        if (cmd.condition) cmd.condition = dispatch(cmd.condition)
-        if (cmd.statements) cmd.statements = dispatch(cmd.statements) as Statements
-      else
-        if (cmd.condition) cmd.condition.dispatch(this)
-        if (cmd.statements) cmd.statements.dispatch(this)
-      endIf
-
-    method visit( cmd:ScannerCreate )->$ReturnType
-      on( cmd )
-      visit_children( cmd )
-      if ($ReturnType instanceOf Cmd) return cmd
-      else                            return $ReturnType.meta.default_value
-
-    method visit_children( cmd:ScannerCreate )
-      if ($ReturnType instanceOf Cmd)
-        if (cmd.arg) cmd.arg = dispatch(cmd.arg)
-      else
-        if (cmd.arg) cmd.arg.dispatch(this)
-      endIf
-
-    method visit( cmd:Restart )->$ReturnType
-      on( cmd )
-      if ($ReturnType instanceOf Cmd) return cmd
-      else                            return $ReturnType.meta.default_value
-
     method visit( cmd:MatchCase )->$ReturnType
-      on( cmd )
+      dispatch_on( cmd )
       visit_children( cmd )
+      dispatch_after( cmd )
       if ($ReturnType instanceOf Cmd) return cmd
       else                            return $ReturnType.meta.default_value
 
@@ -264,435 +425,36 @@ class Visitor<<$ReturnType>>
         if (cmd.statements) cmd.statements.dispatch(this)
       endIf
 
-    method visit( cmd:ProduceAny )->$ReturnType
-      on( cmd )
-      if ($ReturnType instanceOf Cmd) return cmd
-      else                            return $ReturnType.meta.default_value
-
-    method visit( cmd:ElseIf )->$ReturnType
-      on( cmd )
-      visit_children( cmd )
-      if ($ReturnType instanceOf Cmd) return cmd
-      else                            return $ReturnType.meta.default_value
-
-    method visit_children( cmd:ElseIf )
-      if ($ReturnType instanceOf Cmd)
-        if (cmd.condition) cmd.condition = dispatch(cmd.condition)
-        if (cmd.statements) cmd.statements = dispatch(cmd.statements) as Statements
-      else
-        if (cmd.condition) cmd.condition.dispatch(this)
-        if (cmd.statements) cmd.statements.dispatch(this)
-      endIf
-
-    method visit( cmd:Collect )->$ReturnType
-      on( cmd )
-      visit_children( cmd )
-      if ($ReturnType instanceOf Cmd) return cmd
-      else                            return $ReturnType.meta.default_value
-
-    method visit_children( cmd:Collect )
-      if ($ReturnType instanceOf Cmd)
-        if (cmd.args) cmd.args = dispatch(cmd.args) as Args
-      else
-        if (cmd.args) cmd.args.dispatch(this)
-      endIf
-
-    method visit( cmd:DiscardPosition )->$ReturnType
-      on( cmd )
-      if ($ReturnType instanceOf Cmd) return cmd
-      else                            return $ReturnType.meta.default_value
-
-    method visit( cmd:Halt )->$ReturnType
-      on( cmd )
-      if ($ReturnType instanceOf Cmd) return cmd
-      else                            return $ReturnType.meta.default_value
-
-    method visit( cmd:MarkPosition )->$ReturnType
-      on( cmd )
-      if ($ReturnType instanceOf Cmd) return cmd
-      else                            return $ReturnType.meta.default_value
-
     method visit( cmd:Mode )->$ReturnType
-      on( cmd )
-      if ($ReturnType instanceOf Cmd) return cmd
-      else                            return $ReturnType.meta.default_value
-
-    method visit( cmd:ScannerMustConsume )->$ReturnType
-      on( cmd )
-      visit_children( cmd )
-      if ($ReturnType instanceOf Cmd) return cmd
-      else                            return $ReturnType.meta.default_value
-
-    method visit_children( cmd:ScannerMustConsume )
-      if ($ReturnType instanceOf Cmd)
-        if (cmd.args) cmd.args = dispatch(cmd.args) as SequenceArgs
-      else
-        if (cmd.args) cmd.args.dispatch(this)
-      endIf
-
-    method visit( cmd:Print )->$ReturnType
-      on( cmd )
-      visit_children( cmd )
-      if ($ReturnType instanceOf Cmd) return cmd
-      else                            return $ReturnType.meta.default_value
-
-    method visit_children( cmd:Print )
-      if ($ReturnType instanceOf Cmd)
-        if (cmd.args) cmd.args = dispatch(cmd.args) as Args
-      else
-        if (cmd.args) cmd.args.dispatch(this)
-      endIf
-
-    method visit( cmd:Args )->$ReturnType
-      on( cmd )
-      visit_children( cmd )
-      if ($ReturnType instanceOf Cmd) return cmd
-      else                            return $ReturnType.meta.default_value
-
-    method visit( cmd:Println )->$ReturnType
-      on( cmd )
-      visit_children( cmd )
-      if ($ReturnType instanceOf Cmd) return cmd
-      else                            return $ReturnType.meta.default_value
-
-    method visit_children( cmd:Println )
-      if ($ReturnType instanceOf Cmd)
-        if (cmd.args) cmd.args = dispatch(cmd.args) as Args
-      else
-        if (cmd.args) cmd.args.dispatch(this)
-      endIf
-
-    method visit( cmd:RestorePosition )->$ReturnType
-      on( cmd )
-      if ($ReturnType instanceOf Cmd) return cmd
-      else                            return $ReturnType.meta.default_value
-
-    method visit( cmd:Return )->$ReturnType
-      on( cmd )
-      visit_children( cmd )
-      if ($ReturnType instanceOf Cmd) return cmd
-      else                            return $ReturnType.meta.default_value
-
-    method visit_children( cmd:Return )
-      if ($ReturnType instanceOf Cmd)
-        if (cmd.value) cmd.value = dispatch(cmd.value)
-      else
-        if (cmd.value) cmd.value.dispatch(this)
-      endIf
-
-    method visit( cmd:SavePosition )->$ReturnType
-      on( cmd )
-      if ($ReturnType instanceOf Cmd) return cmd
-      else                            return $ReturnType.meta.default_value
-
-    method visit( cmd:ThrowSyntaxError )->$ReturnType
-      on( cmd )
-      visit_children( cmd )
-      if ($ReturnType instanceOf Cmd) return cmd
-      else                            return $ReturnType.meta.default_value
-
-    method visit_children( cmd:ThrowSyntaxError )
-      if ($ReturnType instanceOf Cmd)
-        if (cmd.args) cmd.args = dispatch(cmd.args) as Args
-      else
-        if (cmd.args) cmd.args.dispatch(this)
-      endIf
-
-    method visit( cmd:Increment )->$ReturnType
-      on( cmd )
-      visit_children( cmd )
-      if ($ReturnType instanceOf Cmd) return cmd
-      else                            return $ReturnType.meta.default_value
-
-    method visit_children( cmd:Increment )
-      if ($ReturnType instanceOf Cmd)
-        if (cmd.target) cmd.target = dispatch(cmd.target)
-      else
-        if (cmd.target) cmd.target.dispatch(this)
-      endIf
-
-    method visit( cmd:Decrement )->$ReturnType
-      on( cmd )
-      visit_children( cmd )
-      if ($ReturnType instanceOf Cmd) return cmd
-      else                            return $ReturnType.meta.default_value
-
-    method visit_children( cmd:Decrement )
-      if ($ReturnType instanceOf Cmd)
-        if (cmd.target) cmd.target = dispatch(cmd.target)
-      else
-        if (cmd.target) cmd.target.dispatch(this)
-      endIf
-
-    method visit( cmd:Assign )->$ReturnType
-      on( cmd )
-      visit_children( cmd )
-      if ($ReturnType instanceOf Cmd) return cmd
-      else                            return $ReturnType.meta.default_value
-
-    method visit_children( cmd:Assign )
-      if ($ReturnType instanceOf Cmd)
-        if (cmd.target) cmd.target = dispatch(cmd.target)
-        if (cmd.new_value) cmd.new_value = dispatch(cmd.new_value)
-      else
-        if (cmd.target) cmd.target.dispatch(this)
-        if (cmd.new_value) cmd.new_value.dispatch(this)
-      endIf
-
-    method visit( cmd:Access )->$ReturnType
-      on( cmd )
-      if ($ReturnType instanceOf Cmd) return cmd
-      else                            return $ReturnType.meta.default_value
-
-    method visit( cmd:CreateCmdArg )->$ReturnType
-      on( cmd )
-      visit_children( cmd )
-      if ($ReturnType instanceOf Cmd) return cmd
-      else                            return $ReturnType.meta.default_value
-
-    method visit_children( cmd:CreateCmdArg )
-      if ($ReturnType instanceOf Cmd)
-        if (cmd.arg_value) cmd.arg_value = dispatch(cmd.arg_value)
-      else
-        if (cmd.arg_value) cmd.arg_value.dispatch(this)
-      endIf
-
-    method visit( cmd:SequenceArgs )->$ReturnType
-      on( cmd )
-      visit_children( cmd )
-      if ($ReturnType instanceOf Cmd) return cmd
-      else                            return $ReturnType.meta.default_value
-
-    method visit( cmd:PatternSequence )->$ReturnType
-      on( cmd )
-      visit_children( cmd )
-      if ($ReturnType instanceOf Cmd) return cmd
-      else                            return $ReturnType.meta.default_value
-
-    method visit( cmd:ZeroOrMore )->$ReturnType
-      on( cmd )
-      visit_children( cmd )
-      if ($ReturnType instanceOf Cmd) return cmd
-      else                            return $ReturnType.meta.default_value
-
-    method visit_children( cmd:ZeroOrMore )
-      if ($ReturnType instanceOf Cmd)
-        if (cmd.pattern) cmd.pattern = dispatch(cmd.pattern)
-      else
-        if (cmd.pattern) cmd.pattern.dispatch(this)
-      endIf
-
-    method visit( cmd:OneOrMore )->$ReturnType
-      on( cmd )
-      visit_children( cmd )
-      if ($ReturnType instanceOf Cmd) return cmd
-      else                            return $ReturnType.meta.default_value
-
-    method visit_children( cmd:OneOrMore )
-      if ($ReturnType instanceOf Cmd)
-        if (cmd.pattern) cmd.pattern = dispatch(cmd.pattern)
-      else
-        if (cmd.pattern) cmd.pattern.dispatch(this)
-      endIf
-
-    method visit( cmd:OptionalPattern )->$ReturnType
-      on( cmd )
-      visit_children( cmd )
-      if ($ReturnType instanceOf Cmd) return cmd
-      else                            return $ReturnType.meta.default_value
-
-    method visit_children( cmd:OptionalPattern )
-      if ($ReturnType instanceOf Cmd)
-        if (cmd.pattern) cmd.pattern = dispatch(cmd.pattern)
-      else
-        if (cmd.pattern) cmd.pattern.dispatch(this)
-      endIf
-
-    method visit( cmd:CharSet )->$ReturnType
-      on( cmd )
-      if ($ReturnType instanceOf Cmd) return cmd
-      else                            return $ReturnType.meta.default_value
-
-    method visit( cmd:LiteralStringOrCharacter )->$ReturnType
-      on( cmd )
-      if ($ReturnType instanceOf Cmd) return cmd
-      else                            return $ReturnType.meta.default_value
-
-    method visit( cmd:LogicalOr )->$ReturnType
-      on( cmd )
-      visit_children( cmd )
-      if ($ReturnType instanceOf Cmd) return cmd
-      else                            return $ReturnType.meta.default_value
-
-    method visit( cmd:LogicalAnd )->$ReturnType
-      on( cmd )
-      visit_children( cmd )
-      if ($ReturnType instanceOf Cmd) return cmd
-      else                            return $ReturnType.meta.default_value
-
-    method visit( cmd:CompareEQ )->$ReturnType
-      on( cmd )
-      visit_children( cmd )
-      if ($ReturnType instanceOf Cmd) return cmd
-      else                            return $ReturnType.meta.default_value
-
-    method visit( cmd:CompareNE )->$ReturnType
-      on( cmd )
-      visit_children( cmd )
-      if ($ReturnType instanceOf Cmd) return cmd
-      else                            return $ReturnType.meta.default_value
-
-    method visit( cmd:CompareLT )->$ReturnType
-      on( cmd )
-      visit_children( cmd )
-      if ($ReturnType instanceOf Cmd) return cmd
-      else                            return $ReturnType.meta.default_value
-
-    method visit( cmd:CompareGT )->$ReturnType
-      on( cmd )
-      visit_children( cmd )
-      if ($ReturnType instanceOf Cmd) return cmd
-      else                            return $ReturnType.meta.default_value
-
-    method visit( cmd:CompareLE )->$ReturnType
-      on( cmd )
-      visit_children( cmd )
-      if ($ReturnType instanceOf Cmd) return cmd
-      else                            return $ReturnType.meta.default_value
-
-    method visit( cmd:CompareGE )->$ReturnType
-      on( cmd )
-      visit_children( cmd )
-      if ($ReturnType instanceOf Cmd) return cmd
-      else                            return $ReturnType.meta.default_value
-
-    method visit( cmd:Add )->$ReturnType
-      on( cmd )
-      visit_children( cmd )
-      if ($ReturnType instanceOf Cmd) return cmd
-      else                            return $ReturnType.meta.default_value
-
-    method visit( cmd:Subtract )->$ReturnType
-      on( cmd )
-      visit_children( cmd )
+      dispatch_on( cmd )
+      dispatch_after( cmd )
       if ($ReturnType instanceOf Cmd) return cmd
       else                            return $ReturnType.meta.default_value
 
     method visit( cmd:Multiply )->$ReturnType
-      on( cmd )
+      dispatch_on( cmd )
       visit_children( cmd )
-      if ($ReturnType instanceOf Cmd) return cmd
-      else                            return $ReturnType.meta.default_value
-
-    method visit( cmd:Divide )->$ReturnType
-      on( cmd )
-      visit_children( cmd )
-      if ($ReturnType instanceOf Cmd) return cmd
-      else                            return $ReturnType.meta.default_value
-
-    method visit( cmd:Power )->$ReturnType
-      on( cmd )
-      visit_children( cmd )
+      dispatch_after( cmd )
       if ($ReturnType instanceOf Cmd) return cmd
       else                            return $ReturnType.meta.default_value
 
     method visit( cmd:Negate )->$ReturnType
-      on( cmd )
+      dispatch_on( cmd )
       visit_children( cmd )
+      dispatch_after( cmd )
       if ($ReturnType instanceOf Cmd) return cmd
       else                            return $ReturnType.meta.default_value
 
-    method visit( cmd:LogicalNot )->$ReturnType
-      on( cmd )
-      visit_children( cmd )
-      if ($ReturnType instanceOf Cmd) return cmd
-      else                            return $ReturnType.meta.default_value
-
-    method visit( cmd:ReadBuffer )->$ReturnType
-      on( cmd )
-      if ($ReturnType instanceOf Cmd) return cmd
-      else                            return $ReturnType.meta.default_value
-
-    method visit( cmd:ScannerCallUserMethod )->$ReturnType
-      on( cmd )
-      if ($ReturnType instanceOf Cmd) return cmd
-      else                            return $ReturnType.meta.default_value
-
-    method visit( cmd:ScannerConsume )->$ReturnType
-      on( cmd )
-      visit_children( cmd )
-      if ($ReturnType instanceOf Cmd) return cmd
-      else                            return $ReturnType.meta.default_value
-
-    method visit_children( cmd:ScannerConsume )
-      if ($ReturnType instanceOf Cmd)
-        if (cmd.args) cmd.args = dispatch(cmd.args) as SequenceArgs
-      else
-        if (cmd.args) cmd.args.dispatch(this)
-      endIf
-
-    method visit( cmd:LiteralLogical )->$ReturnType
-      on( cmd )
-      if ($ReturnType instanceOf Cmd) return cmd
-      else                            return $ReturnType.meta.default_value
-
-    method visit( cmd:ScannerHasAnother )->$ReturnType
-      on( cmd )
-      if ($ReturnType instanceOf Cmd) return cmd
-      else                            return $ReturnType.meta.default_value
-
-    method visit( cmd:ScannerNextIs )->$ReturnType
-      on( cmd )
-      visit_children( cmd )
-      if ($ReturnType instanceOf Cmd) return cmd
-      else                            return $ReturnType.meta.default_value
-
-    method visit_children( cmd:ScannerNextIs )
-      if ($ReturnType instanceOf Cmd)
-        if (cmd.args) cmd.args = dispatch(cmd.args) as SequenceArgs
-      else
-        if (cmd.args) cmd.args.dispatch(this)
-      endIf
-
-    method visit( cmd:ScannerPeek )->$ReturnType
-      on( cmd )
-      visit_children( cmd )
-      if ($ReturnType instanceOf Cmd) return cmd
-      else                            return $ReturnType.meta.default_value
-
-    method visit_children( cmd:ScannerPeek )
-      if ($ReturnType instanceOf Cmd)
-        if (cmd.lookahead) cmd.lookahead = dispatch(cmd.lookahead)
-      else
-        if (cmd.lookahead) cmd.lookahead.dispatch(this)
-      endIf
-
-    method visit( cmd:ScannerRead )->$ReturnType
-      on( cmd )
-      if ($ReturnType instanceOf Cmd) return cmd
-      else                            return $ReturnType.meta.default_value
-
-    method visit( cmd:Scan )->$ReturnType
-      on( cmd )
-      visit_children( cmd )
-      if ($ReturnType instanceOf Cmd) return cmd
-      else                            return $ReturnType.meta.default_value
-
-    method visit_children( cmd:Scan )
-      if ($ReturnType instanceOf Cmd)
-        if (cmd.args) cmd.args = dispatch(cmd.args) as SequenceArgs
-      else
-        if (cmd.args) cmd.args.dispatch(this)
-      endIf
-
-    method visit( cmd:LiteralInteger )->$ReturnType
-      on( cmd )
+    method visit( cmd:NextHasAttribute )->$ReturnType
+      dispatch_on( cmd )
+      dispatch_after( cmd )
       if ($ReturnType instanceOf Cmd) return cmd
       else                            return $ReturnType.meta.default_value
 
     method visit( cmd:On )->$ReturnType
-      on( cmd )
+      dispatch_on( cmd )
       visit_children( cmd )
+      dispatch_after( cmd )
       if ($ReturnType instanceOf Cmd) return cmd
       else                            return $ReturnType.meta.default_value
 
@@ -711,106 +473,51 @@ class Visitor<<$ReturnType>>
         if (cmd._else_on_others) cmd._else_on_others.dispatch(this)
       endIf
 
-    method visit( cmd:ElseOn )->$ReturnType
-      on( cmd )
+    method visit( cmd:OneOrMore )->$ReturnType
+      dispatch_on( cmd )
       visit_children( cmd )
+      dispatch_after( cmd )
       if ($ReturnType instanceOf Cmd) return cmd
       else                            return $ReturnType.meta.default_value
 
-    method visit_children( cmd:ElseOn )
+    method visit_children( cmd:OneOrMore )
       if ($ReturnType instanceOf Cmd)
-        if (cmd.token_type) cmd.token_type = dispatch(cmd.token_type)
-        if (cmd.token_types) cmd.token_types = dispatch(cmd.token_types) as Args
-        if (cmd.statements) cmd.statements = dispatch(cmd.statements) as Statements
+        if (cmd.pattern) cmd.pattern = dispatch(cmd.pattern)
       else
-        if (cmd.token_type) cmd.token_type.dispatch(this)
-        if (cmd.token_types) cmd.token_types.dispatch(this)
-        if (cmd.statements) cmd.statements.dispatch(this)
+        if (cmd.pattern) cmd.pattern.dispatch(this)
       endIf
 
-    method visit( cmd:BeginList )->$ReturnType
-      on( cmd )
-      if ($ReturnType instanceOf Cmd) return cmd
-      else                            return $ReturnType.meta.default_value
-
-    method visit( cmd:ParserCreate )->$ReturnType
-      on( cmd )
+    method visit( cmd:OptionalPattern )->$ReturnType
+      dispatch_on( cmd )
       visit_children( cmd )
+      dispatch_after( cmd )
       if ($ReturnType instanceOf Cmd) return cmd
       else                            return $ReturnType.meta.default_value
 
-    method visit_children( cmd:ParserCreate )
+    method visit_children( cmd:OptionalPattern )
       if ($ReturnType instanceOf Cmd)
-        if (cmd.arg) cmd.arg = dispatch(cmd.arg) as CreateCmd
+        if (cmd.pattern) cmd.pattern = dispatch(cmd.pattern)
       else
-        if (cmd.arg) cmd.arg.dispatch(this)
-      endIf
-
-    method visit( cmd:CreateList )->$ReturnType
-      on( cmd )
-      if ($ReturnType instanceOf Cmd) return cmd
-      else                            return $ReturnType.meta.default_value
-
-    method visit( cmd:CreateNull )->$ReturnType
-      on( cmd )
-      if ($ReturnType instanceOf Cmd) return cmd
-      else                            return $ReturnType.meta.default_value
-
-    method visit( cmd:DiscardList )->$ReturnType
-      on( cmd )
-      if ($ReturnType instanceOf Cmd) return cmd
-      else                            return $ReturnType.meta.default_value
-
-    method visit( cmd:ParserMustConsume )->$ReturnType
-      on( cmd )
-      visit_children( cmd )
-      if ($ReturnType instanceOf Cmd) return cmd
-      else                            return $ReturnType.meta.default_value
-
-    method visit_children( cmd:ParserMustConsume )
-      if ($ReturnType instanceOf Cmd)
-        if (cmd.token_type) cmd.token_type = dispatch(cmd.token_type)
-      else
-        if (cmd.token_type) cmd.token_type.dispatch(this)
+        if (cmd.pattern) cmd.pattern.dispatch(this)
       endIf
 
     method visit( cmd:ParserArgs )->$ReturnType
-      on( cmd )
+      dispatch_on( cmd )
       visit_children( cmd )
+      dispatch_after( cmd )
       if ($ReturnType instanceOf Cmd) return cmd
       else                            return $ReturnType.meta.default_value
-
-    method visit( cmd:ProduceList )->$ReturnType
-      on( cmd )
-      if ($ReturnType instanceOf Cmd) return cmd
-      else                            return $ReturnType.meta.default_value
-
-    method visit( cmd:LiteralContent )->$ReturnType
-      on( cmd )
-      if ($ReturnType instanceOf Cmd) return cmd
-      else                            return $ReturnType.meta.default_value
-
-    method visit( cmd:CreateCmd )->$ReturnType
-      on( cmd )
-      visit_children( cmd )
-      if ($ReturnType instanceOf Cmd) return cmd
-      else                            return $ReturnType.meta.default_value
-
-    method visit_children( cmd:CreateCmd )
-      if ($ReturnType instanceOf Cmd)
-        if (cmd.args) cmd.args = dispatch(cmd.args) as Args
-      else
-        if (cmd.args) cmd.args.dispatch(this)
-      endIf
 
     method visit( cmd:ParserCallUserMethod )->$ReturnType
-      on( cmd )
+      dispatch_on( cmd )
+      dispatch_after( cmd )
       if ($ReturnType instanceOf Cmd) return cmd
       else                            return $ReturnType.meta.default_value
 
     method visit( cmd:ParserConsume )->$ReturnType
-      on( cmd )
+      dispatch_on( cmd )
       visit_children( cmd )
+      dispatch_after( cmd )
       if ($ReturnType instanceOf Cmd) return cmd
       else                            return $ReturnType.meta.default_value
 
@@ -821,19 +528,53 @@ class Visitor<<$ReturnType>>
         if (cmd.token_type) cmd.token_type.dispatch(this)
       endIf
 
-    method visit( cmd:ParserHasAnother )->$ReturnType
-      on( cmd )
+    method visit( cmd:ParserCreate )->$ReturnType
+      dispatch_on( cmd )
+      visit_children( cmd )
+      dispatch_after( cmd )
       if ($ReturnType instanceOf Cmd) return cmd
       else                            return $ReturnType.meta.default_value
 
-    method visit( cmd:NextHasAttribute )->$ReturnType
-      on( cmd )
+    method visit_children( cmd:ParserCreate )
+      if ($ReturnType instanceOf Cmd)
+        if (cmd.arg) cmd.arg = dispatch(cmd.arg) as CreateCmd
+      else
+        if (cmd.arg) cmd.arg.dispatch(this)
+      endIf
+
+    method visit( cmd:ParserDef )->$ReturnType
+      temporarily this_element = cmd
+        dispatch_on( cmd )
+        visit_children( cmd )
+        dispatch_after( cmd )
+      endTemporarily
       if ($ReturnType instanceOf Cmd) return cmd
       else                            return $ReturnType.meta.default_value
+
+    method visit( cmd:ParserHasAnother )->$ReturnType
+      dispatch_on( cmd )
+      dispatch_after( cmd )
+      if ($ReturnType instanceOf Cmd) return cmd
+      else                            return $ReturnType.meta.default_value
+
+    method visit( cmd:ParserMustConsume )->$ReturnType
+      dispatch_on( cmd )
+      visit_children( cmd )
+      dispatch_after( cmd )
+      if ($ReturnType instanceOf Cmd) return cmd
+      else                            return $ReturnType.meta.default_value
+
+    method visit_children( cmd:ParserMustConsume )
+      if ($ReturnType instanceOf Cmd)
+        if (cmd.token_type) cmd.token_type = dispatch(cmd.token_type)
+      else
+        if (cmd.token_type) cmd.token_type.dispatch(this)
+      endIf
 
     method visit( cmd:ParserNextIs )->$ReturnType
-      on( cmd )
+      dispatch_on( cmd )
       visit_children( cmd )
+      dispatch_after( cmd )
       if ($ReturnType instanceOf Cmd) return cmd
       else                            return $ReturnType.meta.default_value
 
@@ -845,12 +586,366 @@ class Visitor<<$ReturnType>>
       endIf
 
     method visit( cmd:ParserRead )->$ReturnType
-      on( cmd )
+      dispatch_on( cmd )
+      dispatch_after( cmd )
       if ($ReturnType instanceOf Cmd) return cmd
       else                            return $ReturnType.meta.default_value
-    method visit( cmd:LogicalBinary )->$ReturnType
-      on( cmd )
+
+    method visit( cmd:PatternSequence )->$ReturnType
+      dispatch_on( cmd )
       visit_children( cmd )
+      dispatch_after( cmd )
       if ($ReturnType instanceOf Cmd) return cmd
       else                            return $ReturnType.meta.default_value
+
+    method visit( cmd:Power )->$ReturnType
+      dispatch_on( cmd )
+      visit_children( cmd )
+      dispatch_after( cmd )
+      if ($ReturnType instanceOf Cmd) return cmd
+      else                            return $ReturnType.meta.default_value
+
+    method visit( cmd:Print )->$ReturnType
+      dispatch_on( cmd )
+      visit_children( cmd )
+      dispatch_after( cmd )
+      if ($ReturnType instanceOf Cmd) return cmd
+      else                            return $ReturnType.meta.default_value
+
+    method visit_children( cmd:Print )
+      if ($ReturnType instanceOf Cmd)
+        if (cmd.args) cmd.args = dispatch(cmd.args) as Args
+      else
+        if (cmd.args) cmd.args.dispatch(this)
+      endIf
+
+    method visit( cmd:Println )->$ReturnType
+      dispatch_on( cmd )
+      visit_children( cmd )
+      dispatch_after( cmd )
+      if ($ReturnType instanceOf Cmd) return cmd
+      else                            return $ReturnType.meta.default_value
+
+    method visit_children( cmd:Println )
+      if ($ReturnType instanceOf Cmd)
+        if (cmd.args) cmd.args = dispatch(cmd.args) as Args
+      else
+        if (cmd.args) cmd.args.dispatch(this)
+      endIf
+
+    method visit( cmd:ProduceAny )->$ReturnType
+      dispatch_on( cmd )
+      dispatch_after( cmd )
+      if ($ReturnType instanceOf Cmd) return cmd
+      else                            return $ReturnType.meta.default_value
+
+    method visit( cmd:ProduceList )->$ReturnType
+      dispatch_on( cmd )
+      dispatch_after( cmd )
+      if ($ReturnType instanceOf Cmd) return cmd
+      else                            return $ReturnType.meta.default_value
+
+    method visit( cmd:ProgramDef )->$ReturnType
+      dispatch_on( cmd )
+      visit_children( cmd )
+      dispatch_after( cmd )
+      if ($ReturnType instanceOf Cmd) return cmd
+      else                            return $ReturnType.meta.default_value
+
+    method visit_children( cmd:ProgramDef )
+      if ($ReturnType instanceOf Cmd)
+        if (cmd.sections) cmd.sections = dispatch(cmd.sections)
+      else
+        if (cmd.sections) cmd.sections.dispatch(this)
+      endIf
+
+    method visit( cmd:ReadBuffer )->$ReturnType
+      dispatch_on( cmd )
+      dispatch_after( cmd )
+      if ($ReturnType instanceOf Cmd) return cmd
+      else                            return $ReturnType.meta.default_value
+
+    method visit( cmd:Restart )->$ReturnType
+      dispatch_on( cmd )
+      dispatch_after( cmd )
+      if ($ReturnType instanceOf Cmd) return cmd
+      else                            return $ReturnType.meta.default_value
+
+    method visit( cmd:RestorePosition )->$ReturnType
+      dispatch_on( cmd )
+      dispatch_after( cmd )
+      if ($ReturnType instanceOf Cmd) return cmd
+      else                            return $ReturnType.meta.default_value
+
+    method visit( cmd:Return )->$ReturnType
+      dispatch_on( cmd )
+      visit_children( cmd )
+      dispatch_after( cmd )
+      if ($ReturnType instanceOf Cmd) return cmd
+      else                            return $ReturnType.meta.default_value
+
+    method visit_children( cmd:Return )
+      if ($ReturnType instanceOf Cmd)
+        if (cmd.value) cmd.value = dispatch(cmd.value)
+      else
+        if (cmd.value) cmd.value.dispatch(this)
+      endIf
+
+    method visit( cmd:Routine )->$ReturnType
+      dispatch_on( cmd )
+      visit_children( cmd )
+      dispatch_after( cmd )
+      if ($ReturnType instanceOf Cmd) return cmd
+      else                            return $ReturnType.meta.default_value
+
+    method visit_children( cmd:Routine )
+      if ($ReturnType instanceOf Cmd)
+        if (cmd.statements) cmd.statements = dispatch(cmd.statements) as Statements
+      else
+        if (cmd.statements) cmd.statements.dispatch(this)
+      endIf
+
+    method visit( cmd:SavePosition )->$ReturnType
+      dispatch_on( cmd )
+      dispatch_after( cmd )
+      if ($ReturnType instanceOf Cmd) return cmd
+      else                            return $ReturnType.meta.default_value
+
+    method visit( cmd:Scan )->$ReturnType
+      dispatch_on( cmd )
+      visit_children( cmd )
+      dispatch_after( cmd )
+      if ($ReturnType instanceOf Cmd) return cmd
+      else                            return $ReturnType.meta.default_value
+
+    method visit_children( cmd:Scan )
+      if ($ReturnType instanceOf Cmd)
+        if (cmd.args) cmd.args = dispatch(cmd.args) as SequenceArgs
+      else
+        if (cmd.args) cmd.args.dispatch(this)
+      endIf
+
+    method visit( cmd:ScannerCallUserMethod )->$ReturnType
+      dispatch_on( cmd )
+      dispatch_after( cmd )
+      if ($ReturnType instanceOf Cmd) return cmd
+      else                            return $ReturnType.meta.default_value
+
+    method visit( cmd:ScannerConsume )->$ReturnType
+      dispatch_on( cmd )
+      visit_children( cmd )
+      dispatch_after( cmd )
+      if ($ReturnType instanceOf Cmd) return cmd
+      else                            return $ReturnType.meta.default_value
+
+    method visit_children( cmd:ScannerConsume )
+      if ($ReturnType instanceOf Cmd)
+        if (cmd.args) cmd.args = dispatch(cmd.args) as SequenceArgs
+      else
+        if (cmd.args) cmd.args.dispatch(this)
+      endIf
+
+    method visit( cmd:ScannerCreate )->$ReturnType
+      dispatch_on( cmd )
+      visit_children( cmd )
+      dispatch_after( cmd )
+      if ($ReturnType instanceOf Cmd) return cmd
+      else                            return $ReturnType.meta.default_value
+
+    method visit_children( cmd:ScannerCreate )
+      if ($ReturnType instanceOf Cmd)
+        if (cmd.arg) cmd.arg = dispatch(cmd.arg)
+      else
+        if (cmd.arg) cmd.arg.dispatch(this)
+      endIf
+
+    method visit( cmd:ScannerDef )->$ReturnType
+      temporarily this_element = cmd
+        dispatch_on( cmd )
+        visit_children( cmd )
+        dispatch_after( cmd )
+      endTemporarily
+      if ($ReturnType instanceOf Cmd) return cmd
+      else                            return $ReturnType.meta.default_value
+
+    method visit( cmd:ScannerHasAnother )->$ReturnType
+      dispatch_on( cmd )
+      dispatch_after( cmd )
+      if ($ReturnType instanceOf Cmd) return cmd
+      else                            return $ReturnType.meta.default_value
+
+    method visit( cmd:ScannerMustConsume )->$ReturnType
+      dispatch_on( cmd )
+      visit_children( cmd )
+      dispatch_after( cmd )
+      if ($ReturnType instanceOf Cmd) return cmd
+      else                            return $ReturnType.meta.default_value
+
+    method visit_children( cmd:ScannerMustConsume )
+      if ($ReturnType instanceOf Cmd)
+        if (cmd.args) cmd.args = dispatch(cmd.args) as SequenceArgs
+      else
+        if (cmd.args) cmd.args.dispatch(this)
+      endIf
+
+    method visit( cmd:ScannerNextIs )->$ReturnType
+      dispatch_on( cmd )
+      visit_children( cmd )
+      dispatch_after( cmd )
+      if ($ReturnType instanceOf Cmd) return cmd
+      else                            return $ReturnType.meta.default_value
+
+    method visit_children( cmd:ScannerNextIs )
+      if ($ReturnType instanceOf Cmd)
+        if (cmd.args) cmd.args = dispatch(cmd.args) as SequenceArgs
+      else
+        if (cmd.args) cmd.args.dispatch(this)
+      endIf
+
+    method visit( cmd:ScannerPeek )->$ReturnType
+      dispatch_on( cmd )
+      visit_children( cmd )
+      dispatch_after( cmd )
+      if ($ReturnType instanceOf Cmd) return cmd
+      else                            return $ReturnType.meta.default_value
+
+    method visit_children( cmd:ScannerPeek )
+      if ($ReturnType instanceOf Cmd)
+        if (cmd.lookahead) cmd.lookahead = dispatch(cmd.lookahead)
+      else
+        if (cmd.lookahead) cmd.lookahead.dispatch(this)
+      endIf
+
+    method visit( cmd:ScannerRead )->$ReturnType
+      dispatch_on( cmd )
+      dispatch_after( cmd )
+      if ($ReturnType instanceOf Cmd) return cmd
+      else                            return $ReturnType.meta.default_value
+
+    method visit( cmd:SequenceArgs )->$ReturnType
+      dispatch_on( cmd )
+      visit_children( cmd )
+      dispatch_after( cmd )
+      if ($ReturnType instanceOf Cmd) return cmd
+      else                            return $ReturnType.meta.default_value
+
+    method visit( cmd:Statements )->$ReturnType
+      dispatch_on( cmd )
+      visit_children( cmd )
+      dispatch_after( cmd )
+      if ($ReturnType instanceOf Cmd) return cmd
+      else                            return $ReturnType.meta.default_value
+
+    method visit( cmd:Subtract )->$ReturnType
+      dispatch_on( cmd )
+      visit_children( cmd )
+      dispatch_after( cmd )
+      if ($ReturnType instanceOf Cmd) return cmd
+      else                            return $ReturnType.meta.default_value
+
+    method visit( cmd:Symbol )->$ReturnType
+      dispatch_on( cmd )
+      dispatch_after( cmd )
+      if ($ReturnType instanceOf Cmd) return cmd
+      else                            return $ReturnType.meta.default_value
+
+    method visit( cmd:ThrowSyntaxError )->$ReturnType
+      dispatch_on( cmd )
+      visit_children( cmd )
+      dispatch_after( cmd )
+      if ($ReturnType instanceOf Cmd) return cmd
+      else                            return $ReturnType.meta.default_value
+
+    method visit_children( cmd:ThrowSyntaxError )
+      if ($ReturnType instanceOf Cmd)
+        if (cmd.args) cmd.args = dispatch(cmd.args) as Args
+      else
+        if (cmd.args) cmd.args.dispatch(this)
+      endIf
+
+    method visit( cmd:TokenDef )->$ReturnType
+      dispatch_on( cmd )
+      visit_children( cmd )
+      dispatch_after( cmd )
+      if ($ReturnType instanceOf Cmd) return cmd
+      else                            return $ReturnType.meta.default_value
+
+    method visit_children( cmd:TokenDef )
+      if ($ReturnType instanceOf Cmd)
+        if (cmd.attributes) cmd.attributes = dispatch(cmd.attributes)
+      else
+        if (cmd.attributes) cmd.attributes.dispatch(this)
+      endIf
+
+    method visit( cmd:TokenGroup )->$ReturnType
+      dispatch_on( cmd )
+      visit_children( cmd )
+      dispatch_after( cmd )
+      if ($ReturnType instanceOf Cmd) return cmd
+      else                            return $ReturnType.meta.default_value
+
+    method visit_children( cmd:TokenGroup )
+      if ($ReturnType instanceOf Cmd)
+        if (cmd.definitions) cmd.definitions = dispatch(cmd.definitions)
+      else
+        if (cmd.definitions) cmd.definitions.dispatch(this)
+      endIf
+
+    method visit( cmd:Unary )->$ReturnType
+      dispatch_on( cmd )
+      visit_children( cmd )
+      dispatch_after( cmd )
+      if ($ReturnType instanceOf Cmd) return cmd
+      else                            return $ReturnType.meta.default_value
+
+    method visit_children( cmd:Unary )
+      if ($ReturnType instanceOf Cmd)
+        if (cmd.operand) cmd.operand = dispatch(cmd.operand)
+      else
+        if (cmd.operand) cmd.operand.dispatch(this)
+      endIf
+
+    method visit( cmd:While )->$ReturnType
+      dispatch_on( cmd )
+      visit_children( cmd )
+      dispatch_after( cmd )
+      if ($ReturnType instanceOf Cmd) return cmd
+      else                            return $ReturnType.meta.default_value
+
+    method visit_children( cmd:While )
+      if ($ReturnType instanceOf Cmd)
+        if (cmd.condition) cmd.condition = dispatch(cmd.condition)
+        if (cmd.statements) cmd.statements = dispatch(cmd.statements) as Statements
+      else
+        if (cmd.condition) cmd.condition.dispatch(this)
+        if (cmd.statements) cmd.statements.dispatch(this)
+      endIf
+
+    method visit( cmd:ZeroOrMore )->$ReturnType
+      dispatch_on( cmd )
+      visit_children( cmd )
+      dispatch_after( cmd )
+      if ($ReturnType instanceOf Cmd) return cmd
+      else                            return $ReturnType.meta.default_value
+
+    method visit_children( cmd:ZeroOrMore )
+      if ($ReturnType instanceOf Cmd)
+        if (cmd.pattern) cmd.pattern = dispatch(cmd.pattern)
+      else
+        if (cmd.pattern) cmd.pattern.dispatch(this)
+      endIf
+
+    method visit( cmd:Element )->$ReturnType
+      dispatch_on( cmd )
+      visit_children( cmd )
+      dispatch_after( cmd )
+      if ($ReturnType instanceOf Cmd) return cmd
+      else                            return $ReturnType.meta.default_value
+
+    method visit_children( cmd:Element )
+      if ($ReturnType instanceOf Cmd)
+        if (cmd.routine_defs) cmd.routine_defs = dispatch(cmd.routine_defs)
+      else
+        if (cmd.routine_defs) cmd.routine_defs.dispatch(this)
+      endIf
 endClass

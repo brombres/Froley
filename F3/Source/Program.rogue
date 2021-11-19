@@ -3,16 +3,40 @@ module F3
 class Program [singleton]
   PROPERTIES
     command       : Value
-    ast           : ProgramDef
+    nodes         : ProgramDef
     project_name  : String
     output_folder : String
 
     types         = StringTable<<Type>>()
+    type_Cmd      : Type
+    type_CmdList  : Type
 
   METHODS
-    method init( command, ast )
+    method init( command, nodes )
       project_name  = File.filename( command//args.first ).before_last('.')
       output_folder = File( command//args.last )
+
+      local t = nodes.t
+      type_Cmd = type("Cmd").[ is_node = true ]
+      type_CmdList = type("CmdList").[
+        set_base_type( t, type_Cmd )
+        is_list=true
+      ]
+      type("Unary").[
+        set_base_type( t, type_Cmd )
+        add_property( t, "operand", type_Cmd )
+      ]
+      type("Binary").[
+        set_base_type( t, type_Cmd )
+        add_property( t, "left", type_Cmd )
+        add_property( t, "right", type_Cmd )
+      ]
+
+      type("Logical").is_built_in = true
+      type("Character").is_built_in = true
+      type("Integer").is_built_in = true
+      type("Real").is_built_in = true
+      type("String").is_built_in = true
 
     method type( name:String )->Type
       local result = types[ name ]

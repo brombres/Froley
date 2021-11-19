@@ -1,10 +1,12 @@
 module F3
 
+$include "Collector.rogue"
 $include "FType.rogue"
 $include "Scanner.rogue"
 $include "Parser.rogue" [optional]
 $include "Program.rogue" [optional]
 $include "Type.rogue"
+$include "Var.rogue"
 uses F3
 uses Utility/CommandLineParser
 

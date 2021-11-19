@@ -1,0 +1,7 @@
+module F3
+
+class Var( t:Token, name:String, type=Type.NONE:Type )
+  METHODS
+    method description->String
+      return "Var($:$)"(name,type)
+endClass

@@ -109,7 +109,7 @@ routine compile_cpp
 endRoutine
 
 routine rogo_run
-  execute File.esc( exe_filepath )
+  execute "$ Source/F3.froley Test --main" (File.esc(exe_filepath))
 endRoutine
 
 routine rogo_install

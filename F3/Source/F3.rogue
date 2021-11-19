@@ -13,7 +13,7 @@ catch (error:SyntaxError)
   System.exit 1
 catch (error:Error)
   Console.error.println error
-  Console.error.println error.stack_trace
+  #Console.error.println error.stack_trace
   System.exit 1
 endTry
 
@@ -25,16 +25,27 @@ class F3
     method init( args:String[] )
       command = parse_args( args )
 
-      # trace command
-      # has //options and possibly //args
-
-      if (command//options//help or command//args.count == 0)
+      if (command//options//help or command//args.count != 2)
         print_usage
         System.exit 0
       endIf
 
-      $if (defined(PARSER_EXISTS)) parse_files
-      $else                        scan_files
+      local definition_file = File(command//args.first)
+      local output_folder = File(command//args.last)
+      if (not definition_file.exists)
+        throw Error( ''No such file "$".'' (definition_file) )
+      endIf
+      if (not output_folder.exists) output_folder.create_folder
+      if (not output_folder.is_folder)
+        throw Error( ''Unable to create folder "$".'' (output_folder) )
+      endIf
+
+      local program = Parser(definition_file).parse as Program
+      if (not program)
+        throw Error( ''No language definition found in file "$".'' (definition_file) )
+      endIf
+
+      program.compile( command )
 
     method scan_files
       forEach (arg in command//args)
@@ -58,17 +69,21 @@ class F3
       # This method is unrelated to the Froley Parser
       local command = CommandLineParser().
       [
-        option( "--flag",     &alias="-f" )
+        option( "--main",     &alias="-m" )
         option( "--help",     &aliases=["-h","-?"] )
-        option( "--setting=", &alias="-s" )
       ].parse( args )
       return command
 
     method print_usage
       println @|USAGE
-               |  f3 [OPTIONS] <filepath>
+               |  f3 [OPTIONS] <language-definition.froley> <output-folder>
                |
                |OPTIONS
                |  --help, -h, -?
                |    Show this help text.
+               |
+               |  --main, -m
+               |    Creates a main application file that demonstrates how to use the scanner and parser.
+               |    Does not create or modify a main file if it already exists.
 endClass
+

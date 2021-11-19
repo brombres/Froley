@@ -73,6 +73,7 @@ class ScannerCore [abstract]
       while (_execute(start_ip) or not halt)
         buffer.clear
       endWhile
+      _on_output_line # flush any buffered output
       return tokens
 
     method _add( type:TokenType )

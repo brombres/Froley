@@ -45,7 +45,6 @@ class RMain : RogueSourceWriter
          |      forEach (arg in command//args)
          |        local scanner = Scanner( File(arg) )
          |        local tokens = scanner.tokenize
-         |        if (scanner.output.count) print scanner.output; flush
          |        println (forEach in tokens)
          |      endForEach
          |
@@ -54,7 +53,6 @@ class RMain : RogueSourceWriter
          |      forEach (arg in command//args)
          |        local parser = Parser( File(arg) )
          |        local ast = parser.parse
-         |        if (parser.output.count) print parser.output; flush
          |        @trace ast
          |      endForEach
          |    $endIf

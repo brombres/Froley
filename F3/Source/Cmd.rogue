@@ -95,14 +95,29 @@ endClass
 
 class Program : Cmd
   PROPERTIES
-    sections : Cmd
+    command       : Value
+    sections      : Cmd
+    project_name  : String
+    output_folder : String
+
+    #node_types    = StringTable<<NodeType>>()
 
   METHODS
     method init( t, sections )
 
+    method compile( command )
+      project_name  = File.filename( command//args.first ).before_last('.')
+      output_folder = File( command//args.last )
+      trace
+
     method description->String
       return "Program($)" (%sections)
 
+      #{
+    method node_type( name:String, &is_cmd )->NodeType
+      local type = node_types[ name ]
+      if (type)
+        }#
 endClass
 
 class ScannerDef : Cmd

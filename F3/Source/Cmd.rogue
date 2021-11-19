@@ -6,6 +6,9 @@ class Cmd( t:Token )
     method add( cmd:Cmd )
       throw UnsupportedOperationError()
 
+    method clear
+      throw UnsupportedOperationError()
+
     method count->Int32
       return 0
 
@@ -23,6 +26,9 @@ class Cmd( t:Token )
 
     method get<<$AsType>>( index:Int32 )->$AsType
       return get(index) as $AsType
+
+    method list->Cmd[]
+      throw UnsupportedOperationError()
 
     method to->Character
       return Character(this->Int32)
@@ -49,24 +55,30 @@ class CmdList : Cmd
 
   METHODS
     method add( cmd:Cmd )
-      list.add( cmd )
+      @list.add( cmd )
+
+    method clear
+      @list.clear
 
     method count->Int32
-      return list.count
+      return @list.count
 
     method description->String
       return "CmdList" + list_description
 
     method get( index:Int32 )->Cmd
-      return list[index]
+      return @list[index]
 
     method get<<$AsType>>( index:Int32 )->$AsType
-      return list[index] as $AsType
+      return @list[index] as $AsType
+
+    method list->Cmd[]
+      return @list
 
     method list_description->String
       use builder = StringBuilder.pool
         builder.print '['
-        forEach (element at index in list)
+        forEach (element at index in @list)
           if (index > 0) builder.print ','
           builder.print( %element )
         endForEach
@@ -221,10 +233,20 @@ class TokenDef : Cmd
   PROPERTIES
     name       : String
     symbol     : String
-    attributes : Cmd
+    attributes : String[]
 
   METHODS
     method init( t, name, symbol, attributes )
+
+    method init( t, name, symbol, attribute_cmd_list:Cmd )
+      if (not String.exists(symbol)) symbol = name
+      if (attribute_cmd_list)
+        attributes = (attribute_cmd_list as CmdList).list.map<<String>>( $->String )
+      endIf
+
+    method has_attribute( attribute_name:String )->Logical
+      if (not attributes) return false
+      return attributes.locate(attribute_name)?
 
     method description->String
       return "TokenDef($,$,$)" (%name,%symbol,%attributes)

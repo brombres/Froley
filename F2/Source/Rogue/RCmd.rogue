@@ -36,6 +36,9 @@ class RCmd : RogueSourceWriter
            |    method add( cmd:Cmd )
            |      throw UnsupportedOperationError()
            |
+           |    method clear
+           |      throw UnsupportedOperationError()
+           |
            |    method count->Int32
            |      return 0
            |
@@ -49,6 +52,12 @@ class RCmd : RogueSourceWriter
            |      return visitor.visit( this )
            |
            |    method get( index:Int32 )->Cmd
+           |      throw UnsupportedOperationError()
+           |
+           |    method get<<$AsType>>( index:Int32 )->$AsType
+           |      return get(index) as $AsType
+           |
+           |    method list->Cmd[]
            |      throw UnsupportedOperationError()
            |
            |    method to->Character
@@ -78,21 +87,27 @@ class RCmd : RogueSourceWriter
            |
            |  METHODS
            |    method add( cmd:Cmd )
-           |      list.add( cmd )
+           |      @list.add( cmd )
+           |
+           |    method clear
+           |      @list.clear
            |
            |    method count->Int32
-           |      return list.count
+           |      return @list.count
            |
            |    method description->String
            |      return "CmdList" + list_description
            |
            |    method get( index:Int32 )->Cmd
-           |      return list[index]
+           |      return @list[index]
+           |
+           |    method list->Cmd[]
+           |      return @list
            |
            |    method list_description->String
            |      use builder = StringBuilder.pool
            |        builder.print '['
-           |        forEach (element at index in list)
+           |        forEach (element at index in @list)
            |          if (index > 0) builder.print ','
            |          builder.print( %element )
            |        endForEach

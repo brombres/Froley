@@ -1,0 +1,37 @@
+module F3
+
+class TokenOrganizer : Visitor<<Cmd>>
+  METHODS
+    method on( cmd:Cmd )
+      noAction
+
+    method visit( cmd:TokenGroup )->Cmd [override]
+      if (not String.exists(cmd.name)) cmd.name = "Tokens"
+      prior.visit( cmd )
+      local entry = Program.token_groups.find( cmd.name )
+      if (entry)
+        if (entry is not cmd)
+          # Merge this token group's definitions into existing group with the same name
+          entry.value.definitions.list.add( cmd.definitions.list )
+          return null
+        endIf
+      else
+        Program.token_groups[cmd.name] = cmd
+      endIf
+
+      return prior.visit( cmd )
+
+    method visit( cmd:TokenDef )->Cmd [override]
+      if (not cmd.symbol) cmd.symbol = cmd.name
+      Program.tokens_by_name[cmd.name] = cmd
+      Program.tokens_by_symbol[cmd.symbol] = cmd
+      if (cmd.attributes)
+        forEach (attribute in cmd.attributes)
+          if (not Program.token_attributes.contains(attribute))
+            Program.token_attributes[attribute] = (1:<<:Program.token_attributes.count)
+          endIf
+        endForEach
+      endIf
+      return prior.visit( cmd )
+endClass
+

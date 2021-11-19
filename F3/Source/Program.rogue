@@ -2,14 +2,19 @@ module F3
 
 class Program [singleton]
   PROPERTIES
-    command       : Value
-    nodes         : ProgramDef
-    project_name  : String
-    output_folder : String
+    command          : Value
+    nodes            : ProgramDef
+    project_name     : String
+    output_folder    : String
 
-    types         = StringTable<<Type>>()
-    type_Cmd      : Type
-    type_CmdList  : Type
+    types            = StringTable<<Type>>()
+    type_Cmd         : Type
+    type_CmdList     : Type
+
+    token_groups     = StringTable<<TokenGroup>>()
+    tokens_by_name   = StringTable<<TokenDef>>()
+    tokens_by_symbol = StringTable<<TokenDef>>()
+    token_attributes = StringTable<<Int32>>(){ "content":1 }
 
   METHODS
     method init( command, nodes )
@@ -37,6 +42,9 @@ class Program [singleton]
       type("Integer").is_built_in = true
       type("Real").is_built_in = true
       type("String").is_built_in = true
+
+      nodes.dispatch( Collector() )
+      nodes.dispatch( TokenOrganizer() )
 
     method type( name:String )->Type
       local result = types[ name ]

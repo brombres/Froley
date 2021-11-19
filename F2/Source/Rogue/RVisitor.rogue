@@ -33,7 +33,7 @@ class RVisitor : RogueSourceWriter
                     |    method on( cmd:Cmd )
                     |      local this_name = type_name.after_any("::")
                     |      local cmd_name = cmd.type_name.after_any("::")
-                    |      throw UnsupportedOperationError(
+                    |      throw SyntaxError(
                     |        "$ does not support node type $. Override $.on($) or $.visit($) " ...
                     |        "- or override on(Cmd) to be a noAction." ...
                     |        (this_name,cmd_name,this_name,cmd_name,this_name,cmd_name) )

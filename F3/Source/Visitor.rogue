@@ -11,12 +11,13 @@ class Visitor<<$ReturnType>>
   # Visitor is a Froley-generated triple-dispatch implementation of the visitor pattern.
   PROPERTIES
     this_element : Element
+    this_routine : Routine
 
   METHODS
     method on( cmd:Cmd )
       local this_name = type_name.after_any("::")
       local cmd_name = cmd.type_name.after_any("::")
-      throw UnsupportedOperationError(
+      throw SyntaxError(
         "$ does not support node type $. Override $.on($) or $.visit($) " ...
         "- or override on(Cmd) to be a noAction." ...
         (this_name,cmd_name,this_name,cmd_name,this_name,cmd_name) )
@@ -692,9 +693,11 @@ class Visitor<<$ReturnType>>
       endIf
 
     method visit( cmd:Routine )->$ReturnType
-      dispatch_on( cmd )
-      visit_children( cmd )
-      dispatch_after( cmd )
+      temporarily this_routine = cmd
+        dispatch_on( cmd )
+        visit_children( cmd )
+        dispatch_after( cmd )
+      endTemporarily
       if ($ReturnType instanceOf Cmd) return cmd
       else                            return $ReturnType.meta.default_value
 
@@ -865,17 +868,9 @@ class Visitor<<$ReturnType>>
 
     method visit( cmd:TokenDef )->$ReturnType
       dispatch_on( cmd )
-      visit_children( cmd )
       dispatch_after( cmd )
       if ($ReturnType instanceOf Cmd) return cmd
       else                            return $ReturnType.meta.default_value
-
-    method visit_children( cmd:TokenDef )
-      if ($ReturnType instanceOf Cmd)
-        if (cmd.attributes) cmd.attributes = dispatch(cmd.attributes)
-      else
-        if (cmd.attributes) cmd.attributes.dispatch(this)
-      endIf
 
     method visit( cmd:TokenGroup )->$ReturnType
       dispatch_on( cmd )

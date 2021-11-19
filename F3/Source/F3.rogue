@@ -1,10 +1,13 @@
 module F3
 
+# FIXME: rename SyntaxError to CompileError
+
 $include "Collector.rogue"
 $include "FType.rogue"
 $include "Scanner.rogue"
 $include "Parser.rogue" [optional]
 $include "Program.rogue" [optional]
+$include "TokenOrganizer.rogue"
 $include "Type.rogue"
 $include "Var.rogue"
 uses F3

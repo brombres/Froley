@@ -1,7 +1,10 @@
 module F3
 
-class Collector : Visitor
+class Collector : Visitor<<Cmd>>
   METHODS
+    method on( cmd:Cmd )
+      noAction
+
     method after( cmd:ParserDef )
       # this_element.routines may now have additional routines; re-add them to this node
       cmd.routine_defs.clear

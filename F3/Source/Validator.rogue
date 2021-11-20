@@ -1,0 +1,34 @@
+module F3
+
+class Validator : Visitor
+  METHODS
+    method on( cmd:Cmd )
+      noAction
+
+    method on( cmd:Collect )
+      if (cmd.args.count == 0) throw cmd.args.t.error( "One or more arguments expected." )
+
+    method on( cmd:Print )
+      if (cmd.args.count == 0)
+        throw cmd.t.error( "Argument expected for 'print'." )
+      endIf
+
+    method on( cmd:ParserDef )
+      if (cmd.vars.count)
+        forEach (v in cmd.vars)
+          if (v.type == FType.NONE)
+            throw v.t.error( "Reference to undefined routine or variable '$'."(v.name) )
+          endIf
+        endForEach
+      endIf
+
+    method on( cmd:ScannerDef )
+      if (cmd.vars.count)
+        forEach (v in cmd.vars)
+          if (v.type == FType.NONE)
+            throw v.t.error( "Reference to undefined routine or variable '$'."(v.name) )
+          endIf
+        endForEach
+      endIf
+endClass
+

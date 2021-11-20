@@ -56,6 +56,7 @@ class Program [singleton]
       nodes.dispatch( TokenOrganizer() )
       nodes.dispatch( Organizer() )
       nodes.dispatch( Resolver() )
+      nodes.dispatch( Validator() )
 
     method type( name:String )->Type
       local result = types[ name ]

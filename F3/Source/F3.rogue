@@ -13,6 +13,7 @@ $include "Resolver.rogue"
 $include "ScanTableBuilder.rogue"
 $include "TokenOrganizer.rogue"
 $include "Type.rogue"
+$include "Validator.rogue"
 $include "Var.rogue"
 uses F3
 uses Utility/CommandLineParser

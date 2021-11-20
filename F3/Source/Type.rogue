@@ -88,12 +88,15 @@ class Type
       endIf
       @base_type = new_base_type
       is_node = true
+      if (new_base_type.is_list) is_list = true
 
     method set_base_type( t:Token, base_type_name:String )
       set_base_type( t, Program.type(base_type_name) )
 
     method set_is_list( @is_list )
-      if (is_list) base_type = "CmdList"
+      if (this is not Program.type_CmdList and not base_type)
+        base_type = Program.type_CmdList
+      endIf
 
 endClass
 

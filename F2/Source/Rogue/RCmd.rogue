@@ -57,6 +57,9 @@ class RCmd : RogueSourceWriter
            |    method get<<$AsType>>( index:Int32 )->$AsType
            |      return get(index) as $AsType
            |
+           |    method insert( element:Cmd, before_index=0:Int32 )
+           |      throw UnsupportedOperationError()
+           |
            |    method list->Cmd[]
            |      throw UnsupportedOperationError()
            |
@@ -86,6 +89,16 @@ class RCmd : RogueSourceWriter
            |    list = Cmd[]
            |
            |  METHODS
+           |    method init( t )
+           |      noAction
+           |
+           |    method init( t, element:Cmd )
+           |      list.add( element )
+           |
+           |    method init( t, element1:Cmd, element2:Cmd )
+           |      list.add( element1 )
+           |      list.add( element2 )
+           |
            |    method add( cmd:Cmd )
            |      @list.add( cmd )
            |
@@ -100,6 +113,9 @@ class RCmd : RogueSourceWriter
            |
            |    method get( index:Int32 )->Cmd
            |      return @list[index]
+           |
+           |    method insert( element:Cmd, before_index=0:Int32 )
+           |      list.insert( element, before_index )
            |
            |    method list->Cmd[]
            |      return @list

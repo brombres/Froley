@@ -27,6 +27,9 @@ class Cmd( t:Token )
     method get<<$AsType>>( index:Int32 )->$AsType
       return get(index) as $AsType
 
+    method insert( element:Cmd, before_index=0:Int32 )
+      throw UnsupportedOperationError()
+
     method list->Cmd[]
       throw UnsupportedOperationError()
 
@@ -54,6 +57,16 @@ class CmdList : Cmd
     list = Cmd[]
 
   METHODS
+    method init( t )
+      noAction
+
+    method init( t, element:Cmd )
+      list.add( element )
+
+    method init( t, element1:Cmd, element2:Cmd )
+      list.add( element1 )
+      list.add( element2 )
+
     method add( cmd:Cmd )
       @list.add( cmd )
 
@@ -71,6 +84,9 @@ class CmdList : Cmd
 
     method get<<$AsType>>( index:Int32 )->$AsType
       return @list[index] as $AsType
+
+    method insert( element:Cmd, before_index=0:Int32 )
+      list.insert( element, before_index )
 
     method list->Cmd[]
       return @list
@@ -207,6 +223,12 @@ class Routine : Cmd
       return "Routine($,$,$)" (%name,%attributes,%statements)
 endClass
 
+class Literal : Cmd
+  METHODS
+    method description->String
+      return "Literal"
+endClass
+
 class LiteralString : Cmd
   PROPERTIES
     value : String
@@ -227,6 +249,82 @@ class LiteralString : Cmd
 
     method type->FType
       return FType.STRING
+endClass
+
+class LiteralStringOrCharacter : Cmd
+  PROPERTIES
+    value : String
+
+  METHODS
+    method init( t, value )
+
+    method description->String
+      return "LiteralStringOrCharacter($)" (%value)
+
+    method to->Character
+      if (value is null or value.count == 0) return Character(0)
+      return value[0]
+
+    method to->Int32:  return value
+    method to->Logical: return value?
+    method to->String: return value
+
+    method type->FType
+      return FType.STRING
+
+endClass
+
+class LiteralLogical : Cmd
+  PROPERTIES
+    value : Logical
+
+  METHODS
+    method init( t, value )
+
+    method description->String
+      return "LiteralLogical($)" (%value)
+
+    method to->Int32:   return which{value:1 || 0}
+    method to->Logical: return value
+    method to->String:  return which{value:"true" || "false"}
+
+    method type->FType
+      return FType.LOGICAL
+endClass
+
+class LiteralInteger : Cmd
+  PROPERTIES
+    value : Int32
+
+  METHODS
+    method init( t, value )
+
+    method description->String
+      return "LiteralInteger($)" (%value)
+
+    method to->Int32:     return value
+    method to->String:    return value
+
+    method type->FType
+      return FType.INTEGER
+endClass
+
+class LiteralCharacter : Cmd
+  PROPERTIES
+    value : Character
+
+  METHODS
+    method init( t, value )
+
+    method description->String
+      return "LiteralCharacter($)" (%value)
+
+    method to->Character: return value
+    method to->Int32:     return value
+    method to->String:    return value
+
+    method type->FType
+      return FType.CHARACTER
 endClass
 
 class TokenDef : Cmd
@@ -699,29 +797,6 @@ class CharSet : Cmd
       return FType.PATTERN
 endClass
 
-class LiteralStringOrCharacter : Cmd
-  PROPERTIES
-    value : String
-
-  METHODS
-    method init( t, value )
-
-    method description->String
-      return "LiteralStringOrCharacter($)" (%value)
-
-    method to->Character
-      if (value is null or value.count == 0) return Character(0)
-      return value[0]
-
-    method to->Int32:  return value
-    method to->Logical: return value?
-    method to->String: return value
-
-    method type->FType
-      return FType.STRING
-
-endClass
-
 class LogicalBinary : Binary
   METHODS
     method description->String
@@ -881,24 +956,6 @@ class ScannerConsume : Cmd
       return FType.LOGICAL
 endClass
 
-class LiteralLogical : Cmd
-  PROPERTIES
-    value : Logical
-
-  METHODS
-    method init( t, value )
-
-    method description->String
-      return "LiteralLogical($)" (%value)
-
-    method to->Int32:   return which{value:1 || 0}
-    method to->Logical: return value
-    method to->String:  return which{value:"true" || "false"}
-
-    method type->FType
-      return FType.LOGICAL
-endClass
-
 class ScannerHasAnother : Cmd
   METHODS
     method description->String
@@ -959,23 +1016,6 @@ class Scan : Cmd
       return FType.LOGICAL
 endClass
 
-class LiteralInteger : Cmd
-  PROPERTIES
-    value : Int32
-
-  METHODS
-    method init( t, value )
-
-    method description->String
-      return "LiteralInteger($)" (%value)
-
-    method to->Int32:     return value
-    method to->String:    return value
-
-    method type->FType
-      return FType.INTEGER
-endClass
-
 class On : Cmd
   PROPERTIES
     token_type      : Cmd
@@ -983,6 +1023,7 @@ class On : Cmd
     statements      : Statements
     else_ons        : Cmd
     _else_on_others : Statements
+    is_organized    : Logical
 
   METHODS
     method init( t, token_type, token_types, statements, else_ons, _else_on_others )
@@ -994,9 +1035,10 @@ endClass
 
 class ElseOn : Cmd
   PROPERTIES
-    token_type  : Cmd
-    token_types : Args
-    statements  : Statements
+    token_type   : Cmd
+    token_types  : Args
+    statements   : Statements
+    is_organized : Logical
 
   METHODS
     method init( t, token_type, token_types, statements )
@@ -1200,5 +1242,12 @@ class ParserRead : Cmd
 
     method type->FType
       return FType.TOKEN
+endClass
+
+
+class TokenContent : Cmd
+  METHODS
+    method description->String
+      return "TokenContent"
 endClass
 

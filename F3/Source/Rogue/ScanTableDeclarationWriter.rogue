@@ -1,0 +1,15 @@
+module F3
+
+class ScanTableDeclarationWriter : Visitor
+  PROPERTIES
+    generator : RogueGenerator
+
+  METHODS
+    method init( generator )
+
+    method on( cmd:Cmd )
+      noAction
+
+    method on( cmd:Match )
+      generator.writeln ''$ = ScanTable("$")'' (cmd.id,cmd.table_builder.to_encoded_scan_table)
+endClass

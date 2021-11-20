@@ -9,32 +9,33 @@ class Organizer : Visitor<<Cmd>>
       noAction
 
     method on( cmd:CreateCmd )
-      local node_type = Program.type( cmd.name )
+      local node_type = Program.type( cmd.t, cmd.name )
 
       if (not cmd.is_organized)
         cmd.is_organized = true
+        node_type.is_node = true
 
         # See Collector.visit(Routine) for more details on the following.
         if (this_routine.is_binary)
           local args = cmd.args
           if (args.count == 0) args.add( CreateCmdArg(cmd.t,"left",null,"Cmd") )
           if (args.count == 1) args.add( CreateCmdArg(cmd.t,"right",null,"Cmd") )
-          node_type.base_type = "Binary"
+          node_type.set_base_type( cmd.t, "Binary" )
 
         elseIf (this_routine.is_right_binary)
           local args = cmd.args
           if (args.count == 0) args.add( CreateCmdArg(cmd.t,"left",null,"Cmd") )
           if (args.count == 1) args.add( CreateCmdArg(cmd.t,"right",null,"Cmd") )
-          node_type.base_type = "Binary"
+          node_type.set_base_type( cmd.t, "Binary" )
 
         elseIf (this_routine.is_pre_unary)
           local args = cmd.args
           if (args.count == 0) args.add( CreateCmdArg(cmd.t,"operand",null,"Cmd") )
-          node_type.base_type = "Unary"
+          node_type.set_base_type( cmd.t, "Unary" )
 
         elseIf (this_routine.is_post_unary)
           if (cmd.args.count == 0) cmd.args.add( CreateCmdArg(cmd.t,"operand",null,"Cmd") )
-          node_type.base_type = "Unary"
+          node_type.set_base_type( cmd.t, "Unary" )
 
         endIf
 
@@ -87,7 +88,7 @@ class Organizer : Visitor<<Cmd>>
 
     method on( cmd:CreateList )
       if (not cmd.list_type) cmd.list_type = "CmdList"
-      Program.type(cmd.list_type).is_list = true
+      Program.type(cmd.t,cmd.list_type).is_list = true
 
     method visit( cmd:Identifier )->Cmd [override]
       if (this_element instanceOf ParserDef and cmd.name == "content")
@@ -170,7 +171,7 @@ class Organizer : Visitor<<Cmd>>
 
     method on( cmd:ProduceList )
       if (not cmd.list_type) cmd.list_type = "CmdList"
-      Program.type(cmd.list_type).is_list = true
+      Program.type(cmd.t,cmd.list_type).is_list = true
 
     method on( cmd:Routine )
       if (not cmd.is_organized)

@@ -2,13 +2,16 @@ module F3
 
 # FIXME: rename SyntaxError to CompileError
 # FIXME: add base class declaration
+# FIXME: on(Cmd) noAction by default
 
+$include "BranchAnalyzer.rogue"
 $include "Collector.rogue"
 $include "FType.rogue"
 $include "Scanner.rogue"
 $include "Organizer.rogue"
 $include "Parser.rogue"
 $include "Program.rogue"
+$include "Rogue/RogueGenerator.rogue"
 $include "Resolver.rogue"
 $include "ScanTableBuilder.rogue"
 $include "TokenOrganizer.rogue"
@@ -57,7 +60,7 @@ class F3
         throw Error( ''No language definition found in file "$".'' (definition_file) )
       endIf
 
-      Program( command, ast )
+      Program.compile( command, ast )
 
     method parse_args( args:String[] )->Value
       # This method is unrelated to the Froley Parser

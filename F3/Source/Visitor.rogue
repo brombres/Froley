@@ -15,13 +15,14 @@ class Visitor<<$ReturnType>>
     this_match   : Match
 
   METHODS
+    method is_parser->Logical
+      return this_element instanceOf ParserDef
+
+    method is_scanner->Logical
+      return this_element instanceOf ScannerDef
+
     method on( cmd:Cmd )
-      local this_name = type_name.after_any("::")
-      local cmd_name = cmd.type_name.after_any("::")
-      throw SyntaxError(
-        "$ does not support node type $. Override $.on($) or $.visit($) " ...
-        "- or override on(Cmd) to be a noAction." ...
-        (this_name,cmd_name,this_name,cmd_name,this_name,cmd_name) )
+      noAction
 
     method after( cmd:Cmd )
       noAction
@@ -34,11 +35,11 @@ class Visitor<<$ReturnType>>
       endIf
       return cmd.dispatch<<ThisType,$ReturnType>>( this )
 
-    method dispatch_on( cmd:Cmd ) [propagated]
+    method dispatch_on<<$CmdType>>( cmd:$CmdType ) [propagated]
       on( cmd )
 
-    method dispatch_after( cmd:Cmd ) [propagated]
-      on( cmd )
+    method dispatch_after<<$CmdType>>( cmd:$CmdType ) [propagated]
+      after( cmd )
 
     method visit_children( cmd:CmdList )
       if ($ReturnType instanceOf Cmd)
@@ -995,17 +996,9 @@ class Visitor<<$ReturnType>>
 
     method visit( cmd:Call )->$ReturnType
       dispatch_on( cmd )
-      visit_children( cmd )
       dispatch_after( cmd )
       if ($ReturnType instanceOf Cmd) return cmd
       else                            return $ReturnType.meta.default_value
-
-    method visit_children( cmd:Call )
-      if ($ReturnType instanceOf Cmd)
-        if (cmd.routine_def) cmd.routine_def = dispatch(cmd.routine_def) as Routine
-      else
-        if (cmd.routine_def) cmd.routine_def.dispatch(this)
-      endIf
 
     method visit( cmd:LiteralTokenType )->$ReturnType
       dispatch_on( cmd )

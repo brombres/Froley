@@ -2,7 +2,7 @@ module F3
 
 class Type
   PROPERTIES
-    program      : ProgramDef
+    t            : Token
     name         : String
     name_lc      : String
     base_type    : Type
@@ -15,16 +15,21 @@ class Type
     extended_properties : NodeProperty[]
 
   METHODS
-    method init( name )
+    method init( t, name )
+if (Program.types.contains(name))
+  println StackTrace()
+  throw Error( "BAM!" )
+endIf
       Program.types[ name ] = this
 
     method add( constructor:CreateCmd )
       constructors[ constructor.signature ] = constructor
 
     method add_property( t:Token, name:String, type_name:String )
-      add_property( t, name, Program.type(type_name) )
+      add_property( t, name, Program.type(t,type_name) )
 
     method add_property( t:Token, name:String, type:Type )
+      type.t = t
       properties.add( NodeProperty(t,name,type) )
 
     method description->String
@@ -42,6 +47,9 @@ class Type
 
     method hash_code->Int32
       return name.hash_code
+
+    method is_defined->Logical
+      return is_node or is_built_in or is_list
 
     method is_instance_of( other_type:Type )->Logical
       if (this is other_type) return true
@@ -91,16 +99,20 @@ class Type
       if (new_base_type.is_list) is_list = true
 
     method set_base_type( t:Token, base_type_name:String )
-      set_base_type( t, Program.type(base_type_name) )
+      set_base_type( t, Program.type(t,base_type_name) )
 
     method set_is_list( @is_list )
       if (this is not Program.type_CmdList and not base_type)
-        base_type = Program.type_CmdList
+        @base_type = Program.type_CmdList
       endIf
 
 endClass
 
 class NodeProperty( t:Token, name:String, type:Type ) [compound]
+  GLOBAL METHODS
+    method create( t:Token, name:String, type_name:String )->NodeProperty
+      return NodeProperty( t, name, Program.type(t,type_name) )
+
   METHODS
     method description->String
       return "$:$" (name,type)

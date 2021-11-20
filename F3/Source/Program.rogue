@@ -6,6 +6,7 @@ class Program [singleton]
     nodes              : ProgramDef
     project_name       : String
     output_folder      : String
+    main_filename      : String
 
     types              = StringTable<<Type>>()
     type_Cmd           : Type
@@ -24,33 +25,31 @@ class Program [singleton]
     parser_user_calls  = Set<<String>>()
 
   METHODS
-    method init( command, nodes )
-      Program = this
-
+    method compile( command, nodes )
       project_name  = File.filename( command//args.first ).before_last('.')
       output_folder = File( command//args.last )
 
       local t = nodes.t
-      type_Cmd = type("Cmd").[ is_node = true ]
-      type_CmdList = type("CmdList").[
+      type_Cmd = type(t,"Cmd").[ is_node = true ]
+      type_CmdList = type(t,"CmdList").[
         set_base_type( t, type_Cmd )
         is_list=true
       ]
-      type("Unary").[
+      type(t,"Unary").[
         set_base_type( t, type_Cmd )
         add_property( t, "operand", type_Cmd )
       ]
-      type("Binary").[
+      type(t,"Binary").[
         set_base_type( t, type_Cmd )
         add_property( t, "left", type_Cmd )
         add_property( t, "right", type_Cmd )
       ]
 
-      type("Logical").is_built_in = true
-      type("Character").is_built_in = true
-      type("Integer").is_built_in = true
-      type("Real").is_built_in = true
-      type("String").is_built_in = true
+      type(t,"Logical").is_built_in = true
+      type(t,"Character").is_built_in = true
+      type(t,"Integer").is_built_in = true
+      type(t,"Real").is_built_in = true
+      type(t,"String").is_built_in = true
 
       nodes.dispatch( Collector() )
       nodes.dispatch( TokenOrganizer() )
@@ -58,10 +57,23 @@ class Program [singleton]
       nodes.dispatch( Resolver() )
       nodes.dispatch( Validator() )
 
-    method type( name:String )->Type
+      local main = command//options//main
+      if (main)
+        if (main.is_string) main_filename = main->String
+        else                main_filename = project_name
+      endIf
+      generate_rogue( output_folder )
+
+    method description->String
+      return ""+nodes
+
+    method generate_rogue( folder:String )
+      RogueGenerator( folder )
+
+    method type( t:Token, name:String )->Type
       local result = types[ name ]
       if (result) return result
-      return Type( name )  # adds itself to types[]
+      return Type( t, name )  # adds itself to types[]
 
 endClass
 

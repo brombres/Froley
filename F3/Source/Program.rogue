@@ -25,6 +25,8 @@ class Program [singleton]
 
   METHODS
     method init( command, nodes )
+      Program = this
+
       project_name  = File.filename( command//args.first ).before_last('.')
       output_folder = File( command//args.last )
 
@@ -53,6 +55,7 @@ class Program [singleton]
       nodes.dispatch( Collector() )
       nodes.dispatch( TokenOrganizer() )
       nodes.dispatch( Organizer() )
+      nodes.dispatch( Resolver() )
 
     method type( name:String )->Type
       local result = types[ name ]

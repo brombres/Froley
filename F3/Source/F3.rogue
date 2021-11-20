@@ -1,6 +1,7 @@
 module F3
 
 # FIXME: rename SyntaxError to CompileError
+# FIXME: add base class declaration
 
 $include "Collector.rogue"
 $include "FType.rogue"
@@ -8,6 +9,8 @@ $include "Scanner.rogue"
 $include "Organizer.rogue"
 $include "Parser.rogue"
 $include "Program.rogue"
+$include "Resolver.rogue"
+$include "ScanTableBuilder.rogue"
 $include "TokenOrganizer.rogue"
 $include "Type.rogue"
 $include "Var.rogue"

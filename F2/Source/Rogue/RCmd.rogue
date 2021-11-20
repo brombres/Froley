@@ -51,6 +51,9 @@ class RCmd : RogueSourceWriter
            |    method dispatch<<$VisitorType,$ReturnType>>( visitor:$VisitorType )->$ReturnType [propagated]
            |      return visitor.visit( this )
            |
+           |    method first->Cmd
+           |      throw UnsupportedOperationError()
+           |
            |    method get( index:Int32 )->Cmd
            |      throw UnsupportedOperationError()
            |
@@ -60,7 +63,19 @@ class RCmd : RogueSourceWriter
            |    method insert( element:Cmd, before_index=0:Int32 )
            |      throw UnsupportedOperationError()
            |
+           |    method last->Cmd
+           |      throw UnsupportedOperationError()
+           |
            |    method list->Cmd[]
+           |      throw UnsupportedOperationError()
+           |
+           |    method remove_first->Cmd
+           |      throw UnsupportedOperationError()
+           |
+           |    method remove_last->Cmd
+           |      throw UnsupportedOperationError()
+           |
+           |    method set( index:Int32, value:Cmd )
            |      throw UnsupportedOperationError()
            |
            |    method to->Character
@@ -111,11 +126,17 @@ class RCmd : RogueSourceWriter
            |    method description->String
            |      return "CmdList" + list_description
            |
+           |    method first->Cmd
+           |      return @list.first
+           |
            |    method get( index:Int32 )->Cmd
            |      return @list[index]
            |
            |    method insert( element:Cmd, before_index=0:Int32 )
            |      list.insert( element, before_index )
+           |
+           |    method last->Cmd
+           |      return @list.last
            |
            |    method list->Cmd[]
            |      return @list
@@ -130,6 +151,15 @@ class RCmd : RogueSourceWriter
            |        builder.print ']'
            |        return builder->String
            |      endUse
+           |
+           |    method remove_first->Cmd
+           |      return @list.remove_first
+           |
+           |    method remove_last->Cmd
+           |      return @list.remove_last
+           |
+           |    method set( index:Int32, value:Cmd )
+           |      @list[index] = value
            |endClass
       endIf
 

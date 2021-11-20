@@ -1,0 +1,301 @@
+module F3
+
+class Resolver : Visitor<<Cmd>>
+  PROPERTIES
+    next_scan_table_id = 0
+
+  METHODS
+    method init
+      local t = Program.nodes.t
+      local null_attr : CmdList
+      if (not Program.tokens_by_name.contains("EOI"))
+        Program.tokens_by_name//EOI = TokenDef( t, "EOI", "end of input", null_attr )
+      endIf
+      if (not Program.tokens_by_name.contains("EOL"))
+        Program.tokens_by_name//EOL = TokenDef( t, "EOL", "end of line", null_attr )
+      endIf
+      if (not Program.tokens_by_name.contains("COMPILE_ERROR"))
+        Program.tokens_by_name//COMPILE_ERROR = TokenDef( t, "COMPILE_ERROR", "compile error", null_attr )
+      endIf
+
+    method on( cmd:Cmd )
+      noAction
+
+    method cast_to( cmd:Cmd, to_type:FType )->Cmd
+      cmd = dispatch( cmd )
+      if (cmd.type == to_type) return cmd
+      return dispatch( cmd.cast_to(to_type) )
+
+    method resolve_token_type( token_type:Cmd, &optional )->TokenDef
+      local name = token_type->String
+      if (token_type instanceOf Identifier)
+        local def = Program.tokens_by_name[ name ]
+        if (def) return def
+        if (optional) return null # optional only applies to an Identifier
+        throw token_type.t.error( ''No token is named '$'.''(name) )
+      else
+        local def = Program.tokens_by_symbol[ name ]
+        if (def) return def
+        throw token_type.t.error( ''No token has symbol '$'.''(name) )
+      endIf
+
+    method resolve_sequence( cmd:SequenceArgs )->Cmd
+      dispatch( cmd )
+
+      local any_patterns = false
+      local all_strings = true
+      forEach (element in cmd)
+        if (element.type != FType.STRING and element.type != FType.CHARACTER)
+          all_strings = false
+        endIf
+
+        if (element.type == FType.PATTERN)
+          any_patterns = true
+          escapeForEach
+        endIf
+      endForEach
+
+      if (any_patterns)
+        if (cmd.count == 1)
+          return dispatch( Pattern(cmd.t, cmd.first->ScanPattern) )
+        else
+          # Convert this list into a pattern
+          local pattern = ScanPatternList( ScanPattern[] )
+          pattern.add( (forEach in cmd)->ScanPattern )
+          return dispatch( Pattern(cmd.t,pattern) )
+        endIf
+      endIf
+
+      # Non-pattern
+      if (cmd.count == 1) return cmd[0]
+
+      # All characters and strings?
+      if (all_strings)
+        use builder = StringBuilder.pool
+          builder.print( (forEach in cmd)->String )
+          if (builder.count == 1) return LiteralCharacter( cmd.t, builder[0] )
+          else                    return LiteralString( cmd.t, builder->String )
+        endUse
+      endIf
+
+      throw cmd[1].t.error( "Too many arguments." )
+
+    method visit( cmd:Access )->Cmd [override]
+      local r = this_element.routines[ cmd.name ]
+      if (r)
+        return dispatch( Call(cmd.t,r) )
+      else
+        local t_def = Program.tokens_by_name[ cmd.name ]
+        if (t_def)
+          return dispatch( LiteralTokenType( cmd.t, t_def ) )
+        else
+          return dispatch( ReadVar(this_element.define_var(cmd.t,cmd.name)) )
+        endIf
+      endIf
+
+    method visit( cmd:Add )->Cmd  [override]
+      cmd.left  = dispatch( cmd.left )
+      cmd.right = dispatch( cmd.right )
+      local common_type = cmd.left.common_type( cmd.right )
+      if (cmd.left.require_type != common_type)
+        cmd.left = dispatch( cmd.left.cast_to( common_type ) )
+      endIf
+      if (cmd.right.require_type != common_type)
+        cmd.right = dispatch( cmd.right.cast_to( common_type ) )
+      endIf
+      if (cmd.left instanceOf Literal and cmd.right instanceOf Literal)
+        which (common_type)
+          case FType.LOGICAL
+            local left  = (cmd.left as LiteralLogical).value
+            local right = (cmd.right as LiteralLogical).value
+            return dispatch( LiteralLogical( cmd.t, left or right ) )
+          case FType.CHARACTER
+            local left  = (cmd.left as LiteralCharacter).value
+            local right = (cmd.right as LiteralCharacter).value
+            return dispatch( LiteralCharacter( cmd.t, left+right ) )
+          case FType.INTEGER
+            local left  = (cmd.left as LiteralInteger).value
+            local right = (cmd.right as LiteralInteger).value
+            return dispatch( LiteralInteger( cmd.t, left + right ) )
+          case FType.STRING
+            local left  = (cmd.left as LiteralString).value
+            local right = (cmd.right as LiteralString).value
+            return dispatch( LiteralString( cmd.t, left + right ) )
+          others
+            throw UnsupportedOperationError()
+        endWhich
+      endIf
+      return cmd
+
+    method visit( cmd:SequenceArgs )->Cmd [override]
+      local result = prior.visit( cmd )
+      if (not result) return null
+      (forEach in cmd.list).require_value
+      return result
+
+    method visit( cmd:Assign )->Cmd [override]
+      return cmd.target.resolve_assignment( cmd, this )
+
+    method visit( cmd:CastToPattern )->Cmd [override]
+      return dispatch( Pattern( cmd.t, cmd.operand->ScanPattern ) )
+
+    method visit( cmd:ScannerConsume )->Cmd [override]
+      local seq = resolve_sequence( cmd.args )
+      which (seq.require_type)
+        case FType.CHARACTER, FType.STRING
+          return dispatch( ConsumeCharacters(cmd.t, seq) )
+        case FType.PATTERN
+          return dispatch( ConsumePattern( cmd.t, seq ) )
+        others
+          throw cmd.t.error( "Expected character, string, or pattern; found type $."(seq.type.display_name) )
+      endWhich
+
+    method visit( cmd:ScannerMustConsume )->Cmd [override]
+      local seq = resolve_sequence( cmd.args )
+      which (seq.require_type)
+        case FType.CHARACTER, FType.STRING
+          return dispatch( MustConsumeCharacters( cmd.t, seq ) )
+        case FType.PATTERN
+          return dispatch( MustConsumePattern( cmd.t, seq ) )
+        others
+          throw cmd.t.error( "Expected character, string, or pattern; found type $."(seq.type.display_name) )
+      endWhich
+
+    method visit( cmd:Pattern )->Cmd [override]
+      if (not cmd.reference_name)
+        local pattern = cmd.scan_pattern->String
+        if (not Program.scan_patterns.contains(pattern))
+          Program.scan_patterns[ pattern ] = "_scan_pattern_" + Program.scan_patterns.count
+        endIf
+        cmd.reference_name = Program.scan_patterns[ pattern ]
+      endIf
+      return cmd
+
+    method visit( cmd:ScannerCreate )->Cmd [override]
+      cmd.arg = cast_to( cmd.arg, FType.TOKEN_TYPE )
+      return cmd
+
+    method on( cmd:Match )
+      if (not cmd.id)
+        cmd.id = "_scan_table_" + next_scan_table_id
+        ++next_scan_table_id
+      endIf
+      if (cmd.expression)
+        cmd.expression = cast_to( dispatch(cmd.expression), FType.STRING )
+      endIf
+      if (cmd._others and cmd.statement_lists.is_empty)
+        cmd.table_builder.default = 0  # index 0 in statement_lists
+        cmd.statement_lists.add( cmd._others )
+      endIf
+
+    method visit( cmd:MatchCase )->Cmd [override]
+      if (not cmd.is_resolved)
+        cmd.is_resolved = true
+
+        cmd.expression = dispatch( cmd.expression )
+        if (cmd.expression.type == FType.INTEGER) cmd.expression .= cast_to( FType.CHARACTER )
+        cmd.expression = dispatch( cmd.expression.cast_to(FType.STRING) )
+        if (cmd.expression not instanceOf LiteralString)
+          throw cmd.t.error( "Literal string, character, or character code expected." )
+        endIf
+
+        cmd.statements = dispatch( cmd.statements )
+
+        this_match.table_builder.add(
+          (cmd.expression as LiteralString).value,
+          this_match.statement_lists.count
+        )
+        this_match.statement_lists.add( cmd.statements )
+      endIf
+      return cmd
+
+    method on( cmd:On )
+      cmd.token_type = LiteralTokenType( cmd.token_type.t, resolve_token_type(cmd.token_type) )
+      while (cmd.token_types.count)
+        local ttype = cmd.token_types.remove_last
+        local def = resolve_token_type( ttype, &optional )
+        if (def)
+          cmd.statements.insert( MustConsumeToken(ttype.t,def) )
+        else
+          local name = ttype->String
+          if (name == "_consume_eols()")
+            cmd.statements.insert( ConsumeEOLs(ttype.t) )
+          else
+            cmd.statements.insert( Access(ttype.t,ttype->String) )
+          endIf
+        endIf
+      endWhile
+
+    method on( cmd:ElseOn )
+      cmd.token_type = LiteralTokenType( cmd.token_type.t, resolve_token_type(cmd.token_type) )
+      while (cmd.token_types.count)
+        local ttype = cmd.token_types.remove_last
+        local def = resolve_token_type( ttype, &optional )
+        if (def)
+          cmd.statements.insert( MustConsumeToken(ttype.t,def) )
+        else
+          cmd.statements.insert( Access(ttype.t,ttype->String) )
+        endIf
+      endWhile
+
+    method on( cmd:NextHasAttribute )
+      if (not Program.token_attributes.contains(cmd.name))
+        throw cmd.t.error( "No token has the attribute '$'."(cmd.name) )
+      endIf
+
+    method visit( cmd:ParserConsume )->Cmd [override]
+      local t = cmd.t
+      local literal_content = cmd.token_type as LiteralContent
+      if (literal_content) return dispatch( ConsumeContent( t, literal_content.value ) )
+      return dispatch( ConsumeToken( t, resolve_token_type(cmd.token_type) ) )
+
+    method visit( cmd:ParserMustConsume )->Cmd [override]
+      local t = cmd.t
+      local literal_content = cmd.token_type as LiteralContent
+      if (literal_content) return dispatch( MustConsumeContent( t, literal_content.value ) )
+      return dispatch( MustConsumeToken( t, resolve_token_type(cmd.token_type) ) )
+
+    method visit( cmd:ParserNextIs )->Cmd [override]
+      local t = cmd.t
+      local literal_content = cmd.token_type as LiteralContent
+      if (literal_content) return dispatch( NextIsContent( t, literal_content.value ) )
+      return dispatch( NextIsTokenType( t, resolve_token_type(cmd.token_type) ) )
+
+    method visit( cmd:ScannerNextIs )->Cmd [override]
+      local seq = resolve_sequence( cmd.args )
+      which (seq.require_type)
+        case FType.CHARACTER, FType.STRING
+          return dispatch( NextIsCharacters( cmd.t, seq ) )
+        case FType.PATTERN
+          return dispatch( NextIsPattern( cmd.t, seq ) )
+        others
+          throw cmd.t.error( "Expected character, string, or pattern; found type $."(seq.type.display_name) )
+      endWhich
+
+    method visit( cmd:Scan )->Cmd [override]
+      local seq = resolve_sequence( cmd.args )
+      which (seq.require_type)
+        case FType.CHARACTER, FType.STRING
+          return dispatch( ScanCharacters( cmd.t, seq ) )
+        case FType.PATTERN
+          return dispatch( ScanPatternCmd( cmd.t, seq ) )
+        others
+          throw cmd.t.error( "Expected character, string, or pattern; found type $."(seq.type.display_name) )
+      endWhich
+
+    method visit( cmd:ThrowSyntaxError )->Cmd [override]
+      if (cmd.args)
+        forEach (arg at i in cmd.args)
+          cmd.args[i] = dispatch( arg.cast_to( FType.STRING ) )
+        endForEach
+      endIf
+      return cmd
+
+    method after( cmd:WriteBuffer )
+      cmd.new_value.require_value
+
+    method after( cmd:WriteVar )
+      cmd.new_value.require_value
+
+endClass
+

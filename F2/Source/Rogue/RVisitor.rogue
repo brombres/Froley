@@ -69,6 +69,8 @@ class RVisitor : RogueSourceWriter
 
       scan_node_types( content )
 
+      local builder = StringBuilder(content.count*2)
+
       local end_class_location = content.locate( "endClass", content.locate("class Visitor<<").value )
       local bottom = "endClass\n"
       if (end_class_location)
@@ -76,8 +78,7 @@ class RVisitor : RogueSourceWriter
         content = content.leftmost( end_class_location.value ).trimmed
       endIf
 
-      local builder = StringBuilder()
-      builder.print( content )
+      builder.println( content )
       builder.indent = 4
 
       forEach (node_type in program.node_types.values.to_list.sorted((a,b)=>(a.name<b.name)))

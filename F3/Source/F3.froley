@@ -524,7 +524,7 @@ parser
     cases
     _others
     mustConsume "endMatch"
-    produce Match(scanner_expression,cases,_others)
+    produce Match(expression,cases,_others)
   endOn
 
   on "while"
@@ -564,7 +564,7 @@ parser
           consume_eols
           scanner_multi_line_statements
         endIf
-        create MatchCase(scanner_expression,statements)
+        create MatchCase(expression,statements)
       elseOn "produceAny"
         identifier
         create ProduceAny(token_group_name:String)
@@ -706,7 +706,7 @@ parser
 
 - scanner_product
   identifier
-  produce Access( name=content )
+  produce Access( name:String )
 
 - cmd_args
   beginList

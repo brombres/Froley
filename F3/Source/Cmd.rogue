@@ -6,8 +6,28 @@ class Cmd( t:Token )
     method add( cmd:Cmd )
       throw UnsupportedOperationError()
 
+    method cast_to( to_type:FType )->Cmd
+      if (require_type == to_type) return this  # no cast needed
+
+      which (to_type)
+        case FType.LOGICAL:    return CastToLogical( t, this )
+        case FType.CHARACTER:  return CastToCharacter( t, this )
+        case FType.INTEGER:    return CastToInteger( t, this )
+        case FType.REAL:       return CastToReal( t, this )
+        case FType.TOKEN_TYPE: return CastToTokenType( t, this )
+        case FType.STRING:     return CastToString( t, this )
+        case FType.PATTERN:    return CastToPattern( t, this )
+        others
+          throw t.error( "Cannot cast type $ to type: $."(type,to_type) )
+      endWhich
+
     method clear
       throw UnsupportedOperationError()
+
+    method common_type( other:Cmd )->FType
+      local a = require_type
+      local b = other.require_type
+      return FType( a->Int32.or_larger(b->Int32) )
 
     method count->Int32
       return 0
@@ -21,6 +41,9 @@ class Cmd( t:Token )
     method dispatch<<$VisitorType,$ReturnType>>( visitor:$VisitorType )->$ReturnType [propagated]
       return visitor.visit( this )
 
+    method first->Cmd
+      throw UnsupportedOperationError()
+
     method get( index:Int32 )->Cmd
       throw UnsupportedOperationError()
 
@@ -30,7 +53,34 @@ class Cmd( t:Token )
     method insert( element:Cmd, before_index=0:Int32 )
       throw UnsupportedOperationError()
 
+    method last->Cmd
+      throw UnsupportedOperationError()
+
     method list->Cmd[]
+      throw UnsupportedOperationError()
+
+    method remove_first->Cmd
+      throw UnsupportedOperationError()
+
+    method remove_last->Cmd
+      throw UnsupportedOperationError()
+
+    method require_type->FType
+      localize type
+      if (not type.exists)
+        throw t.error( "Value expected." )
+        #throw t.error( "Value expected.($,$)"(type_name,type) )
+      endIf
+      return type
+
+    method require_value->Cmd
+      require_type
+      return this
+
+    method resolve_assignment( cmd:Assign, resolver:Resolver )->Cmd
+      throw t.error( "Illegal assignment." )
+
+    method set( index:Int32, value:Cmd )
       throw UnsupportedOperationError()
 
     method to->Character
@@ -44,6 +94,9 @@ class Cmd( t:Token )
 
     method to->Real64
       return this->Int32
+
+    method to->ScanPattern
+      throw t.error( ''Pattern expected.'' )
 
     method to->String
       return description
@@ -79,6 +132,9 @@ class CmdList : Cmd
     method description->String
       return "CmdList" + list_description
 
+    method first->Cmd
+      return @list.first
+
     method get( index:Int32 )->Cmd
       return @list[index]
 
@@ -87,6 +143,9 @@ class CmdList : Cmd
 
     method insert( element:Cmd, before_index=0:Int32 )
       list.insert( element, before_index )
+
+    method last->Cmd
+      return @list.last
 
     method list->Cmd[]
       return @list
@@ -101,6 +160,15 @@ class CmdList : Cmd
         builder.print ']'
         return builder->String
       endUse
+
+    method remove_first->Cmd
+      return @list.remove_first
+
+    method remove_last->Cmd
+      return @list.remove_last
+
+    method set( index:Int32, value:Cmd )
+      @list[index] = value
 endClass
 
 class Unary( t, operand:Cmd ) : Cmd
@@ -141,6 +209,31 @@ class Element : Cmd
 
   METHODS
     method init( t, name, routine_defs )
+
+    method define_var( t:Token, name:String, type=FType.NONE:FType )->Var
+      local entry = vars.find( name )
+      if (not entry)
+        local v = Var( t, name, type )
+        vars[name] = v
+        return v
+      endIf
+
+      local existing = entry.value
+      if (type != existing.type)
+        if (not existing.type.exists)
+          existing.type = type
+        elseIf (type.exists)
+          throw t.error( "Conflicting implicit types $ and $ for variable '$'."...
+                         (existing.type,type,name) )
+        endIf
+      endIf
+
+      return existing
+
+    method var_type( name:String )->FType
+      local entry = vars.find( name )
+      if (not entry) return FType.NONE
+      return entry.value.type
 endClass
 
 class ScannerDef : Element
@@ -236,6 +329,18 @@ class LiteralString : Cmd
   METHODS
     method init( t, value )
 
+    method cast_to( to_type:FType )->Cmd
+      if (to_type == FType.STRING) return this
+
+      which (to_type)
+        case FType.LOGICAL:    return LiteralLogical( t, value->Logical )
+        case FType.CHARACTER:  return LiteralCharacter( t, value[0] )
+        case FType.INTEGER:    return LiteralInteger( t, value->Int32 )
+        case FType.REAL:       return LiteralReal( t, value->Real64 )
+        others
+          return prior.cast_to( to_type )
+      endWhich
+
     method description->String
       return "LiteralString($)" (%value)
 
@@ -247,6 +352,9 @@ class LiteralString : Cmd
     method to->Logical: return value?
     method to->String: return value
 
+    method to->ScanPattern
+      return LiteralStringScanPattern( value )
+
     method type->FType
       return FType.STRING
 endClass
@@ -257,6 +365,17 @@ class LiteralStringOrCharacter : Cmd
 
   METHODS
     method init( t, value )
+
+    method cast_to( to_type:FType )->Cmd
+      which (to_type)
+        case FType.CHARACTER
+          if (value.count == 0) return LiteralCharacter( t, 0 )
+          return LiteralCharacter( t, value[0] )
+        case FType.STRING
+          return LiteralString( t, value )
+        others
+          return prior.cast_to( to_type )
+      endWhich
 
     method description->String
       return "LiteralStringOrCharacter($)" (%value)
@@ -281,6 +400,18 @@ class LiteralLogical : Cmd
   METHODS
     method init( t, value )
 
+    method cast_to( to_type:FType )->Cmd
+      if (to_type == FType.LOGICAL) return this
+
+      which (to_type)
+        case FType.CHARACTER:  return LiteralCharacter( t, which{value:'1'||'0'} )
+        case FType.INTEGER:    return LiteralInteger( t, which{value:1||0} )
+        case FType.REAL:       return LiteralReal( t, which{value:1||0} )
+        case FType.STRING:     return LiteralString( t, which{value:"true"||"false"} )
+        others
+          return prior.cast_to( to_type )
+      endWhich
+
     method description->String
       return "LiteralLogical($)" (%value)
 
@@ -299,6 +430,17 @@ class LiteralInteger : Cmd
   METHODS
     method init( t, value )
 
+    method cast_to( to_type:FType )->Cmd
+      if (to_type == FType.INTEGER) return this
+      which (to_type)
+        case FType.LOGICAL:    return LiteralLogical( t, value->Logical )
+        case FType.CHARACTER:  return LiteralCharacter( t, value->Character )
+        case FType.REAL:       return LiteralReal( t, value->Real64 )
+        case FType.STRING:     return LiteralString( t, value->String )
+        others
+          return prior.cast_to( to_type )
+      endWhich
+
     method description->String
       return "LiteralInteger($)" (%value)
 
@@ -316,12 +458,27 @@ class LiteralCharacter : Cmd
   METHODS
     method init( t, value )
 
+    method cast_to( to_type:FType )->Cmd
+      if (to_type == FType.CHARACTER) return this
+
+      which (to_type)
+        case FType.LOGICAL:    return LiteralLogical( t, value->Logical )
+        case FType.INTEGER:    return LiteralInteger( t, value->Int32 )
+        case FType.REAL:       return LiteralReal( t, value->Real64 )
+        case FType.STRING:     return LiteralString( t, value->String )
+        others
+          return prior.cast_to( to_type )
+      endWhich
+
     method description->String
       return "LiteralCharacter($)" (%value)
 
     method to->Character: return value
     method to->Int32:     return value
     method to->String:    return value
+
+    method to->ScanPattern
+      return LiteralStringScanPattern( ""+value )
 
     method type->FType
       return FType.CHARACTER
@@ -394,15 +551,18 @@ endClass
 
 class Match : Cmd
   PROPERTIES
-    scanner_expression : Cmd
-    cases              : Cmd
-    _others            : Cmd
+    expression      : Cmd
+    cases           : Cmd
+    _others         : Cmd
+    id              : String
+    table_builder   = ScanTableBuilder()
+    statement_lists = Cmd[]
 
   METHODS
-    method init( t, scanner_expression, cases, _others )
+    method init( t, expression, cases, _others )
 
     method description->String
-      return "Match($,$,$)" (%scanner_expression,%cases,%_others)
+      return "Match($,$,$)" (%expression,%cases,%_others)
 
 endClass
 
@@ -453,14 +613,15 @@ endClass
 
 class MatchCase : Cmd
   PROPERTIES
-    scanner_expression : Cmd
-    statements         : Cmd
+    expression  : Cmd
+    statements  : Cmd
+    is_resolved : Logical
 
   METHODS
-    method init( t, scanner_expression, statements )
+    method init( t, expression, statements )
 
     method description->String
-      return "MatchCase($,$)" (%scanner_expression,%statements)
+      return "MatchCase($,$)" (%expression,%statements)
 
 endClass
 
@@ -668,9 +829,17 @@ class Access : Cmd
 
   METHODS
     method init( t, name )
+if (not name) println StackTrace()
+require name
 
     method description->String
       return "Access($)" (%name)
+
+    method resolve_assignment( cmd:Assign, resolver:Resolver )->Cmd
+      local r = resolver.this_element.routines[name]
+      if (r) throw t.error( "Illegal assignment to a routine." )
+      local v = resolver.this_element.define_var( t, name, cmd.new_value.type )
+      return resolver.dispatch( WriteVar( v, cmd.new_value ) )
 
     method to->Character
       if (name is null or name.count == 0) return Character(0)
@@ -729,6 +898,11 @@ class PatternSequence : CmdList
     method description->String
       return "PatternSequence" + list_description
 
+    method to->ScanPattern
+      local result = ScanPatternList( ScanPattern[] )
+      result.add( (forEach in this)->ScanPattern )
+      return result
+
     method type->FType
       return FType.PATTERN
 endClass
@@ -742,6 +916,9 @@ class ZeroOrMore : Cmd
 
     method description->String
       return "ZeroOrMore($)" (%pattern)
+
+    method to->ScanPattern
+      return ZeroOrMoreScanPattern( pattern->ScanPattern )
 
     method type->FType
       return FType.PATTERN
@@ -757,6 +934,9 @@ class OneOrMore : Cmd
     method description->String
       return "OneOrMore($)" (%pattern)
 
+    method to->ScanPattern
+      return OneOrMoreScanPattern( pattern->ScanPattern )
+
     method type->FType
       return FType.PATTERN
 endClass
@@ -770,6 +950,9 @@ class OptionalPattern : Cmd
 
     method description->String
       return "OptionalPattern($)" (%pattern)
+
+    method to->ScanPattern
+      return OptionalScanPattern( pattern->ScanPattern )
 
     method type->FType
       return FType.PATTERN
@@ -792,6 +975,9 @@ class CharSet : Cmd
     method to->Int32:  return characters
     method to->Logical: return characters?
     method to->String: return characters
+
+    method to->ScanPattern
+      return ScanPatternParser.charset_to_scan_pattern( characters.from(1,characters.count-2) )
 
     method type->FType
       return FType.PATTERN
@@ -917,6 +1103,9 @@ class ReadBuffer : Cmd
   METHODS
     method description->String
       return "ReadBuffer"
+
+    method resolve_assignment( cmd:Assign, resolver:Resolver )->Cmd
+      return resolver.dispatch( WriteBuffer( t, cmd.new_value ) )
 
     method type->FType
       return FType.STRING
@@ -1251,3 +1440,401 @@ class TokenContent : Cmd
       return "TokenContent"
 endClass
 
+
+class WriteVar : Cmd
+  PROPERTIES
+    var       : Var
+    new_value : Cmd
+
+  METHODS
+    method init( var, new_value )
+      t = var.t
+
+    method description->String
+      return "WriteVar($,$)" (%var,%new_value)
+
+endClass
+
+class WriteBuffer : Cmd
+  PROPERTIES
+    new_value : Cmd
+
+  METHODS
+    method init( t, new_value )
+
+    method description->String
+      return "WriteBuffer($)" (%new_value)
+
+endClass
+
+class Call : Cmd
+  PROPERTIES
+    routine_def : Routine
+
+  METHODS
+    method init( t, routine_def )
+
+    method description->String
+      return "Call($)" (%routine_def)
+
+endClass
+
+class LiteralTokenType : Cmd
+  PROPERTIES
+    token_type : TokenDef
+
+  METHODS
+    method init( t, token_type )
+
+    method description->String
+      return "LiteralTokenType($)" (%token_type)
+
+    method type->FType
+      return FType.TOKEN_TYPE
+endClass
+
+class ReadVar : Cmd
+  PROPERTIES
+    var : Var
+
+  METHODS
+    method init( var )
+      t = var.t
+
+    method description->String
+      return "ReadVar"
+
+    method type->FType
+      return var.type
+endClass
+
+class CastToLogical : Unary
+  METHODS
+    method description->String
+      return "CastToLogical($)" (%operand)
+
+    method type->FType
+      return FType.LOGICAL
+endClass
+
+class CastToCharacter : Unary
+  METHODS
+    method description->String
+      return "CastToCharacter($)" (%operand)
+
+    method type->FType
+      return FType.CHARACTER
+
+endClass
+
+class CastToInteger : Unary
+  METHODS
+    method description->String
+      return "CastToInteger($)" (%operand)
+
+    method type->FType
+      return FType.INTEGER
+
+endClass
+
+class CastToReal : Unary
+  METHODS
+    method description->String
+      return "CastToReal($)" (%operand)
+
+    method type->FType
+      return FType.REAL
+
+endClass
+
+class CastToTokenType : Unary
+  METHODS
+    method description->String
+      return "CastToTokenType($)" (%operand)
+
+    method type->FType
+      return FType.TOKEN_TYPE
+
+endClass
+
+class CastToString : Unary
+  METHODS
+    method description->String
+      return "CastToString($)" (%operand)
+
+    method type->FType
+      return FType.STRING
+
+endClass
+
+class CastToPattern : Unary
+  METHODS
+    method description->String
+      return "CastToPattern($)" (%operand)
+
+    method type->FType
+      return FType.PATTERN
+
+endClass
+
+
+class LiteralReal : Cmd
+  PROPERTIES
+    value : Real64
+
+  METHODS
+    method init( t, value )
+
+    method cast_to( to_type:FType )->Cmd
+      if (to_type == FType.REAL) return this
+      which (to_type)
+        case FType.LOGICAL:    return LiteralLogical( t, value->Logical )
+        case FType.CHARACTER:  return LiteralCharacter( t, value->Character )
+        case FType.INTEGER:    return LiteralInteger( t, value->Int32 )
+        case FType.STRING:     return LiteralString( t, value->String )
+        others
+          return prior.cast_to( to_type )
+      endWhich
+
+    method description->String
+      return "LiteralReal($)" (%value)
+
+    method to->Int32:  return value
+    method to->Real64: return value
+    method to->String: return value
+
+    method type->FType
+      return FType.REAL
+
+endClass
+
+class ConsumeContent : Cmd
+  PROPERTIES
+    content : String
+
+  METHODS
+    method init( t, content )
+
+    method description->String
+      return "ConsumeContent($)" (%content)
+
+    method to->Character
+      if (content is null or content.count == 0) return Character(0)
+      return content[0]
+
+    method to->Int32:  return content
+    method to->Logical: return content?
+    method to->String: return content
+
+    method type->FType
+      return FType.LOGICAL
+endClass
+
+class ConsumeToken : Cmd
+  PROPERTIES
+    token_type : TokenDef
+
+  METHODS
+    method init( t, token_type )
+
+    method description->String
+      return "ConsumeToken($)" (%token_type)
+
+    method type->FType
+      return FType.LOGICAL
+endClass
+
+class MustConsumeContent : Cmd
+  PROPERTIES
+    content : String
+
+  METHODS
+    method init( t, content )
+
+    method description->String
+      return "MustConsumeContent($)" (%content)
+
+    method to->Character
+      if (content is null or content.count == 0) return Character(0)
+      return content[0]
+
+    method to->Int32:  return content
+    method to->Logical: return content?
+    method to->String: return content
+
+endClass
+
+class MustConsumeToken : Cmd
+  PROPERTIES
+    token_type : TokenDef
+
+  METHODS
+    method init( t, token_type )
+
+    method description->String
+      return "MustConsumeToken($)" (%token_type)
+
+endClass
+
+class NextIsContent : Cmd
+  PROPERTIES
+    content : String
+
+  METHODS
+    method init( t, content )
+
+    method description->String
+      return "NextIsContent($)" (%content)
+
+    method to->Character
+      if (content is null or content.count == 0) return Character(0)
+      return content[0]
+
+    method to->Int32:  return content
+    method to->Logical: return content?
+    method to->String: return content
+
+    method type->FType
+      return FType.LOGICAL
+endClass
+
+
+class NextIsTokenType : Cmd
+  PROPERTIES
+    token_type : TokenDef
+
+  METHODS
+    method init( t, token_type )
+
+    method description->String
+      return "NextIsTokenType($)" (%token_type)
+
+    method type->FType
+      return FType.LOGICAL
+endClass
+
+class Pattern( t, scan_pattern:ScanPattern ) : Cmd
+  PROPERTIES
+    reference_name : String
+
+  METHODS
+    method description->String
+      return "Pattern"
+
+    method type->FType
+      return FType.PATTERN
+endClass
+
+class ScanCharacters : Cmd
+  PROPERTIES
+    value : Cmd
+
+  METHODS
+    method init( t, value )
+
+    method description->String
+      return "ScanCharacters($)" (%value)
+
+    method type->FType
+      return FType.LOGICAL
+endClass
+
+class ScanPatternCmd : Cmd
+  PROPERTIES
+    pattern : Cmd
+
+  METHODS
+    method init( t, pattern )
+
+    method description->String
+      return "ScanPatternCmd($)" (%pattern)
+
+    method type->FType
+      return FType.LOGICAL
+endClass
+
+class ConsumeCharacters : Cmd
+  PROPERTIES
+    value : Cmd
+
+  METHODS
+    method init( t, value )
+
+    method description->String
+      return "ConsumeCharacters($)" (%value)
+
+    method type->FType
+      return FType.LOGICAL
+endClass
+
+class ConsumePattern : Cmd
+  PROPERTIES
+    pattern : Cmd
+
+  METHODS
+    method init( t, pattern )
+
+    method description->String
+      return "ConsumePattern($)" (%pattern)
+
+    method type->FType
+      return FType.LOGICAL
+endClass
+
+class MustConsumeCharacters : Cmd
+  PROPERTIES
+    value : Cmd
+
+  METHODS
+    method init( t, value )
+
+    method description->String
+      return "MustConsumeCharacters($)" (%value)
+
+endClass
+
+class MustConsumePattern : Cmd
+  PROPERTIES
+    pattern : Cmd
+
+  METHODS
+    method init( t, pattern )
+
+    method description->String
+      return "MustConsumePattern($)" (%pattern)
+
+endClass
+
+class NextIsCharacters : Cmd
+  PROPERTIES
+    value : Cmd
+
+  METHODS
+    method init( t, value )
+
+    method description->String
+      return "NextIsCharacters($)" (%value)
+
+    method type->FType
+      return FType.LOGICAL
+endClass
+
+class NextIsPattern : Cmd
+  PROPERTIES
+    pattern : Cmd
+
+  METHODS
+    method init( t, pattern )
+
+    method description->String
+      return "NextIsPattern($)" (%pattern)
+
+    method type->FType
+      return FType.LOGICAL
+endClass
+
+class ConsumeEOLs : Cmd
+  METHODS
+    method description->String
+      return "ConsumeEOLs"
+endClass

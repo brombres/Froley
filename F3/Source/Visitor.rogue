@@ -18,10 +18,16 @@ class Visitor<<$ReturnType>>
     method is_scanner->Logical
       return this_element instanceOf ScannerDef
 
-    method on( cmd:Cmd )
+    method on_enter( cmd:Cmd )
       noAction
 
-    method after( cmd:Cmd )
+    method on_visit( cmd:Cmd )
+      noAction
+
+    method visit_children( cmd:Cmd )
+      noAction
+
+    method on_leave( cmd:Cmd )
       noAction
 
     method dispatch( cmd:Cmd )->$ReturnType
@@ -32,11 +38,11 @@ class Visitor<<$ReturnType>>
       endIf
       return cmd.dispatch<<ThisType,$ReturnType>>( this )
 
-    method dispatch_on<<$CmdType>>( cmd:$CmdType ) [propagated]
-      on( cmd )
+    method dispatch_on( cmd:Cmd ) [propagated]
+      cmd.dispatch_on_enter( this )
 
     method dispatch_after<<$CmdType>>( cmd:$CmdType ) [propagated]
-      after( cmd )
+      cmd.dispatch_on_leave( this )
 
     method visit_children( cmd:CmdList )
       if ($ReturnType instanceOf Cmd)

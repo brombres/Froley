@@ -2,7 +2,7 @@ module F3
 
 # FIXME: rename SyntaxError to CompileError
 # FIXME: add base class declaration
-# FIXME: on(Cmd) noAction by default
+# FIXME: on_enter(Cmd) noAction by default
 
 $include "BranchAnalyzer.rogue"
 $include "Collector.rogue"

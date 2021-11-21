@@ -27,10 +27,13 @@ class RVisitor : RogueSourceWriter
                     |
                     |class Visitor<<$ReturnType>>
                     |  METHODS
-                    |    method on( cmd:Cmd )
+                    |    method on_enter( cmd:Cmd )
                     |      noAction
                     |
-                    |    method after( cmd:Cmd )
+                    |    method on_visit( cmd:Cmd )
+                    |      noAction
+                    |
+                    |    method on_leave( cmd:Cmd )
                     |      noAction
                     |
                     |    method dispatch( cmd:Cmd )->$ReturnType
@@ -42,10 +45,10 @@ class RVisitor : RogueSourceWriter
                     |      return cmd.dispatch<<ThisType,$ReturnType>>( this )
                     |
                     |    method dispatch_on<<$CmdType>>( cmd:$CmdType ) [propagated]
-                    |      on( cmd )
+                    |      on_enter( cmd )
                     |
-                    |    method dispatch_after<<$CmdType>>( cmd:$CmdType ) [propagated]
-                    |      after( cmd )
+                    |    method visit_children( cmd:Cmd )
+                    |      noAction
                     |
                     |    method visit_children( cmd:CmdList )
                     |      if ($ReturnType instanceOf Cmd)
@@ -86,11 +89,11 @@ class RVisitor : RogueSourceWriter
 
           builder.println
           builder.print(  "method visit( cmd:" ).print( node_type.name ).println( " )->$ReturnType" )
-          builder.println "  dispatch_on( cmd )"
+          builder.println "  cmd.dispatch_on_enter"
           if (properties.count or node_type.is_list)
             builder.println "  visit_children( cmd )"
           endIf
-          builder.println "  dispatch_after( cmd )"
+          builder.println "  cmd.dispatch_on_leave"
           builder.println "  if ($ReturnType instanceOf Cmd) return cmd"
           builder.println "  else                            return $ReturnType.meta.default_value"
 

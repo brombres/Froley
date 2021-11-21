@@ -2,9 +2,6 @@ module F3
 
 class TokenOrganizer : Visitor<<Cmd>>
   METHODS
-    method on( cmd:Cmd )
-      noAction
-
     method visit( cmd:TokenGroup )->Cmd [override]
       if (not String.exists(cmd.name)) cmd.name = "Tokens"
       prior.visit( cmd )

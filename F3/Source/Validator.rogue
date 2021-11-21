@@ -2,18 +2,15 @@ module F3
 
 class Validator : Visitor
   METHODS
-    method on( cmd:Cmd )
-      noAction
-
-    method on( cmd:Collect )
+    method on_enter( cmd:Collect )
       if (cmd.args.count == 0) throw cmd.args.t.error( "One or more arguments expected." )
 
-    method on( cmd:Print )
+    method on_enter( cmd:Print )
       if (cmd.args.count == 0)
         throw cmd.t.error( "Argument expected for 'print'." )
       endIf
 
-    method on( program:ProgramDef )
+    method on_enter( program:ProgramDef )
       forEach (type in Program.types)
         if (not type.is_defined)
           throw type.t.error( "Use of undefined node type '$'."(type.name) )
@@ -21,7 +18,7 @@ class Validator : Visitor
         if (type.is_node and not type.base_type) type.base_type = Program.type_Cmd
       endForEach
 
-    method on( cmd:ParserDef )
+    method on_enter( cmd:ParserDef )
       if (cmd.vars.count)
         forEach (v in cmd.vars)
           if (v.type == FType.NONE)
@@ -30,7 +27,7 @@ class Validator : Visitor
         endForEach
       endIf
 
-    method on( cmd:ScannerDef )
+    method on_enter( cmd:ScannerDef )
       if (cmd.vars.count)
         forEach (v in cmd.vars)
           if (v.type == FType.NONE)

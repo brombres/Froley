@@ -5,10 +5,7 @@ class Organizer : Visitor<<Cmd>>
     this_match      : Match
 
   METHODS
-    method on( cmd:Cmd )
-      noAction
-
-    method on( cmd:CreateCmd )
+    method on_enter( cmd:CreateCmd )
       local node_type = Program.type( cmd.t, cmd.name )
 
       if (not cmd.is_organized)
@@ -86,7 +83,7 @@ class Organizer : Visitor<<Cmd>>
         node_type.add( cmd )
       endIf
 
-    method on( cmd:CreateList )
+    method on_enter( cmd:CreateList )
       if (not cmd.list_type) cmd.list_type = "CmdList"
       Program.type(cmd.t,cmd.list_type).is_list = true
 
@@ -100,7 +97,7 @@ class Organizer : Visitor<<Cmd>>
       if (cmd.value.count == 1) return dispatch( LiteralCharacter( cmd.t, cmd.value[0] ) )
       else                      return dispatch( LiteralString( cmd.t, cmd.value ) )
 
-    method on( cmd:On )
+    method on_enter( cmd:On )
       if (not cmd.is_organized)
         cmd.is_organized = true
         # See visit(Routine) for more details
@@ -121,7 +118,7 @@ class Organizer : Visitor<<Cmd>>
         endIf
       endIf
 
-    method on( cmd:ElseOn )
+    method on_enter( cmd:ElseOn )
       if (not cmd.is_organized)
         cmd.is_organized = true
         if (this_routine.is_binary)
@@ -141,10 +138,10 @@ class Organizer : Visitor<<Cmd>>
         endIf
       endIf
 
-    method on( cmd:ParserCallUserMethod )
+    method on_enter( cmd:ParserCallUserMethod )
       Program.parser_user_calls.add( cmd.fn_name )
 
-    method on( cmd:ParserDef )
+    method on_enter( cmd:ParserDef )
       if (not cmd.name) cmd.name = "Parser"
       if (Program.parser and Program.parser is not cmd)
         throw cmd.t.error( "Multiple parsers defined - only one parser can be defined." )
@@ -178,11 +175,11 @@ class Organizer : Visitor<<Cmd>>
       endForEach
       return null
 
-    method on( cmd:ProduceList )
+    method on_enter( cmd:ProduceList )
       if (not cmd.list_type) cmd.list_type = "CmdList"
       Program.type(cmd.t,cmd.list_type).is_list = true
 
-    method on( cmd:Routine )
+    method on_enter( cmd:Routine )
       if (not cmd.is_organized)
         cmd.is_organized = true
         if (cmd.attributes)
@@ -252,10 +249,10 @@ class Organizer : Visitor<<Cmd>>
         endIf
       endIf
 
-    method on( cmd:ScannerCallUserMethod )
+    method on_enter( cmd:ScannerCallUserMethod )
       Program.scanner_user_calls.add( cmd.fn_name )
 
-    method on( cmd:ScannerDef )
+    method on_enter( cmd:ScannerDef )
       if (not cmd.name) cmd.name = "Scanner"
       if (Program.scanner and Program.scanner is not cmd)
         throw cmd.t.error( "Multiple scanners defined - only one scanner can be defined." )

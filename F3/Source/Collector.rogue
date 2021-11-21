@@ -2,10 +2,7 @@ module F3
 
 class Collector : Visitor<<Cmd>>
   METHODS
-    method on( cmd:Cmd )
-      noAction
-
-    method after( cmd:ParserDef )
+    method on_leave( cmd:ParserDef )
       # this_element.routines may now have additional routines; re-add them to this node
       cmd.routine_defs.clear
       cmd.routine_defs.add( forEach in this_element.routines )

@@ -10,7 +10,7 @@ class RVisitor : RogueSourceWriter
 
     method scan_node_types( content:String )
       forEach (line in LineReader(content))
-        if (line.contains("method visit("))
+        if (line.contains("method on_visit_children("))
           local node_type = line.after_first('(').before_first(')').after_first(':').trimmed
           handled_node_types.add( node_type )
         endIf
@@ -36,7 +36,7 @@ class RVisitor : RogueSourceWriter
                     |    method on_leave( cmd:Cmd )
                     |      noAction
                     |
-                    |    method dispatch( cmd:Cmd )->$ReturnType
+                    |    method dispatch( cmd:Cmd )->$ReturnType [propagated]
                     |      if ($ReturnType instanceOf Cmd)
                     |        if (cmd is null) return null
                     |      else
@@ -44,13 +44,27 @@ class RVisitor : RogueSourceWriter
                     |      endIf
                     |      return cmd.dispatch<<ThisType,$ReturnType>>( this )
                     |
-                    |    method dispatch_on<<$CmdType>>( cmd:$CmdType ) [propagated]
-                    |      on_enter( cmd )
+                    |    method enter( cmd:Cmd ) [propagated]
+                    |      cmd.dispatch_on_enter<<ThisType>>( this )
                     |
-                    |    method visit_children( cmd:Cmd )
+                    |    method leave( cmd:Cmd ) [propagated]
+                    |      cmd.dispatch_on_leave<<ThisType>>( this )
+                    |
+                    |    method visit( cmd:Cmd )->$ReturnType
+                    |      enter( cmd )
+                    |      visit_children( cmd )
+                    |      leave( cmd )
+                    |      if ($ReturnType instanceOf Cmd) return cmd
+                    |      else                            return $ReturnType.meta.default_value
+                    |
+                    |    method visit_children( cmd:Cmd ) [propagated]
+                    |      cmd.dispatch_on_visit_children<<ThisType>>( this )
+                    |
+                    |    method on_visit_children( cmd:Cmd )
+                    |      # Overloaded automatically by the Froley compiler
                     |      noAction
                     |
-                    |    method visit_children( cmd:CmdList )
+                    |    method on_visit_children( cmd:CmdList )
                     |      if ($ReturnType instanceOf Cmd)
                     |        forEach (element in writer=cmd.list.rewriter)
                     |          local visited_element = dispatch( element )
@@ -87,21 +101,11 @@ class RVisitor : RogueSourceWriter
           local extended_properties = node_type.extended_properties
           extended_properties .= discarding( (p) with (Program) => p.type.is_built_in )
 
-          builder.println
-          builder.print(  "method visit( cmd:" ).print( node_type.name ).println( " )->$ReturnType" )
-          builder.println "  cmd.dispatch_on_enter"
-          if (properties.count or node_type.is_list)
-            builder.println "  visit_children( cmd )"
-          endIf
-          builder.println "  cmd.dispatch_on_leave"
-          builder.println "  if ($ReturnType instanceOf Cmd) return cmd"
-          builder.println "  else                            return $ReturnType.meta.default_value"
-
           if (extended_properties.count)
             builder.println
-            builder.print(  "method visit_children( cmd:" ).print( node_type.name ).println( " )" )
+            builder.print(  "method on_visit_children( cmd:" ).print( node_type.name ).println( " )" )
             if (node_type.is_list and node_type.name != "CmdList")
-              builder.println "  prior.visit_children( cmd )"
+              builder.println "  on_visit_children( cmd as CmdList )"
             endIf
 
             builder.println "  if ($ReturnType instanceOf Cmd)"

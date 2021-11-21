@@ -1,10 +1,12 @@
 module F3
 
-class TokenOrganizer : Visitor<<Cmd>>
+class TokenOrganizer : Visitor
   METHODS
-    method visit( cmd:TokenGroup )->Cmd [override]
+    method visit( cmd:TokenGroup )->Cmd
       if (not String.exists(cmd.name)) cmd.name = "Tokens"
-      prior.visit( cmd )
+
+      visit_children( cmd )
+
       local entry = Program.token_groups.find( cmd.name )
       if (entry)
         if (entry is not cmd)
@@ -16,9 +18,9 @@ class TokenOrganizer : Visitor<<Cmd>>
         Program.token_groups[cmd.name] = cmd
       endIf
 
-      return prior.visit( cmd )
+      return cmd
 
-    method visit( cmd:TokenDef )->Cmd [override]
+    method on_enter( cmd:TokenDef )
       if (not cmd.symbol) cmd.symbol = cmd.name
       Program.tokens_by_name[cmd.name] = cmd
       Program.tokens_by_symbol[cmd.symbol] = cmd
@@ -29,6 +31,5 @@ class TokenOrganizer : Visitor<<Cmd>>
           endIf
         endForEach
       endIf
-      return prior.visit( cmd )
 endClass
 

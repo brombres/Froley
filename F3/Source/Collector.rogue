@@ -1,13 +1,13 @@
 module F3
 
-class Collector : Visitor<<Cmd>>
+class Collector : Visitor
   METHODS
     method on_leave( cmd:ParserDef )
       # this_element.routines may now have additional routines; re-add them to this node
       cmd.routine_defs.clear
       cmd.routine_defs.add( forEach in this_element.routines )
 
-    method visit( cmd:Routine )->Cmd [override]
+    method visit( cmd:Routine )->Cmd
       if (cmd.is_binary or cmd.is_post_unary)
         # CONVERT THIS:
         #   - parse_op [binary/postUnary]

@@ -5,16 +5,16 @@ class BranchAnalyzer : Visitor<<Logical>> [singleton]
     method all_paths_return( cmd:Cmd )->Logical
       return dispatch( cmd )
 
-    method visit( cmd:Routine )->Logical  [override]
+    method visit( cmd:Routine )->Logical
       return dispatch( cmd.statements )
 
-    method visit( cmd:CmdList )->Logical  [override]
+    method visit( cmd:CmdList )->Logical
       forEach (element in cmd)
         if (dispatch(element)) return true
       endForEach
       return false
 
-    method visit( cmd:If )->Logical  [override]
+    method visit( cmd:If )->Logical
       if (not cmd._else) return false
 
       if (not dispatch(cmd.statements)) return false
@@ -27,7 +27,7 @@ class BranchAnalyzer : Visitor<<Logical>> [singleton]
 
       return dispatch( cmd._else )
 
-    method visit( cmd:On )->Logical  [override]
+    method visit( cmd:On )->Logical
       if (not cmd._else_on_others) return false
 
       if (not dispatch(cmd.statements)) return false
@@ -40,19 +40,19 @@ class BranchAnalyzer : Visitor<<Logical>> [singleton]
 
       return dispatch( cmd._else_on_others )
 
-    method visit( cmd:ParserProduce )->Logical  [override]
+    method visit( cmd:ParserProduce )->Logical
       return true
 
-    method visit( cmd:ProduceList )->Logical  [override]
+    method visit( cmd:ProduceList )->Logical
       return true
 
-    method visit( cmd:Restart )->Logical  [override]
+    method visit( cmd:Restart )->Logical
       return true
 
-    method visit( cmd:Return )->Logical  [override]
+    method visit( cmd:Return )->Logical
       return true
 
-    method visit( cmd:Statements )->Logical  [override]
+    method visit( cmd:Statements )->Logical
       forEach (element in cmd)
         if (element)
           if (dispatch(element)) return true

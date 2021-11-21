@@ -151,6 +151,15 @@ class Organizer : Visitor<<Cmd>>
       endIf
       Program.parser = cmd
 
+    method visit( cmd:ParserProduce )->Cmd [override]
+      cmd.arg = dispatch( cmd.arg ) as CreateCmd
+      if (this_routine.is_binary or this_routine.is_post_unary)
+        # Change 'produce X' to 'create X'
+        # See visit(Routine) for more details
+        return visit( ParserCreate(cmd.t,cmd.arg) )
+      endIf
+      return prior.visit(cmd)
+
     method visit( cmd:ProduceAny )->Cmd [override]
       # Add a scan case for each token in the named group
       local t = cmd.t
@@ -162,8 +171,8 @@ class Organizer : Visitor<<Cmd>>
         local def = item as TokenDef
         local expr = LiteralString( t, def.symbol )
         local cmd_create = ScannerCreate( t, Access(t,def.name) )
-        local cmd_return = Return( t, null )
-        local _case = MatchCase( t, expr, Statements(t,cmd_create,cmd_return) )
+        local cmd_restart = Restart( t, null )
+        local _case = MatchCase( t, expr, Statements(t,cmd_create,cmd_restart) )
         this_match.cases.add( _case )
         _case.dispatch( this )
       endForEach

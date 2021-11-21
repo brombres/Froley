@@ -1757,7 +1757,7 @@ class ParserCore [abstract]
               _on_t
               if (((not (_position < _limit)) or (_next_t.type.attributes & TokenType.ATTRIBUTE_STRUCTURAL)?))
                 _begin_list
-                _push_list( ParserArgs(_list_t) )
+                _push_list( Args(_list_t) )
               else
                 _execute(ip_parser_args)
                 _pop_frame
@@ -1769,17 +1769,14 @@ class ParserCore [abstract]
               _on_t
               _execute(ip_parser_product)
               _pop_frame
-              _push( ParserCreate(_cur_t,_node_arg(-1) as CreateCmd), 1 )
-              _push( null, 0 )
-              _push( Return(_cur_t,_node_arg(-1)), 1 )
+              _push( ParserProduce(_cur_t,_node_arg(-1) as CreateCmd), 1 )
               return
-            elseIf (_next_t.type == TokenType.SYMBOL_ARROW)
+            endIf
+            if (_next_t.type == TokenType.SYMBOL_ARROW)
               _on_t
               _execute(ip_parser_product)
               _pop_frame
-              _push( ParserCreate(_cur_t,_node_arg(-1) as CreateCmd), 1 )
-              _push( null, 0 )
-              _push( Return(_cur_t,_node_arg(-1)), 1 )
+              _push( ParserProduce(_cur_t,_node_arg(-1) as CreateCmd), 1 )
               return
             endIf
             if (_next_t.type == TokenType.KEYWORD_PRODUCE_NULL)
@@ -1888,7 +1885,7 @@ class ParserCore [abstract]
           case ip_parser_arg_list
             _begin_list
             if ((_next_t.type.attributes & TokenType.ATTRIBUTE_STRUCTURAL)?)
-              _push_list( ParserArgs(_list_t) )
+              _push_list( Args(_list_t) )
               return
             endIf
             _execute(ip_parser_expression)
@@ -1900,14 +1897,14 @@ class ParserCore [abstract]
                 _execute(ip_parser_expression)
                 _pop_frame
               elseIf (((_next_t.type == TokenType.EOL) or (_next_t.type.attributes & TokenType.ATTRIBUTE_STRUCTURAL)?))
-                _push_list( ParserArgs(_list_t) )
+                _push_list( Args(_list_t) )
                 return
               else
                 _execute(ip_parser_expression)
                 _pop_frame
               endIf
             endWhile
-            _push_list( ParserArgs(_list_t) )
+            _push_list( Args(_list_t) )
             return
           case ip_ttype_or_literal
             if (_consume(TokenType.SYMBOL_OPEN_PAREN))

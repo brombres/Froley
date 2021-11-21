@@ -21,14 +21,11 @@ class RVisitor : RogueSourceWriter
         if (content is null) content = ""
         content +=  "# Generated and updated by Froley. Custom changes will not be overwritten; customize as desired.\n"
         content += "module $\n\n"(Program.project_name)
-        content += @|class Visitor : Visitor<<Logical>>
-                    |  # Extend this simple convenience class to use a non-rebuilding, "non-value-returning"
-                    |  # Visitor. It uses return type Logical as a dummy value, but just overide on(CmdType)
-                    |  # methods as needed.
+        content += @|class Visitor : Visitor<<Cmd>>
+                    |  # Standard tree-rebuilding visitor.
                     |endClass
                     |
                     |class Visitor<<$ReturnType>>
-                    |  # Visitor is a Froley-generated triple-dispatch implementation of the visitor pattern.
                     |  METHODS
                     |    method on( cmd:Cmd )
                     |      noAction

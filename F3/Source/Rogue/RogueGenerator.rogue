@@ -61,99 +61,100 @@ class RogueGenerator : Visitor
         write   "_pop_frame"
       endIf
 
-    method on( cmd:CastToLogical )
-      cmd.operand.dispatch( this )
+    method after( cmd:CastToLogical )
       write "->Logical"
 
-    method on( cmd:CastToCharacter )
-      cmd.operand.dispatch( this )
+    method after( cmd:CastToCharacter )
       write "->Character"
 
-    method on( cmd:CastToInteger )
-      cmd.operand.dispatch( this )
+    method after( cmd:CastToInteger )
       write "->Int32"
 
-    method on( cmd:CastToString )
-      cmd.operand.dispatch( this )
+    method after( cmd:CastToString )
       write "->String"
 
-    method on( cmd:CharSet )
-      trace cmd.characters
-      println StackTrace()
-
-    method on( cmd:Collect )
+    method visit( cmd:Collect )->Cmd [override]
       write "buffer"
       forEach (arg in cmd.args)
         write ".print("
-        arg.dispatch( this )
+        dispatch( arg )
         write ")"
       endForEach
+      return null
 
-    method on( cmd:CompareEQ )
+    method visit( cmd:CompareEQ )->Cmd [override]
       write "("
       dispatch( cmd.left )
       write "=="
       dispatch( cmd.right )
       write ")"
+      return cmd
 
-    method on( cmd:CompareGE )
+    method visit( cmd:CompareGE )->Cmd [override]
       write "("
       dispatch( cmd.left )
       write ">="
       dispatch( cmd.right )
       write ")"
+      return cmd
 
-    method on( cmd:CompareGT )
+    method visit( cmd:CompareGT )->Cmd [override]
       write "("
       dispatch( cmd.left )
       write ">"
       dispatch( cmd.right )
       write ")"
+      return cmd
 
-    method on( cmd:CompareLE )
+    method visit( cmd:CompareLE )->Cmd [override]
       write "("
       dispatch( cmd.left )
       write "<="
       dispatch( cmd.right )
       write ")"
+      return cmd
 
-    method on( cmd:CompareLT )
+    method visit( cmd:CompareLT )->Cmd [override]
       write "("
       dispatch( cmd.left )
       write "<"
       dispatch( cmd.right )
       write ")"
+      return cmd
 
-    method on( cmd:CompareNE )
+    method visit( cmd:CompareNE )->Cmd [override]
       write "("
       dispatch( cmd.left )
       write "!="
       dispatch( cmd.right )
       write ")"
+      return cmd
 
     method on( cmd:ConsumeCharacters )
       write "_scanner.consume("
-      dispatch( cmd.value )
+
+    method after( cmd:ConsumeCharacters )
       write ")"
 
-    method on( cmd:ConsumeContent )
+    method visit( cmd:ConsumeContent )->Cmd [override]
       write "_consume_content("
       write ''"$"'' (to_escaped_ascii(cmd.content,"\""))
       write ")"
+      return cmd
 
     method on( cmd:ConsumeEOLs )
       write "_consume_eols"
 
-    method on( cmd:ConsumePattern )
-      dispatch( cmd.pattern )
+    method after( cmd:ConsumePattern )
       write ".scan(_scanner)"
 
-    method on( cmd:ConsumeToken )
+    method visit( cmd:ConsumeToken )->Cmd [override]
       write "_consume(TokenType."
       write cmd.token_type.name
       write ")"
+      return cmd
 
-    method on( cmd:CreateCmd )
+    method visit( cmd:CreateCmd )->Cmd [override]
       write "_push( "
       write cmd.name
       write "(_cur_t"
@@ -161,8 +162,9 @@ class RogueGenerator : Visitor
       write "), "
       write cmd.node_arg_count
       write " )"
+      return cmd
 
-    method on( cmd:CreateCmdArg )
+    method visit( cmd:CreateCmdArg )->Cmd [override]
       write ","
       local arg_type = Program.type( cmd.t, cmd.arg_type )
       if (cmd.arg_value)
@@ -181,6 +183,7 @@ class RogueGenerator : Visitor
           if (arg_type.name != "Cmd") write " as "; write arg_type.name
         endIf
       endIf
+      return cmd
 
     method on( cmd:CreateList )
       write "_push_list( $(_list_t) )" (cmd.list_type)
@@ -190,20 +193,23 @@ class RogueGenerator : Visitor
 
     method on( cmd:MustConsumeCharacters )
       write "_must_consume( "
-      dispatch( cmd.value )
+
+    method after( cmd:MustConsumeCharacters )
       write " )"
 
     method on( cmd:MustConsumePattern )
       write "_must_consume( "
-      dispatch( cmd.pattern )
+
+    method after( cmd:MustConsumePattern )
       write " )"
 
-    method on( cmd:MustConsumeToken )
+    method visit( cmd:MustConsumeToken )->Cmd [override]
       write "if (not _consume(TokenType."
       write cmd.token_type.name
       write ")) _throw_syntax_error( &expected=TokenType."
       write cmd.token_type.name
       write " )"
+      return cmd
 
     method on( cmd:ParserHasAnother )
       write "(_position < _limit)"
@@ -213,7 +219,6 @@ class RogueGenerator : Visitor
 
     method on( cmd:Decrement )
       write "--"
-      dispatch( cmd.target )
 
     method on( cmd:DiscardList )
       write "_discard_list"
@@ -225,7 +230,7 @@ class RogueGenerator : Visitor
         write "_discard_position"
       endIf
 
-    method on( cmd:If )
+    method visit( cmd:If )->Cmd [override]
       write   "if ("
       dispatch( cmd.condition )
       writeln ")"
@@ -243,14 +248,16 @@ class RogueGenerator : Visitor
       endIf
 
       write   "endIf"
+      return cmd
 
-    method on( cmd:ElseIf )
+    method visit( cmd:ElseIf )->Cmd [override]
       write   "elseIf ("
       dispatch( cmd.condition )
       writeln ")"
       indent += 2
       dispatch( cmd.statements )
       indent -= 2
+      return cmd
 
     method on( cmd:Halt )
       writeln "halt = true"
@@ -258,7 +265,6 @@ class RogueGenerator : Visitor
 
     method on( cmd:Increment )
       write "++"
-      dispatch( cmd.target )
 
     method on( cmd:ScannerHasAnother )
       write "_scanner.has_another"
@@ -281,34 +287,32 @@ class RogueGenerator : Visitor
 
     method on( cmd:LiteralString )
       writer.print( ''"$"''(to_escaped_ascii(cmd.value,''"'')) )
-      #if (cmd.value.count == 1)
-      #  writer.print( "'$'"(to_escaped_ascii(cmd.value,"'")) )
-      #else
-      #  writer.print( ''"$"''(to_escaped_ascii(cmd.value,''"'')) )
-      #endIf
 
     method on( cmd:LiteralTokenType )
       write "TokenType."
       write cmd.token_type.name
 
-    method on( cmd:LogicalAnd )
+    method visit( cmd:LogicalAnd )->Cmd [override]
       write "("
       cmd.left.dispatch( this )
       write " and "
       cmd.right.dispatch( this )
       write ")"
+      return cmd
 
     method on( cmd:LogicalNot )
       write "(not "
-      cmd.operand.dispatch( this )
+
+    method after( cmd:LogicalNot )
       write ")"
 
-    method on( cmd:LogicalOr )
+    method visit( cmd:LogicalOr )->Cmd [override]
       write "("
       cmd.left.dispatch( this )
       write " or "
       cmd.right.dispatch( this )
       write ")"
+      return cmd
 
     method on( cmd:MarkPosition )
       writeln "_src_line   = _scanner.line"
@@ -318,7 +322,7 @@ class RogueGenerator : Visitor
       write "start_ip = ip_"
       write cmd.routine_name
 
-    method on( cmd:On )
+    method visit( cmd:On )->Cmd [override]
       write   "if (_next_t.type == "
       dispatch( cmd.token_type )
       writeln ")"
@@ -337,8 +341,9 @@ class RogueGenerator : Visitor
       endIf
 
       write   "endIf"
+      return cmd
 
-    method on( cmd:ElseOn )
+    method visit( cmd:ElseOn )->Cmd [override]
       write   "elseIf (_next_t.type == "
       dispatch( cmd.token_type )
       writeln ")"
@@ -346,6 +351,7 @@ class RogueGenerator : Visitor
       writeln "_on_t"
       dispatch( cmd.statements )
       indent -= 2
+      return cmd
 
     method on( cmd:ScannerCallUserMethod )
       writeln "this.ip = ip"
@@ -360,7 +366,7 @@ class RogueGenerator : Visitor
     method on( cmd:NextHasAttribute )
       write "(_next_t.type.attributes & TokenType.ATTRIBUTE_$)?"(cmd.name.to_uppercase)
 
-    method on( cmd:NextIsCharacters )
+    method visit( cmd:NextIsCharacters )->Cmd [override]
       if (cmd.value.type == FType.CHARACTER)
         write "_scanner.next_is("
         dispatch( cmd.value )
@@ -370,14 +376,14 @@ class RogueGenerator : Visitor
         dispatch( cmd.value )
         write ")"
       endIf
+      return cmd
 
     method on( cmd:NextIsContent )
       write ''(_next_t.content and _next_t.content == "''
       write to_escaped_ascii( cmd.content, "\"" )
       write ''")''
 
-    method on( cmd:NextIsPattern )
-      dispatch( cmd.pattern )
+    method after( cmd:NextIsPattern )
       write ".is_next(_scanner)"
 
     method on( cmd:ParserCallUserMethod )
@@ -385,23 +391,22 @@ class RogueGenerator : Visitor
       writeln cmd.fn_name
       write   "ip = this.ip"
 
-    method on( cmd:ParserCreate )
-      cmd.arg.dispatch( this )
-
-    method on( cmd:NextIsTokenType )
+    method visit( cmd:NextIsTokenType )->Cmd [override]
       write "(_next_t.type == TokenType."
       write cmd.token_type.name
       write ")"
+      return cmd
 
-    method on( cmd:Print )
+    method visit( cmd:Print )->Cmd [override]
       write "output"
       forEach (arg in cmd.args)
         write ".print("
         arg.require_value.dispatch( this )
         write ")"
       endForEach
+      return cmd
 
-    method on( cmd:Println )
+    method visit( cmd:Println )->Cmd [override]
       write "output"
       forEach (arg in cmd.args)
         write ".print("
@@ -410,6 +415,7 @@ class RogueGenerator : Visitor
       endForEach
       writeln ".println"
       write "_on_output_line"
+      return cmd
 
     method on( cmd:ProduceList )
       writeln "_push_list( $(_list_t) )" (cmd.list_type)
@@ -417,28 +423,34 @@ class RogueGenerator : Visitor
 
     method on( cmd:ScanCharacters )
       write "_scan("
-      dispatch( cmd.value )
+
+    method after( cmd:ScanCharacters )
       write ")"
 
-    method on( cmd:ScanPatternCmd )
-      dispatch( cmd.pattern )
+    method after( cmd:ScanPatternCmd )
       write ".scan(_scanner,buffer)"
+
+    method after( cmd:ParserProduce )
+      writeln
+      write   "return"
 
     method on( cmd:ParserRead )
       write "_read"
 
     method on( cmd:ScannerCreate )
       write   "_add( "
-      cmd.arg.dispatch( this )
-      writeln " )"
 
-    method on( cmd:ScannerPeek )
+    method after( cmd:ScannerCreate )
+      write " )"
+
+    method visit( cmd:ScannerPeek )->Cmd [override]
       write   "_scanner.peek "
       if (cmd.lookahead)
         write "("
         cmd.lookahead.dispatch( this )
         write ")"
       endIf
+      return cmd
 
     method on( cmd:ScannerRead )
       write "_scanner.read"
@@ -467,7 +479,7 @@ class RogueGenerator : Visitor
       if (is_scanner) write   "return true"
       else            write   "return"
 
-    method visit( cmd:Routine )->Logical [override]
+    method visit( cmd:Routine )->Cmd [override]
       writeln "          case ip_$"(cmd.name)
 
       indent += 12
@@ -480,7 +492,7 @@ class RogueGenerator : Visitor
       endIf
 
       indent -= 12
-      return false
+      return null
 
 
     method on( cmd:SavePosition )
@@ -490,19 +502,23 @@ class RogueGenerator : Visitor
         write "_save_position"
       endIf
 
-    method on( cmd:ScannerDef )
-      RScanner(this).create_missing
-      RScannerCore(this,cmd).overwrite
+    method visit( cmd:ScannerDef )->Cmd [override]
+      temporarily this_element = cmd
+        RScanner(this).create_missing
+        RScannerCore(this,cmd).overwrite
+      endTemporarily
+      return cmd
 
-    method on( cmd:Statements )
+    method visit( cmd:Statements )->Cmd [override]
       forEach (element in cmd)
         if (element)
           element.dispatch( this )
           writeln
         endIf
       endForEach
+      return cmd
 
-    method on( cmd:Match )
+    method visit( cmd:Match )->Cmd [override]
       write_replacements["$scan_table"] = cmd.id
 
       writeln @|$scan_table.reset
@@ -553,8 +569,9 @@ class RogueGenerator : Visitor
       write @|endContingent
 
       write_replacements.remove( "$scan_table" )
+      return cmd
 
-    method on( cmd:ThrowSyntaxError )
+    method visit( cmd:ThrowSyntaxError )->Cmd [override]
       write "_throw_syntax_error"
       if (cmd.args and cmd.args.count)
         write "("
@@ -564,19 +581,18 @@ class RogueGenerator : Visitor
         endForEach
         write ")"
       endIf
+      return cmd
 
     method on( cmd:TokenContent )
       write "_cur_t.content"
 
     method on( cmd:WriteBuffer )
       write "buffer.clear.print "
-      dispatch( cmd.new_value )
 
     method on( cmd:WriteVar )
       write "$ = " (cmd.var.name)
-      dispatch( cmd.new_value )
 
-    method on( cmd:While )
+    method visit( cmd:While )->Cmd [override]
       write   "while ("
       dispatch( cmd.condition )
       writeln ")"
@@ -584,6 +600,7 @@ class RogueGenerator : Visitor
       dispatch( cmd.statements )
       indent -= 2
       write   "endWhile"
+      return cmd
 
     method write( content:String )
       if (content.contains('\n'))
@@ -613,51 +630,57 @@ class RogueGenerator : Visitor
       writer.println
       at_newline = true
 
-    method on( cmd:ParserDef )
-      RCmd(this).update
-      RParser(this).create_missing
-      RParserCore(this,cmd).overwrite
-      RVisitor(this).update
+    method visit( cmd:ParserDef )->Cmd [override]
+      temporarily this_element = cmd
+        RCmd(this).update
+        RParser(this).create_missing
+        RParserCore(this,cmd).overwrite
+        RVisitor(this).update
+      endTemporarily
+      return cmd
 
-
-    method on( cmd:Add )
+    method visit( cmd:Add )->Cmd [override]
       write "("
       dispatch( cmd.left )
       write " + "
       dispatch( cmd.right )
       write ")"
+      return cmd
 
-    method on( cmd:Subtract )
+    method visit( cmd:Subtract )->Cmd [override]
       write "("
       dispatch( cmd.left )
       write " - "
       dispatch( cmd.right )
       write ")"
+      return cmd
 
-    method on( cmd:Multiply )
+    method visit( cmd:Multiply )->Cmd [override]
       write "("
       dispatch( cmd.left )
       write " * "
       dispatch( cmd.right )
       write ")"
+      return cmd
 
-    method on( cmd:Divide )
+    method visit( cmd:Divide )->Cmd [override]
       write "("
       dispatch( cmd.left )
       write " / "
       dispatch( cmd.right )
       write ")"
+      return cmd
 
-    method on( cmd:Power )
+    method visit( cmd:Power )->Cmd [override]
       write "("
       dispatch( cmd.left )
       write " ^ "
       dispatch( cmd.right )
       write ")"
+      return cmd
 
     method on( cmd:Negate )
       write "-"
-      dispatch( cmd.operand )
 
 endClass
 

@@ -829,8 +829,6 @@ class Access : Cmd
 
   METHODS
     method init( t, name )
-if (not name) println StackTrace()
-require name
 
     method description->String
       return "Access($)" (%name)
@@ -1475,7 +1473,7 @@ class Call : Cmd
     method init( t, routine_def )
 
     method description->String
-      return "Call($)" (%routine_def)
+      return "Call($)" (routine_def.name)
 
 endClass
 
@@ -1837,4 +1835,16 @@ class ConsumeEOLs : Cmd
   METHODS
     method description->String
       return "ConsumeEOLs"
+endClass
+
+class ParserProduce : Cmd
+  PROPERTIES
+    arg : CreateCmd
+
+  METHODS
+    method init( t, arg )
+
+    method description->String
+      return "ParserProduce($)" (%arg)
+
 endClass

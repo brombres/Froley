@@ -1135,22 +1135,15 @@ parser
   on "println"
     if (not hasAnother or nextHasAttribute(structural))
       beginList
-      createList ParserArgs
+      createList Args
     else
       parser_args
     endIf
     produce Println(args:Args)
   endOn
 
-  on "produce", parser_product
-    create ParserCreate(arg:CreateCmd)
-    createNull
-    produce Return(value)
-  elseOn "->", parser_product
-    create ParserCreate(arg:CreateCmd)
-    createNull
-    produce Return(value)
-  endOn
+  on "produce", parser_product -> ParserProduce(arg:CreateCmd)
+  on "->",      parser_product -> ParserProduce(arg:CreateCmd)
   on "produceNull"
     create CreateNull
     createNull
@@ -1200,7 +1193,7 @@ parser
 
 - parser_arg_list
   beginList
-  if (nextHasAttribute(structural)) produceList ParserArgs
+  if (nextHasAttribute(structural)) produceList Args
 
   parser_expression
   while (hasAnother)
@@ -1208,13 +1201,13 @@ parser
       consume_eols
       parser_expression
     elseIf (nextIs(EOL) or nextHasAttribute(structural))
-      produceList ParserArgs
+      produceList Args
     else
       parser_expression
     endIf
   endWhile
 
-  produceList ParserArgs
+  produceList Args
 
 - ttype_or_literal
   if (consume('('))

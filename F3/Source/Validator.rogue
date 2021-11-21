@@ -18,6 +18,7 @@ class Validator : Visitor
         if (not type.is_defined)
           throw type.t.error( "Use of undefined node type '$'."(type.name) )
         endIf
+        if (type.is_node and not type.base_type) type.base_type = Program.type_Cmd
       endForEach
 
     method on( cmd:ParserDef )

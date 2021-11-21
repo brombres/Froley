@@ -1,12 +1,18 @@
 module F3
 
-class BranchAnalyzer : Visitor [singleton]
+class BranchAnalyzer : Visitor<<Logical>> [singleton]
   METHODS
-    method on( cmd:Cmd )
-      noAction
-
     method all_paths_return( cmd:Cmd )->Logical
       return dispatch( cmd )
+
+    method visit( cmd:Routine )->Logical  [override]
+      return dispatch( cmd.statements )
+
+    method visit( cmd:CmdList )->Logical  [override]
+      forEach (element in cmd)
+        if (dispatch(element)) return true
+      endForEach
+      return false
 
     method visit( cmd:If )->Logical  [override]
       if (not cmd._else) return false
@@ -33,6 +39,9 @@ class BranchAnalyzer : Visitor [singleton]
       endIf
 
       return dispatch( cmd._else_on_others )
+
+    method visit( cmd:ParserProduce )->Logical  [override]
+      return true
 
     method visit( cmd:ProduceList )->Logical  [override]
       return true

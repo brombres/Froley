@@ -1,14 +1,11 @@
 # Generated and updated by Froley. Custom changes will not be overwritten; customize as desired.
 module F3
 
-class Visitor : Visitor<<Logical>>
-  # Extend this simple convenience class to use a non-rebuilding, "non-value-returning"
-  # Visitor. It uses return type Logical as a dummy value, but just overide on(CmdType)
-  # methods as needed.
+class Visitor : Visitor<<Cmd>>
+  # Standard tree-rebuilding visitor.
 endClass
 
 class Visitor<<$ReturnType>>
-  # Visitor is a Froley-generated triple-dispatch implementation of the visitor pattern.
   PROPERTIES
     this_element : Element
     this_routine : Routine
@@ -1258,5 +1255,19 @@ class Visitor<<$ReturnType>>
       dispatch_after( cmd )
       if ($ReturnType instanceOf Cmd) return cmd
       else                            return $ReturnType.meta.default_value
+
+    method visit( cmd:ParserProduce )->$ReturnType
+      dispatch_on( cmd )
+      visit_children( cmd )
+      dispatch_after( cmd )
+      if ($ReturnType instanceOf Cmd) return cmd
+      else                            return $ReturnType.meta.default_value
+
+    method visit_children( cmd:ParserProduce )
+      if ($ReturnType instanceOf Cmd)
+        if (cmd.arg) cmd.arg = dispatch(cmd.arg) as CreateCmd
+      else
+        if (cmd.arg) cmd.arg.dispatch(this)
+      endIf
 
 endClass

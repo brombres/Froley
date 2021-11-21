@@ -185,7 +185,7 @@ class RCmd : RogueSourceWriter
            |endClass
       endIf
 
-      forEach (node_type in Program.types)
+      forEach (node_type in Program.types.values.to_list.sorted((a,b)=>(a.name<b.name)))
         if (node_type.is_built_in) nextIteration
 
         if (not node_types.contains(node_type.name))

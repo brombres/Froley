@@ -12,7 +12,7 @@ class Organizer : Visitor
         cmd.is_organized = true
         node_type.is_node = true
 
-        # See Collector.visit(Routine) for more details on the following.
+        # See Collector.handleRoutine) for more details on the following.
         if (this_routine.is_binary)
           local args = cmd.args
           if (args.count == 0) args.add( CreateCmdArg(cmd.t,"left",null,"Cmd") )
@@ -87,20 +87,20 @@ class Organizer : Visitor
       if (not cmd.list_type) cmd.list_type = "CmdList"
       Program.type(cmd.t,cmd.list_type).is_list = true
 
-    method visit( cmd:Identifier )->Cmd
+    method on( cmd:Identifier )->Cmd
       if (this_element instanceOf ParserDef and cmd.name == "content")
-        return dispatch( TokenContent(cmd.t) )
+        return visit( TokenContent(cmd.t) )
       endIf
       return cmd
 
-    method visit( cmd:LiteralStringOrCharacter )->Cmd
-      if (cmd.value.count == 1) return dispatch( LiteralCharacter( cmd.t, cmd.value[0] ) )
-      else                      return dispatch( LiteralString( cmd.t, cmd.value ) )
+    method on( cmd:LiteralStringOrCharacter )->Cmd
+      if (cmd.value.count == 1) return visit( LiteralCharacter( cmd.t, cmd.value[0] ) )
+      else                      return visit( LiteralString( cmd.t, cmd.value ) )
 
     method on_enter( cmd:On )
       if (not cmd.is_organized)
         cmd.is_organized = true
-        # See visit(Routine) for more details
+        # See on(Routine) for more details
         if (this_routine.is_binary)
           cmd.token_types.add( Identifier(cmd.t,"_consume_eols()") )
           cmd.token_types.add( Identifier(cmd.t,this_routine.next_routine.name) )
@@ -148,17 +148,17 @@ class Organizer : Visitor
       endIf
       Program.parser = cmd
 
-    method visit( cmd:ParserProduce )->Cmd
-      cmd.arg = dispatch( cmd.arg ) as CreateCmd
+    method on( cmd:ParserProduce )->Cmd
+      cmd.arg = visit( cmd.arg ) as CreateCmd
       if (this_routine.is_binary or this_routine.is_post_unary)
         # Change 'produce X' to 'create X'
-        # See visit(Routine) for more details
-        return visit( ParserCreate(cmd.t,cmd.arg) )
+        # See on(Routine) for more details
+        return on( ParserCreate(cmd.t,cmd.arg) )
       endIf
       visit_children( cmd )
       return cmd
 
-    method visit( cmd:ProduceAny )->Cmd
+    method on( cmd:ProduceAny )->Cmd
       # Add a scan case for each token in the named group
       local t = cmd.t
       local group = Program.token_groups[ cmd.token_group_name ]

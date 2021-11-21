@@ -3,59 +3,59 @@ module F3
 class BranchAnalyzer : Visitor<<Logical>> [singleton]
   METHODS
     method all_paths_return( cmd:Cmd )->Logical
-      return dispatch( cmd )
+      return visit( cmd )
 
-    method visit( cmd:Routine )->Logical
-      return dispatch( cmd.statements )
+    method on( cmd:Routine )->Logical
+      return visit( cmd.statements )
 
-    method visit( cmd:CmdList )->Logical
+    method on( cmd:CmdList )->Logical
       forEach (element in cmd)
-        if (dispatch(element)) return true
+        if (visit(element)) return true
       endForEach
       return false
 
-    method visit( cmd:If )->Logical
+    method on( cmd:If )->Logical
       if (not cmd._else) return false
 
-      if (not dispatch(cmd.statements)) return false
+      if (not visit(cmd.statements)) return false
 
       if (cmd.else_ifs)
         forEach (else_if in cmd.else_ifs)
-          if (not dispatch(else_if)) return false
+          if (not visit(else_if)) return false
         endForEach
       endIf
 
-      return dispatch( cmd._else )
+      return visit( cmd._else )
 
-    method visit( cmd:On )->Logical
+    method on( cmd:On )->Logical
       if (not cmd._else_on_others) return false
 
-      if (not dispatch(cmd.statements)) return false
+      if (not visit(cmd.statements)) return false
 
       if (cmd.else_ons)
         forEach (else_on in cmd.else_ons)
-          if (not dispatch(else_on)) return false
+          if (not visit(else_on)) return false
         endForEach
       endIf
 
-      return dispatch( cmd._else_on_others )
+      return visit( cmd._else_on_others )
 
-    method visit( cmd:ParserProduce )->Logical
+    method on( cmd:ParserProduce )->Logical
       return true
 
-    method visit( cmd:ProduceList )->Logical
+    method on( cmd:ProduceList )->Logical
       return true
 
-    method visit( cmd:Restart )->Logical
+    method on( cmd:Restart )->Logical
       return true
 
-    method visit( cmd:Return )->Logical
+    method on( cmd:Return )->Logical
       return true
 
-    method visit( cmd:Statements )->Logical
+    method on( cmd:Statements )->Logical
       forEach (element in cmd)
         if (element)
-          if (dispatch(element)) return true
+          if (visit(element)) return true
         endIf
       endForEach
       return false

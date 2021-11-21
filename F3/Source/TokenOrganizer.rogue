@@ -2,7 +2,7 @@ module F3
 
 class TokenOrganizer : Visitor
   METHODS
-    method visit( cmd:TokenGroup )->Cmd
+    method on( cmd:TokenGroup )->Cmd
       if (not String.exists(cmd.name)) cmd.name = "Tokens"
 
       visit_children( cmd )

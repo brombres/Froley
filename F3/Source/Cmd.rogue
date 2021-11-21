@@ -36,10 +36,10 @@ class Cmd( t:Token )
       return "Cmd"
 
     method dispatch<<$VisitorType>>( visitor:$VisitorType ) [propagated]
-      visitor.dispatch( this )
+      visitor.visit( this )
 
     method dispatch<<$VisitorType,$ReturnType>>( visitor:$VisitorType )->$ReturnType [propagated]
-      return visitor.visit( this )
+      return visitor.on( this )
 
    method dispatch_on_enter<<$VisitorType>>( visitor:$VisitorType ) [propagated]
      visitor.on_enter( this )
@@ -849,7 +849,7 @@ class Access : Cmd
       local r = resolver.this_element.routines[name]
       if (r) throw t.error( "Illegal assignment to a routine." )
       local v = resolver.this_element.define_var( t, name, cmd.new_value.type )
-      return resolver.dispatch( WriteVar( v, cmd.new_value ) )
+      return resolver.visit( WriteVar( v, cmd.new_value ) )
 
     method to->Character
       if (name is null or name.count == 0) return Character(0)
@@ -1115,7 +1115,7 @@ class ReadBuffer : Cmd
       return "ReadBuffer"
 
     method resolve_assignment( cmd:Assign, resolver:Resolver )->Cmd
-      return resolver.dispatch( WriteBuffer( t, cmd.new_value ) )
+      return resolver.visit( WriteBuffer( t, cmd.new_value ) )
 
     method type->FType
       return FType.STRING

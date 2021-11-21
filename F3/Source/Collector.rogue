@@ -7,7 +7,7 @@ class Collector : Visitor
       cmd.routine_defs.clear
       cmd.routine_defs.add( forEach in this_element.routines )
 
-    method visit( cmd:Routine )->Cmd
+    method on( cmd:Routine )->Cmd
       if (cmd.is_binary or cmd.is_post_unary)
         # CONVERT THIS:
         #   - parse_op [binary/postUnary]
@@ -22,7 +22,7 @@ class Collector : Visitor
         primer.ip = this_element.routines.count
         this_element.routines[primer.name] = primer
         temporarily this_routine = primer
-          prior.visit( primer )
+          prior.on( primer )
         endTemporarily
 
         cmd.name += "__inner"
@@ -30,6 +30,6 @@ class Collector : Visitor
 
       cmd.ip = this_element.routines.count
       this_element.routines[cmd.name] = cmd
-      return prior.visit( cmd )
+      return prior.on( cmd )
 endClass
 

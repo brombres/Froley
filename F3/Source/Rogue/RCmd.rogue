@@ -46,10 +46,10 @@ class RCmd : RogueSourceWriter
            |      return "Cmd"
            |
            |    method dispatch<<$VisitorType>>( visitor:$VisitorType ) [propagated]
-           |      visitor.dispatch( this )
+           |      visitor.visit( this )
            |
            |    method dispatch<<$VisitorType,$ReturnType>>( visitor:$VisitorType )->$ReturnType [propagated]
-           |      return visitor.visit( this )
+           |      return visitor.on( this )
            |
            |    method dispatch_on_enter<<$VisitorType>>( visitor:$VisitorType ) [propagated]
            |      visitor.on_enter( this )

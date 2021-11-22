@@ -1,4 +1,4 @@
-module F3
+module Froley
 
 class RScanner : RogueSourceWriter
   METHODS

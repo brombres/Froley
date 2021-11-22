@@ -1,4 +1,4 @@
-module F3
+module Froley
 
 $include "RCmd.rogue"
 $include "RFrameStack.rogue"

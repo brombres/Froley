@@ -1,0 +1,4 @@
+Source/*.rogue
+!Source/Simple.rogue
+!Source/Interpreter.rogue
+

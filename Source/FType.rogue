@@ -1,4 +1,4 @@
-module F3
+module Froley
 
 enum FType( display_name:String )
   CATEGORIES

@@ -1,4 +1,4 @@
-module F3
+module Froley
 
 class Validator : Visitor
   METHODS

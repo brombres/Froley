@@ -1,4 +1,4 @@
-module F3
+module Froley
 
 class Var( t:Token, name:String, type=FType.NONE:FType )
   METHODS

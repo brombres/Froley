@@ -1,4 +1,4 @@
-module F3
+module Froley
 
 $include "BranchAnalyzer.rogue"
 $include "Collector.rogue"
@@ -14,11 +14,11 @@ $include "TokenOrganizer.rogue"
 $include "Type.rogue"
 $include "Validator.rogue"
 $include "Var.rogue"
-uses F3
+uses Froley
 uses Utility/CommandLineParser
 
 try
-  F3( System.command_line_arguments )
+  Froley( System.command_line_arguments )
 catch (error:CompileError)
   Console.error.println error
   System.exit 1
@@ -28,7 +28,7 @@ catch (error:Error)
   System.exit 1
 endTry
 
-class F3
+class Froley
   PROPERTIES
     command : Value
 
@@ -69,7 +69,7 @@ class F3
 
     method print_usage
       println @|USAGE
-               |  f3 [OPTIONS] <language-definition.froley> <output-folder>
+               |  froley [OPTIONS] <language-definition.froley> <output-folder>
                |
                |OPTIONS
                |  --help, -h, -?

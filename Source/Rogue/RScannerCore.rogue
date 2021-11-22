@@ -1,4 +1,4 @@
-module F3
+module Froley
 
 class RScannerCore( generator, scanner_def:ScannerDef ) : RogueSourceWriter
   METHODS

@@ -1,4 +1,4 @@
-module F3
+module Froley
 
 class RParserCore( generator, parser_def:ParserDef ) : RogueSourceWriter
   METHODS

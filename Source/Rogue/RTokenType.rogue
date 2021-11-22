@@ -1,4 +1,4 @@
-module F3
+module Froley
 
 class RTokenType : RogueSourceWriter
   METHODS

@@ -1,5 +1,5 @@
 # Generated and updated by Froley. Custom changes will not be overwritten; customize as desired.
-module F3
+module Froley
 
 class Visitor : Visitor<<Cmd>>
   # Standard tree-rebuilding visitor.

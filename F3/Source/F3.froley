@@ -435,7 +435,7 @@ parser
 
     attributes
 
-    create TokenDef(name:String,symbol:String,attributes)
+    create TokenDef(name:String,symbol:String,attribute_cmd_list)
     consume_eols
   endWhile
 

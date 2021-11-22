@@ -168,7 +168,6 @@ class ScannerCore [abstract]
             _src_line   = _scanner.line
             _src_column = _scanner.column
             if (_scanner.consume('\n'))
-
               _add( TokenType.EOL )
               return false
             endIf
@@ -283,7 +282,6 @@ class ScannerCore [abstract]
               ch = _scanner.peek 
               if (_scan_pattern_0.is_next(_scanner))
                 if (not _execute(ip_scan_integer)) return false
-
                 _add( TokenType.INTEGER )
                 return false
               endIf
@@ -294,7 +292,6 @@ class ScannerCore [abstract]
               return true
             endIf
             if (_scanner.consume(']'))
-
               _add( TokenType.SYMBOL_EMPTY_BRACKETS )
               return false
             endIf
@@ -317,7 +314,6 @@ class ScannerCore [abstract]
             endWhile
             _must_consume( ']' )
             buffer.print(']')
-
             _add( TokenType.CHARSET )
             return false
           case ip_consume_whitespace
@@ -331,9 +327,7 @@ class ScannerCore [abstract]
                 while (_scanner.has_another)
                   ch = _scanner.read
                   if ((ch=='\n'))
-
                     _add( TokenType.EOL )
-
                   elseIf ((ch=='#'))
                     if (_scanner.consume('{'))
                       ++count
@@ -353,7 +347,6 @@ class ScannerCore [abstract]
                 while (_scanner.has_another)
                   ch = _scanner.read
                   if ((ch=='\n'))
-
                     _add( TokenType.EOL )
                     return false
                   endIf
@@ -364,7 +357,6 @@ class ScannerCore [abstract]
               while (_scanner.has_another)
                 ch = _scanner.read
                 if ((ch=='\n'))
-
                   _add( TokenType.EOL )
                   return false
                 endIf
@@ -377,7 +369,6 @@ class ScannerCore [abstract]
             if ((not _scan_pattern_1.scan(_scanner,buffer)))
               return true
             endIf
-
             _add( TokenType.IDENTIFIER )
             return false
           case ip_scan_tokens_id
@@ -391,7 +382,6 @@ class ScannerCore [abstract]
             _src_column = _scanner.column
             start_ip = ip_scan_token_name
             if (_scanner.consume('\n'))
-
               _add( TokenType.EOL )
               return false
             endIf
@@ -414,31 +404,26 @@ class ScannerCore [abstract]
                 which (_scan_table_1.product)
                   case 1
                     start_ip = ip_scan_standard_token
-
                     _add( TokenType.KEYWORD_PARSER )
                     return false
                   case 2
                     start_ip = ip_scan_standard_token
-
                     _add( TokenType.KEYWORD_SCANNER )
                     return false
                   case 3
                     start_ip = ip_scan_tokens_id
-
                     _add( TokenType.KEYWORD_TOKENS )
                     return false
                   others
                     necessary (false)
                 endWhich
               unsatisfied
-
                 _add( TokenType.IDENTIFIER )
                 return false
               endContingent
             endIf
             start_ip = ip_scan_token_name
             if (_scanner.consume('\n'))
-
               _add( TokenType.EOL )
               return false
             endIf
@@ -462,7 +447,6 @@ class ScannerCore [abstract]
               endWhile
             endIf
             start_ip = ip_scan_token_attributes
-
             _add( TokenType.SYMBOL )
             return false
           case ip_scan_token_attributes
@@ -487,19 +471,15 @@ class ScannerCore [abstract]
               which (_scan_table_2.product)
                 case 0
                   start_ip = ip_scan_token_name
-
                   _add( TokenType.EOL )
                   return false
                 case 1
-
                   _add( TokenType.SYMBOL_OPEN_SQUARE )
                   return false
                 case 2
-
                   _add( TokenType.SYMBOL_CLOSE_SQUARE )
                   return false
                 case 3
-
                   _add( TokenType.SYMBOL_COMMA )
                   return false
                 others
@@ -516,17 +496,14 @@ class ScannerCore [abstract]
                 which (_scan_table_3.product)
                   case 1
                     start_ip = ip_scan_standard_token
-
                     _add( TokenType.KEYWORD_PARSER )
                     return false
                   case 2
                     start_ip = ip_scan_standard_token
-
                     _add( TokenType.KEYWORD_SCANNER )
                     return false
                   case 3
                     start_ip = ip_scan_tokens_id
-
                     _add( TokenType.KEYWORD_TOKENS )
                     return false
                   case 4
@@ -692,7 +669,6 @@ class ScannerCore [abstract]
                     necessary (false)
                 endWhich
               unsatisfied
-
                 _add( TokenType.IDENTIFIER )
                 return false
               endContingent
@@ -700,7 +676,6 @@ class ScannerCore [abstract]
             return true
           case ip_must_scan_attribute_identifier
             if (_scan_pattern_2.scan(_scanner,buffer))
-
               _add( TokenType.IDENTIFIER )
               return false
             endIf
@@ -723,7 +698,6 @@ class ScannerCore [abstract]
             endIf
             while (_scanner.has_another)
               if (_scanner.consume('\''))
-
                 _add( TokenType.STRING_OR_CHARACTER )
                 return false
               endIf
@@ -739,7 +713,6 @@ class ScannerCore [abstract]
             endIf
             while (_scanner.has_another)
               if (_scanner.consume('"'))
-
                 _add( TokenType.STRING )
                 return false
               endIf

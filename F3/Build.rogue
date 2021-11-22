@@ -43,7 +43,7 @@ routine launcher_folder->String
 endRoutine
 
 routine rogo_build
-  #rogo_build_parser
+  rogo_build_parser
 
   local source_files = Files( "Source", "**/*.rogue" )
   if (source_files.any_newer_than(exe_filepath))
@@ -56,15 +56,13 @@ routine rogo_build
 endRoutine
 
 routine rogo_build_parser
-  #{
   # Updates the F3 language parser if necessary
   local def = File( "Source/F3.froley" )
   if (def.is_newer_than("Source/TokenizerVM.rogue"))
     println "Compiling F3 language parser"
     #execute "f2 $ --target=rogue --output=Source/" (def.esc)
-    execute "f2 --main $ Source/" (def.esc)
+    execute "f3 --main $ Source/" (def.esc)
   endIf
-  }#
 endRoutine
 
 routine rogo_debug
@@ -111,7 +109,8 @@ routine compile_cpp
 endRoutine
 
 routine rogo_run
-  execute "$ Source/F3.froley Test --main" (File.esc(exe_filepath))
+  execute File.esc(exe_filepath)
+  #execute "$ Source/F3.froley Test --main" (File.esc(exe_filepath))
 endRoutine
 
 routine rogo_install

@@ -102,5 +102,5 @@ enum TokenType( symbol:String, attributes=0:Int32 )
     SYMBOL_SLASH("/")
     SYMBOL_STAR("*")
     EOI("end of input")
-    SYNTAX_ERROR("compile error")
+    COMPILE_ERROR("compile error")
 endEnum

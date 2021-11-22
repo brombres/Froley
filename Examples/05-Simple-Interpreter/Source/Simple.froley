@@ -105,7 +105,7 @@ parser
     while (hasAnother and not nextIs(EOL))
       expression
     endWhile
-  produceList
+  produceList Args
 
 - expression
   assign
@@ -136,3 +136,9 @@ parser
   on NUMBER     -> Number(value=content:Real)
   on STRING     -> LiteralString(value=content)
   syntaxError
+
+# This routine is not called but its commands cause additional necessary node defs to be generated
+- additional_nodes
+  create ReadVar(name:String)
+  create WriteVar(name:String,new_value:Cmd)
+

@@ -49,7 +49,7 @@ routine rogo_build
     sufficient (File.is_newer_than("Source/$.froley"(Build.PROJECT),exe_filepath))
     necessary  (Files("Source/*.rogue").count < 7)
   satisfied
-    compile_froley
+    rogo_froley
   endContingent
 
   local source_files = Files( "Source", "**/*.rogue" )
@@ -62,7 +62,7 @@ routine rogo_build
   endIf
 endRoutine
 
-routine compile_froley
+routine rogo_froley
   local froley_src = File( "Source/$.froley"(Build.PROJECT) )
   execute "$ $ Source --main"(File.esc(Build.FROLEY_EXE),froley_src.esc)
 endRoutine
@@ -78,7 +78,7 @@ routine rogo_debug
 endRoutine
 
 routine rogo_rebuild
-  compile_froley
+  rogo_froley
   compile_rogue
   compile_cpp
 endRoutine

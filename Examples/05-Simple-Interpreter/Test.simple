@@ -1,5 +1,5 @@
 # Simple test program
-inches = 12
-cm = inches * 2.54
-println inches " inches = " cm " cm"
+fahrenheit = 212
+celsius = (5/9) * (fahrenheit - 32)
+println fahrenheit "F = " celsius "C"
 

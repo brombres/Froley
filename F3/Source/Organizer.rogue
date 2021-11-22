@@ -7,6 +7,14 @@ class Organizer : Visitor
   METHODS
     method on_enter( cmd:CreateCmd )
       local node_type = Program.type( cmd.t, cmd.name )
+      if (cmd.base_type_name)
+        local base_type = Program.type( cmd.t, cmd.base_type_name )
+        if (node_type.base_type and node_type.base_type is not base_type)
+          throw cmd.t.error( "Node '$' used with multiple conflicting base types ('$' and '$')." ...
+          (cmd.name, base_type, node_type.base_type) )
+        endIf
+        node_type.base_type = base_type
+      endIf
 
       if (not cmd.is_organized)
         cmd.is_organized = true

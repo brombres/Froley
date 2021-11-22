@@ -16,10 +16,6 @@ class Type
 
   METHODS
     method init( t, name )
-if (Program.types.contains(name))
-  println StackTrace()
-  throw Error( "BAM!" )
-endIf
       Program.types[ name ] = this
 
     method add( constructor:CreateCmd )

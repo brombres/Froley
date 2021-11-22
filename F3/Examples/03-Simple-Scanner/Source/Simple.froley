@@ -1,0 +1,81 @@
+#-------------------------------------------------------------------------------
+tokens
+#-------------------------------------------------------------------------------
+EOL(end of line)
+IDENTIFIER identifier [content]
+NUMBER     number     [content]
+STRING     string     [content]
+
+#-------------------------------------------------------------------------------
+tokens Keywords
+#-------------------------------------------------------------------------------
+KEYWORD_PRINTLN println
+
+#-------------------------------------------------------------------------------
+tokens Symbols
+#-------------------------------------------------------------------------------
+SYMBOL_BANG        !
+SYMBOL_CARET       ^
+SYMBOL_CLOSE_PAREN )
+SYMBOL_EQUALS      =
+SYMBOL_MINUS       -
+SYMBOL_OPEN_PAREN  (
+SYMBOL_PLUS        +
+SYMBOL_SLASH       /
+SYMBOL_STAR        *
+
+
+#-------------------------------------------------------------------------------
+scanner
+#-------------------------------------------------------------------------------
+- main
+  consume [ \r\t]*  # whitespace
+  if (consume('\n')) produce EOL
+
+  # single-line comment
+  if consume("#" [^\n]*) restart
+
+  if (not hasAnother) halt
+  markPosition
+
+  match
+    produceAny Keywords
+    produceAny Symbols
+  endMatch
+
+  if (scan([_a-zA-Z][_a-zA-Z0-9]*)) produce IDENTIFIER
+  scan_number
+  scan_string
+
+  syntaxError
+
+- scan_number
+  if (not hasAnother) return
+
+  if (scan [0-9])
+    scan_integer
+    if (scan '.') scan_integer
+    produce NUMBER
+  elseIf (scan '.')
+    scan_integer
+    produce NUMBER
+  else
+    return
+  endIf
+
+- scan_integer
+  while hasAnother
+    if (not scan([0-9]) and not consume('_'*)) return
+  endWhile
+  return
+
+- scan_string
+  if (not consume('"')) return
+  while (hasAnother and not nextIs('\n'))
+    ch = read
+    if (ch == '"') produce STRING
+    elseIf (ch == '\\' and hasAnother) ch = read
+    collect ch
+  endWhile
+  syntaxError "Unterminated string."
+

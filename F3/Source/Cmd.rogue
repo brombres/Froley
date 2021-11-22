@@ -863,8 +863,9 @@ endClass
 
 class CreateCmd : Cmd
   PROPERTIES
-    name : String
-    args : Args
+    name           : String
+    args           : Args
+    base_type_name : String
 
     is_organized   = false
     arg_count      = 0
@@ -872,7 +873,7 @@ class CreateCmd : Cmd
     signature      : String
 
   METHODS
-    method init( t, name, args )
+    method init( t, name, args, base_type_name )
 
     method description->String
       return "CreateCmd($,$)" (%name,%args)

@@ -314,8 +314,6 @@ class ScannerCore [abstract]
             endWhile
             _must_consume( ']' )
             buffer.print(']')
-            output.print("CHARSET[").print(buffer).print("]").println
-            _on_output_line
             _add( TokenType.CHARSET )
             return false
           case ip_consume_whitespace

@@ -1,7 +1,5 @@
 module F3
 
-# FIXME: add base class declaration
-
 $include "BranchAnalyzer.rogue"
 $include "Collector.rogue"
 $include "FType.rogue"

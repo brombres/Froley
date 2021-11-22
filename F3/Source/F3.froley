@@ -1269,7 +1269,9 @@ parser
     beginList
     createList Args
   endIf
-  produce CreateCmd(name:String,args:Args)
+  if (consume(':')) identifier
+  else              createNull
+  produce CreateCmd(name:String,args:Args,base_type_name:String)
 
 - parser_expression
   parser_logical_or

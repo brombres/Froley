@@ -69,7 +69,11 @@ endRoutine
 
 routine rogo_clean
   File.delete( "Build" )
-  Files( "Source/*.rogue" ).delete
+  local files = Files( "Source/*.rogue" )
+  files.remove( "Source/Simple.rogue" )
+  files.remove( "Source/Resolver.rogue" )
+  files.remove( "Source/Interpreter.rogue" )
+  files.delete
 endRoutine
 
 routine rogo_debug

@@ -1,8 +1,0 @@
-.rogo
-/Build
-.*.swo
-.*.swp
-*.o
-.DS_Store
-*~
-Source/*.rogue

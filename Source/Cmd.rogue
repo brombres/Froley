@@ -1,1274 +1,1863 @@
-module Froley
-  uses ParseKit<<Froley>>
+# Generated and updated by Froley. Custom changes will not be overwritten; customize as desired.
+module F3
 
-enum ValueType
-  VARIANT
-  INT32
-  LOGICAL
-endEnum
-
-augment Cmd
+class Cmd( t:Token )
   METHODS
-    method is_buffer->Logical
-      return false
+    method add( cmd:Cmd )
+      throw UnsupportedOperationError()
 
-    method is_ch->Logical
-      return false
+    method cast_to( to_type:FType )->Cmd
+      if (require_type == to_type) return this  # no cast needed
 
-    method is_integer->Logical
-      return false
-
-    method is_string->Logical
-      return false
-
-    method is_var->Logical
-      return false
-
-    method jump_if_true->TokenizerOpcode
-      throw t.error( "Value expected." )
-
-    method jump_if_false->TokenizerOpcode
-      which (jump_if_true)
-        case TokenizerOpcode.JUMP_EQ: return TokenizerOpcode.JUMP_NE
-        case TokenizerOpcode.JUMP_NE: return TokenizerOpcode.JUMP_EQ
-        case TokenizerOpcode.JUMP_LT: return TokenizerOpcode.JUMP_GE
-        case TokenizerOpcode.JUMP_LE: return TokenizerOpcode.JUMP_GT
-        case TokenizerOpcode.JUMP_GT: return TokenizerOpcode.JUMP_LE
-        case TokenizerOpcode.JUMP_GE: return TokenizerOpcode.JUMP_LT
+      which (to_type)
+        case FType.LOGICAL:    return CastToLogical( t, this )
+        case FType.CHARACTER:  return CastToCharacter( t, this )
+        case FType.INTEGER:    return CastToInteger( t, this )
+        case FType.REAL:       return CastToReal( t, this )
+        case FType.TOKEN_TYPE: return CastToTokenType( t, this )
+        case FType.STRING:     return CastToString( t, this )
+        case FType.PATTERN:    return CastToPattern( t, this )
         others
-          throw UnsupportedOperationError()
+          throw t.error( "Cannot cast type $ to type: $."(type,to_type) )
       endWhich
 
-    method resolved->Cmd
+    method clear
+      throw UnsupportedOperationError()
+
+    method common_type( other:Cmd )->FType
+      local a = require_type
+      local b = other.require_type
+      return FType( a->Int32.or_larger(b->Int32) )
+
+    method count->Int32
+      return 0
+
+    method description->String
+      return "Cmd"
+
+    method dispatch<<$VisitorType>>( visitor:$VisitorType ) [propagated]
+      visitor.visit( this )
+
+    method dispatch<<$VisitorType,$ReturnType>>( visitor:$VisitorType )->$ReturnType [propagated]
+      return visitor.on( this )
+
+   method dispatch_on_enter<<$VisitorType>>( visitor:$VisitorType ) [propagated]
+     visitor.on_enter( this )
+
+   method dispatch_on_visit<<$VisitorType>>( visitor:$VisitorType ) [propagated]
+     visitor.on_visit( this )
+
+   method dispatch_on_visit_children<<$VisitorType>>( visitor:$VisitorType ) [propagated]
+    visitor.on_visit_children( this )
+
+   method dispatch_on_leave<<$VisitorType>>( visitor:$VisitorType ) [propagated]
+     visitor.on_leave( this )
+
+    method first->Cmd
+      throw UnsupportedOperationError()
+
+    method get( index:Int32 )->Cmd
+      throw UnsupportedOperationError()
+
+    method get<<$AsType>>( index:Int32 )->$AsType
+      return get(index) as $AsType
+
+    method insert( element:Cmd, before_index=0:Int32 )
+      throw UnsupportedOperationError()
+
+    method last->Cmd
+      throw UnsupportedOperationError()
+
+    method list->Cmd[]
+      throw UnsupportedOperationError()
+
+    method remove_first->Cmd
+      throw UnsupportedOperationError()
+
+    method remove_last->Cmd
+      throw UnsupportedOperationError()
+
+    method require_type->FType
+      localize type
+      if (not type.exists)
+        throw t.error( "Value expected." )
+        #throw t.error( "Value expected.($,$)"(type_name,type) )
+      endIf
+      return type
+
+    method require_value->Cmd
+      require_type
       return this
 
-    method resolve_assignment( new_value:Cmd )->Cmd
+    method resolve_assignment( cmd:Assign, resolver:Resolver )->Cmd
       throw t.error( "Illegal assignment." )
 
-    method text->String
-      return this->String
+    method set( index:Int32, value:Cmd )
+      throw UnsupportedOperationError()
+
+    method to->Character
+      return Character(this->Int32)
 
     method to->Int32
-      throw UnsupportedOperationError()
+      return 0
 
-    method to_is_range( low:Int32, high:Int32 )->Cmd
-      throw t.error( "Syntax error; expected \"ch is 'a'..'z'\" etc." )
+    method to->Logical
+      return (this->Int32)?
 
-    method type->ValueType?
-      return null
+    method to->Real64
+      return this->Int32
 
-    method write( assembler:TokenizerAssembler )
-      throw UnsupportedOperationError()
+    method to->ScanPattern
+      throw t.error( ''Pattern expected.'' )
 
-    method write( assembler:ParserAssembler )
-      throw UnsupportedOperationError()
+    method to->String
+      return description
 
-    method write_add( assembler:TokenizerAssembler, expression:Cmd )
-      throw t.error( "Illegal operation target - target must be 'ch' or @varname." )
+    method type->FType
+      return FType.NONE
+endClass
 
-    method write_divide( assembler:TokenizerAssembler, expression:Cmd )
-      throw t.error( "Illegal operation target - target must be @varname." )
+class CmdList : Cmd
+  PROPERTIES
+    list = Cmd[]
 
-    method write_logical_ands( assembler:TokenizerAssembler, target_if_false:Label )
-      write( assembler )
-      assembler.write( jump_if_false, target_if_false )
-
-    method write_logical_ors( assembler:TokenizerAssembler, target_if_true:Label )
-      write( assembler )
-      assembler.write( jump_if_true, target_if_true )
-
-    method write_multiply( assembler:TokenizerAssembler, expression:Cmd )
-      throw t.error( "Illegal operation target - target must be @varname." )
-
-    method write_subtract( assembler:TokenizerAssembler, expression:Cmd )
-      throw t.error( "Illegal operation target - target must be 'ch' or @varname." )
-
-    method error( message:String )->Error
-      return t.error( message )
-
-    method write_assignment( assembler:ParserAssembler, new_value:Cmd )
-      throw t.error( "Invalid assignment target: " + this )
-endAugment
-
-augment CmdStatements
   METHODS
-    method resolve
-      forEach (statement at index in this)
-        this[ index ] = statement.resolved
-      endForEach
+    method init( t )
+      noAction
 
-    method write( assembler:ParserAssembler )
-      forEach (statement in this)
-        statement.write( assembler )
-        if (statement.type.exists)
-          # Statement leaves a value on the stack that we need to remove
-          assembler.write( ParserOpcode.POP_DISCARD )
+    method init( t, element:Cmd )
+      list.add( element )
+
+    method init( t, element1:Cmd, element2:Cmd )
+      list.add( element1 )
+      list.add( element2 )
+
+    method add( cmd:Cmd )
+      @list.add( cmd )
+
+    method clear
+      @list.clear
+
+    method count->Int32
+      return @list.count
+
+    method description->String
+      return "CmdList" + list_description
+
+    method first->Cmd
+      return @list.first
+
+    method get( index:Int32 )->Cmd
+      return @list[index]
+
+    method get<<$AsType>>( index:Int32 )->$AsType
+      return @list[index] as $AsType
+
+    method insert( element:Cmd, before_index=0:Int32 )
+      list.insert( element, before_index )
+
+    method last->Cmd
+      return @list.last
+
+    method list->Cmd[]
+      return @list
+
+    method list_description->String
+      use builder = StringBuilder.pool
+        builder.print '['
+        forEach (element at index in @list)
+          if (index > 0) builder.print ','
+          builder.print( %element )
+        endForEach
+        builder.print ']'
+        return builder->String
+      endUse
+
+    method remove_first->Cmd
+      return @list.remove_first
+
+    method remove_last->Cmd
+      return @list.remove_last
+
+    method set( index:Int32, value:Cmd )
+      @list[index] = value
+endClass
+
+class Unary( t, operand:Cmd ) : Cmd
+  METHODS
+    method description->String
+      return "Unary($)"(%operand)
+
+    method type->FType
+      return operand.type
+endClass
+
+class Binary( t, left:Cmd, right:Cmd ) : Cmd
+  METHODS
+    method description->String
+      return "Binary($,$)"(%left,%right)
+
+    method type->FType
+      return FType( left.type->Int32.or_larger(right.type->Int32) )
+endClass
+
+class ProgramDef : Cmd
+  PROPERTIES
+    sections      : Cmd
+
+  METHODS
+    method init( t, sections )
+
+    method description->String
+      return "ProgramDef($)" (%sections)
+endClass
+
+class Element : Cmd
+  PROPERTIES
+    name         : String
+    routine_defs : Cmd
+    routines     = StringTable<<Routine>>()
+    vars         = StringTable<<Var>>()
+
+  METHODS
+    method init( t, name, routine_defs )
+
+    method define_var( t:Token, name:String, type=FType.NONE:FType )->Var
+      local entry = vars.find( name )
+      if (not entry)
+        local v = Var( t, name, type )
+        vars[name] = v
+        return v
+      endIf
+
+      local existing = entry.value
+      if (type != existing.type)
+        if (not existing.type.exists)
+          existing.type = type
+        elseIf (type.exists)
+          throw t.error( "Conflicting implicit types $ and $ for variable '$'."...
+                         (existing.type,type,name) )
         endIf
-      endForEach
-
-    method write( assembler:TokenizerAssembler )
-      (forEach in this).write( assembler )
-endAugment
-
-
-augment CmdArgs
-  METHODS
-    method resolve
-      forEach (statement at index in this)
-        this[ index ] = statement.resolved
-      endForEach
-
-    method write( assembler:ParserAssembler )
-      (forEach in this).write( assembler )
-
-    method write( assembler:TokenizerAssembler )
-      (forEach in this).write( assembler )
-endAugment
-
-class TokenizerCmdOp( t, name:String, opcode:TokenizerOpcode ) : Cmd
-  # Generic statement with opcode and no operands
-  METHODS
-    method to->String
-      return name
-
-    method write( assembler:TokenizerAssembler )
-      assembler.write( opcode )
-endClass
-
-class TokenizerCmdVarOp( t, name:String, opcode:TokenizerOpcode, varname:String ) : Cmd
-  METHODS
-    method to->String
-      return name
-
-    method write( assembler:TokenizerAssembler )
-      assembler.write( opcode )
-      assembler.write_var( varname )
-endClass
-
-class TokenizerCmdGoto( t, label_name:String ) : Cmd
-  METHODS
-    method write( assembler:TokenizerAssembler )
-      assembler.[ write(TokenizerOpcode.JUMP), write_address(label_name) ]
-
-    method to->String
-      return "goto " + label_name
-endClass
-
-class TokenizerCmdGotoLabel( t, label:Label ) : Cmd
-  METHODS
-    method write( assembler:TokenizerAssembler )
-      assembler.[ write(TokenizerOpcode.JUMP), write_address(label) ]
-
-    method to->String
-      return "goto " + label.name
-endClass
-
-class TokenizerCmdJump( t, address:Int32 ) : Cmd
-  METHODS
-    method write( assembler:TokenizerAssembler )
-      assembler.write( TokenizerOpcode.JUMP, address )
-
-    method to->String
-      return "jump " + address
-endClass
-
-class TokenizerCmdMode( t, label_name:String) : Cmd
-  METHODS
-    method write( assembler:TokenizerAssembler )
-      assembler.[ write(TokenizerOpcode.MODE_INT32), write_address(label_name) ]
-
-    method to->String
-      return "mode " + label_name
-endClass
-
-class TokenizerCmdLabel( t, name:String ) : Cmd
-  METHODS
-    method write( assembler:TokenizerAssembler )
-      if (assembler.label(name).exists)
-        throw error( "Label <$> has already been defined." (name) )
       endIf
-      assembler.define( name )
 
-    method to->String
-      return "<$>" (name)
+      return existing
+
+    method var_type( name:String )->FType
+      local entry = vars.find( name )
+      if (not entry) return FType.NONE
+      return entry.value.type
 endClass
 
-class TokenizerCmdAccess( t, name:String ) : Cmd
+class ScannerDef : Element
   METHODS
-    method init( t )
-      name = t.text
+    method description->String
+      return "ScannerDef($,$)" (%name,%routine_defs)
 
-    method jump_if_true->TokenizerOpcode
-      return TokenizerOpcode.JUMP_NE
-
-    method to->Int32
-      throw t.error( "to->Int32 unsupported" )
-
-    method to->String
-      return name
-
-    method resolve_assignment( new_value:Cmd )->Cmd
-      throw t.error( "Illegal assignment target. Valid targets are 'ch' and @varname." )
-
-    method write( assembler:TokenizerAssembler )
-      TokenizerCmdCall( t, name ).write( assembler )
 endClass
 
-class TokenizerCmdAssign : CmdBinary
+class ParserDef : Element
   METHODS
-    method resolved->Cmd
-      return left.resolve_assignment( right )
+    method description->String
+      return "ParserDef($,$)" (%name,%routine_defs)
 
-    method write( assembler:TokenizerAssembler )
-      throw t.error( "Illegal assignment: $ = $" (left,right) )
 endClass
 
-class TokenizerCmdLiteralInt32( t, value:Int32 ) : Cmd
-  METHODS
-    method init( t )
-      value = t->Int32
-
-    method is_integer->Logical
-      return true
-
-    method to->Int32
-      return value
-
-    method to->String
-      return value->String
-endClass
-
-class TokenizerCmdAdd( t, target:Cmd, value:Cmd ) : Cmd
-  METHODS
-    method write( assembler:TokenizerAssembler )
-      target.write_add( assembler, value )
-endClass
-
-class TokenizerCmdSubtract( t, target:Cmd, value:Cmd ) : Cmd
-  METHODS
-    method write( assembler:TokenizerAssembler )
-      target.write_subtract( assembler, value )
-endClass
-
-class TokenizerCmdMultiply( t, target:Cmd, value:Cmd ) : Cmd
-  METHODS
-    method write( assembler:TokenizerAssembler )
-      target.write_multiply( assembler, value )
-endClass
-
-class TokenizerCmdDivide( t, target:Cmd, value:Cmd ) : Cmd
-  METHODS
-    method write( assembler:TokenizerAssembler )
-      target.write_divide( assembler, value )
-endClass
-
-
-class TokenizerCmdCall( t, label_name:String ) : Cmd
-  METHODS
-    method write( assembler:TokenizerAssembler )
-      assembler.write( TokenizerOpcode.CALL )
-      assembler.write_address( label_name )
-endClass
-
-class TokenizerCmdRead( t ) : Cmd
-  METHODS
-    method write( assembler:TokenizerAssembler )
-      throw t.error( "Syntax error - expected 'ch = read'." )
-
-    method to->String
-      return "read"
-endClass
-
-class TokenizerCmdWhile( t, condition:Cmd ) : Cmd
+class TokenGroup : Cmd
   PROPERTIES
-    statements = CmdStatements()
+    name        : String
+    definitions : Cmd
 
   METHODS
-    method resolved->Cmd
-      condition = condition.resolved
-      statements.resolve
-      return this
+    method init( t, name, definitions )
 
-    method write( assembler:TokenizerAssembler )
-      local label_test = Label()
-      local label_top  = Label()
-      local label_end  = Label()
-      assembler.write( TokenizerOpcode.JUMP, label_test )
-      assembler.define( label_top )
-      statements.write( assembler )
-      assembler.define( label_test )
-      if (condition instanceOf TokenizerCmdLogicalAnd)
-        condition.write_logical_ands( assembler, label_end )
-        assembler.write( TokenizerOpcode.JUMP, label_top )
-      elseIf (condition instanceOf TokenizerCmdLogicalOr)
-        condition.write_logical_ors( assembler, label_top )
-      else
-        condition.write( assembler )
-        assembler.write( condition.jump_if_true, label_top )
-      endIf
-      assembler.define( label_end )
+    method description->String
+      return "TokenGroup($,$)" (%name,%definitions)
+
 endClass
 
-class TokenizerCmdIf( t, condition:Cmd ) : Cmd
+class Identifier : Cmd
   PROPERTIES
-    statements      = CmdStatements()
-    else_statements : CmdStatements
+    name : String
 
   METHODS
-    method resolved->Cmd
-      condition = condition.resolved
-      statements.resolve
-      if (else_statements) else_statements.resolve
-      return this
+    method init( t, name )
 
-    method write( assembler:TokenizerAssembler )
-      local label_body   = Label()
-      local label_else   = Label()
-      local label_end_if = Label()
-      if (condition instanceOf TokenizerCmdLogicalAnd)
-        condition.write_logical_ands( assembler, label_else )
-      elseIf (condition instanceOf TokenizerCmdLogicalOr)
-        condition.write_logical_ors( assembler, label_body )
-        assembler.write( TokenizerOpcode.JUMP, label_else )
-      else
-        condition.write( assembler )
-        assembler.write( condition.jump_if_false, label_else )
-      endIf
-      assembler.define( label_body )
-      statements.write( assembler )
-      assembler.write( TokenizerOpcode.JUMP, label_end_if )
-      assembler.define( label_else )
-      if (else_statements) else_statements.write( assembler )
-      assembler.define( label_end_if )
+    method description->String
+      return "Identifier($)" (%name)
+
+    method to->Character
+      if (name is null or name.count == 0) return Character(0)
+      return name[0]
+
+    method to->Int32:  return name
+    method to->Logical: return name?
+    method to->String: return name
+
 endClass
 
-class TokenizerCmdHasAnother( t ) : Cmd
+class Routine : Cmd
+  PROPERTIES
+    name             : String
+    attributes       : String
+    statements       : Statements
+
+    ip               : Int32
+    is_primer        : Logical
+    is_binary        : Logical
+    is_right_binary  : Logical
+    is_pre_unary     : Logical
+    is_post_unary    : Logical
+    is_organized     : Logical
+
+    next_routine     : Routine
+
   METHODS
-    method jump_if_true->TokenizerOpcode
-      return TokenizerOpcode.JUMP_GT
-
-    method to->String
-      return "hasAnother"
-
-    method type->ValueType?
-      return ValueType.LOGICAL
-
-    method write( assembler:TokenizerAssembler )
-      assembler.write( TokenizerOpcode.HAS_ANOTHER )
-endClass
-
-class TokenizerCmdSetChToInt32( t, value:Int32 ) : Cmd
-  METHODS
-    method jump_if_true->TokenizerOpcode
-      return TokenizerOpcode.JUMP_NE
-
-    method write( assembler:TokenizerAssembler )
-      assembler.write( TokenizerOpcode.SET_CH_TO_INT32, value )
-endClass
-
-class TokenizerCmdSetChToVar( t, name:String ) : Cmd
-  METHODS
-    method jump_if_true->TokenizerOpcode
-      return TokenizerOpcode.JUMP_NE
-
-    method write( assembler:TokenizerAssembler )
-      assembler.write( TokenizerOpcode.SET_CH_TO_VAR )
-      assembler.write_var( name )
-endClass
-
-class TokenizerCmdReadCh( t ) : Cmd
-  METHODS
-    method jump_if_true->TokenizerOpcode
-      return TokenizerOpcode.JUMP_NE
-
-    method write( assembler:TokenizerAssembler )
-      assembler.write( TokenizerOpcode.READ_CH )
-endClass
-
-class TokenizerCmdChIsRange( t, low:Int32, high:Int32 ) : Cmd
-  METHODS
-    method jump_if_true->TokenizerOpcode
-      return TokenizerOpcode.JUMP_NE
-
-    method write( assembler:TokenizerAssembler )
-      assembler.write( TokenizerOpcode.CH_IS_RANGE )
-      assembler.write( low )
-      assembler.write( high )
-endClass
-
-class TokenizerCmdSetBufferToString( t, value:String ) : Cmd
-  METHODS
-    method write( assembler:TokenizerAssembler )
-      assembler.write( TokenizerOpcode.CLEAR_BUFFER )
-      assembler.write( TokenizerOpcode.COLLECT_STRING, value )
-
-    method to->String
-      return ''buffer = "$"'' (value.to_escaped_ascii)
-endClass
-
-class TokenizerCmdRegisterBuffer( t ) : Cmd
-  METHODS
-    method is_buffer->Logical
-      return true
-
-    method resolve_assignment( new_value:Cmd )->Cmd
-      if (new_value instanceOf TokenizerCmdLiteralString)
-        return TokenizerCmdSetBufferToString( t, (new_value as TokenizerCmdLiteralString).value )
-      else
-        throw t.error( "Illegal 'buffer' assignment. Expected a literal string." )
+    method init( t, name, attributes, statements )
+      if (attributes)
+        which (attributes)
+          case "[binary]":       is_binary = true
+          case "[primer]":       is_primer = true
+          case "[rightBinary]":  is_right_binary = true
+          case "[preUnary]":     is_pre_unary = true
+          case "[postUnary]":    is_post_unary = true
+          others:                throw t.error( "Unrecognized routine attribute $."(attributes) )
+        endWhich
       endIf
 
-    method to->String
-      return "buffer"
-
-    method write( assembler:TokenizerAssembler )
-      throw t.error( ''Syntax error - expected 'buffer = pop' or 'buffer = "<string>"'.'' )
+    method description->String
+      return "Routine($,$,$)" (%name,%attributes,%statements)
 endClass
 
-class TokenizerCmdRegisterCh( t ) : Cmd
+class Literal : Cmd
   METHODS
-    method is_ch->Logical
-      return true
-
-    method resolve_assignment( new_value:Cmd )->Cmd
-      if (new_value.is_integer)
-        return TokenizerCmdSetChToInt32( t, new_value->Int32 )
-      elseIf (new_value.is_var)
-        return TokenizerCmdSetChToVar( t, new_value->String )
-      elseIf (new_value instanceOf TokenizerCmdRead)
-        return TokenizerCmdReadCh( t )
-      elseIf (new_value instanceOf TokenizerCmdPeek)
-        return TokenizerCmdPeekChInt32( t, 0 )
-      elseIf (new_value instanceOf TokenizerCmdPeekInt32)
-        return TokenizerCmdPeekChInt32( t, (new_value as TokenizerCmdPeekInt32).lookahead )
-      elseIf (new_value instanceOf TokenizerCmdPeekVar)
-        return TokenizerCmdPeekChVar( t, (new_value as TokenizerCmdPeekVar).name )
-      else
-        throw t.error( "Illegal 'ch' assignment. Expected 'read', '@varname', or an integer." )
-      endIf
-
-    method to->String
-      return "ch"
-
-    method to_is_range( low:Int32, high:Int32 )->Cmd
-      return TokenizerCmdChIsRange( t, low, high )
-
-    method write( assembler:TokenizerAssembler )
-      assembler.write( TokenizerOpcode.SET_RESULT_TO_CH )
-
-    method write_add( assembler:TokenizerAssembler, expression:Cmd )
-      local cmd_int = expression as TokenizerCmdLiteralInt32
-      if (cmd_int)
-        assembler.write( TokenizerOpcode.ADD_CH_INT32, cmd_int.value )
-      else
-        throw expression.error( "Illegal operation value; integer expected." )
-      endIf
-
-    method write_subtract( assembler:TokenizerAssembler, expression:Cmd )
-      local cmd_int = expression as TokenizerCmdLiteralInt32
-      if (cmd_int)
-        assembler.write( TokenizerOpcode.ADD_CH_INT32, -cmd_int.value )
-      else
-        throw expression.error( "Illegal operation value; integer expected." )
-      endIf
+    method description->String
+      return "Literal"
 endClass
 
-class TokenizerCmdSetVarToInt32( t, name:String, value:Int32 ) : Cmd
+class LiteralString : Cmd
+  PROPERTIES
+    value : String
+
   METHODS
-    method jump_if_true->TokenizerOpcode
-      return TokenizerOpcode.JUMP_NE
+    method init( t, value )
 
-    method write( assembler:TokenizerAssembler )
-      assembler.write( TokenizerOpcode.SET_VAR_TO_INT32 )
-      assembler.write_var( name )
-      assembler.write( value )
-endClass
+    method cast_to( to_type:FType )->Cmd
+      if (to_type == FType.STRING) return this
 
-class TokenizerCmdSetVarToCh( t, name:String ) : Cmd
-  METHODS
-    method jump_if_true->TokenizerOpcode
-      return TokenizerOpcode.JUMP_NE
-
-    method write( assembler:TokenizerAssembler )
-      assembler.write( TokenizerOpcode.SET_VAR_TO_CH )
-      assembler.write_var( name )
-endClass
-
-
-class TokenizerCmdCompare<<$OPCODE>> : CmdBinary
-  METHODS
-    method jump_if_true->TokenizerOpcode
-      return TokenizerOpcode.$OPCODE
-
-    method to->String
-      local symbol = "<>"
-      which (TokenizerOpcode.$OPCODE)
-        case TokenizerOpcode.JUMP_EQ: symbol = "=="
-        case TokenizerOpcode.JUMP_NE: symbol = "!="
-        case TokenizerOpcode.JUMP_LT: symbol = "<"
-        case TokenizerOpcode.JUMP_LE: symbol = "<="
-        case TokenizerOpcode.JUMP_GT: symbol = ">"
-        case TokenizerOpcode.JUMP_GE: symbol = ">="
+      which (to_type)
+        case FType.LOGICAL:    return LiteralLogical( t, value->Logical )
+        case FType.CHARACTER:  return LiteralCharacter( t, value[0] )
+        case FType.INTEGER:    return LiteralInteger( t, value->Int32 )
+        case FType.REAL:       return LiteralReal( t, value->Real64 )
+        others
+          return prior.cast_to( to_type )
       endWhich
-      return "$ $ $" (left,symbol,right)
 
-    method write( assembler:TokenizerAssembler )
-      if (left.is_ch)
-        if (right.is_integer)
-          assembler.write( TokenizerOpcode.COMPARE_CH_INT32, right->Int32 )
-          return
-        endIf
-      endIf
-      if (left.is_var)
-        if (right.is_integer)
-          assembler.write( TokenizerOpcode.COMPARE_VAR_INT32 )
-          assembler.write_var( left->String )
-          assembler.write( right->Int32 )
-          return
-        endIf
-      endIf
-      if (left.is_buffer)
-        local st = right as TokenizerCmdLiteralString
-        if (st)
-          assembler.write( TokenizerOpcode.COMPARE_BUFFER_STRING, st.value )
-          return
-        endIf
-      endIf
-      throw t.error( "Unsupported comparison between '$' and '$'." (left,right) )
+    method description->String
+      return "LiteralString($)" (%value)
+
+    method to->Character
+      if (value is null or value.count == 0) return Character(0)
+      return value[0]
+
+    method to->Int32:  return value
+    method to->Logical: return value?
+    method to->String: return value
+
+    method to->ScanPattern
+      return LiteralStringScanPattern( value )
+
+    method type->FType
+      return FType.STRING
 endClass
 
-class TokenizerCmdCompareEQ : TokenizerCmdCompare<<JUMP_EQ>>;
-class TokenizerCmdCompareNE : TokenizerCmdCompare<<JUMP_NE>>;
-class TokenizerCmdCompareLT : TokenizerCmdCompare<<JUMP_LT>>;
-class TokenizerCmdCompareLE : TokenizerCmdCompare<<JUMP_LE>>;
-class TokenizerCmdCompareGT : TokenizerCmdCompare<<JUMP_GT>>;
-class TokenizerCmdCompareGE : TokenizerCmdCompare<<JUMP_GE>>;
-
-class TokenizerCmdCollectCharacter( t, value:Int32 ) : Cmd
-  METHODS
-    method to->String
-      return "collect '$'" (value->Character.to_escaped_ascii)
-
-    method write( assembler:TokenizerAssembler )
-      assembler.write( TokenizerOpcode.COLLECT_CHARACTER, value )
-endClass
-
-class TokenizerCmdCollectString( t, value:String ) : Cmd
-  METHODS
-    method to->String
-      return ''collect "$"'' (value.to_escaped_ascii)
-
-    method write( assembler:TokenizerAssembler )
-      assembler.write( TokenizerOpcode.COLLECT_STRING, value )
-endClass
-
-class TokenizerCmdCreateInt32( t, token_type:Int32 ) : Cmd
-  METHODS
-    method to->String
-      return Froley.token_def( token_type ).name
-
-    method write( assembler:TokenizerAssembler )
-      assembler.write( TokenizerOpcode.CREATE_INT32, token_type )
-endClass
-
-class TokenizerCmdPeek( t ) : Cmd
-  METHODS
-    method to->String
-      return "peek"
-
-    method write( assembler:TokenizerAssembler )
-      throw t.error( "Syntax error - expected 'ch = peek'." )
-endClass
-
-class TokenizerCmdPeekVar( t, name:String ) : Cmd
-  METHODS
-    method to->String
-      return "peek(@$)"(name)
-
-    method write( assembler:TokenizerAssembler )
-      throw t.error( "Syntax error - expected 'ch = peek(@$)'."(name) )
-endClass
-
-class TokenizerCmdPeekInt32( t, lookahead:Int32 ) : Cmd
-  METHODS
-    method to->String
-      return "peek($)" (lookahead)
-
-    method write( assembler:TokenizerAssembler )
-      throw t.error( "Syntax error - expected 'ch = peek($)'." (lookahead) )
-endClass
-
-class TokenizerCmdPeekChVar( t, name:String ) : Cmd
-  METHODS
-    method to->String
-      return "ch = peek(@varname)"
-
-    method write( assembler:TokenizerAssembler )
-      assembler.write( TokenizerOpcode.PEEK_CH_VAR )
-      assembler.write_var( name )
-endClass
-
-class TokenizerCmdPeekChInt32( t, lookahead:Int32 ) : Cmd
-  METHODS
-    method to->String
-      return "ch = peek($)" (lookahead)
-
-    method write( assembler:TokenizerAssembler )
-      assembler.write( TokenizerOpcode.PEEK_CH_INT32, lookahead )
-endClass
-
-class TokenizerCmdConsumeCharacter( t, value:Int32 ) : Cmd
-  METHODS
-    method jump_if_true->TokenizerOpcode
-      return TokenizerOpcode.JUMP_NE
-
-    method to->String
-      return "consume($)" (value->Character.to_escaped_ascii)
-
-    method write( assembler:TokenizerAssembler )
-      assembler.write( TokenizerOpcode.CONSUME_CHARACTER, value )
-endClass
-
-class TokenizerCmdConsumeString( t, value:String ) : Cmd
-  METHODS
-    method jump_if_true->TokenizerOpcode
-      return TokenizerOpcode.JUMP_NE
-
-    method to->String
-      return "consume($)" (value.to_escaped_ascii)
-
-    method write( assembler:TokenizerAssembler )
-      assembler.write( TokenizerOpcode.CONSUME_STRING, value )
-endClass
-
-class TokenizerCmdMustConsumeCharacter( t, value:Int32 ) : Cmd
-  METHODS
-    method jump_if_true->TokenizerOpcode
-      return TokenizerOpcode.JUMP_NE
-
-    method to->String
-      return "mustConsume($)" (value->Character.to_escaped_ascii)
-
-    method write( assembler:TokenizerAssembler )
-      assembler.write( TokenizerOpcode.MUST_CONSUME_CHARACTER, value )
-endClass
-
-class TokenizerCmdNextIsCharacter( t, low:Int32, high:Int32 ) : Cmd
-  METHODS
-    method jump_if_true->TokenizerOpcode
-      return TokenizerOpcode.JUMP_NE
-
-    method to->String
-      return "nextIs($..$)" (low->Character.to_escaped_ascii,high->Character.to_escaped_ascii)
-
-    method write( assembler:TokenizerAssembler )
-      assembler.write( TokenizerOpcode.NEXT_IS_CHARACTER )
-      assembler.write( low )
-      assembler.write( high )
-endClass
-
-class TokenizerCmdLiteralString( t, value:String ) : Cmd
-  METHODS
-    method init( t )
-      value = t.text
-
-    method is_string->Logical
-      return true
-
-    method text->String
-      return value
-
-    method to->String
-      return ''"$"'' (value.to_escaped_ascii)
-
-    method write( assembler:TokenizerAssembler )
-      throw t.error( "Syntax error - unexpected literal string." )
-endClass
-
-class TokenizerCmdWhichInput : Cmd
+class LiteralStringOrCharacter : Cmd
   PROPERTIES
-    start = ScanState()
+    value : String
 
   METHODS
-    method init( t )
-      start.is_acceptable = true
-
-    method resolved->Cmd
-      start.resolve
-      return this
-
-    method write( assembler:TokenizerAssembler )
-      assembler.write( TokenizerOpcode.WHICH_INPUT )
-      local label_end = Label()
-      local states = ScanState[]
-      start.collect( states )
-      (forEach in states).is_collected = false
-      (forEach in states).write( assembler, label_end )
-      assembler.define( label_end )
-endClass
-
-class TokenizerCmdWhichBuffer : Cmd
-  PROPERTIES
-    start = ScanState()
-
-  METHODS
-    method init( t )
-      start.is_acceptable = true
-
-    method resolved->Cmd
-      start.resolve
-      return this
-
-    method write( assembler:TokenizerAssembler )
-      assembler.write( TokenizerOpcode.WHICH_BUFFER )
-      local label_end = Label()
-      local states = ScanState[]
-      start.collect( states )
-      (forEach in states).is_collected = false
-      (forEach in states).write( assembler, label_end )
-      assembler.define( label_end )
-endClass
-
-class TokenizerCmdNot( t, operand ) : CmdUnary
-  METHODS
-    method jump_if_true->TokenizerOpcode
-      return operand.jump_if_false
-
-    method jump_if_false->TokenizerOpcode
-      return operand.jump_if_true
-
-    method resolved->Cmd
-      operand = operand.resolved
-      return this
-
-    method to->String
-      return "not " + operand
-
-    method write( assembler:TokenizerAssembler )
-      operand.write( assembler )
-endClass
-
-class TokenizerCmdLogicalAnd : CmdBinary
-  METHODS
-    method resolved->Cmd
-      left  = left.resolved
-      right = right.resolved
-      return this
-
-    method to->String
-      return "($ and $)" (left,right)
-
-    method type->ValueType?
-      return ValueType.LOGICAL
-
-    method write( assembler:TokenizerAssembler )
-      throw t.error( "Condition too complex - only simple 'a or b or ...', 'a and b and...' conditions are allowed." )
-
-    method write_logical_ands( assembler:TokenizerAssembler, target_if_false:Label )
-      left.write_logical_ands( assembler, target_if_false )
-      right.write_logical_ands( assembler, target_if_false )
-
-endClass
-
-class TokenizerCmdLogicalOr : CmdBinary
-  METHODS
-    method resolved->Cmd
-      left  = left.resolved
-      right = right.resolved
-      return this
-
-    method type->ValueType?
-      return ValueType.LOGICAL
-
-    method to->String
-      return "($ or $)" (left,right)
-
-    method write( assembler:TokenizerAssembler )
-      throw t.error( "Condition too complex - only simple 'a or b or ...', 'a and b and...' conditions are allowed." )
-
-    method write_logical_ors( assembler:TokenizerAssembler, target_if_true:Label )
-      left.write_logical_ors( assembler, target_if_true )
-      right.write_logical_ors( assembler, target_if_true )
-
-endClass
-
-class TokenizerCmdTrace : Cmd
-  METHODS
-    method write( assembler:TokenizerAssembler )
-      assembler.write( TokenizerOpcode.TRACE, t.line )
-endClass
-
-class TokenizerCmdVarAccess( t, name:String ) : Cmd
-  METHODS
-    method is_var->Logical
-      return true
-
-    method jump_if_true->TokenizerOpcode
-      return TokenizerOpcode.JUMP_NE
-
-    method to->String
-      return name
-
-    method resolve_assignment( new_value:Cmd )->Cmd
-      if (new_value.is_integer)
-        return TokenizerCmdSetVarToInt32( t, name, new_value->Int32 )
-      elseIf (new_value.is_ch)
-        return TokenizerCmdSetVarToCh( t, name )
-      else
-        throw t.error( "Illegal variable assignment. Expected 'ch' or an integer." )
-      endIf
-
-    method write( assembler:TokenizerAssembler )
-      assembler.write( TokenizerOpcode.SET_RESULT_TO_VAR )
-      assembler.write_var( name )
-
-    method write_add( assembler:TokenizerAssembler, expression:Cmd )
-      local cmd_int = expression as TokenizerCmdLiteralInt32
-      if (cmd_int)
-        assembler.write( TokenizerOpcode.ADD_VAR_INT32 )
-        assembler.write_var( name )
-        assembler.write( cmd_int.value )
-      elseIf (expression.is_var)
-        assembler.write( TokenizerOpcode.ADD_VAR_VAR )
-        assembler.write_var( name )
-        assembler.write_var( expression->String )
-      else
-        throw expression.error( "Illegal operation value; integer or variable expected." )
-      endIf
-
-    method write_divide( assembler:TokenizerAssembler, expression:Cmd )
-      local cmd_int = expression as TokenizerCmdLiteralInt32
-      if (cmd_int)
-        assembler.write( TokenizerOpcode.DIV_VAR_INT32 )
-        assembler.write_var( name )
-        assembler.write( cmd_int.value )
-      else
-        throw expression.error( "Illegal operation value; integer expected." )
-      endIf
-
-    method write_multiply( assembler:TokenizerAssembler, expression:Cmd )
-      local cmd_int = expression as TokenizerCmdLiteralInt32
-      if (cmd_int)
-        assembler.write( TokenizerOpcode.MUL_VAR_INT32 )
-        assembler.write_var( name )
-        assembler.write( cmd_int.value )
-      else
-        throw expression.error( "Illegal operation value; integer expected." )
-      endIf
-
-    method write_subtract( assembler:TokenizerAssembler, expression:Cmd )
-      local cmd_int = expression as TokenizerCmdLiteralInt32
-      if (cmd_int)
-        assembler.write( TokenizerOpcode.ADD_VAR_INT32 )
-        assembler.write_var( name )
-        assembler.write( -cmd_int.value )
-      elseIf (expression.is_var)
-        assembler.write( TokenizerOpcode.SUB_VAR_VAR )
-        assembler.write_var( name )
-        assembler.write_var( expression->String )
-      else
-        throw expression.error( "Illegal operation value; integer or variable expected." )
-      endIf
-endClass
-
-class TokenizerCmdCustom( t, name:String ) : Cmd
-  METHODS
-    method to->String
-      return "custom($)"(name)
-
-    method write( assembler:TokenizerAssembler )
-      assembler.write( TokenizerOpcode.CUSTOM, name )
-endClass
-
-class ParserCmdOnType( t, token_type_def:TokenDef ) : Cmd
-  PROPERTIES
-    statements = CmdStatements()
-    else_on    : ParserCmdOnType
-    peek       = false
-
-  METHODS
-    method write( assembler:ParserAssembler )
-      if (token_type_def)
-        local label_else = Label()
-        local label_done = Label()
-        if (peek) assembler.write( ParserOpcode.ON_PEEK_TOKEN_TYPE, token_type_def.type )
-        else      assembler.write( ParserOpcode.ON_TOKEN_TYPE, token_type_def.type )
-        assembler.write_address( label_else )
-        statements.write( assembler )
-        assembler.write( ParserOpcode.POP_CUR_TOKEN )
-        assembler.write( ParserOpcode.JUMP, label_done )
-        assembler.define( label_else )
-        if (else_on) else_on.write( assembler )
-        assembler.define( label_done )
-      else
-        # just an 'else'
-        statements.write( assembler )
-      endIf
-endClass
-
-class ParserCmdOnTypeProduce( t, token_type_def:TokenDef, constructor:Constructor ) : Cmd
-  PROPERTIES
-    statements = CmdStatements()
-    peek : Logical
-
-  METHODS
-    method write( assembler:ParserAssembler )
-      assembler.this_method.write( this, assembler )
-endClass
-
-class ParserCmdConsumeTokenType( t, token_type_def:TokenDef ) : Cmd
-  METHODS
-    method type->ValueType?
-      return ValueType.LOGICAL
-
-    method write( assembler:ParserAssembler )
-      assembler.write( ParserOpcode.CONSUME_TYPE, token_type_def.type )
-endClass
-
-class ParserCmdConsumeString( t, content:String ) : Cmd
-  METHODS
-    method type->ValueType?
-      return ValueType.LOGICAL
-
-    method write( assembler:ParserAssembler )
-      assembler.write( ParserOpcode.CONSUME_STRING, content )
-endClass
-
-class ParserCmdNextIsTokenType( t, token_type_def:TokenDef ) : Cmd
-  METHODS
-    method type->ValueType?
-      return ValueType.LOGICAL
-
-    method write( assembler:ParserAssembler )
-      assembler.write( ParserOpcode.NEXT_IS_TYPE, token_type_def.type )
-endClass
-
-class ParserCmdNextIsString( t, content:String ) : Cmd
-  METHODS
-    method type->ValueType?
-      return ValueType.LOGICAL
-
-    method write( assembler:ParserAssembler )
-      assembler.write( ParserOpcode.NEXT_IS_STRING, content )
-endClass
-
-class ParserCmdMustConsumeType( t, token_type_def:TokenDef ) : Cmd
-  METHODS
-    method write( assembler:ParserAssembler )
-      assembler.write( ParserOpcode.MUST_CONSUME_TYPE, token_type_def.type )
-endClass
-
-class ParserCmdMustConsumeString( t, content:String ) : Cmd
-  METHODS
-    method write( assembler:ParserAssembler )
-      assembler.write( ParserOpcode.MUST_CONSUME_STRING, content )
-endClass
-
-class ParserCmdCreate( t, constructor:Constructor ) : Cmd
-  PROPERTIES
-    args = ConstructorArg[]
-
-  METHODS
-    method write( assembler:ParserAssembler )
-      assembler.write( ParserOpcode.CREATE_CMD, constructor.index )
-      assembler.write( constructor.subcommand_count )
-endClass
-
-class ParserCmdCreateNull( t ) : Cmd
-  METHODS
-    method write( assembler:ParserAssembler )
-      assembler.write( ParserOpcode.CREATE_NULL_CMD )
-endClass
-
-class ParserCmdCreateList( t, list_type:Constructor ) : Cmd
-  METHODS
-    method write( assembler:ParserAssembler )
-      assembler.write( ParserOpcode.CREATE_LIST, list_type.index )
-endClass
-
-class ParserCmdDiscardList( t ) : Cmd
-  METHODS
-    method write( assembler:ParserAssembler )
-      assembler.write( ParserOpcode.DISCARD_LIST )
-endClass
-
-class ParserCmdPrintlnString( t, value:String ) : Cmd
-  METHODS
-    method write( assembler:ParserAssembler )
-      assembler.write( ParserOpcode.PRINTLN_STRING, value )
-endClass
-
-class ParserCmdPrintlnCmd( t, value:Cmd ) : Cmd
-  METHODS
-    method write( assembler:ParserAssembler )
-      value.write( assembler )
-      assembler.write( ParserOpcode.PRINTLN_NUMBER )
-endClass
-
-class ParserCmdReturn( t, expression:Cmd ) : Cmd
-  METHODS
-    method write( assembler:ParserAssembler )
-      if (expression) expression.write( assembler )
-      assembler.write( ParserOpcode.RETURN )
-
-endClass
-
-class ParserCmdAccess( t, name:String ) : Cmd
-  METHODS
-    method init( t )
-      name = t->String
-
-    method type->ValueType?
-      if (Froley.parser_methods[name]) return null
-      else                             return ValueType.VARIANT
-
-    method write( assembler:ParserAssembler )
-      local m = Froley.parser_methods[ name ]
-      if (m)
-        assembler.write( ParserOpcode.CALL, m.start_label )
-      else
-        assembler.write( ParserOpcode.READ_VAR, name )
-      endIf
-
-    method write_assignment( assembler:ParserAssembler, new_value:Cmd )
-      ParserCmdWriteVar( t, name, new_value ).write( assembler )
-endClass
-
-class ParserCmdSyntaxError( t, message=null:String ) : Cmd
-  METHODS
-    method write( assembler:ParserAssembler )
-      if (message)
-        assembler.write( ParserOpcode.SYNTAX_ERROR_STRING, message )
-      else
-        assembler.write( ParserOpcode.SYNTAX_ERROR )
-      endIf
-endClass
-
-class ParserCmdWhile( t, condition:Cmd ) : Cmd
-  PROPERTIES
-    statements = CmdStatements()
-
-  METHODS
-    method resolved->Cmd
-      condition = condition.resolved
-      statements.resolve
-      return this
-
-    method write( assembler:ParserAssembler )
-      local label_test = Label()
-      local label_top  = Label()
-      local label_end  = Label()
-      assembler.write( ParserOpcode.JUMP, label_test )
-      assembler.define( label_top )
-      statements.write( assembler )
-      assembler.define( label_test )
-      condition.write( assembler )
-      assembler.write( ParserOpcode.JUMP_IF_TRUE, label_top )
-      assembler.define( label_end )
-endClass
-
-class ParserCmdBeginList( t ) : Cmd
-  METHODS
-    method write( assembler:ParserAssembler )
-      assembler.write( ParserOpcode.BEGIN_LIST )
-endClass
-
-class ParserCmdHasAnother( t ) : Cmd
-  METHODS
-    method write( assembler:ParserAssembler )
-      assembler.write( ParserOpcode.HAS_ANOTHER )
-endClass
-
-class ParserCmdNextHasAttribute( t, name:String ) : Cmd
-  METHODS
-    method type->ValueType?
-      return ValueType.LOGICAL
-
-    method write( assembler:ParserAssembler )
-      assembler.write( ParserOpcode.NEXT_HAS_ATTRIBUTE, Froley.token_attribute(name) )
-endClass
-
-class ParserCmdLogicalAnd : CmdBinary
-  METHODS
-    method write( assembler:ParserAssembler )
-      local label_false = Label()
-      local label_done  = Label()
-      left.write( assembler )
-      assembler.write( ParserOpcode.JUMP_IF_FALSE, label_false )
-      right.write( assembler )
-      assembler.write( ParserOpcode.JUMP_IF_FALSE, label_false )
-      assembler.write( ParserOpcode.PUSH_INT32, 1 )  # true
-      assembler.write( ParserOpcode.JUMP, label_done )
-      assembler.define( label_false )
-      assembler.write( ParserOpcode.PUSH_INT32, 0 )  # false
-      assembler.define( label_done )
-endClass
-
-class ParserCmdLogicalOr : CmdBinary
-  METHODS
-    method write( assembler:ParserAssembler )
-      local label_true = Label()
-      local label_done = Label()
-      left.write( assembler )
-      assembler.write( ParserOpcode.JUMP_IF_TRUE, label_true )
-      right.write( assembler )
-      assembler.write( ParserOpcode.JUMP_IF_TRUE, label_true )
-      assembler.write( ParserOpcode.PUSH_INT32, 0 )  # false
-      assembler.write( ParserOpcode.JUMP, label_done )
-      assembler.define( label_true )
-      assembler.write( ParserOpcode.PUSH_INT32, 1 )  # true
-      assembler.define( label_done )
-endClass
-
-class ParserCmdLogicalNot : CmdUnary
-  METHODS
-    method type->ValueType?
-      return ValueType.LOGICAL
-
-    method write( assembler:ParserAssembler )
-      operand.write( assembler )
-      assembler.write( ParserOpcode.LOGICAL_NOT )
-endClass
-
-class ParserCmdIf( t, condition:Cmd ) : Cmd
-  PROPERTIES
-    statements      = CmdStatements()
-    else_statements : CmdStatements
-
-  METHODS
-    method resolved->Cmd
-      condition = condition.resolved
-      statements.resolve
-      if (else_statements) else_statements.resolve
-      return this
-
-    method write( assembler:ParserAssembler )
-      local label_body   = Label()
-      local label_else   = Label()
-      local label_end_if = Label()
-      condition.write( assembler )
-      assembler.write( ParserOpcode.JUMP_IF_FALSE, label_else )
-      statements.write( assembler )
-      assembler.write( ParserOpcode.JUMP, label_end_if )
-      assembler.define( label_else )
-      if (else_statements) else_statements.write( assembler )
-      assembler.define( label_end_if )
-endClass
-
-class ParserCmdTrace : Cmd
-  METHODS
-    method write( assembler:ParserAssembler )
-      assembler.write( ParserOpcode.TRACE, t.line )
-endClass
-
-class ParserCmdDeclareVar( t, name:String, value:Cmd ) : Cmd
-  METHODS
-    method write( assembler:ParserAssembler )
-      value.write( assembler )
-      assembler.write( ParserOpcode.DECLARE_VAR, name )
-endClass
-
-class ParserCmdWriteVar( t, name:String, value:Cmd ) : Cmd
-  METHODS
-    method write( assembler:ParserAssembler )
-      value.write( assembler )
-      assembler.write( ParserOpcode.WRITE_VAR, name )
-endClass
-
-class ParserCmdLiteralInt32( t, value:Int32 ) : Cmd
-  METHODS
-    method init( t )
-      value = t->Int32
-
-    method type->ValueType?
-      return ValueType.INT32
-
-    method write( assembler:ParserAssembler )
-      assembler.write( ParserOpcode.PUSH_INT32, value )
-endClass
-
-class ParserCmdLiteralTrue : Cmd
-  METHODS
-    method type->ValueType?
-      return ValueType.INT32
-
-    method write( assembler:ParserAssembler )
-      assembler.write( ParserOpcode.PUSH_INT32, 1 )
-endClass
-
-class ParserCmdLiteralFalse : Cmd
-  METHODS
-    method type->ValueType?
-      return ValueType.INT32
-
-    method write( assembler:ParserAssembler )
-      assembler.write( ParserOpcode.PUSH_INT32, 0 )
-endClass
-
-class ParserCmdAssign( t, target:Cmd, new_value:Cmd ) : Cmd
-  METHODS
-    method write( assembler:ParserAssembler )
-      target.write_assignment( assembler, new_value )
-endClass
-
-class ParserCmdSavePosition( t ) : Cmd
-  METHODS
-    method write( assembler:ParserAssembler )
-      assembler.write( ParserOpcode.SAVE_POSITION )
-endClass
-
-class ParserCmdRestorePosition( t ) : Cmd
-  METHODS
-    method write( assembler:ParserAssembler )
-      assembler.write( ParserOpcode.RESTORE_POSITION )
-endClass
-
-class ParserCmdDiscardPosition( t ) : Cmd
-  METHODS
-    method write( assembler:ParserAssembler )
-      assembler.write( ParserOpcode.DISCARD_POSITION )
-endClass
-
-class ParserCmdCompare<<$OPCODE>> : CmdBinary
-  METHODS
-    method to->String
-      local symbol = "<>"
-      which (ParserOpcode.$OPCODE)
-        case ParserOpcode.COMPARE_EQ: symbol = "=="
-        case ParserOpcode.COMPARE_NE: symbol = "!="
-        case ParserOpcode.COMPARE_LT: symbol = "<"
-        case ParserOpcode.COMPARE_LE: symbol = "<="
-        case ParserOpcode.COMPARE_GT: symbol = ">"
-        case ParserOpcode.COMPARE_GE: symbol = ">="
+    method init( t, value )
+
+    method cast_to( to_type:FType )->Cmd
+      which (to_type)
+        case FType.CHARACTER
+          if (value.count == 0) return LiteralCharacter( t, 0 )
+          return LiteralCharacter( t, value[0] )
+        case FType.STRING
+          return LiteralString( t, value )
+        others
+          return prior.cast_to( to_type )
       endWhich
-      return "$ $ $" (left,symbol,right)
 
-    method write( assembler:ParserAssembler )
-      left.write( assembler )
-      right.write( assembler )
-      assembler.write( ParserOpcode.$OPCODE )
+    method description->String
+      return "LiteralStringOrCharacter($)" (%value)
+
+    method to->Character
+      if (value is null or value.count == 0) return Character(0)
+      return value[0]
+
+    method to->Int32:  return value
+    method to->Logical: return value?
+    method to->String: return value
+
+    method type->FType
+      return FType.STRING
+
 endClass
 
-class ParserCmdCompareEQ : ParserCmdCompare<<COMPARE_EQ>>;
-class ParserCmdCompareNE : ParserCmdCompare<<COMPARE_NE>>;
-class ParserCmdCompareLT : ParserCmdCompare<<COMPARE_LT>>;
-class ParserCmdCompareLE : ParserCmdCompare<<COMPARE_LE>>;
-class ParserCmdCompareGT : ParserCmdCompare<<COMPARE_GT>>;
-class ParserCmdCompareGE : ParserCmdCompare<<COMPARE_GE>>;
+class LiteralLogical : Cmd
+  PROPERTIES
+    value : Logical
 
-class ParserCmdOp( t, name:String, opcode:ParserOpcode ) : Cmd
-  # Generic statement with opcode and no operands
   METHODS
-    method to->String
-      return name
+    method init( t, value )
 
-    method write( assembler:ParserAssembler )
-      assembler.write( opcode )
+    method cast_to( to_type:FType )->Cmd
+      if (to_type == FType.LOGICAL) return this
+
+      which (to_type)
+        case FType.CHARACTER:  return LiteralCharacter( t, which{value:'1'||'0'} )
+        case FType.INTEGER:    return LiteralInteger( t, which{value:1||0} )
+        case FType.REAL:       return LiteralReal( t, which{value:1||0} )
+        case FType.STRING:     return LiteralString( t, which{value:"true"||"false"} )
+        others
+          return prior.cast_to( to_type )
+      endWhich
+
+    method description->String
+      return "LiteralLogical($)" (%value)
+
+    method to->Int32:   return which{value:1 || 0}
+    method to->Logical: return value
+    method to->String:  return which{value:"true" || "false"}
+
+    method type->FType
+      return FType.LOGICAL
 endClass
 
-class ParserCmdCustom( t, name:String ) : Cmd
+class LiteralInteger : Cmd
+  PROPERTIES
+    value : Int32
+
   METHODS
-    method write( assembler:ParserAssembler )
-      assembler.write( ParserOpcode.CUSTOM, name )
+    method init( t, value )
+
+    method cast_to( to_type:FType )->Cmd
+      if (to_type == FType.INTEGER) return this
+      which (to_type)
+        case FType.LOGICAL:    return LiteralLogical( t, value->Logical )
+        case FType.CHARACTER:  return LiteralCharacter( t, value->Character )
+        case FType.REAL:       return LiteralReal( t, value->Real64 )
+        case FType.STRING:     return LiteralString( t, value->String )
+        others
+          return prior.cast_to( to_type )
+      endWhich
+
+    method description->String
+      return "LiteralInteger($)" (%value)
+
+    method to->Int32:     return value
+    method to->String:    return value
+
+    method type->FType
+      return FType.INTEGER
 endClass
 
+class LiteralCharacter : Cmd
+  PROPERTIES
+    value : Character
+
+  METHODS
+    method init( t, value )
+
+    method cast_to( to_type:FType )->Cmd
+      if (to_type == FType.CHARACTER) return this
+
+      which (to_type)
+        case FType.LOGICAL:    return LiteralLogical( t, value->Logical )
+        case FType.INTEGER:    return LiteralInteger( t, value->Int32 )
+        case FType.REAL:       return LiteralReal( t, value->Real64 )
+        case FType.STRING:     return LiteralString( t, value->String )
+        others
+          return prior.cast_to( to_type )
+      endWhich
+
+    method description->String
+      return "LiteralCharacter($)" (%value)
+
+    method to->Character: return value
+    method to->Int32:     return value
+    method to->String:    return value
+
+    method to->ScanPattern
+      return LiteralStringScanPattern( ""+value )
+
+    method type->FType
+      return FType.CHARACTER
+endClass
+
+class TokenDef : Cmd
+  PROPERTIES
+    name       : String
+    symbol     : String
+    attributes : String[]
+
+  METHODS
+    method init( t, name, symbol, attributes )
+
+    method init( t, name, symbol, attribute_cmd_list:Cmd )
+      if (not String.exists(symbol)) symbol = name
+      if (attribute_cmd_list)
+        attributes = (attribute_cmd_list as CmdList).list.map<<String>>( $->String )
+      endIf
+
+    method has_attribute( attribute_name:String )->Logical
+      if (not attributes) return false
+      return attributes.locate(attribute_name)?
+
+    method description->String
+      return "TokenDef($,$,$)" (%name,%symbol,%attributes)
+
+endClass
+
+class Symbol : Cmd
+  PROPERTIES
+    name : String
+
+  METHODS
+    method init( t, name )
+
+    method description->String
+      return "Symbol($)" (%name)
+
+    method to->Character
+      if (name is null or name.count == 0) return Character(0)
+      return name[0]
+
+    method to->Int32:  return name
+    method to->Logical: return name?
+    method to->String: return name
+
+endClass
+
+class Statements : CmdList
+  METHODS
+    method description->String
+      return "Statements" + list_description
+endClass
+
+class If : Cmd
+  PROPERTIES
+    condition  : Cmd
+    statements : Statements
+    else_ifs   : Cmd
+    _else      : Statements
+
+  METHODS
+    method init( t, condition, statements, else_ifs, _else )
+
+    method description->String
+      return "If($,$,$,$)" (%condition,%statements,%else_ifs,%_else)
+
+endClass
+
+class Match : Cmd
+  PROPERTIES
+    expression      : Cmd
+    cases           : Cmd
+    _others         : Cmd
+    id              : String
+    table_builder   = ScanTableBuilder()
+    statement_lists = Cmd[]
+
+  METHODS
+    method init( t, expression, cases, _others )
+
+    method description->String
+      return "Match($,$,$)" (%expression,%cases,%_others)
+
+endClass
+
+class While : Cmd
+  PROPERTIES
+    condition  : Cmd
+    statements : Statements
+
+  METHODS
+    method init( t, condition, statements )
+
+    method description->String
+      return "While($,$)" (%condition,%statements)
+
+endClass
+
+class ScannerCreate : Cmd
+  PROPERTIES
+    arg : Cmd
+
+  METHODS
+    method init( t, arg )
+
+    method description->String
+      return "ScannerCreate($)" (%arg)
+
+endClass
+
+class Restart : Cmd
+  PROPERTIES
+    start_ip : String
+
+  METHODS
+    method init( t, start_ip )
+
+    method description->String
+      return "Restart($)" (%start_ip)
+
+    method to->Character
+      if (start_ip is null or start_ip.count == 0) return Character(0)
+      return start_ip[0]
+
+    method to->Int32:  return start_ip
+    method to->Logical: return start_ip?
+    method to->String: return start_ip
+
+endClass
+
+class MatchCase : Cmd
+  PROPERTIES
+    expression  : Cmd
+    statements  : Cmd
+    is_resolved : Logical
+
+  METHODS
+    method init( t, expression, statements )
+
+    method description->String
+      return "MatchCase($,$)" (%expression,%statements)
+
+endClass
+
+class ProduceAny : Cmd
+  PROPERTIES
+    token_group_name : String
+
+  METHODS
+    method init( t, token_group_name )
+
+    method description->String
+      return "ProduceAny($)" (%token_group_name)
+
+    method to->Character
+      if (token_group_name is null or token_group_name.count == 0) return Character(0)
+      return token_group_name[0]
+
+    method to->Int32:  return token_group_name
+    method to->Logical: return token_group_name?
+    method to->String: return token_group_name
+
+endClass
+
+class ElseIf : Cmd
+  PROPERTIES
+    condition  : Cmd
+    statements : Statements
+
+  METHODS
+    method init( t, condition, statements )
+
+    method description->String
+      return "ElseIf($,$)" (%condition,%statements)
+
+endClass
+
+class Collect : Cmd
+  PROPERTIES
+    args : Args
+
+  METHODS
+    method init( t, args )
+
+    method description->String
+      return "Collect($)" (%args)
+
+endClass
+
+class DiscardPosition : Cmd
+  METHODS
+    method description->String
+      return "DiscardPosition"
+endClass
+
+class Halt : Cmd
+  METHODS
+    method description->String
+      return "Halt"
+endClass
+
+class MarkPosition : Cmd
+  METHODS
+    method description->String
+      return "MarkPosition"
+endClass
+
+class Mode : Cmd
+  PROPERTIES
+    routine_name : String
+
+  METHODS
+    method init( t, routine_name )
+
+    method description->String
+      return "Mode($)" (%routine_name)
+
+    method to->Character
+      if (routine_name is null or routine_name.count == 0) return Character(0)
+      return routine_name[0]
+
+    method to->Int32:  return routine_name
+    method to->Logical: return routine_name?
+    method to->String: return routine_name
+
+endClass
+
+class ScannerMustConsume : Cmd
+  PROPERTIES
+    args : SequenceArgs
+
+  METHODS
+    method init( t, args )
+
+    method description->String
+      return "ScannerMustConsume($)" (%args)
+
+endClass
+
+class Print : Cmd
+  PROPERTIES
+    args : Args
+
+  METHODS
+    method init( t, args )
+
+    method description->String
+      return "Print($)" (%args)
+
+endClass
+
+class Args : CmdList
+  METHODS
+    method description->String
+      return "Args" + list_description
+endClass
+
+class Println : Cmd
+  PROPERTIES
+    args : Args
+
+  METHODS
+    method init( t, args )
+
+    method description->String
+      return "Println($)" (%args)
+
+endClass
+
+class RestorePosition : Cmd
+  METHODS
+    method description->String
+      return "RestorePosition"
+endClass
+
+class Return : Cmd
+  PROPERTIES
+    value : Cmd
+
+  METHODS
+    method init( t, value )
+
+    method description->String
+      return "Return($)" (%value)
+
+endClass
+
+class SavePosition : Cmd
+  METHODS
+    method description->String
+      return "SavePosition"
+endClass
+
+class ThrowSyntaxError : Cmd
+  PROPERTIES
+    args : Args
+
+  METHODS
+    method init( t, args )
+
+    method description->String
+      return "ThrowSyntaxError($)" (%args)
+
+endClass
+
+class Increment : Cmd
+  PROPERTIES
+    target : Cmd
+
+  METHODS
+    method init( t, target )
+
+    method description->String
+      return "Increment($)" (%target)
+
+endClass
+
+class Decrement : Cmd
+  PROPERTIES
+    target : Cmd
+
+  METHODS
+    method init( t, target )
+
+    method description->String
+      return "Decrement($)" (%target)
+
+endClass
+
+class Assign : Cmd
+  PROPERTIES
+    target    : Cmd
+    new_value : Cmd
+
+  METHODS
+    method init( t, target, new_value )
+
+    method description->String
+      return "Assign($,$)" (%target,%new_value)
+
+endClass
+
+class Access : Cmd
+  PROPERTIES
+    name : String
+
+  METHODS
+    method init( t, name )
+
+    method description->String
+      return "Access($)" (%name)
+
+    method resolve_assignment( cmd:Assign, resolver:Resolver )->Cmd
+      local r = resolver.this_element.routines[name]
+      if (r) throw t.error( "Illegal assignment to a routine." )
+      local v = resolver.this_element.define_var( t, name, cmd.new_value.type )
+      return resolver.visit( WriteVar( v, cmd.new_value ) )
+
+    method to->Character
+      if (name is null or name.count == 0) return Character(0)
+      return name[0]
+
+    method to->Int32:  return name
+    method to->Logical: return name?
+    method to->String: return name
+
+endClass
+
+class CreateCmd : Cmd
+  PROPERTIES
+    name           : String
+    args           : Args
+    base_type_name : String
+
+    is_organized   = false
+    arg_count      = 0
+    node_arg_count = 0  # number of node-based args (vs 'content')
+    signature      : String
+
+  METHODS
+    method init( t, name, args, base_type_name )
+
+    method description->String
+      return "CreateCmd($,$)" (%name,%args)
+
+endClass
+
+class CreateCmdArg : Cmd
+  PROPERTIES
+    arg_name  : String
+    arg_value : Cmd
+    arg_type  : String
+
+    is_node_arg  = false   # versus 'content'
+    index        : Int32   # arg index 0, 1, ...
+    stack_offset : Int32   # back into cmd stack; most recent = -1, one back = -2, ...
+
+  METHODS
+    method init( t, arg_name, arg_value, arg_type )
+
+    method description->String
+      return "CreateCmdArg($,$,$)" (%arg_name,%arg_value,%arg_type)
+
+endClass
+
+class SequenceArgs : CmdList
+  METHODS
+    method description->String
+      return "SequenceArgs" + list_description
+endClass
+
+class PatternSequence : CmdList
+  METHODS
+    method description->String
+      return "PatternSequence" + list_description
+
+    method to->ScanPattern
+      local result = ScanPatternList( ScanPattern[] )
+      result.add( (forEach in this)->ScanPattern )
+      return result
+
+    method type->FType
+      return FType.PATTERN
+endClass
+
+class ZeroOrMore : Cmd
+  PROPERTIES
+    pattern : Cmd
+
+  METHODS
+    method init( t, pattern )
+
+    method description->String
+      return "ZeroOrMore($)" (%pattern)
+
+    method to->ScanPattern
+      return ZeroOrMoreScanPattern( pattern->ScanPattern )
+
+    method type->FType
+      return FType.PATTERN
+endClass
+
+class OneOrMore : Cmd
+  PROPERTIES
+    pattern : Cmd
+
+  METHODS
+    method init( t, pattern )
+
+    method description->String
+      return "OneOrMore($)" (%pattern)
+
+    method to->ScanPattern
+      return OneOrMoreScanPattern( pattern->ScanPattern )
+
+    method type->FType
+      return FType.PATTERN
+endClass
+
+class OptionalPattern : Cmd
+  PROPERTIES
+    pattern : Cmd
+
+  METHODS
+    method init( t, pattern )
+
+    method description->String
+      return "OptionalPattern($)" (%pattern)
+
+    method to->ScanPattern
+      return OptionalScanPattern( pattern->ScanPattern )
+
+    method type->FType
+      return FType.PATTERN
+endClass
+
+class CharSet : Cmd
+  PROPERTIES
+    characters : String
+
+  METHODS
+    method init( t, characters )
+
+    method description->String
+      return "CharSet($)" (%characters)
+
+    method to->Character
+      if (characters is null or characters.count == 0) return Character(0)
+      return characters[0]
+
+    method to->Int32:  return characters
+    method to->Logical: return characters?
+    method to->String: return characters
+
+    method to->ScanPattern
+      return ScanPatternParser.charset_to_scan_pattern( characters.from(1,characters.count-2) )
+
+    method type->FType
+      return FType.PATTERN
+endClass
+
+class LogicalBinary : Binary
+  METHODS
+    method description->String
+      return "LogicalBinary($,$)" (%left,%right)
+
+    method type->FType
+      return FType.LOGICAL
+endClass
+
+class LogicalOr : LogicalBinary
+  METHODS
+    method description->String
+      return "LogicalOr($,$)" (%left,%right)
+
+endClass
+
+class LogicalAnd : LogicalBinary
+  METHODS
+    method description->String
+      return "LogicalAnd($,$)" (%left,%right)
+
+endClass
+
+class CompareEQ : LogicalBinary
+  METHODS
+    method description->String
+      return "CompareEQ($,$)" (%left,%right)
+
+endClass
+
+class CompareNE : LogicalBinary
+  METHODS
+    method description->String
+      return "CompareNE($,$)" (%left,%right)
+
+endClass
+
+class CompareLT : LogicalBinary
+  METHODS
+    method description->String
+      return "CompareLT($,$)" (%left,%right)
+
+endClass
+
+class CompareGT : LogicalBinary
+  METHODS
+    method description->String
+      return "CompareGT($,$)" (%left,%right)
+
+endClass
+
+class CompareLE : LogicalBinary
+  METHODS
+    method description->String
+      return "CompareLE($,$)" (%left,%right)
+
+endClass
+
+class CompareGE : LogicalBinary
+  METHODS
+    method description->String
+      return "CompareGE($,$)" (%left,%right)
+
+endClass
+
+class Add : Binary
+  METHODS
+    method description->String
+      return "Add($,$)" (%left,%right)
+
+endClass
+
+class Subtract : Binary
+  METHODS
+    method description->String
+      return "Subtract($,$)" (%left,%right)
+
+endClass
+
+class Multiply : Binary
+  METHODS
+    method description->String
+      return "Multiply($,$)" (%left,%right)
+
+endClass
+
+class Divide : Binary
+  METHODS
+    method description->String
+      return "Divide($,$)" (%left,%right)
+
+endClass
+
+class Power : Binary
+  METHODS
+    method description->String
+      return "Power($,$)" (%left,%right)
+
+endClass
+
+class Negate : Unary
+  METHODS
+    method description->String
+      return "Negate($)" (%operand)
+
+endClass
+
+class LogicalNot : Unary
+  METHODS
+    method description->String
+      return "LogicalNot($)" (%operand)
+
+    method type->FType
+      return FType.LOGICAL
+endClass
+
+class ReadBuffer : Cmd
+  METHODS
+    method description->String
+      return "ReadBuffer"
+
+    method resolve_assignment( cmd:Assign, resolver:Resolver )->Cmd
+      return resolver.visit( WriteBuffer( t, cmd.new_value ) )
+
+    method type->FType
+      return FType.STRING
+endClass
+
+class ScannerCallUserMethod : Cmd
+  PROPERTIES
+    fn_name : String
+
+  METHODS
+    method init( t, fn_name )
+
+    method description->String
+      return "ScannerCallUserMethod($)" (%fn_name)
+
+    method to->Character
+      if (fn_name is null or fn_name.count == 0) return Character(0)
+      return fn_name[0]
+
+    method to->Int32:  return fn_name
+    method to->Logical: return fn_name?
+    method to->String: return fn_name
+
+endClass
+
+class ScannerConsume : Cmd
+  PROPERTIES
+    args : SequenceArgs
+
+  METHODS
+    method init( t, args )
+
+    method description->String
+      return "ScannerConsume($)" (%args)
+
+    method type->FType
+      return FType.LOGICAL
+endClass
+
+class ScannerHasAnother : Cmd
+  METHODS
+    method description->String
+      return "ScannerHasAnother"
+
+    method type->FType
+      return FType.LOGICAL
+endClass
+
+class ScannerNextIs : Cmd
+  PROPERTIES
+    args : SequenceArgs
+
+  METHODS
+    method init( t, args )
+
+    method description->String
+      return "ScannerNextIs($)" (%args)
+
+    method type->FType
+      return FType.LOGICAL
+endClass
+
+class ScannerPeek : Cmd
+  PROPERTIES
+    lookahead : Cmd
+
+  METHODS
+    method init( t, lookahead )
+
+    method description->String
+      return "ScannerPeek($)" (%lookahead)
+
+    method type->FType
+      return FType.CHARACTER
+endClass
+
+class ScannerRead : Cmd
+  METHODS
+    method description->String
+      return "ScannerRead"
+
+    method type->FType
+      return FType.CHARACTER
+endClass
+
+class Scan : Cmd
+  PROPERTIES
+    args : SequenceArgs
+
+  METHODS
+    method init( t, args )
+
+    method description->String
+      return "Scan($)" (%args)
+
+    method type->FType
+      return FType.LOGICAL
+endClass
+
+class On : Cmd
+  PROPERTIES
+    token_type      : Cmd
+    token_types     : Args
+    statements      : Statements
+    else_ons        : Cmd
+    _else_on_others : Statements
+    is_organized    : Logical
+
+  METHODS
+    method init( t, token_type, token_types, statements, else_ons, _else_on_others )
+
+    method description->String
+      return "On($,$,$,$,$)" (%token_type,%token_types,%statements,%else_ons,%_else_on_others)
+
+endClass
+
+class ElseOn : Cmd
+  PROPERTIES
+    token_type   : Cmd
+    token_types  : Args
+    statements   : Statements
+    is_organized : Logical
+
+  METHODS
+    method init( t, token_type, token_types, statements )
+
+    method description->String
+      return "ElseOn($,$,$)" (%token_type,%token_types,%statements)
+
+endClass
+
+class BeginList : Cmd
+  METHODS
+    method description->String
+      return "BeginList"
+endClass
+
+class ParserCreate : Cmd
+  PROPERTIES
+    arg : CreateCmd
+
+  METHODS
+    method init( t, arg )
+
+    method description->String
+      return "ParserCreate($)" (%arg)
+
+endClass
+
+class CreateList : Cmd
+  PROPERTIES
+    list_type : String
+
+  METHODS
+    method init( t, list_type )
+
+    method description->String
+      return "CreateList($)" (%list_type)
+
+    method to->Character
+      if (list_type is null or list_type.count == 0) return Character(0)
+      return list_type[0]
+
+    method to->Int32:  return list_type
+    method to->Logical: return list_type?
+    method to->String: return list_type
+
+endClass
+
+class CreateNull : Cmd
+  METHODS
+    method description->String
+      return "CreateNull"
+endClass
+
+class DiscardList : Cmd
+  METHODS
+    method description->String
+      return "DiscardList"
+endClass
+
+class ParserMustConsume : Cmd
+  PROPERTIES
+    token_type : Cmd
+
+  METHODS
+    method init( t, token_type )
+
+    method description->String
+      return "ParserMustConsume($)" (%token_type)
+
+endClass
+
+class ParserArgs : CmdList
+  METHODS
+    method description->String
+      return "ParserArgs" + list_description
+endClass
+
+class ProduceList : Cmd
+  PROPERTIES
+    list_type : String
+
+  METHODS
+    method init( t, list_type )
+
+    method description->String
+      return "ProduceList($)" (%list_type)
+
+    method to->Character
+      if (list_type is null or list_type.count == 0) return Character(0)
+      return list_type[0]
+
+    method to->Int32:  return list_type
+    method to->Logical: return list_type?
+    method to->String: return list_type
+
+endClass
+
+class LiteralContent : Cmd
+  PROPERTIES
+    value : String
+
+  METHODS
+    method init( t, value )
+
+    method description->String
+      return "LiteralContent($)" (%value)
+
+    method to->Character
+      if (value is null or value.count == 0) return Character(0)
+      return value[0]
+
+    method to->Int32:  return value
+    method to->Logical: return value?
+    method to->String: return value
+
+endClass
+
+class ParserCallUserMethod : Cmd
+  PROPERTIES
+    fn_name : String
+
+  METHODS
+    method init( t, fn_name )
+
+    method description->String
+      return "ParserCallUserMethod($)" (%fn_name)
+
+    method to->Character
+      if (fn_name is null or fn_name.count == 0) return Character(0)
+      return fn_name[0]
+
+    method to->Int32:  return fn_name
+    method to->Logical: return fn_name?
+    method to->String: return fn_name
+
+endClass
+
+class ParserConsume : Cmd
+  PROPERTIES
+    token_type : Cmd
+
+  METHODS
+    method init( t, token_type )
+
+    method description->String
+      return "ParserConsume($)" (%token_type)
+
+    method to->FType
+      return FType.LOGICAL
+endClass
+
+class ParserHasAnother : Cmd
+  METHODS
+    method description->String
+      return "ParserHasAnother"
+
+    method type->FType
+      return FType.LOGICAL
+endClass
+
+class NextHasAttribute : Cmd
+  PROPERTIES
+    name : String
+
+  METHODS
+    method init( t, name )
+
+    method description->String
+      return "NextHasAttribute($)" (%name)
+
+    method to->Character
+      if (name is null or name.count == 0) return Character(0)
+      return name[0]
+
+    method to->Int32:  return name
+    method to->Logical: return name?
+    method to->String: return name
+
+    method type->FType
+      return FType.LOGICAL
+endClass
+
+class ParserNextIs : Cmd
+  PROPERTIES
+    token_type : Cmd
+
+  METHODS
+    method init( t, token_type )
+
+    method description->String
+      return "ParserNextIs($)" (%token_type)
+
+    method to->FType
+      return FType.LOGICAL
+endClass
+
+class ParserRead : Cmd
+  METHODS
+    method description->String
+      return "ParserRead"
+
+    method type->FType
+      return FType.TOKEN
+endClass
+
+
+class TokenContent : Cmd
+  METHODS
+    method description->String
+      return "TokenContent"
+endClass
+
+
+class WriteVar : Cmd
+  PROPERTIES
+    var       : Var
+    new_value : Cmd
+
+  METHODS
+    method init( var, new_value )
+      t = var.t
+
+    method description->String
+      return "WriteVar($,$)" (%var,%new_value)
+
+endClass
+
+class WriteBuffer : Cmd
+  PROPERTIES
+    new_value : Cmd
+
+  METHODS
+    method init( t, new_value )
+
+    method description->String
+      return "WriteBuffer($)" (%new_value)
+
+endClass
+
+class Call : Cmd
+  PROPERTIES
+    routine_def : Routine
+
+  METHODS
+    method init( t, routine_def )
+
+    method description->String
+      return "Call($)" (routine_def.name)
+
+endClass
+
+class LiteralTokenType : Cmd
+  PROPERTIES
+    token_type : TokenDef
+
+  METHODS
+    method init( t, token_type )
+
+    method description->String
+      return "LiteralTokenType($)" (%token_type)
+
+    method type->FType
+      return FType.TOKEN_TYPE
+endClass
+
+class ReadVar : Cmd
+  PROPERTIES
+    var : Var
+
+  METHODS
+    method init( var )
+      t = var.t
+
+    method description->String
+      return "ReadVar"
+
+    method type->FType
+      return var.type
+endClass
+
+class CastToLogical : Unary
+  METHODS
+    method description->String
+      return "CastToLogical($)" (%operand)
+
+    method type->FType
+      return FType.LOGICAL
+endClass
+
+class CastToCharacter : Unary
+  METHODS
+    method description->String
+      return "CastToCharacter($)" (%operand)
+
+    method type->FType
+      return FType.CHARACTER
+
+endClass
+
+class CastToInteger : Unary
+  METHODS
+    method description->String
+      return "CastToInteger($)" (%operand)
+
+    method type->FType
+      return FType.INTEGER
+
+endClass
+
+class CastToReal : Unary
+  METHODS
+    method description->String
+      return "CastToReal($)" (%operand)
+
+    method type->FType
+      return FType.REAL
+
+endClass
+
+class CastToTokenType : Unary
+  METHODS
+    method description->String
+      return "CastToTokenType($)" (%operand)
+
+    method type->FType
+      return FType.TOKEN_TYPE
+
+endClass
+
+class CastToString : Unary
+  METHODS
+    method description->String
+      return "CastToString($)" (%operand)
+
+    method type->FType
+      return FType.STRING
+
+endClass
+
+class CastToPattern : Unary
+  METHODS
+    method description->String
+      return "CastToPattern($)" (%operand)
+
+    method type->FType
+      return FType.PATTERN
+
+endClass
+
+
+class LiteralReal : Cmd
+  PROPERTIES
+    value : Real64
+
+  METHODS
+    method init( t, value )
+
+    method cast_to( to_type:FType )->Cmd
+      if (to_type == FType.REAL) return this
+      which (to_type)
+        case FType.LOGICAL:    return LiteralLogical( t, value->Logical )
+        case FType.CHARACTER:  return LiteralCharacter( t, value->Character )
+        case FType.INTEGER:    return LiteralInteger( t, value->Int32 )
+        case FType.STRING:     return LiteralString( t, value->String )
+        others
+          return prior.cast_to( to_type )
+      endWhich
+
+    method description->String
+      return "LiteralReal($)" (%value)
+
+    method to->Int32:  return value
+    method to->Real64: return value
+    method to->String: return value
+
+    method type->FType
+      return FType.REAL
+
+endClass
+
+class ConsumeContent : Cmd
+  PROPERTIES
+    content : String
+
+  METHODS
+    method init( t, content )
+
+    method description->String
+      return "ConsumeContent($)" (%content)
+
+    method to->Character
+      if (content is null or content.count == 0) return Character(0)
+      return content[0]
+
+    method to->Int32:  return content
+    method to->Logical: return content?
+    method to->String: return content
+
+    method type->FType
+      return FType.LOGICAL
+endClass
+
+class ConsumeToken : Cmd
+  PROPERTIES
+    token_type : TokenDef
+
+  METHODS
+    method init( t, token_type )
+
+    method description->String
+      return "ConsumeToken($)" (%token_type)
+
+    method type->FType
+      return FType.LOGICAL
+endClass
+
+class MustConsumeContent : Cmd
+  PROPERTIES
+    content : String
+
+  METHODS
+    method init( t, content )
+
+    method description->String
+      return "MustConsumeContent($)" (%content)
+
+    method to->Character
+      if (content is null or content.count == 0) return Character(0)
+      return content[0]
+
+    method to->Int32:  return content
+    method to->Logical: return content?
+    method to->String: return content
+
+endClass
+
+class MustConsumeToken : Cmd
+  PROPERTIES
+    token_type : TokenDef
+
+  METHODS
+    method init( t, token_type )
+
+    method description->String
+      return "MustConsumeToken($)" (%token_type)
+
+endClass
+
+class NextIsContent : Cmd
+  PROPERTIES
+    content : String
+
+  METHODS
+    method init( t, content )
+
+    method description->String
+      return "NextIsContent($)" (%content)
+
+    method to->Character
+      if (content is null or content.count == 0) return Character(0)
+      return content[0]
+
+    method to->Int32:  return content
+    method to->Logical: return content?
+    method to->String: return content
+
+    method type->FType
+      return FType.LOGICAL
+endClass
+
+
+class NextIsTokenType : Cmd
+  PROPERTIES
+    token_type : TokenDef
+
+  METHODS
+    method init( t, token_type )
+
+    method description->String
+      return "NextIsTokenType($)" (%token_type)
+
+    method type->FType
+      return FType.LOGICAL
+endClass
+
+class Pattern( t, scan_pattern:ScanPattern ) : Cmd
+  PROPERTIES
+    reference_name : String
+
+  METHODS
+    method description->String
+      return "Pattern"
+
+    method type->FType
+      return FType.PATTERN
+endClass
+
+class ScanCharacters : Cmd
+  PROPERTIES
+    value : Cmd
+
+  METHODS
+    method init( t, value )
+
+    method description->String
+      return "ScanCharacters($)" (%value)
+
+    method type->FType
+      return FType.LOGICAL
+endClass
+
+class ScanPatternCmd : Cmd
+  PROPERTIES
+    pattern : Cmd
+
+  METHODS
+    method init( t, pattern )
+
+    method description->String
+      return "ScanPatternCmd($)" (%pattern)
+
+    method type->FType
+      return FType.LOGICAL
+endClass
+
+class ConsumeCharacters : Cmd
+  PROPERTIES
+    value : Cmd
+
+  METHODS
+    method init( t, value )
+
+    method description->String
+      return "ConsumeCharacters($)" (%value)
+
+    method type->FType
+      return FType.LOGICAL
+endClass
+
+class ConsumePattern : Cmd
+  PROPERTIES
+    pattern : Cmd
+
+  METHODS
+    method init( t, pattern )
+
+    method description->String
+      return "ConsumePattern($)" (%pattern)
+
+    method type->FType
+      return FType.LOGICAL
+endClass
+
+class MustConsumeCharacters : Cmd
+  PROPERTIES
+    value : Cmd
+
+  METHODS
+    method init( t, value )
+
+    method description->String
+      return "MustConsumeCharacters($)" (%value)
+
+endClass
+
+class MustConsumePattern : Cmd
+  PROPERTIES
+    pattern : Cmd
+
+  METHODS
+    method init( t, pattern )
+
+    method description->String
+      return "MustConsumePattern($)" (%pattern)
+
+endClass
+
+class NextIsCharacters : Cmd
+  PROPERTIES
+    value : Cmd
+
+  METHODS
+    method init( t, value )
+
+    method description->String
+      return "NextIsCharacters($)" (%value)
+
+    method type->FType
+      return FType.LOGICAL
+endClass
+
+class NextIsPattern : Cmd
+  PROPERTIES
+    pattern : Cmd
+
+  METHODS
+    method init( t, pattern )
+
+    method description->String
+      return "NextIsPattern($)" (%pattern)
+
+    method type->FType
+      return FType.LOGICAL
+endClass
+
+class ConsumeEOLs : Cmd
+  METHODS
+    method description->String
+      return "ConsumeEOLs"
+endClass
+
+class ParserProduce : Cmd
+  PROPERTIES
+    arg : CreateCmd
+
+  METHODS
+    method init( t, arg )
+
+    method description->String
+      return "ParserProduce($)" (%arg)
+
+endClass

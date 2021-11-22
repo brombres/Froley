@@ -13,7 +13,7 @@ class RMain : RogueSourceWriter
          |
          |try
          |  $ClassName( System.command_line_arguments )
-         |catch (error:SyntaxError)
+         |catch (error:CompileError)
          |  Console.error.println error
          |  System.exit 1
          |catch (error:Error)

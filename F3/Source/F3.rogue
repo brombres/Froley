@@ -1,8 +1,6 @@
 module F3
 
-# FIXME: rename SyntaxError to CompileError
 # FIXME: add base class declaration
-# FIXME: on_enter(Cmd) noAction by default
 
 $include "BranchAnalyzer.rogue"
 $include "Collector.rogue"
@@ -23,7 +21,7 @@ uses Utility/CommandLineParser
 
 try
   F3( System.command_line_arguments )
-catch (error:SyntaxError)
+catch (error:CompileError)
   Console.error.println error
   System.exit 1
 catch (error:Error)

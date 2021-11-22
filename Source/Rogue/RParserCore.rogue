@@ -242,6 +242,7 @@ class RParserCore( generator, parser_def:ParserDef ) : RogueSourceWriter
          |      return node->String
          |
          |    method _string_to_Logical( st:String )->Logical
+         |      if (st.equals("false",&ignore_case)) return false
          |      return st->Logical
          |
          |    method _string_to_Character( st:String )->Character

@@ -12,7 +12,7 @@ augment Build
   # LAUNCHER_FOLDER = "~/bin"
   PROPERTIES
     PROJECT           = "Simple"
-    FROLEY_EXE        = "f3"
+    FROLEY_EXE        = "froley"
 
     LAUNCHER_NAME     = PROJECT.to_lowercase : String
     LAUNCHER_FOLDER   = "/usr/local/bin"

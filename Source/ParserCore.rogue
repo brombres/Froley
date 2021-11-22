@@ -279,6 +279,7 @@ class ParserCore [abstract]
       return node->String
 
     method _string_to_Logical( st:String )->Logical
+      if (st.equals("false",&ignore_case)) return false
       return st->Logical
 
     method _string_to_Character( st:String )->Character
@@ -910,7 +911,7 @@ class ParserCore [abstract]
                 _on_t
                 _push( LiteralString(_cur_t,_cur_t.content), 0 )
               else
-                _throw_syntax_error("content or \"quoted expression\" expected.")
+                _throw_syntax_error("Content or \"quoted expression\" expected.")
               endIf
             else
               _push( null, 0 )

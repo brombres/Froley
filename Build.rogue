@@ -60,6 +60,7 @@ routine rogo_froley
     println "Compiling Froley language parser"
     execute "froley --main $ Source/" (def.esc)
   endIf
+  rogo_build
 endRoutine
 
 routine rogo_debug

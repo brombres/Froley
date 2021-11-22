@@ -728,7 +728,7 @@ parser
     elseOn STRING
       create LiteralString( value=content )
     elseOthers
-      syntaxError "content or \"quoted expression\" expected."
+      syntaxError "Content or \"quoted expression\" expected."
     endOn
   else
     createNull

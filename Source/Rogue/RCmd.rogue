@@ -267,7 +267,7 @@ class RCmd : RogueSourceWriter
 
           if (properties.count == 1 and extended_properties.count == 1)
             local name = properties.first.name
-            which (properties.first.type)
+            which (properties.first.type.name)
               case "Logical"
                 builder.println ''    method to->Int32:   return which{$:1 || 0}'' (name)
                 builder.println ''    method to->Logical: return $'' (name)

@@ -69,7 +69,7 @@ class Froley
 
     method print_usage
       println @|USAGE
-               |  froley [OPTIONS] <language-definition.froley> <output-folder>
+               |  froley [OPTIONS] language-definition.froley output-folder/
                |
                |OPTIONS
                |  --help, -h, -?

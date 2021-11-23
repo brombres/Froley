@@ -1,0 +1,11 @@
+class FroleyPackage : Package
+  # Base class Package is defined here:
+  # https://github.com/AbePralle/Morlock/blob/main/Source/Package.rogue
+  PROPERTIES
+    name = "abepralle/froley"
+
+  METHODS
+    method init
+      dependency "abepralle/rogue@1.10.1"
+      scan_repo_releases
+endClass

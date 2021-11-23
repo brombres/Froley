@@ -35,7 +35,9 @@ class Interpreter : Visitor<<Value>>
       return -visit(cmd.operand)
 
     method on( cmd:ReadVar )->Value
-      return variables[cmd.name]
+      local entry = variables.find( cmd.name )
+      if (entry) return entry.value
+      throw cmd.t.error( "'$' is undefined."(cmd.name) )
 
     method on_visit( cmd:WriteVar )
       variables[cmd.name] = visit(cmd.new_value)

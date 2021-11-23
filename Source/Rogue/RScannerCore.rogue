@@ -107,6 +107,7 @@ class RScannerCore( generator, scanner_def:ScannerDef ) : RogueSourceWriter
          |      else
          |        tokens.add( _t(type) )
          |      endIf
+         |      buffer.clear
          |
          |    method _clear_state
          |      tokens = Token[]

@@ -1,0 +1,35 @@
+module Froley
+
+class Collector : Visitor
+  METHODS
+    method on_leave( cmd:ParserDef )
+      # this_element.routines may now have additional routines; re-add them to this node
+      cmd.routine_defs.clear
+      cmd.routine_defs.add( forEach in this_element.routines )
+
+    method on( cmd:Routine )->Cmd
+      if (cmd.is_binary or cmd.is_post_unary)
+        # CONVERT THIS:
+        #   - parse_op [binary/postUnary]
+        #     on "op" ...
+        #
+        # INTO THIS
+        #   - parse_op [primer]
+        #
+        #   - parse_op__inner [binary/postUnary]
+        #     on "op" ...
+        local primer = Routine( cmd.t, cmd.name, "[primer]", Statements(cmd.t) )
+        primer.ip = this_element.routines.count
+        this_element.routines[primer.name] = primer
+        temporarily this_routine = primer
+          prior.on( primer )
+        endTemporarily
+
+        cmd.name += "__inner"
+      endIf
+
+      cmd.ip = this_element.routines.count
+      this_element.routines[cmd.name] = cmd
+      return prior.on( cmd )
+endClass
+

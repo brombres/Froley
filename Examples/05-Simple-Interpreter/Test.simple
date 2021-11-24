@@ -1,0 +1,5 @@
+# Simple test program
+fahrenheit = 212
+celsius = (5/9) * (fahrenheit - 32)
+println fahrenheit "F = " celsius "C"
+

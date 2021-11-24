@@ -1,0 +1,63 @@
+module Froley
+
+class BranchAnalyzer : Visitor<<Logical>> [singleton]
+  METHODS
+    method all_paths_return( cmd:Cmd )->Logical
+      return visit( cmd )
+
+    method on( cmd:Routine )->Logical
+      return visit( cmd.statements )
+
+    method on( cmd:CmdList )->Logical
+      forEach (element in cmd)
+        if (visit(element)) return true
+      endForEach
+      return false
+
+    method on( cmd:If )->Logical
+      if (not cmd._else) return false
+
+      if (not visit(cmd.statements)) return false
+
+      if (cmd.else_ifs)
+        forEach (else_if in cmd.else_ifs)
+          if (not visit(else_if)) return false
+        endForEach
+      endIf
+
+      return visit( cmd._else )
+
+    method on( cmd:On )->Logical
+      if (not cmd._else_on_others) return false
+
+      if (not visit(cmd.statements)) return false
+
+      if (cmd.else_ons)
+        forEach (else_on in cmd.else_ons)
+          if (not visit(else_on)) return false
+        endForEach
+      endIf
+
+      return visit( cmd._else_on_others )
+
+    method on( cmd:ParserProduce )->Logical
+      return true
+
+    method on( cmd:ProduceList )->Logical
+      return true
+
+    method on( cmd:Restart )->Logical
+      return true
+
+    method on( cmd:Return )->Logical
+      return true
+
+    method on( cmd:Statements )->Logical
+      forEach (element in cmd)
+        if (element)
+          if (visit(element)) return true
+        endIf
+      endForEach
+      return false
+
+endClass

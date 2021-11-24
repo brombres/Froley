@@ -1,0 +1,68 @@
+module Simple
+
+$include "Interpreter.rogue"
+$include "Scanner.rogue"
+$include "Parser.rogue"
+$include "Resolver.rogue"
+uses Simple
+uses Utility/CommandLineParser
+
+try
+  Simple( System.command_line_arguments )
+catch (error:CompileError)
+  Console.error.println error
+  System.exit 1
+catch (error:Error)
+  Console.error.println error
+  Console.error.println error.stack_trace
+  System.exit 1
+endTry
+
+class Simple
+  PROPERTIES
+    command : Value
+
+  METHODS
+    method init( args:String[] )
+      command = parse_args( args )
+
+      if (command//options//help or command//args.count == 0)
+        print_usage
+        System.exit 0
+      endIf
+
+      forEach (arg in command//args)
+        local parser = Parser( File(arg) )
+        local ast = parser.parse
+        println "ORIGINAL TREE"
+        println ast
+        println
+
+        println "RESOLVED"
+        Resolver().visit( ast )
+        println ast
+        println
+
+        println "INTERPRETED"
+        Interpreter().visit( ast )
+        println
+      endForEach
+
+    method parse_args( args:String[] )->Value
+      # This method is unrelated to the Froley Parser
+      local command = CommandLineParser().
+      [
+        option( "--flag",     &alias="-f" )
+        option( "--help",     &aliases=["-h","-?"] )
+        option( "--setting=", &alias="-s" )
+      ].parse( args )
+      return command
+
+    method print_usage
+      println @|USAGE
+               |  simple [OPTIONS] <filepath>
+               |
+               |OPTIONS
+               |  --help, -h, -?
+               |    Show this help text.
+endClass

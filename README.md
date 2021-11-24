@@ -24,7 +24,7 @@ Author         | Abe Pralle
 Refer to the [Wiki](wiki).
 
 # Examples
-The `Examples/` folder contains a number of examples of increasing scope. Run `rogo` in an example folder to compile and run the example.
+The [Examples](Examples) folder contains a number of examples of increasing scope. Run `rogo` in an example folder to compile and run the example.
 
 Because Froley is written in Froley, examine the [Source](Source) folder for a look at a full project implemented in Froley.
 

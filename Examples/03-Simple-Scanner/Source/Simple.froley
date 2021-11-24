@@ -27,6 +27,11 @@ KEYWORD_PRINTLN println
 --------------------------------------------------------------------------------
 scanner
 --------------------------------------------------------------------------------
+- m2
+  scan({{"0x" [0-9A-Fa-f]+}? [0-9]*})
+  println buffer
+  halt
+
 - main
   consume [ \r\t]*  # whitespace
   if (consume('\n')) produce EOL

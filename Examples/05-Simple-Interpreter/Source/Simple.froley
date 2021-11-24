@@ -130,10 +130,10 @@ parser
   on "^" -> Power
 
 - factorial [postUnary]
-  on "!" -> Factorial(operand)
+  on "!" -> Factorial
 
 - negate [preUnary]
-  on "-" -> Negate(operand)
+  on "-" -> Negate
 
 - term
   on '(' expression ')': return
@@ -145,5 +145,5 @@ parser
 # This routine is not called but its commands cause additional necessary node defs to be generated
 - additional_nodes
   create ReadVar(name:String)
-  create WriteVar(name:String,new_value:Cmd)
+  create WriteVar(name:String,new_value)
 

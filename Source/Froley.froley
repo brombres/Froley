@@ -225,7 +225,7 @@ scanner
   if (consume('\n')) produce EOL
 
   scan_optional_plain_id
-  syntaxError "1 Identifier expected."
+  syntaxError "Identifier expected."
 
 - scan_token_name
   consume_whitespace
@@ -237,7 +237,7 @@ scanner
 
   if (scan [a-zA-Z_][a-zA-Z_0-9]*)
     # May switch sections here
-    match (buffer)
+    match buffer
       case "parser"
         mode scan_standard_token
         produce KEYWORD_PARSER
@@ -254,7 +254,7 @@ scanner
 
   mode scan_token_name
   if (consume('\n')) produce EOL
-  syntaxError "2 Identifier expected."
+  syntaxError "Identifier expected."
 
 - scan_token_symbol
   # TOKEN_ID(symbol)
@@ -646,15 +646,16 @@ parser
   endOn
 
 - scanner_statement
-  on "collect", scanner_args    -> Collect(args:Args)
-  on "create",  scanner_product -> ScannerCreate(arg)
-  on "discardPosition"          -> DiscardPosition
-  on "halt"                     -> Halt
-  on "markPosition"             -> MarkPosition
-  on "mode", identifier         -> Mode(routine_name:String)
-  on "mustConsume", sequence_args   -> ScannerMustConsume(args:SequenceArgs)
+  on "call"    identifier         -> ScannerCallUserMethod(fn_name:String)
+  on "collect" scanner_args       -> Collect(args:Args)
+  on "create"  scanner_product    -> ScannerCreate(arg)
+  on "discardPosition"            -> DiscardPosition
+  on "halt"                       -> Halt
+  on "markPosition"               -> MarkPosition
+  on "mode"  identifier           -> Mode(routine_name:String)
+  on "mustConsume"  sequence_args -> ScannerMustConsume(args:SequenceArgs)
   on "noAction": return
-  on "print",   scanner_args       -> Print(args:Args)
+  on "print"    scanner_args      -> Print(args:Args)
   on "println"
     if (not hasAnother or nextHasAttribute(structural))
       beginList
@@ -681,7 +682,7 @@ parser
   on "restorePosition" -> RestorePosition
   on "return"
     if (nextIs(EOL)) createNull
-    else             scanner_expression
+    else             syntaxError
     produce Return(value)
   endOn
   on "savePosition"    -> SavePosition
@@ -691,12 +692,12 @@ parser
     produce ThrowSyntaxError(args:Args)
   endOn
 
-  on "++", scanner_expression -> Increment(target)
-  on "--", scanner_expression -> Decrement(target)
+  on "++" scanner_expression -> Increment(target)
+  on "--" scanner_expression -> Decrement(target)
 
   scanner_expression
 
-  on "=", scanner_expression -> Assign(target,new_value)
+  on "=" scanner_expression  -> Assign(target,new_value)
   on "++"
     produce Increment(target)
   endOn
@@ -868,7 +869,6 @@ parser
   on '(' scanner_expression ')': return
   on '{' pattern_sequence '}':   return
   on "buffer"                    -> ReadBuffer
-  on "call", identifier          -> ScannerCallUserMethod(fn_name:String)
   on "consume", sequence_args    -> ScannerConsume(args:SequenceArgs)
   on "false"                     -> LiteralLogical(value="false":Logical)
   on "hasAnother"                -> ScannerHasAnother
@@ -1122,16 +1122,17 @@ parser
   endOn
 
 - parser_statement
-  on "beginList"                       -> BeginList
-  on "create",     parser_product      -> ParserCreate(arg:CreateCmd)
-  on "createList", list_type           -> CreateList(list_type:String)
-  on "createNull"                      -> CreateNull
-  on "discardList"                     -> DiscardList
-  on "discardPosition"                 -> DiscardPosition
-  on "mustConsume", ttype_or_literal   -> ParserMustConsume(token_type)
+  on "beginList"                     -> BeginList
+  on "call"       identifier         -> ParserCallUserMethod(fn_name:String)
+  on "create"     parser_product     -> ParserCreate(arg:CreateCmd)
+  on "createList" list_type          -> CreateList(list_type:String)
+  on "createNull"                    -> CreateNull
+  on "discardList"                   -> DiscardList
+  on "discardPosition"               -> DiscardPosition
+  on "mustConsume"  ttype_or_literal -> ParserMustConsume(token_type)
   on "noAction": return
 
-  on "print",   parser_args       -> Print(args:Args)
+  on "print" parser_args             -> Print(args:Args)
   on "println"
     if (not hasAnother or nextHasAttribute(structural))
       beginList
@@ -1142,18 +1143,18 @@ parser
     produce Println(args:Args)
   endOn
 
-  on "produce", parser_product -> ParserProduce(arg:CreateCmd)
-  on "->",      parser_product -> ParserProduce(arg:CreateCmd)
+  on "produce" parser_product -> ParserProduce(arg:CreateCmd)
+  on "->"      parser_product -> ParserProduce(arg:CreateCmd)
   on "produceNull"
     create CreateNull
     createNull
     produce Return(value)
   endOn
-  on "produceList", list_type -> ProduceList(list_type:String)
-  on "restorePosition"        -> RestorePosition
+  on "produceList" list_type -> ProduceList(list_type:String)
+  on "restorePosition"       -> RestorePosition
   on "return"
     if (nextIs(EOL)) createNull
-    else             parser_expression
+    else             syntaxError
     produce          Return(value)
   endOn
   on "savePosition"    -> SavePosition
@@ -1163,12 +1164,12 @@ parser
     produce ThrowSyntaxError(args:Args)
   endOn
 
-  on "++", parser_expression -> Increment(target)
-  on "--", parser_expression -> Decrement(target)
+  on "++" parser_expression -> Increment(target)
+  on "--" parser_expression -> Decrement(target)
 
   parser_expression
 
-  on "=",  parser_expression -> Assign(target,new_value)
+  on "="  parser_expression -> Assign(target,new_value)
 
   on "++"
     produce Increment(target)
@@ -1307,7 +1308,6 @@ parser
 
 - parser_term
   on '(' parser_expression ')':           return
-  on "call", identifier                 -> ParserCallUserMethod(fn_name:String)
   on "consume", ttype_or_literal        -> ParserConsume(token_type)
   on "false"                            -> LiteralLogical(value="false":Logical)
   on "hasAnother"                       -> ParserHasAnother

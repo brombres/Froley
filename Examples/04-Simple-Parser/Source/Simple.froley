@@ -130,10 +130,10 @@ parser
   on "^" -> Power
 
 - factorial [postUnary]
-  on "!" -> Factorial(operand)
+  on "!" -> Factorial
 
 - negate [preUnary]
-  on "-" -> Negate(operand)
+  on "-" -> Negate
 
 - term
   on '(' expression ')': return

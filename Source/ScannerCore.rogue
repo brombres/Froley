@@ -82,6 +82,7 @@ class ScannerCore [abstract]
       else
         tokens.add( _t(type) )
       endIf
+      buffer.clear
 
     method _clear_state
       tokens = Token[]
@@ -386,7 +387,7 @@ class ScannerCore [abstract]
               return false
             endIf
             if (not _execute(ip_scan_optional_plain_id)) return false
-            _throw_syntax_error("1 Identifier expected.")
+            _throw_syntax_error("Identifier expected.")
           case ip_scan_token_name
             if (not _execute(ip_consume_whitespace)) return false
             if (not _execute(ip_consume_comment)) return false
@@ -427,7 +428,7 @@ class ScannerCore [abstract]
               _add( TokenType.EOL )
               return false
             endIf
-            _throw_syntax_error("2 Identifier expected.")
+            _throw_syntax_error("Identifier expected.")
           case ip_scan_token_symbol
             if (_scanner.consume('('))
               while (((_scanner.has_another and (not _scanner.next_is(')'))) and (not _scanner.next_is('\n'))))

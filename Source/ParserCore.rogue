@@ -717,6 +717,13 @@ class ParserCore [abstract]
             endIf
             return
           case ip_scanner_statement
+            if (_next_t.type == TokenType.KEYWORD_CALL)
+              _on_t
+              _execute(ip_identifier)
+              _pop_frame
+              _push( ScannerCallUserMethod(_cur_t,_string_arg(-1)), 1 )
+              return
+            endIf
             if (_next_t.type == TokenType.KEYWORD_COLLECT)
               _on_t
               _execute(ip_scanner_args)
@@ -819,8 +826,7 @@ class ParserCore [abstract]
               if ((_next_t.type == TokenType.EOL))
                 _push( null, 0 )
               else
-                _execute(ip_scanner_expression)
-                _pop_frame
+                _throw_syntax_error
               endIf
               _push( Return(_cur_t,_node_arg(-1)), 1 )
               return
@@ -1283,13 +1289,6 @@ class ParserCore [abstract]
               _push( ReadBuffer(_cur_t), 0 )
               return
             endIf
-            if (_next_t.type == TokenType.KEYWORD_CALL)
-              _on_t
-              _execute(ip_identifier)
-              _pop_frame
-              _push( ScannerCallUserMethod(_cur_t,_string_arg(-1)), 1 )
-              return
-            endIf
             if (_next_t.type == TokenType.KEYWORD_CONSUME)
               _on_t
               _execute(ip_sequence_args)
@@ -1707,6 +1706,13 @@ class ParserCore [abstract]
               _push( BeginList(_cur_t), 0 )
               return
             endIf
+            if (_next_t.type == TokenType.KEYWORD_CALL)
+              _on_t
+              _execute(ip_identifier)
+              _pop_frame
+              _push( ParserCallUserMethod(_cur_t,_string_arg(-1)), 1 )
+              return
+            endIf
             if (_next_t.type == TokenType.KEYWORD_CREATE)
               _on_t
               _execute(ip_parser_product)
@@ -1804,8 +1810,7 @@ class ParserCore [abstract]
               if ((_next_t.type == TokenType.EOL))
                 _push( null, 0 )
               else
-                _execute(ip_parser_expression)
-                _pop_frame
+                _throw_syntax_error
               endIf
               _push( Return(_cur_t,_node_arg(-1)), 1 )
               return
@@ -2227,13 +2232,6 @@ class ParserCore [abstract]
               _execute(ip_parser_expression)
               _pop_frame
               if (not _consume(TokenType.SYMBOL_CLOSE_PAREN)) _throw_syntax_error( &expected=TokenType.SYMBOL_CLOSE_PAREN )
-              return
-            endIf
-            if (_next_t.type == TokenType.KEYWORD_CALL)
-              _on_t
-              _execute(ip_identifier)
-              _pop_frame
-              _push( ParserCallUserMethod(_cur_t,_string_arg(-1)), 1 )
               return
             endIf
             if (_next_t.type == TokenType.KEYWORD_CONSUME)

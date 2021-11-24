@@ -1,0 +1,7 @@
+module Froley
+
+class Var( t:Token, name:String, type=FType.NONE:FType )
+  METHODS
+    method description->String
+      return "Var($:$)"(name,type)
+endClass

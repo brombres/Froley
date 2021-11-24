@@ -1,0 +1,110 @@
+module Simple
+
+class Resolver : Visitor
+  METHODS
+    method require_value( t:Token, cmd:Cmd )->Cmd
+      if (cmd) return cmd.require_value
+      throw t.error( "Value expected." )
+
+    method on( cmd:Assign )->Cmd
+      return visit( cmd.left.resolve_assignment(this,cmd.right) )
+
+    method on( cmd:Access )->Cmd
+      return visit( ReadVar(cmd.t,cmd.name) )
+
+    method on_leave( cmd:Binary )
+      require_value( cmd.t, cmd.left )
+      require_value( cmd.t, cmd.right )
+
+    method on_leave( cmd:Unary )
+      require_value( cmd.t, cmd.operand )
+
+    method on_leave( cmd:Args )
+      forEach (arg in cmd) require_value(cmd.t,arg)
+
+    method on( cmd:Add )->Cmd
+      visit_children( cmd )
+      if (cmd.left instanceOf Number and cmd.right instanceOf Number)
+        return visit( Number(cmd.t, cmd.left->Real64 + cmd.right->Real64) )
+      else
+        return cmd
+      endIf
+
+    method on( cmd:Subtract )->Cmd
+      visit_children( cmd )
+      if (cmd.left instanceOf Number and cmd.right instanceOf Number)
+        return visit( Number(cmd.t, cmd.left->Real64 - cmd.right->Real64) )
+      else
+        return cmd
+      endIf
+
+    method on( cmd:Multiply )->Cmd
+      visit_children( cmd )
+      if (cmd.left instanceOf Number and cmd.right instanceOf Number)
+        return visit( Number(cmd.t, cmd.left->Real64 * cmd.right->Real64) )
+      else
+        return cmd
+      endIf
+
+    method on( cmd:Divide )->Cmd
+      visit_children( cmd )
+      if (cmd.left instanceOf Number and cmd.right instanceOf Number)
+        return visit( Number(cmd.t, cmd.left->Real64 / cmd.right->Real64) )
+      else
+        return cmd
+      endIf
+
+    method on( cmd:Power )->Cmd
+      visit_children( cmd )
+      if (cmd.left instanceOf Number and cmd.right instanceOf Number)
+        return visit( Number(cmd.t, cmd.left->Real64 ^ cmd.right->Real64) )
+      else
+        return cmd
+      endIf
+endClass
+
+augment Cmd
+  METHODS
+    method require_value->Cmd
+      throw t.error( "Value expected." )
+
+    method resolve_assignment( resolver:Resolver, new_value:Cmd )->Cmd
+      throw t.error( "Illegal assignment target." )
+endAugment
+
+augment Unary
+  METHODS
+    method require_value->Cmd
+      return this
+endAugment
+
+augment Binary
+  METHODS
+    method require_value->Cmd
+      return this
+endAugment
+
+augment Number
+  METHODS
+    method require_value->Cmd
+      return this
+endAugment
+
+augment LiteralString
+  METHODS
+    method require_value->Cmd
+      return this
+endAugment
+
+augment ReadVar
+  METHODS
+    method require_value->Cmd
+      return this
+endAugment
+
+augment Access
+  METHODS
+    method resolve_assignment( resolver:Resolver, new_value:Cmd )->Cmd
+      return resolver.visit( WriteVar(t,name,new_value) )
+endAugment
+

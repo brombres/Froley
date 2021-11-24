@@ -1,549 +1,82 @@
-$define VERSION_INFO "Froley v2.2.0 - June 15, 2021"
-
 module Froley
-  uses ParseKit<<Froley>>
 
-$include "Assembler.rogue"
-$include "Cmd.rogue"
-$include "Constructor.rogue"
-$include "FroleyError.rogue"
-$include "FroleyParser.rogue"
-$include "FroleyTokenizer.rogue"
-$include "Label.rogue"
-$include "ParserAssembler.rogue"
-$include "ParserMethod.rogue"
-$include "ParserOpcode.rogue"
-$include "ScanState.rogue"
-$include "Token.rogue"
-$include "TokenType.rogue"
-$include "TokenizerAssembler.rogue"
-$include "TokenizerOpcode.rogue"
-$include "TokenizerVM.rogue"
+$include "BranchAnalyzer.rogue"
+$include "Collector.rogue"
+$include "FType.rogue"
+$include "Scanner.rogue"
+$include "Organizer.rogue"
+$include "Parser.rogue"
+$include "Program.rogue"
+$include "Rogue/RogueGenerator.rogue"
+$include "Resolver.rogue"
+$include "ScanTableBuilder.rogue"
+$include "TokenOrganizer.rogue"
+$include "Type.rogue"
+$include "Validator.rogue"
+$include "Var.rogue"
+uses Froley
+uses Utility/CommandLineParser
 
-$includeFolder "Generators"
+try
+  Froley( System.command_line_arguments )
+catch (error:CompileError)
+  Console.error.println error
+  System.exit 1
+catch (error:Error)
+  Console.error.println error
+  #Console.error.println error.stack_trace
+  System.exit 1
+endTry
 
-Launcher( System.command_line_arguments )
+class Froley
+  PROPERTIES
+    command : Value
 
-class Launcher
   METHODS
     method init( args:String[] )
-      try
-        local options = String[]
-        local inputs  = String[]
-        forEach (arg in args)
-          if (arg.begins_with("--")) options.add( arg.after_first("--") )
-          else                       inputs.add( arg )
-        endForEach
+      command = parse_args( args )
 
-        which (inputs.count)
-          case 0
-            print_usage
-            return
-
-          case 1
-            if (not inputs.first.ends_with(".froley",&ignore_case)) throw FroleyError( 'Input file must end with ".froley".' )
-
-          others
-            forEach (input in inputs)
-              if (not input.ends_with(".froley",&ignore_case))
-                throw FroleyError( "Invalid option or input file '$'." (input) )
-              endIf
-            endForEach
-            throw FroleyError( "Only one .froley input file can be specified." )
-        endWhich
-
-        init( inputs.first, options )
-
-      catch (error:Error)
-        if (error not instanceOf FroleyError) error = FroleyError( error.message )
-        # Turn other errors into FroleyErrors to get the nice banner-style output
-
-        Console.error.println error
-        System.exit 1
-
-      endTry
-
-    method init( input_filepath:String, options:String[] )
-      try
-        if (not File.exists(input_filepath))
-          throw FroleyError( "Cannot read input file $." (input_filepath) )
-        endIf
-
-        local active_generators = CodeGenerator[]
-        local cur_gen : CodeGenerator
-
-        local default_language = File.filename(input_filepath).before_last( ".froley", &ignore_case )
-        local language_override : String
-
-        # Default to Rogue target
-        options.insert( "target=rogue" )
-
-        forEach (option in options)
-          local name = option.before_first('=')
-          local value = option.after_first('=')
-          if (name == "target")
-            local gen = Froley.generators[ value ]
-            if (gen)
-              # Switching host language
-              cur_gen = gen
-              active_generators.add( cur_gen )
-              if (language_override) cur_gen.language = language_override
-            else
-              local valid_names = Froley.generators.keys.to_list
-              throw FroleyError( "Invalid target '$'. Valid targets: $." (value,valid_names.join(", ")) )
-            endIf
-          elseIf (cur_gen is null)
-            if (name == "language")
-              language_override = value  # leading '--language' overrides .froley-level 'language' for every output
-            else
-              throw FroleyError( "Invalid option '$'. Note: no --target has been specified."(option) )
-            endIf
-          else
-            cur_gen.add_option( name, value )
-          endIf
-        endForEach
-
-        local info = Froley.parse( File(input_filepath) )
-        if (not info//language) info//language = default_language
-        forEach (gen in active_generators)
-          if (gen.language) info//language = gen.language
-          gen.process( info )
-        endForEach
-
-      catch (error:Error)
-        if (error not instanceOf FroleyError) error = FroleyError( error.message )
-        # Turn other errors into FroleyErrors to get the nice banner-style output
-
-        Console.error.println error
-        System.exit 1
-
-      endTry
-
-      method print_usage( writer=Console:PrintWriter )->PrintWriter
-        writer.println VERSION_INFO
-        writer.println @|By Abe Pralle
-                        |github.com/AbePralle/Froley
-        writer.println
-
-        writer.println @|USAGE
-                        |  froley filename.froley [options]
-                        |
-                        |OPTIONS
-                        |  --language=<name>
-                        |    Specifies the name of the language that the Froley-generated Tokenizer and
-                        |    Parser will work with. For example, to generate Rogue source code that will
-                        |    parse a language called Simple you would write:
-                        |      froley --language=Simple
-                        |    If no --language is specified then the base name of the '.froley' filename
-                        |    is used as the language name.
-                        |
-                        |  --main
-                        |    Creates a main file (if it does not yet exist) to test out the parser
-                        |    and tokenizer.
-                        |
-                        |  --output=<folder>
-                        |    Specifies the output folder for generated code.
-        return writer
-
-      #method print_usage( writer=Console:PrintWriter )->PrintWriter
-      #  writer.println VERSION_INFO
-      #  writer.println
-
-      #  writer.println @|USAGE
-      #                  |  froley filename.froley [--target=<target-language>] [options]
-      #           |
-      #           |TARGET LANGUAGES
-      #           |  Froley can generate code for the following target languages:
-      #  writer.print( "    " ).println( forEach in Froley.generators.keys )
-      #  writer.println
-      #  writer.println @|Use '--target=<language>' to include output for that language. Any successive
-      #                  |options will apply only to that language until another `--target` is specified.
-      #                  |
-      #                  |GENERAL OPTIONS
-      #                  |  --language=<name>
-      #                  |    Specifies the name of the language that the Froley-generated Tokenizer and
-      #                  |    Parser will parse. For example, to generate Rogue source code that will
-      #                  |    parse a language called Simple you would write:
-      #                  |      froley --language=Simple --target=rogue
-      #                  |    If no --language is specified then the base name of the '.froley' filename
-      #                  |    is used as the language name.
-      #                  |
-      #                  |OPTIONS
-      #  forEach (key in Froley.generators.keys)
-      #    writer.print  "  --target="
-      #    writer.println key
-      #    writer.println(forEach in Froley.generators[ key ].usage_options.sort((a,b)=>a<b)).println
-      #  endForEach
-
-      #  writer.println
-      #  return writer
-endClass
-
-class TokenDef( name:String, type:Int32, symbol=null:String, attributes=0:Int32 )
-  METHODS
-    method to->String
-      return "$=$ ($) [$]" (name,type,symbol,attributes)
-
-    method to->Value
-      local sym = name
-      if (symbol)
-        if (symbol.count != 1 or (symbol[0] >= 32 and symbol[0] != 127)) sym = symbol
-      endIf
-      return @{ :name, :type, :attributes, symbol:sym }
-endClass
-
-class Froley [singleton]
-  PROPERTIES
-    filepath              : String
-    source                : String
-    scanner               : Scanner
-
-    generators       = StringTable<<CodeGenerator>>()
-
-    token_defs_by_name    = LookupList<<TokenDef>>()
-    token_defs_by_type    = Table<<Int32,TokenDef>>()
-    token_defs_by_symbol  = LookupList<<TokenDef>>()
-    last_token_type       = 0
-
-    token_defs_by_section = StringTable<<TokenDef[]>>()
-    token_attributes      = LookupList<<Int32>>()
-    next_attribute_value  = 1
-
-    entry_points          = StringLookupList()
-
-    tokenizer_code = StringBuilder( 2048 )
-    parser_code    = StringBuilder( 2048 )
-
-    parser_methods     = LookupList<<ParserMethod>>()
-    constructor_lookup = LookupList<<Constructor>>()
-
-    list_types = ["CmdList"]
-
-    id_start    = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_"
-    id_continue = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_0123456789"
-    language    : String
-
-  METHODS
-    method init
-      token_def( "EOI" ).symbol = "end of input"
-
-    method parse( file:File )->Value
-      local source = file.load_as_string
-      return parse( file.filepath, source )
-
-    method parse( filepath, source)->Value
-      collect_definitions_and_extract_code
-
-      local tokenizer_statements = CmdStatements()
-      local parser = FroleyParser()
-      parser.set_source( filepath, tokenizer_code->String )
-      parser.consume_eols
-      parser.parse_multi_line_tokenizer_statements( tokenizer_statements )
-      tokenizer_statements.resolve
-
-      forEach (def in token_defs_by_name)
-        if (def.symbol) token_defs_by_symbol[ def.symbol ] = def
-        else            token_defs_by_symbol[ def.name ]   = def
-      endForEach
-
-      local tokenizer_bytes = TokenizerAssembler().assemble( tokenizer_statements )
-
-      parser.set_source( filepath, parser_code->String )
-      parser.parse_parser_methods
-      local parser_assembler = ParserAssembler()
-      local parser_bytes = parser_assembler.assemble( parser_methods )
-      if (parser_methods.is_empty) parser_bytes = Byte[]
-
-      local token_attributes = @[]
-      forEach (name at index in this.token_attributes.keys)
-        local value = this.token_attributes[ index ]
-        token_attributes.add( @{:name,:value} )
-      endForEach
-
-      local token_types = @[]
-      forEach (def at index in token_defs_by_name)
-        token_types.add( def->Value )
-      endForEach
-
-      local tokenizer_opcodes = @[]
-      forEach (name in TokenizerOpcode.names)
-        tokenizer_opcodes.add( @{ :name, value:TokenizerOpcode(name)->Int32 } )
-      endForEach
-
-      local constructors = @[]
-      constructors.add( (forEach in Froley.constructor_lookup)->Value )
-
-      local parser_opcodes = @[]
-      forEach (name in ParserOpcode.names)
-        parser_opcodes.add( @{ :name, value:ParserOpcode(name)->Int32 } )
-      endForEach
-
-      #{
-      local b64 = tokenizer_bytes.to_base64
-      while (b64.count >= 64)
-        println b64.leftmost(64)
-        b64 = b64.rightmost(-64)
-      endWhile
-      if (b64.count) println b64
-      }#
-      #@trace tokenizer_bytes.count
-
-      local output =
-      @{
-        :language,
-        source_filepath: filepath,
-        id_characters: {start:id_start,continue:id_continue},
-        :token_attributes,
-        :token_types,
-        :tokenizer_opcodes,
-        tokenizer_code:tokenizer_bytes.to_base64,
-        :constructors,
-        :parser_opcodes,
-        parser_code:parser_bytes.to_base64
-      }
-
-      return output
-
-    method token_attribute( name:String, value=0:Int32 )->Int32
-      if (token_attributes.contains(name))
-        return token_attributes[ name ]
+      if (command//options//help or command//args.count != 2)
+        print_usage
+        System.exit 0
       endIf
 
-      if (value == 0) value = next_attribute_value
-      token_attributes[ name ] = value
-      next_attribute_value = 1
-      while (next_attribute_value <= value) next_attribute_value = next_attribute_value :<<: 1
-      return value
-
-    method constructor( t:Token, name:String, type:ParseRuleType, symbol=null:String, args=null:ConstructorArg[], base_type=null:String )->Constructor
-      local constructor = Constructor( t, name, type, constructor_lookup.count, symbol, args, base_type )
-      if (constructor_lookup.contains(constructor.signature))
-        constructor.index = constructor_lookup[constructor.signature].index
-      else
-        constructor_lookup[ constructor.signature ] = constructor
+      local definition_file = File(command//args.first)
+      local output_folder = File(command//args.last)
+      if (not definition_file.exists)
+        throw Error( ''No such file "$".'' (definition_file) )
       endIf
-      return constructor
-
-    method collect_definitions_and_extract_code
-      $localDefine PARSING_SETTINGS    0
-      $localDefine PARSING_ATTRIBUTES  1
-      $localDefine PARSING_DEFINITIONS 2
-      $localDefine PARSING_TOKENIZER   3
-      $localDefine PARSING_PARSER      4
-
-      token_attributes.clear
-      token_attribute( "content", 1 )
-
-      tokenizer_code.clear
-      parser_code.clear
-      local cur_section_name = "tokenizer"
-      local cur_section_defs : TokenDef[]
-      local parse_type = PARSING_TOKENIZER
-      local buffer = StringBuilder()
-      local comment_level = 0
-      forEach (line at index in LineReader(source))
-        local trimmed = line.trimmed
-        if (trimmed == "#{")
-          ++comment_level
-          nextIteration
-        elseIf (comment_level)
-          if (trimmed == "}#") --comment_level
-          nextIteration
-        endIf
-
-        if (line.begins_with('['))  # new section
-          tokenizer_code.println  # keep line numbers consistent
-          parser_code.println  # keep line numbers consistent
-          cur_section_name = line.extract_string( "[$]*" )
-          which (cur_section_name)
-            case "settings"
-              parse_type = PARSING_SETTINGS
-            case "attributes"
-              parse_type = PARSING_ATTRIBUTES
-            case "tokenizer"
-              parse_type = PARSING_TOKENIZER
-            case "parser"
-              parse_type = PARSING_PARSER
-            others
-              parse_type = PARSING_DEFINITIONS
-          endWhich
-
-          if (parse_type == PARSING_DEFINITIONS)
-            cur_section_defs = section_defs( cur_section_name )
-          endIf
-
-        elseIf (parse_type == PARSING_SETTINGS)
-          tokenizer_code.println  # keep line numbers consistent
-          parser_code.println     # keep line numbers consistent
-          scanner = Scanner( line, &spaces_per_tab=2 ).[ line=index+1 ]
-          if (scanner.consume("id_start"))
-            id_start = scan_id_characters
-          elseIf (scanner.consume("id_continue"))
-            id_continue = scan_id_characters
-          elseIf (scanner.consume("language"))
-            while (scanner.consume(' ')) noAction
-            language = scanner.scan_identifier
-            if (not language)
-              throw FroleyError( filepath, source, scanner.line, scanner.column, "Language name expected." )
-            endIf
-          endIf
-
-        elseIf (parse_type == PARSING_TOKENIZER)
-          tokenizer_code.println( line )
-          parser_code.println  # keep line numbers consistent
-
-        elseIf (parse_type == PARSING_PARSER)
-          parser_code.println( line )
-          tokenizer_code.println  # keep line numbers consistent
-
-        elseIf (parse_type == PARSING_ATTRIBUTES)
-          tokenizer_code.println  # keep line numbers consistent
-          parser_code.println  # keep line numbers consistent
-          local scanner = Scanner( line, &spaces_per_tab=2 ).[ line=index+1 ]
-          discard_whitespace( scanner )
-          if (scanner.has_another)
-            local name = scanner.scan_identifier
-            if (name is null)
-              throw FroleyError( filepath, source, scanner.line, scanner.column, "Attribute name expected." )
-            endIf
-
-            discard_whitespace( scanner )
-            if (scanner.consume('='))
-              discard_whitespace( scanner )
-              if (not scanner.peek.is_number)
-                throw FroleyError( filepath, source, scanner.line, scanner.column, "Attribute value expected, e.g 1, 2, 4, etc." )
-              endIf
-              next_attribute_value = scanner.scan_int64
-            endIf
-
-            token_attribute( name, next_attribute_value )
-
-          endIf
-        else
-          # Token definitions
-          tokenizer_code.println  # keep line numbers consistent
-          parser_code.println     # keep line numbers consistent
-          local scanner = Scanner( line, &spaces_per_tab=2 ).[ line=index+1 ]
-          discard_whitespace( scanner )
-          if (scanner.has_another)
-            local name = scanner.scan_identifier
-            if (name is null)
-              throw FroleyError( filepath, source, scanner.line, scanner.column, "Token name expected." )
-            endIf
-
-            local symbol : String
-            discard_whitespace( scanner )
-            if (scanner.has_another)
-              buffer.clear
-              local ch = scanner.peek
-              if (ch == '"' or ch == '\'')
-                local st = scanner.scan_string
-                if (st is null)
-                  throw FroleyError( filepath, source, scanner.line, scanner.column, "Unterminated string." )
-                endIf
-                buffer.print( st )
-              else
-                while (scanner.has_another and not scanner.consume(' ')) buffer.print( scanner.read )
-              endIf
-              symbol = buffer->String
-            endIf
-
-            local attributes = 0
-            discard_whitespace( scanner )
-            if (scanner.consume('['))
-              discard_whitespace( scanner )
-              local first = true
-              while (first or scanner.consume(','))
-                first = false
-                discard_whitespace( scanner )
-                local attribute_name = scanner.scan_identifier
-                if (attribute_name is null)
-                  throw FroleyError( filepath, source, scanner.line, scanner.column, "Attribute name expected." )
-                endIf
-                attributes |= token_attribute( attribute_name )
-              endWhile
-              if (not scanner.consume(']'))
-                throw FroleyError( filepath, source, scanner.line, scanner.column, "Closing ']' expected." )
-              endIf
-            endIf
-
-            discard_whitespace( scanner )
-            if (scanner.has_another)
-              throw FroleyError( filepath, source, scanner.line, scanner.column, "Syntax error - unexpected '$'." (scanner.peek.to_escaped_ascii) )
-            endIf
-
-            local def = token_def( name, cur_section_name )
-            def.symbol = symbol
-            def.attributes = attributes
-
-          endIf
-        endIf
-      endForEach
-
-    method scan_id_characters->String
-      local characters = Array<<Logical>>(128)
-      loop
-        while (scanner.consume(' ')) noAction
-        if (not scanner.has_another) escapeLoop
-        if (scanner.consume("alpha"))
-          characters[ Int32(forEach in 'a'..'z')&127 ] = true
-          characters[ Int32(forEach in 'A'..'Z')&127 ] = true
-          nextIteration
-        elseIf (scanner.consume("numeric"))
-          characters[ Int32(forEach in '0'..'9')&127 ] = true
-          nextIteration
-        else
-          local chars = scanner.scan_string
-          if (chars)
-            characters[ Int32(forEach in chars)&127 ] = true
-            nextIteration
-          else
-            throw FroleyError( filepath, source, scanner.line, scanner.column, "Expected 'alpha', 'numeric', a character, or a string." )
-          endIf
-        endIf
-      endLoop
-      use result = StringBuilder.pool
-        forEach (is_used at i in characters)
-          if (is_used) result.print( Character(i) )
-        endForEach
-        return result
-      endUse
-
-    method discard_whitespace( scanner:Scanner )
-      while (scanner.consume(' ')) noAction
-      if (scanner.consume('#'))
-        while (scanner.has_another) scanner.read
+      if (not output_folder.exists) output_folder.create_folder
+      if (not output_folder.is_folder)
+        throw Error( ''Unable to create folder "$".'' (output_folder) )
       endIf
 
-    method section_defs( name:String )->TokenDef[]
-      local entry = token_defs_by_section.find( name )
-      if (entry) return entry.value
-
-      local defs = TokenDef[]
-      token_defs_by_section[ name ] = defs
-      return defs
-
-    method token_def( token_name:String, cur_section_name=null:String )->TokenDef
-      if (token_defs_by_name.contains(token_name)) return token_defs_by_name[ token_name ]
-
-      ++last_token_type
-      local def = TokenDef( token_name, last_token_type )
-      token_defs_by_name[ token_name ] = def
-      token_defs_by_type[ def.type ] = def
-
-      if (cur_section_name)
-        section_defs( cur_section_name ).add( def )
+      local ast = Parser(definition_file).parse as ProgramDef
+      if (not ast)
+        throw Error( ''No language definition found in file "$".'' (definition_file) )
       endIf
-      return def
 
-    method token_def( token_type:Int32 )->TokenDef
-      return token_defs_by_type[ token_type ]
+      Program.compile( command, ast )
 
-endClass
+    method parse_args( args:String[] )->Value
+      # This method is unrelated to the Froley Parser
+      local command = CommandLineParser().
+      [
+        option( "--main",     &alias="-m" )
+        option( "--help",     &aliases=["-h","-?"] )
+      ].parse( args )
+      return command
 
-class TestVM : TokenizerVM
-  METHODS
-    method accept( token_type:Int32 )
-      @trace token_type, buffer
+    method print_usage
+      println @|USAGE
+               |  froley [OPTIONS] language-definition.froley output-folder/
+               |
+               |OPTIONS
+               |  --help, -h, -?
+               |    Show this help text.
+               |
+               |  --main, -m
+               |    Creates a main application file that demonstrates how to use the scanner and parser.
+               |    Does not create or modify a main file if it already exists.
 endClass
 

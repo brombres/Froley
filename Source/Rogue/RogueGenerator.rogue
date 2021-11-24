@@ -1,0 +1,686 @@
+module Froley
+
+$include "RCmd.rogue"
+$include "RFrameStack.rogue"
+$include "RMain.rogue"
+$include "RParser.rogue"
+$include "RParserCore.rogue"
+$include "RScanTable.rogue"
+$include "RScanner.rogue"
+$include "RScannerCore.rogue"
+$include "RSyntaxError.rogue"
+$include "RToken.rogue"
+$include "RTokenType.rogue"
+$include "RVisitor.rogue"
+$include "RogueSourceWriter.rogue"
+$include "ScanTableDeclarationWriter.rogue"
+
+class RogueGenerator : Visitor
+  GLOBAL METHODS
+    method to_escaped_ascii( st:String, additional_escapes:String )->String
+      return st.to_escaped_ascii( additional_escapes )
+
+  PROPERTIES
+    folder     : String
+    writer     : PrintWriter
+    class_name = ""
+
+    indent     = 0
+    at_newline = true
+    write_replacements = StringTable<<String>>()
+
+  METHODS
+    method init( folder )
+      File.create_folder( folder )
+
+      Program.nodes.dispatch( this )
+
+      RSyntaxError(this).create_missing
+      RScanTable(this).create_missing
+      RTokenType(this).overwrite
+      RToken(this).create_missing
+      RFrameStack(this).create_missing
+
+      # Main
+      if (Program.main_filename)
+        RMain( this, Program.main_filename ).create_missing
+      endIf
+
+    method on_enter( cmd:BeginList )
+      write   "_begin_list"
+
+    method on_enter( cmd:Call )
+      if (is_scanner)
+        write "if (not _execute(ip_"
+        write cmd.routine_def.name
+        write ")) return false"
+      else
+        write   "_execute(ip_"
+        write   cmd.routine_def.name
+        writeln ")"
+        write   "_pop_frame"
+      endIf
+
+    method on_leave( cmd:CastToLogical )
+      write "->Logical"
+
+    method on_leave( cmd:CastToCharacter )
+      write "->Character"
+
+    method on_leave( cmd:CastToInteger )
+      write "->Int32"
+
+    method on_leave( cmd:CastToString )
+      write "->String"
+
+    method on( cmd:Collect )->Cmd
+      write "buffer"
+      forEach (arg in cmd.args)
+        write ".print("
+        visit( arg )
+        write ")"
+      endForEach
+      return null
+
+    method on( cmd:CompareEQ )->Cmd
+      write "("
+      visit( cmd.left )
+      write "=="
+      visit( cmd.right )
+      write ")"
+      return cmd
+
+    method on( cmd:CompareGE )->Cmd
+      write "("
+      visit( cmd.left )
+      write ">="
+      visit( cmd.right )
+      write ")"
+      return cmd
+
+    method on( cmd:CompareGT )->Cmd
+      write "("
+      visit( cmd.left )
+      write ">"
+      visit( cmd.right )
+      write ")"
+      return cmd
+
+    method on( cmd:CompareLE )->Cmd
+      write "("
+      visit( cmd.left )
+      write "<="
+      visit( cmd.right )
+      write ")"
+      return cmd
+
+    method on( cmd:CompareLT )->Cmd
+      write "("
+      visit( cmd.left )
+      write "<"
+      visit( cmd.right )
+      write ")"
+      return cmd
+
+    method on( cmd:CompareNE )->Cmd
+      write "("
+      visit( cmd.left )
+      write "!="
+      visit( cmd.right )
+      write ")"
+      return cmd
+
+    method on_enter( cmd:ConsumeCharacters )
+      write "_scanner.consume("
+
+    method on_leave( cmd:ConsumeCharacters )
+      write ")"
+
+    method on( cmd:ConsumeContent )->Cmd
+      write "_consume_content("
+      write ''"$"'' (to_escaped_ascii(cmd.content,"\""))
+      write ")"
+      return cmd
+
+    method on_enter( cmd:ConsumeEOLs )
+      write "_consume_eols"
+
+    method on_leave( cmd:ConsumePattern )
+      write ".scan(_scanner)"
+
+    method on( cmd:ConsumeToken )->Cmd
+      write "_consume(TokenType."
+      write cmd.token_type.name
+      write ")"
+      return cmd
+
+    method on( cmd:CreateCmd )->Cmd
+      write "_push( "
+      write cmd.name
+      write "(_cur_t"
+      cmd.args.dispatch( this )
+      write "), "
+      write cmd.node_arg_count
+      write " )"
+      return cmd
+
+    method on( cmd:CreateCmdArg )->Cmd
+      write ","
+      local arg_type = Program.type( cmd.t, cmd.arg_type )
+      if (cmd.arg_value)
+        if (arg_type.is_built_in and arg_type.name != "String")
+          write "_string_to_$(" (arg_type.name)
+          cmd.arg_value.dispatch( this )
+          write ")"
+        else
+          cmd.arg_value.dispatch( this )
+        endIf
+      else
+        if (arg_type.is_built_in)
+          write "_$_arg($)"(arg_type.name_lc,cmd.stack_offset)
+        else
+          write "_node_arg($)"(cmd.stack_offset)
+          if (arg_type.name != "Cmd") write " as "; write arg_type.name
+        endIf
+      endIf
+      return cmd
+
+    method on_enter( cmd:CreateList )
+      write "_push_list( $(_list_t) )" (cmd.list_type)
+
+    method on_enter( cmd:CreateNull )
+      write "_push( null, 0 )"
+
+    method on_enter( cmd:MustConsumeCharacters )
+      write "_must_consume( "
+
+    method on_leave( cmd:MustConsumeCharacters )
+      write " )"
+
+    method on_enter( cmd:MustConsumePattern )
+      write "_must_consume( "
+
+    method on_leave( cmd:MustConsumePattern )
+      write " )"
+
+    method on( cmd:MustConsumeToken )->Cmd
+      write "if (not _consume(TokenType."
+      write cmd.token_type.name
+      write ")) _throw_syntax_error( &expected=TokenType."
+      write cmd.token_type.name
+      write " )"
+      return cmd
+
+    method on_enter( cmd:ParserHasAnother )
+      write "(_position < _limit)"
+
+    method on_enter( cmd:Pattern )
+      write cmd.reference_name
+
+    method on_enter( cmd:Decrement )
+      write "--"
+
+    method on_enter( cmd:DiscardList )
+      write "_discard_list"
+
+    method on_enter( cmd:DiscardPosition )
+      if (is_scanner)
+        write @|if (_position_stack.count) _position_stack.remove_last
+      else
+        write "_discard_position"
+      endIf
+
+    method on( cmd:If )->Cmd
+      write   "if ("
+      visit( cmd.condition )
+      writeln ")"
+      indent += 2
+      visit( cmd.statements )
+      indent -= 2
+
+      visit( cmd.else_ifs )
+
+      if (cmd._else)
+        writeln "else"
+        indent += 2
+        visit( cmd._else )
+        indent -= 2
+      endIf
+
+      write   "endIf"
+      return cmd
+
+    method on( cmd:ElseIf )->Cmd
+      write   "elseIf ("
+      visit( cmd.condition )
+      writeln ")"
+      indent += 2
+      visit( cmd.statements )
+      indent -= 2
+      return cmd
+
+    method on_enter( cmd:Halt )
+      writeln "halt = true"
+      write   "return false"
+
+    method on_enter( cmd:Increment )
+      write "++"
+
+    method on_enter( cmd:ScannerHasAnother )
+      write "_scanner.has_another"
+
+    method on_enter( cmd:LiteralCharacter )
+      which (cmd.value)
+        case '\\': write @|'\\'
+        case '\n': write @|'\n'
+        case '\r': write @|'\r'
+        case '\t': write @|'\t'
+        others
+          write( "'$'"(to_escaped_ascii(cmd.value,"'")) )
+      endWhich
+
+    method on_enter( cmd:LiteralInteger )
+      writer.print( cmd.value )
+
+    method on_enter( cmd:LiteralLogical )
+      writer.print( cmd.value )
+
+    method on_enter( cmd:LiteralString )
+      writer.print( ''"$"''(to_escaped_ascii(cmd.value,''"'')) )
+
+    method on_enter( cmd:LiteralTokenType )
+      write "TokenType."
+      write cmd.token_type.name
+
+    method on( cmd:LogicalAnd )->Cmd
+      write "("
+      cmd.left.dispatch( this )
+      write " and "
+      cmd.right.dispatch( this )
+      write ")"
+      return cmd
+
+    method on_enter( cmd:LogicalNot )
+      write "(not "
+
+    method on_leave( cmd:LogicalNot )
+      write ")"
+
+    method on( cmd:LogicalOr )->Cmd
+      write "("
+      cmd.left.dispatch( this )
+      write " or "
+      cmd.right.dispatch( this )
+      write ")"
+      return cmd
+
+    method on_enter( cmd:MarkPosition )
+      writeln "_src_line   = _scanner.line"
+      write   "_src_column = _scanner.column"
+
+    method on_enter( cmd:Mode )
+      write "start_ip = ip_"
+      write cmd.routine_name
+
+    method on( cmd:On )->Cmd
+      write   "if (_next_t.type == "
+      visit( cmd.token_type )
+      writeln ")"
+      indent += 2
+      writeln "_on_t"
+      visit( cmd.statements )
+      indent -= 2
+
+      visit( cmd.else_ons )
+
+      if (cmd._else_on_others)
+        writeln "else"
+        indent += 2
+        visit( cmd._else_on_others )
+        indent -= 2
+      endIf
+
+      write   "endIf"
+      return cmd
+
+    method on( cmd:ElseOn )->Cmd
+      write   "elseIf (_next_t.type == "
+      visit( cmd.token_type )
+      writeln ")"
+      indent += 2
+      writeln "_on_t"
+      visit( cmd.statements )
+      indent -= 2
+      return cmd
+
+    method on_enter( cmd:ScannerCallUserMethod )
+      writeln "this.ip = ip"
+      writeln cmd.fn_name
+      write   "ip = this.ip"
+
+    method on_enter( cmd:MustConsumeContent )
+      write "_must_consume_content("
+      write ''"$"'' (to_escaped_ascii(cmd.content, "\""))
+      write ")"
+
+    method on_enter( cmd:NextHasAttribute )
+      write "(_next_t.type.attributes & TokenType.ATTRIBUTE_$)?"(cmd.name.to_uppercase)
+
+    method on( cmd:NextIsCharacters )->Cmd
+      if (cmd.value.type == FType.CHARACTER)
+        write "_scanner.next_is("
+        visit( cmd.value )
+        write ")"
+      else
+        write "_next_is("
+        visit( cmd.value )
+        write ")"
+      endIf
+      return cmd
+
+    method on_enter( cmd:NextIsContent )
+      write ''(_next_t.content and _next_t.content == "''
+      write to_escaped_ascii( cmd.content, "\"" )
+      write ''")''
+
+    method on_leave( cmd:NextIsPattern )
+      write ".is_next(_scanner)"
+
+    method on_enter( cmd:ParserCallUserMethod )
+      writeln "this.ip = ip"
+      writeln cmd.fn_name
+      write   "ip = this.ip"
+
+    method on( cmd:NextIsTokenType )->Cmd
+      write "(_next_t.type == TokenType."
+      write cmd.token_type.name
+      write ")"
+      return cmd
+
+    method on( cmd:Print )->Cmd
+      write "output"
+      forEach (arg in cmd.args)
+        write ".print("
+        arg.require_value.dispatch( this )
+        write ")"
+      endForEach
+      return cmd
+
+    method on( cmd:Println )->Cmd
+      write "output"
+      forEach (arg in cmd.args)
+        write ".print("
+        arg.require_value.dispatch( this )
+        write ")"
+      endForEach
+      writeln ".println"
+      write "_on_output_line"
+      return cmd
+
+    method on_enter( cmd:ProduceList )
+      writeln "_push_list( $(_list_t) )" (cmd.list_type)
+      write   "return"
+
+    method on_enter( cmd:ScanCharacters )
+      write "_scan("
+
+    method on_leave( cmd:ScanCharacters )
+      write ")"
+
+    method on_leave( cmd:ScanPatternCmd )
+      write ".scan(_scanner,buffer)"
+
+    method on_leave( cmd:ParserProduce )
+      writeln
+      write   "return"
+
+    method on_enter( cmd:ParserRead )
+      write "_read"
+
+    method on_enter( cmd:ScannerCreate )
+      write   "_add( "
+
+    method on_leave( cmd:ScannerCreate )
+      write " )"
+
+    method on( cmd:ScannerPeek )->Cmd
+      write   "_scanner.peek "
+      if (cmd.lookahead)
+        write "("
+        cmd.lookahead.dispatch( this )
+        write ")"
+      endIf
+      return cmd
+
+    method on_enter( cmd:ScannerRead )
+      write "_scanner.read"
+
+    method on_enter( cmd:ReadBuffer )
+      write "buffer"
+
+    method on_enter( cmd:ReadVar )
+      write cmd.var.name
+
+    method on_enter( cmd:Restart )
+      if (cmd.start_ip)
+        write "start_ip = ip_"
+        writeln cmd.start_ip
+      endIf
+      write "return false"
+
+    method on_enter( cmd:RestorePosition )
+      if (is_scanner)
+        write "if (_position_stack.count) _scanner.seek( _position_stack.remove_last )"
+      else
+        write "_restore_position"
+      endIf
+
+    method on_enter( cmd:Return )
+      if (is_scanner) write   "return true"
+      else            write   "return"
+
+    method on( cmd:Routine )->Cmd
+      writeln "          case ip_$"(cmd.name)
+
+      indent += 12
+      prior.on( cmd )
+
+      if (is_parser)
+        if (not BranchAnalyzer.all_paths_return(cmd))
+          writeln "return"
+        endIf
+      endIf
+
+      indent -= 12
+      return null
+
+
+    method on_enter( cmd:SavePosition )
+      if (is_scanner)
+        write "_position_stack.add( _scanner.position )"
+      else
+        write "_save_position"
+      endIf
+
+    method on( cmd:ScannerDef )->Cmd
+      temporarily this_element = cmd
+        RScanner(this).create_missing
+        RScannerCore(this,cmd).overwrite
+      endTemporarily
+      return cmd
+
+    method on( cmd:Statements )->Cmd
+      forEach (element in cmd)
+        if (element)
+          element.dispatch( this )
+          writeln
+        endIf
+      endForEach
+      return cmd
+
+    method on( cmd:Match )->Cmd
+      write_replacements["$scan_table"] = cmd.id
+
+      writeln @|$scan_table.reset
+               |contingent
+      if (cmd.expression)
+        # ScannerRead from string; must accept all characters.
+        write @|  necessary ($scan_table.accept(forEach in
+        write " "
+        cmd.expression.dispatch(this)
+        writeln @|))
+      else
+        # ScannerRead longest match from input
+        indent += 2
+        writeln @|block n=1
+                 |  while (_scanner.has_another(n))
+                 |    if (not $scan_table.accept(_scanner.peek(n-1)))
+                 |      escapeWhile
+                 |    endIf
+                 |    ++n
+                 |  endWhile
+                 |  necessary ($scan_table.has_product)
+                 |  loop ($scan_table.match_count) _scanner.read
+                 |endBlock
+        indent -= 2
+      endIf
+
+      writeln @|  which ($scan_table.product)
+      indent += 4
+      local i1 = which{ cmd._others:1 || 0 }
+      forEach (statements at i in cmd.statement_lists from i1)
+        writeln "case "+i
+        indent += 2
+        statements.dispatch(this)
+        indent -= 2
+      endForEach
+      writeln @|others
+               |  necessary (false)
+      indent -= 4
+      writeln @|  endWhich
+
+      if (cmd._others)
+        writeln "unsatisfied"
+        indent += 2
+        cmd.statement_lists[0].dispatch(this)
+        indent -= 2
+      endIf
+
+      write @|endContingent
+
+      write_replacements.remove( "$scan_table" )
+      return cmd
+
+    method on( cmd:ThrowSyntaxError )->Cmd
+      write "_throw_syntax_error"
+      if (cmd.args and cmd.args.count)
+        write "("
+        forEach (arg at i in cmd.args)
+          if (i > 0) write "+"
+          cmd.args.dispatch( this )
+        endForEach
+        write ")"
+      endIf
+      return cmd
+
+    method on_enter( cmd:TokenContent )
+      write "_cur_t.content"
+
+    method on_enter( cmd:WriteBuffer )
+      write "buffer.clear.print "
+
+    method on_enter( cmd:WriteVar )
+      write "$ = " (cmd.var.name)
+
+    method on( cmd:While )->Cmd
+      write   "while ("
+      visit( cmd.condition )
+      writeln ")"
+      indent += 2
+      visit( cmd.statements )
+      indent -= 2
+      write   "endWhile"
+      return cmd
+
+    method write( content:String )
+      if (content.contains('\n'))
+        forEach (line at i in content.split('\n'))
+          if (i > 0) writeln
+          write( line )
+        endForEach
+        return
+      endIf
+
+      if (at_newline and indent)
+        loop (indent) writer.print(' ')
+      endIf
+
+      if (content.contains('$'))
+        content .= replacing( "$module", "module $\n" (Program.project_name) )
+        forEach (entry in write_replacements.entries)
+          content .= replacing( entry.key, entry.value )
+        endForEach
+      endIf
+      writer.print( content )
+
+      at_newline = false
+
+    method writeln( content="":String )
+      if (String.exists(content)) write( content )
+      writer.println
+      at_newline = true
+
+    method on( cmd:ParserDef )->Cmd
+      temporarily this_element = cmd
+        RCmd(this).update
+        RParser(this).create_missing
+        RParserCore(this,cmd).overwrite
+        RVisitor(this).update
+      endTemporarily
+      return cmd
+
+    method on( cmd:Add )->Cmd
+      write "("
+      visit( cmd.left )
+      write " + "
+      visit( cmd.right )
+      write ")"
+      return cmd
+
+    method on( cmd:Subtract )->Cmd
+      write "("
+      visit( cmd.left )
+      write " - "
+      visit( cmd.right )
+      write ")"
+      return cmd
+
+    method on( cmd:Multiply )->Cmd
+      write "("
+      visit( cmd.left )
+      write " * "
+      visit( cmd.right )
+      write ")"
+      return cmd
+
+    method on( cmd:Divide )->Cmd
+      write "("
+      visit( cmd.left )
+      write " / "
+      visit( cmd.right )
+      write ")"
+      return cmd
+
+    method on( cmd:Power )->Cmd
+      write "("
+      visit( cmd.left )
+      write " ^ "
+      visit( cmd.right )
+      write ")"
+      return cmd
+
+    method on_enter( cmd:Negate )
+      write "-"
+
+endClass
+

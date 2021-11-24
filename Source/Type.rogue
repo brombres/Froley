@@ -1,0 +1,122 @@
+module Froley
+
+class Type
+  PROPERTIES
+    t            : Token
+    name         : String
+    name_lc      : String
+    base_type    : Type
+    is_node      : Logical
+    is_built_in  : Logical   # String etc.
+    is_list      : Logical
+    constructors = StringTable<<CreateCmd>>()
+
+    properties          : NodeProperty[]
+    extended_properties : NodeProperty[]
+
+  METHODS
+    method init( t, name )
+      Program.types[ name ] = this
+
+    method add( constructor:CreateCmd )
+      constructors[ constructor.signature ] = constructor
+
+    method add_property( t:Token, name:String, type_name:String )
+      add_property( t, name, Program.type(t,type_name) )
+
+    method add_property( t:Token, name:String, type:Type )
+      type.t = t
+      properties.add( NodeProperty(t,name,type) )
+
+    method description->String
+      return name
+
+    method extended_properties->NodeProperty[]
+      if (not base_type)        return properties
+      if (@extended_properties) return @extended_properties
+
+      local types = StringTable<<NodeProperty>>()
+      forEach (p in properties) types[p.name] = p
+      forEach (p in base_type.properties) types.remove(p.name)
+      extended_properties = types.values.to_list
+      return @extended_properties
+
+    method hash_code->Int32
+      return name.hash_code
+
+    method is_defined->Logical
+      return is_node or is_built_in or is_list
+
+    method is_instance_of( other_type:Type )->Logical
+      if (this is other_type) return true
+      if (not base_type) return false
+      return base_type.is_instance_of( other_type )
+
+    method name_lc->String
+      if (not @name_lc) @name_lc = name.to_lowercase
+      return @name_lc
+
+    method properties->NodeProperty[]
+      if (@properties) return @properties
+
+      # Sift through all node constructors to find a full set of unique properties
+      local types = StringTable<<NodeProperty>>()
+      forEach (constructor in constructors)
+        if (constructor.args)
+          local args = constructor.args as Args
+          forEach (arg in args)
+            block arg = arg as CreateCmdArg
+              local p = NodeProperty( arg.t, arg.arg_name, arg.arg_type )
+              if (types.contains(p.name))
+                local existing = types[ p.name ]
+                if (existing != p)
+                  throw arg.t.error( "Multiple definitions of '$' as both type '$' and type '$'." ...
+                    (p.name,p.type,existing.type) )
+                endIf
+              endIf
+              types[ p.name ] = p
+            endBlock
+          endForEach
+        endIf
+      endForEach
+
+      @properties = types.values.to_list
+      return @properties
+
+    method set_base_type( t:Token, new_base_type:Type )
+      if (is_built_in or new_base_type.is_built_in)
+        throw t.error( "Cannot extend built-in types." )
+      endIf
+      if (new_base_type.is_instance_of(this))
+        throw t.error( "Illegal cyclic inheritance." )
+      endIf
+      @base_type = new_base_type
+      is_node = true
+      if (new_base_type.is_list) is_list = true
+
+    method set_base_type( t:Token, base_type_name:String )
+      set_base_type( t, Program.type(t,base_type_name) )
+
+    method set_is_list( @is_list )
+      if (this is not Program.type_CmdList and not base_type)
+        @base_type = Program.type_CmdList
+      endIf
+
+endClass
+
+class NodeProperty( t:Token, name:String, type:Type ) [compound]
+  GLOBAL METHODS
+    method create( t:Token, name:String, type_name:String )->NodeProperty
+      return NodeProperty( t, name, Program.type(t,type_name) )
+
+  METHODS
+    method description->String
+      return "$:$" (name,type)
+
+    method hash_code->Int32
+      return name.hash_code ~ type.hash_code
+
+    method operator==( other:NodeProperty )->Logical
+      return name == other.name and type is other.type
+endClass
+

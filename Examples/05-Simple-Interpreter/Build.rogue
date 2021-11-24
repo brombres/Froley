@@ -11,24 +11,25 @@ augment Build
   # You can create a Local.settings file with overrides for these values, e.g.:
   # LAUNCHER_FOLDER = "~/bin"
   PROPERTIES
-    PROJECT           = "Froley"
-    LAUNCHER_NAME     = PROJECT.to_lowercase : String
+    PROJECT           = "Simple"
+    FROLEY_EXE        = "froley"
 
-    RELEASE_MODE      = false  # default; 'rogo debug' temporarily sets to false and rebuilds
+    LAUNCHER_NAME     = PROJECT.to_lowercase : String
     LAUNCHER_FOLDER   = "/usr/local/bin"
     ROGUEC_FLAGS      = ""
     CPP_FLAGS_UNIX    = ""
     CPP_FLAGS_WINDOWS = ""
+    RELEASE_MODE      = false  # default; 'rogo debug' temporarily sets to false and rebuilds
 endAugment
 
 routine rogo_default
   rogo_build
-  rogo_install  # Uncomment to automatically install a /usr/local/bin/froley launcher
+  #rogo_install  # Uncomment to automatically install a /usr/local/bin/simple launcher
   rogo_run
 endRoutine
 
-routine rogo_clean
-  File.delete( "Build" )
+routine rogo_run
+  execute "$ Test.$" (File.esc(exe_filepath),Build.LAUNCHER_NAME)
 endRoutine
 
 routine exe_filepath->String
@@ -43,6 +44,14 @@ routine launcher_folder->String
 endRoutine
 
 routine rogo_build
+  localize exe_filepath
+  contingent
+    sufficient (File.is_newer_than("Source/$.froley"(Build.PROJECT),exe_filepath))
+    necessary  (Files("Source/*.rogue").count < 7)
+  satisfied
+    rogo_froley
+  endContingent
+
   local source_files = Files( "Source", "**/*.rogue" )
   if (source_files.any_newer_than(exe_filepath))
     local cpp_filepath = "Build/$-$.cpp" (Build.PROJECT,System.os)
@@ -54,13 +63,17 @@ routine rogo_build
 endRoutine
 
 routine rogo_froley
-  # Updates the Froley language parser if necessary
-  local def = File( "Source/Froley.froley" )
-  if (def.is_newer_than("Source/TokenizerVM.rogue"))
-    println "Compiling Froley language parser"
-    execute "froley --main $ Source/" (def.esc)
-  endIf
-  rogo_build
+  local froley_src = File( "Source/$.froley"(Build.PROJECT) )
+  execute "$ $ Source --main"(File.esc(Build.FROLEY_EXE),froley_src.esc)
+endRoutine
+
+routine rogo_clean
+  File.delete( "Build" )
+  local files = Files( "Source/*.rogue" )
+  files.remove( "Source/Simple.rogue" )
+  files.remove( "Source/Resolver.rogue" )
+  files.remove( "Source/Interpreter.rogue" )
+  files.delete
 endRoutine
 
 routine rogo_debug
@@ -69,6 +82,7 @@ routine rogo_debug
 endRoutine
 
 routine rogo_rebuild
+  rogo_froley
   compile_rogue
   compile_cpp
 endRoutine
@@ -104,10 +118,6 @@ routine compile_cpp
       (flags,File.esc(cpp_filepath),File.esc(exe_filepath),libs)
     execute cc
   endIf
-endRoutine
-
-routine rogo_run
-  execute File.esc(exe_filepath)
 endRoutine
 
 routine rogo_install

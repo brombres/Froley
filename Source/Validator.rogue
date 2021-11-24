@@ -1,0 +1,39 @@
+module Froley
+
+class Validator : Visitor
+  METHODS
+    method on_enter( cmd:Collect )
+      if (cmd.args.count == 0) throw cmd.args.t.error( "One or more arguments expected." )
+
+    method on_enter( cmd:Print )
+      if (cmd.args.count == 0)
+        throw cmd.t.error( "Argument expected for 'print'." )
+      endIf
+
+    method on_enter( program:ProgramDef )
+      forEach (type in Program.types)
+        if (not type.is_defined)
+          throw type.t.error( "Use of undefined node type '$'."(type.name) )
+        endIf
+        if (type.is_node and not type.base_type) type.base_type = Program.type_Cmd
+      endForEach
+
+    method on_enter( cmd:ParserDef )
+      if (cmd.vars.count)
+        forEach (v in cmd.vars)
+          if (v.type == FType.NONE)
+            throw v.t.error( "Reference to undefined routine or variable '$'."(v.name) )
+          endIf
+        endForEach
+      endIf
+
+    method on_enter( cmd:ScannerDef )
+      if (cmd.vars.count)
+        forEach (v in cmd.vars)
+          if (v.type == FType.NONE)
+            throw v.t.error( "Reference to undefined routine or variable '$'."(v.name) )
+          endIf
+        endForEach
+      endIf
+endClass
+

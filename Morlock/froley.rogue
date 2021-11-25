@@ -6,6 +6,7 @@ class FroleyPackage : Package
 
   METHODS
     method init
+      dependency "abepralle/morlock@1.0"
       dependency "abepralle/rogue@1.10.1"
       scan_repo_releases
 endClass

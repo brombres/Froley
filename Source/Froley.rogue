@@ -4,6 +4,7 @@ $define AUTHOR "November 23, 2021 by Abe Pralle"
 module Froley
 
 $include "BranchAnalyzer.rogue"
+$include "BuildfileGenerator.rogue"
 $include "Collector.rogue"
 $include "FType.rogue"
 $include "Scanner.rogue"
@@ -13,6 +14,7 @@ $include "Program.rogue"
 $include "Rogue/RogueGenerator.rogue"
 $include "Resolver.rogue"
 $include "ScanTableBuilder.rogue"
+$include "StarterFroleyGenerator.rogue"
 $include "TokenOrganizer.rogue"
 $include "Type.rogue"
 $include "Validator.rogue"
@@ -39,6 +41,32 @@ class Froley
     method init( args:String[] )
       command = parse_args( args )
 
+      if (command//options//project and not command//options//create)
+        throw CompileError( "--project option can only be specified in tandem with --create." )
+      endIf
+      if (command//options//create and not command//options//project)
+        command//options//project = File.filename( File.abs(".") )
+      endIf
+
+      if (command//options//create)
+        create_project
+      else
+        compile_project
+      endIf
+
+    method create_project
+      local project_name = command//options//project->String
+
+      println "Creating Build.rogue"
+      BuildfileGenerator.generate( project_name )
+
+      println "Creating Source/$.froley"(project_name)
+      StarterFroleyGenerator.generate_froley( project_name )
+
+      println "Creating Test.$"(project_name.to_lowercase)
+      StarterFroleyGenerator.generate_test( project_name )
+
+    method compile_project
       if (command//options//help or command//args.count != 2)
         print_usage
         System.exit 0
@@ -65,8 +93,10 @@ class Froley
       # This method is unrelated to the Froley Parser
       local command = CommandLineParser().
       [
+        option( "--create",   &alias="-c" )
         option( "--main",     &alias="-m" )
         option( "--help",     &aliases=["-h","-?"] )
+        option( "--project=", &alias="-p" )
       ].parse( args )
       return command
 
@@ -78,11 +108,20 @@ class Froley
                |  froley [OPTIONS] language-definition.froley output-folder/
                |
                |OPTIONS
+               |  --create, -c
+               |    Creates a new template project and Rogo-based build framework in
+               |    the current folder. Uses the current folder name as the project name
+               |    or else specify a different project name with `--project=ProjectName`.
+               |
                |  --help, -h, -?
                |    Show this help text.
                |
                |  --main, -m
                |    Creates a main application file that demonstrates how to use the scanner and parser.
                |    Does not create or modify a main file if it already exists.
+               |
+               |  --project=ProjectName, -p ProjectName
+               |    If you `--create` a project in the current folder, this option can be used
+               |    to specify a different project name than the name of the folder.
 endClass
 

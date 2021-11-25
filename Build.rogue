@@ -23,7 +23,7 @@ endAugment
 
 routine rogo_default
   rogo_build
-  rogo_install  # Uncomment to automatically install a /usr/local/bin/froley launcher
+  #rogo_install  # Uncomment to automatically install a /usr/local/bin/froley launcher
   rogo_run
 endRoutine
 
@@ -110,6 +110,10 @@ routine rogo_run
   execute File.esc(exe_filepath)
 endRoutine
 
+routine rogo_link
+  execute "morlock link $ $" (File.esc(exe_filepath),Build.LAUNCHER_NAME)
+endRoutine
+
 routine rogo_install
   rogo_build
   local exe_filepath = File.abs( exe_filepath )
@@ -181,6 +185,86 @@ routine execute( commands:String, error_message=null:String, &suppress_error )->
     endIf
   endForEach
   return true
+endRoutine
+
+routine rogo_incv( version:String )
+  if (not String.exists(version))
+    version = String(File("README.md")).extract_string(''*Version|$\n*'')
+    require version
+    local parts = version.split('.')
+    parts.last = (parts.last->Int32 + 1)->String
+    version = parts.join('.')
+  endIf
+
+  block file = File( "Source/Froley.rogue" )
+    local og_content = file.load_as_string
+    local content = og_content
+
+    content = content.replacing_pattern(
+    ''define VERSION "$"'',
+    ''define VERSION "Froley v$"''(version)
+    )
+
+    content = content.replacing_pattern(
+      ''define AUTHOR "$"'',
+      ''define AUTHOR "$"''(Date.today->String(&verbose) + " by Abe Pralle")
+    )
+
+    if (content != og_content) file.save( content )
+  endBlock
+
+  block file = File( "README.md" )
+    local og_content = String(file)
+    local builder = StringBuilder( og_content.count )
+    forEach (line in LineReader(og_content))
+      if (line.contains_pattern("Version|$(I)"))
+        builder.println( "$| $" (line.before_last('|'),version) )
+      elseIf (line.contains_pattern("Date|"))
+        local today = Date.today->String(&verbose)
+        builder.println( "$| $" (line.before_last('|'),today) )
+      else
+        builder.println( line )
+      endIf
+    endForEach
+    local content = builder->String
+    if (content != og_content) file.save( content )
+  endBlock
+
+endRoutine
+
+routine rogo_commit( new_version="":String )
+  if (not String.exists(new_version)) throw Error( "Expected version number after 'rogo commit'." )
+
+  rogo_build
+
+  if (project_has_uncommitted_changes)
+    execute ''git commit -am "[v$]"'' (new_version)
+  endIf
+endRoutine
+
+routine rogo_publish( new_version="":String )
+  if (not String.exists(new_version)) throw Error( "Expected version number after 'rogo publish'." )
+  rogo_commit( new_version )
+
+  execute @|git push
+           |git checkout master
+           |git pull
+           |git merge develop
+           |git push
+           |git checkout develop
+  execute "gh release create v"+new_version
+endRoutine
+
+routine project_has_uncommitted_changes->Logical
+  local result = Process.run( "git status --porcelain", &env )
+  if (not result.success)
+    Console.error.println result->String
+    System.exit 1
+  endIf
+
+  local lines = result->String.trimmed.split('\n').[discard($.begins_with("??"))]
+  lines.discard( $ == "" )
+  return not lines.is_empty
 endRoutine
 
 #-------------------------------------------------------------------------------

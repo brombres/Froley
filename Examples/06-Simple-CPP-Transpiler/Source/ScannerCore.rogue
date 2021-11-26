@@ -149,10 +149,6 @@ class ScannerCore [abstract]
         which (ip-1)
           case ip_main
             _scan_pattern_0.scan(_scanner)
-            if (_scanner.consume('\n'))
-              _add( TokenType.EOL )
-              return false
-            endIf
             if (_scan_pattern_1.scan(_scanner))
               return false
             endIf
@@ -162,6 +158,10 @@ class ScannerCore [abstract]
             endIf
             _src_line   = _scanner.line
             _src_column = _scanner.column
+            if (_scanner.consume('\n'))
+              _add( TokenType.EOL )
+              return false
+            endIf
             _scan_table_0.reset
             contingent
               block n=1

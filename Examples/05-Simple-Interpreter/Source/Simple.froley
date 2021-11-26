@@ -28,14 +28,13 @@ KEYWORD_PRINTLN println
 scanner
 --------------------------------------------------------------------------------
 - main
-  consume [ \r\t]*  # whitespace
-  if (consume('\n')) produce EOL
-
-  # single-line comment
-  if consume("#" [^\n]*) restart
+  consume [ \r\t]*               # whitespace
+  if consume("#" [^\n]*) restart # single-line comment
 
   if (not hasAnother) halt
   markPosition
+
+  if (consume('\n')) produce EOL
 
   match
     produceAny Symbols

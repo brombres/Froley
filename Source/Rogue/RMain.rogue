@@ -43,7 +43,8 @@ class RMain : RogueSourceWriter
          |
          |    method scan_files
          |      forEach (arg in command//args)
-         |        local scanner = Scanner( File(arg) )
+         |        local filepath = arg->String
+         |        local scanner = Scanner( File(filepath) )
          |        local tokens = scanner.tokenize
          |        println (forEach in tokens)
          |      endForEach
@@ -51,7 +52,8 @@ class RMain : RogueSourceWriter
          |    $if (defined(PARSER_EXISTS))
          |    method parse_files
          |      forEach (arg in command//args)
-         |        local parser = Parser( File(arg) )
+         |        local filepath = arg->String
+         |        local parser = Parser( File(filepath) )
          |        local ast = parser.parse
          |        @trace ast
          |      endForEach

@@ -633,9 +633,9 @@ class RogueGenerator : Visitor
     method on( cmd:ParserDef )->Cmd
       temporarily this_element = cmd
         RCmd(this).update
+        RVisitor(this).update
         RParser(this).create_missing
         RParserCore(this,cmd).overwrite
-        RVisitor(this).update
       endTemporarily
       return cmd
 

@@ -1,0 +1,152 @@
+================================================================================
+# Simple.froley
+================================================================================
+
+--------------------------------------------------------------------------------
+tokens
+--------------------------------------------------------------------------------
+EOL(end of line)
+IDENTIFIER identifier [content]
+NUMBER     number     [content]
+STRING     string     [content]
+
+--------------------------------------------------------------------------------
+tokens Symbols
+--------------------------------------------------------------------------------
+SYMBOL_CLOSE_PAREN )  [structural]
+SYMBOL_EQUALS      =
+SYMBOL_MINUS       -
+SYMBOL_OPEN_PAREN  (
+SYMBOL_PLUS        +
+SYMBOL_SLASH       /
+SYMBOL_STAR        *
+
+--------------------------------------------------------------------------------
+tokens Keywords
+--------------------------------------------------------------------------------
+KEYWORD_PRINT   print
+KEYWORD_PRINTLN println
+
+--------------------------------------------------------------------------------
+scanner
+--------------------------------------------------------------------------------
+- main
+  consume [ \r\t]*  # whitespace
+  if (consume('\n')) produce EOL
+
+  # single-line comment
+  if consume("#" [^\n]*) restart
+
+  if (not hasAnother) halt
+  markPosition
+
+  match
+    produceAny Symbols
+  endMatch
+
+  scan_id_or_keyword
+  scan_number
+  scan_string
+
+  syntaxError
+
+- scan_id_or_keyword
+  if (not scan([_a-zA-Z][_a-zA-Z0-9]*)) return
+  # 'scan' fills 'buffer' with matching characters
+
+  match buffer
+    produceAny Keywords
+    others
+      produce IDENTIFIER
+      # Because type IDENTIFER has [content], 'buffer' will be copied
+      # as the resulting Token's .content string.
+  endMatch
+
+- scan_number
+  if (not hasAnother) return
+
+  if (scan [0-9])
+    scan_integer  # First character is now in 'buffer'
+    if (scan '.') scan_integer
+    produce NUMBER
+  elseIf (scan '.')
+    scan_integer
+    produce NUMBER
+  else
+    return
+  endIf
+
+- scan_integer
+  scan [0-9]*  # Fills 'buffer' with remaining digits
+
+- scan_string
+  if (not consume('"')) return
+  while (hasAnother and not nextIs('\n'))
+    ch = read
+    if (ch == '"') produce STRING
+    elseIf (ch == '\\' and hasAnother) ch = read  # Handle backslash escapes
+    collect ch
+  endWhile
+  syntaxError "Unterminated string."
+
+--------------------------------------------------------------------------------
+parser
+--------------------------------------------------------------------------------
+- ast
+  statements
+  produce AST(statements)
+
+- statements
+  consume_eols
+
+  beginList
+
+  while (hasAnother and not nextHasAttribute(structural))
+    statement
+    consume_eols
+  endWhile
+
+  produceList Statements
+
+- statement
+  on "print"   arg_list -> Print(args)
+  on "println" arg_list -> Println(args):Print
+  expression
+
+- consume_eols
+  while (consume(EOL)) noAction
+
+- arg_list
+  beginList
+    while (hasAnother and not nextIs(EOL) and not nextHasAttribute(structural))
+      expression
+    endWhile
+  produceList Args
+
+- expression
+  assign
+
+- assign [rightBinary]
+  on "=" -> Assign
+
+- add_subtract [binary]
+  on "+" -> Add
+  on "-" -> Subtract
+
+- multiply_divide [binary]
+  on "*" -> Multiply
+  on "/" -> Divide
+
+- negate [preUnary]
+  on "-" -> Negate
+
+- term
+  on '(' expression ')': return
+  on IDENTIFIER -> Access(name=content)
+  on NUMBER     -> Number(value=content:Real)
+  on STRING     -> LiteralString(value=content)
+  syntaxError
+
+- additional_nodes
+  create WriteVar(name:String,new_value)
+  create ReadVar(name:String)

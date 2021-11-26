@@ -1,0 +1,326 @@
+# Generated and updated by Froley. Custom changes will not be overwritten; customize as desired.
+module Simple
+
+class Cmd( t:Token )
+  METHODS
+    method add( cmd:Cmd )
+      throw UnsupportedOperationError()
+
+    method clear
+      throw UnsupportedOperationError()
+
+    method count->Int32
+      return 0
+
+    method description->String
+      return "Cmd"
+
+    method dispatch<<$VisitorType>>( visitor:$VisitorType ) [propagated]
+      visitor.visit( this )
+
+    method dispatch<<$VisitorType,$ReturnType>>( visitor:$VisitorType )->$ReturnType [propagated]
+      return visitor.on( this )
+
+    method dispatch_on_enter<<$VisitorType>>( visitor:$VisitorType ) [propagated]
+      visitor.on_enter( this )
+
+    method dispatch_on_visit<<$VisitorType>>( visitor:$VisitorType ) [propagated]
+      visitor.on_visit( this )
+
+    method dispatch_on_visit_children<<$VisitorType>>( visitor:$VisitorType ) [propagated]
+      visitor.on_visit_children( this )
+
+    method dispatch_on_leave<<$VisitorType>>( visitor:$VisitorType ) [propagated]
+      visitor.on_leave( this )
+
+    method first->Cmd
+      throw UnsupportedOperationError()
+
+    method get( index:Int32 )->Cmd
+      throw UnsupportedOperationError()
+
+    method get<<$AsType>>( index:Int32 )->$AsType
+      return get(index) as $AsType
+
+    method insert( element:Cmd, before_index=0:Int32 )
+      throw UnsupportedOperationError()
+
+    method last->Cmd
+      throw UnsupportedOperationError()
+
+    method list->Cmd[]
+      throw UnsupportedOperationError()
+
+    method remove_first->Cmd
+      throw UnsupportedOperationError()
+
+    method remove_last->Cmd
+      throw UnsupportedOperationError()
+
+    method set( index:Int32, value:Cmd )
+      throw UnsupportedOperationError()
+
+    method to->Character
+      return Character(this->Int32)
+
+    method to->Int32
+      return 0
+
+    method to->Logical
+      return (this->Int32)?
+
+    method to->Real64
+      return this->Int32
+
+    method to->String
+      return description
+endClass
+
+class CmdList : Cmd
+  PROPERTIES
+    list = Cmd[]
+
+  METHODS
+    method init( t )
+      noAction
+
+    method init( t, element:Cmd )
+      list.add( element )
+
+    method init( t, element1:Cmd, element2:Cmd )
+      list.add( element1 )
+      list.add( element2 )
+
+    method add( cmd:Cmd )
+      @list.add( cmd )
+
+    method clear
+      @list.clear
+
+    method count->Int32
+      return @list.count
+
+    method description->String
+      return "CmdList" + list_description
+
+    method first->Cmd
+      return @list.first
+
+    method get( index:Int32 )->Cmd
+      return @list[index]
+
+    method insert( element:Cmd, before_index=0:Int32 )
+      list.insert( element, before_index )
+
+    method last->Cmd
+      return @list.last
+
+    method list->Cmd[]
+      return @list
+
+    method list_description->String
+      use builder = StringBuilder.pool
+        builder.print '['
+        forEach (element at index in @list)
+          if (index > 0) builder.print ','
+          builder.print( %element )
+        endForEach
+        builder.print ']'
+        return builder->String
+      endUse
+
+    method remove_first->Cmd
+      return @list.remove_first
+
+    method remove_last->Cmd
+      return @list.remove_last
+
+    method set( index:Int32, value:Cmd )
+      @list[index] = value
+endClass
+
+class Unary( t, operand:Cmd ) : Cmd
+  METHODS
+    method description->String
+      return "Unary($)"(%operand)
+endClass
+
+class Binary( t, left:Cmd, right:Cmd ) : Cmd
+  METHODS
+    method description->String
+      return "Binary($,$)"(%left,%right)
+endClass
+
+class AST : Cmd
+  PROPERTIES
+    statements : Cmd
+
+  METHODS
+    method init( t, statements )
+
+    method description->String
+      return "AST($)" (%statements)
+
+endClass
+
+class Access : Cmd
+  PROPERTIES
+    name : String
+
+  METHODS
+    method init( t, name )
+
+    method description->String
+      return "Access($)" (%name)
+
+    method to->Character
+      if (name is null or name.count == 0) return Character(0)
+      return name[0]
+
+    method to->Int32:  return name
+    method to->Logical: return name?
+    method to->String: return name
+
+endClass
+
+class Add : Binary
+  METHODS
+    method description->String
+      return "Add($,$)" (%left,%right)
+
+endClass
+
+class Args : CmdList
+  METHODS
+    method description->String
+      return "Args" + list_description
+endClass
+
+class Assign : Binary
+  METHODS
+    method description->String
+      return "Assign($,$)" (%left,%right)
+
+endClass
+
+class Divide : Binary
+  METHODS
+    method description->String
+      return "Divide($,$)" (%left,%right)
+
+endClass
+
+class LiteralString : Cmd
+  PROPERTIES
+    value : String
+
+  METHODS
+    method init( t, value )
+
+    method description->String
+      return "LiteralString($)" (%value)
+
+    method to->Character
+      if (value is null or value.count == 0) return Character(0)
+      return value[0]
+
+    method to->Int32:  return value
+    method to->Logical: return value?
+    method to->String: return value
+
+endClass
+
+class Multiply : Binary
+  METHODS
+    method description->String
+      return "Multiply($,$)" (%left,%right)
+
+endClass
+
+class Negate : Unary
+  METHODS
+    method description->String
+      return "Negate($)" (%operand)
+
+endClass
+
+class Number : Cmd
+  PROPERTIES
+    value : Real64
+
+  METHODS
+    method init( t, value )
+
+    method description->String
+      return "Number($)" (%value)
+
+    method to->Int32:  return value
+    method to->Real64: return value
+    method to->String: return value
+
+endClass
+
+class Print : Cmd
+  PROPERTIES
+    args : Cmd
+
+  METHODS
+    method init( t, args )
+
+    method description->String
+      return "Print($)" (%args)
+
+endClass
+
+class Println : Print
+  METHODS
+    method description->String
+      return "Println($)" (%args)
+
+endClass
+
+class Statements : CmdList
+  METHODS
+    method description->String
+      return "Statements" + list_description
+endClass
+
+class Subtract : Binary
+  METHODS
+    method description->String
+      return "Subtract($,$)" (%left,%right)
+
+endClass
+
+class ReadVar : Cmd
+  PROPERTIES
+    name : String
+
+  METHODS
+    method init( t, name )
+
+    method description->String
+      return "ReadVar($)" (%name)
+
+    method to->Character
+      if (name is null or name.count == 0) return Character(0)
+      return name[0]
+
+    method to->Int32:  return name
+    method to->Logical: return name?
+    method to->String: return name
+
+endClass
+
+class WriteVar : Cmd
+  PROPERTIES
+    name      : String
+    new_value : Cmd
+
+  METHODS
+    method init( t, name, new_value )
+
+    method description->String
+      return "WriteVar($,$)" (%name,%new_value)
+
+endClass

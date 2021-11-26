@@ -1,0 +1,81 @@
+module Simple
+
+$include "CPPWriter.rogue"
+$include "Scanner.rogue"
+$include "Parser.rogue" [optional]
+$include "Program.rogue"
+$include "CmdTypes.rogue"
+$include "Resolver.rogue"
+uses Simple
+uses Utility/CommandLineParser
+
+try
+  Simple( System.command_line_arguments )
+catch (error:CompileError)
+  Console.error.println error
+  System.exit 1
+catch (error:Error)
+  Console.error.println error
+  Console.error.println error.stack_trace
+  System.exit 1
+endTry
+
+class Simple
+  PROPERTIES
+    command : Value
+
+  METHODS
+    method init( args:String[] )
+      command = parse_args( args )
+
+      # trace command
+      # has //options and possibly //args
+
+      if (command//options//help or command//args.count == 0)
+        print_usage
+        System.exit 0
+      endIf
+
+      $if (defined(PARSER_EXISTS)) parse_files
+      $else                        scan_files
+
+    method scan_files
+      forEach (arg in command//args)
+        local filepath = arg->String
+        local scanner = Scanner( File(filepath) )
+        local tokens = scanner.tokenize
+        println (forEach in tokens)
+      endForEach
+
+    $if (defined(PARSER_EXISTS))
+    method parse_files
+      forEach (arg in command//args)
+        local filepath = arg->String
+        local parser = Parser( File(filepath) )
+        local ast = parser.parse
+        Resolver().visit( ast )
+        #@trace ast
+        local cpp_filepath = filepath.before_last('.') + ".cpp"
+        println "$ -> $"(filepath,cpp_filepath)
+        CPPWriter(cpp_filepath).visit( ast )
+      endForEach
+    $endIf
+
+    method parse_args( args:String[] )->Value
+      # This method is unrelated to the Froley Parser
+      local command = CommandLineParser().
+      [
+        option( "--flag",     &alias="-f" )
+        option( "--help",     &aliases=["-h","-?"] )
+        option( "--setting=", &alias="-s" )
+      ].parse( args )
+      return command
+
+    method print_usage
+      println @|USAGE
+               |  simple [OPTIONS] <filepath>
+               |
+               |OPTIONS
+               |  --help, -h, -?
+               |    Show this help text.
+endClass

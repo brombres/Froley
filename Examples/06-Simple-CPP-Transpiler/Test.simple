@@ -1,0 +1,5 @@
+println "Simple Test"
+
+inches = 12
+cm = inches * 2.54
+println inches " inches = " cm " cm"

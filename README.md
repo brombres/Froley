@@ -2,8 +2,8 @@
 
 About          | Current Release
 ---------------|-----------------------
-Version        | v3.0
-Date           | November 23, 2021
+Version        | 3.1.1
+Date           | November 25, 2021
 Platforms      | macOS, Linux, Windows
 Output Targets | Rogue
 Author         | Abe Pralle

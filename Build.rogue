@@ -14,7 +14,7 @@ augment Build
     PROJECT           = "Froley"
     LAUNCHER_NAME     = PROJECT.to_lowercase : String
 
-    RELEASE_MODE      = false  # default; 'rogo debug' temporarily sets to false and rebuilds
+    RELEASE_MODE      = true  # default; 'rogo debug' temporarily sets to false and rebuilds
     LAUNCHER_FOLDER   = "/usr/local/bin"
     ROGUEC_FLAGS      = ""
     CPP_FLAGS_UNIX    = ""
@@ -234,6 +234,7 @@ endRoutine
 
 routine rogo_commit( new_version="":String )
   if (not String.exists(new_version)) throw Error( "Expected version number after 'rogo commit'." )
+  rogo_incv( new_version )
 
   rogo_build
 
@@ -245,6 +246,8 @@ endRoutine
 routine rogo_publish( new_version="":String )
   if (not String.exists(new_version)) throw Error( "Expected version number after 'rogo publish'." )
   rogo_commit( new_version )
+
+  if (not Console.input("Continue publishing? ").to_lowercase.begins_with('y')) return
 
   execute @|git push
            |git checkout master

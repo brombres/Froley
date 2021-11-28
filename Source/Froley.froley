@@ -26,6 +26,7 @@ KEYWORD_CHARACTER        Character
 KEYWORD_COLLECT          collect
 KEYWORD_END_MATCH        endMatch    [structural]
 KEYWORD_INPUT            input
+KEYWORD_INTEGER          Integer
 KEYWORD_PEEK             peek
 KEYWORD_PRODUCE_ANY      produceAny  [structural]
 KEYWORD_MATCH            match
@@ -871,6 +872,7 @@ parser
   on '{' pattern_sequence '}':   return
   on "buffer"                       -> ReadBuffer
   on "Character" '(' scanner_expression ')' -> CastToCharacter(operand):Unary
+  on "Integer"   '(' scanner_expression ')' -> CastToInteger(operand):Unary
   on "consume", sequence_args       -> ScannerConsume(args:SequenceArgs)
   on "false"                        -> LiteralLogical(value="false":Logical)
   on "hasAnother"                   -> ScannerHasAnother

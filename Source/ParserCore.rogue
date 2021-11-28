@@ -1298,6 +1298,15 @@ class ParserCore [abstract]
               _push( CastToCharacter(_cur_t,_node_arg(-1)), 1 )
               return
             endIf
+            if (_next_t.type == TokenType.KEYWORD_INTEGER)
+              _on_t
+              if (not _consume(TokenType.SYMBOL_OPEN_PAREN)) _throw_syntax_error( &expected=TokenType.SYMBOL_OPEN_PAREN )
+              _execute(ip_scanner_expression)
+              _pop_frame
+              if (not _consume(TokenType.SYMBOL_CLOSE_PAREN)) _throw_syntax_error( &expected=TokenType.SYMBOL_CLOSE_PAREN )
+              _push( CastToInteger(_cur_t,_node_arg(-1)), 1 )
+              return
+            endIf
             if (_next_t.type == TokenType.KEYWORD_CONSUME)
               _on_t
               _execute(ip_sequence_args)

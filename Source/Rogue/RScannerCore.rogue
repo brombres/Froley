@@ -143,6 +143,14 @@ class RScannerCore( generator, scanner_def:ScannerDef ) : RogueSourceWriter
          |      if (pattern.scan(_scanner)) return
          |      _throw_expected_string_error( pattern->String )
          |
+         |    method _next_is( text:String )->Logical
+         |      if (not _scanner.has_another(text.count)) return false
+         |      local pos = _scanner.position
+         |      forEach (ch at index in text)
+         |        if (ch != _scanner.data[pos+index]) return false
+         |      endForEach
+         |      return true
+         |
          |    method _on_output_line
          |      # Default behavior: print out 'output' and clear it. Can override this method.
          |      print( output ).flush

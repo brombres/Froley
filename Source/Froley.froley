@@ -22,6 +22,7 @@ tokens ScannerKeywords
 --------------------------------------------------------------------------------
 KEYWORD_BUFFER           buffer
 KEYWORD_CASE             case        [structural]
+KEYWORD_CHARACTER        Character
 KEYWORD_COLLECT          collect
 KEYWORD_END_MATCH        endMatch    [structural]
 KEYWORD_INPUT            input
@@ -868,11 +869,12 @@ parser
 - scanner_term
   on '(' scanner_expression ')': return
   on '{' pattern_sequence '}':   return
-  on "buffer"                    -> ReadBuffer
-  on "consume", sequence_args    -> ScannerConsume(args:SequenceArgs)
-  on "false"                     -> LiteralLogical(value="false":Logical)
-  on "hasAnother"                -> ScannerHasAnother
-  on "nextIs", sequence_args     -> ScannerNextIs(args:SequenceArgs)
+  on "buffer"                       -> ReadBuffer
+  on "Character" '(' scanner_expression ')' -> CastToCharacter(operand):Unary
+  on "consume", sequence_args       -> ScannerConsume(args:SequenceArgs)
+  on "false"                        -> LiteralLogical(value="false":Logical)
+  on "hasAnother"                   -> ScannerHasAnother
+  on "nextIs", sequence_args        -> ScannerNextIs(args:SequenceArgs)
   on "peek"
     if (consume('(')) scanner_expression; mustConsume(')')
     else              createNull

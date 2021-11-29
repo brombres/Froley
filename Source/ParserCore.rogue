@@ -12,90 +12,91 @@ class ParserCore [abstract]
   DEFINITIONS
     ip_program = 0
     ip_section = 1
-    ip_identifier = 2
-    ip_scanner_routines = 3
-    ip_routine_name_and_attributes = 4
-    ip_token_definitions = 5
-    ip_attributes = 6
-    ip_symbol = 7
-    ip_consume_eols = 8
-    ip_consume_eols_and_semicolons = 9
-    ip_must_consume_eols = 10
-    ip_scanner_multi_line_statements = 11
-    ip_scanner_single_line_statements = 12
-    ip_scanner_control_structure = 13
-    ip_cases = 14
-    ip__others = 15
-    ip_scanner_multi_line_else_ifs = 16
-    ip_scanner_multi_line_else = 17
-    ip_scanner_single_line_else_ifs = 18
-    ip_scanner_single_line_else = 19
-    ip_scanner_statement = 20
-    ip_scanner_product = 21
-    ip_cmd_args = 22
-    ip_cmd_arg = 23
-    ip_scanner_args = 24
-    ip_scanner_arg_list = 25
-    ip_sequence_args = 26
-    ip_sequence_arg_list = 27
-    ip_pattern_sequence = 28
-    ip_sequence_item = 29
-    ip_empty_statements = 30
-    ip_scanner_expression = 31
-    ip_scanner_logical_or = 32
-    ip_scanner_logical_or__inner = 33
-    ip_scanner_logical_and = 34
-    ip_scanner_logical_and__inner = 35
-    ip_scanner_comparison = 36
-    ip_scanner_comparison__inner = 37
-    ip_scanner_add_subtract = 38
-    ip_scanner_add_subtract__inner = 39
-    ip_scanner_multiply_divide = 40
-    ip_scanner_multiply_divide__inner = 41
-    ip_scanner_power = 42
-    ip_scanner_power__inner = 43
-    ip_scanner_pre_unary = 44
-    ip_scanner_term = 45
-    ip_repeat_count = 46
-    ip_parser_routines = 47
-    ip_parser_multi_line_statements = 48
-    ip_parser_single_line_statements = 49
-    ip_parser_control_structure = 50
-    ip_parser_multi_line_else_ifs = 51
-    ip_parser_multi_line_else = 52
-    ip_parser_single_line_else_ifs = 53
-    ip_parser_single_line_else = 54
-    ip_parser_multi_line_else_ons = 55
-    ip_parser_multi_line_else_on_others = 56
-    ip_parser_single_line_else_ons = 57
-    ip_parser_single_line_else_on_others = 58
-    ip_parser_statement = 59
-    ip_list_type = 60
-    ip_parser_args = 61
-    ip_parser_arg_list = 62
-    ip_ttype_or_literal = 63
-    ip_ttype_or_literal_inner = 64
-    ip_attr_name_arg = 65
-    ip_attribute_name = 66
-    ip_token_id = 67
-    ip_collect_parse_list = 68
-    ip_string_id_or_routine = 69
-    ip_parser_product = 70
-    ip_parser_expression = 71
-    ip_parser_logical_or = 72
-    ip_parser_logical_or__inner = 73
-    ip_parser_logical_and = 74
-    ip_parser_logical_and__inner = 75
-    ip_parser_comparison = 76
-    ip_parser_comparison__inner = 77
-    ip_parser_add_subtract = 78
-    ip_parser_add_subtract__inner = 79
-    ip_parser_multiply_divide = 80
-    ip_parser_multiply_divide__inner = 81
-    ip_parser_power = 82
-    ip_parser_power__inner = 83
-    ip_parser_pre_unary = 84
-    ip_parser_term = 85
+    ip_type_name = 2
+    ip_identifier = 3
+    ip_scanner_routines = 4
+    ip_routine_name_and_attributes = 5
+    ip_token_definitions = 6
+    ip_attributes = 7
+    ip_symbol = 8
+    ip_consume_eols = 9
+    ip_consume_eols_and_semicolons = 10
+    ip_must_consume_eols = 11
+    ip_scanner_multi_line_statements = 12
+    ip_scanner_single_line_statements = 13
+    ip_scanner_control_structure = 14
+    ip_cases = 15
+    ip__others = 16
+    ip_scanner_multi_line_else_ifs = 17
+    ip_scanner_multi_line_else = 18
+    ip_scanner_single_line_else_ifs = 19
+    ip_scanner_single_line_else = 20
+    ip_scanner_statement = 21
+    ip_scanner_product = 22
+    ip_cmd_args = 23
+    ip_cmd_arg = 24
+    ip_scanner_args = 25
+    ip_scanner_arg_list = 26
+    ip_sequence_args = 27
+    ip_sequence_arg_list = 28
+    ip_pattern_sequence = 29
+    ip_sequence_item = 30
+    ip_empty_statements = 31
+    ip_scanner_expression = 32
+    ip_scanner_logical_or = 33
+    ip_scanner_logical_or__inner = 34
+    ip_scanner_logical_and = 35
+    ip_scanner_logical_and__inner = 36
+    ip_scanner_comparison = 37
+    ip_scanner_comparison__inner = 38
+    ip_scanner_add_subtract = 39
+    ip_scanner_add_subtract__inner = 40
+    ip_scanner_multiply_divide = 41
+    ip_scanner_multiply_divide__inner = 42
+    ip_scanner_power = 43
+    ip_scanner_power__inner = 44
+    ip_scanner_pre_unary = 45
+    ip_scanner_term = 46
+    ip_repeat_count = 47
+    ip_parser_routines = 48
+    ip_parser_multi_line_statements = 49
+    ip_parser_single_line_statements = 50
+    ip_parser_control_structure = 51
+    ip_parser_multi_line_else_ifs = 52
+    ip_parser_multi_line_else = 53
+    ip_parser_single_line_else_ifs = 54
+    ip_parser_single_line_else = 55
+    ip_parser_multi_line_else_ons = 56
+    ip_parser_multi_line_else_on_others = 57
+    ip_parser_single_line_else_ons = 58
+    ip_parser_single_line_else_on_others = 59
+    ip_parser_statement = 60
+    ip_list_type = 61
+    ip_parser_args = 62
+    ip_parser_arg_list = 63
+    ip_ttype_or_literal = 64
+    ip_ttype_or_literal_inner = 65
+    ip_attr_name_arg = 66
+    ip_attribute_name = 67
+    ip_token_id = 68
+    ip_collect_parse_list = 69
+    ip_string_id_or_routine = 70
+    ip_parser_product = 71
+    ip_parser_expression = 72
+    ip_parser_logical_or = 73
+    ip_parser_logical_or__inner = 74
+    ip_parser_logical_and = 75
+    ip_parser_logical_and__inner = 76
+    ip_parser_comparison = 77
+    ip_parser_comparison__inner = 78
+    ip_parser_add_subtract = 79
+    ip_parser_add_subtract__inner = 80
+    ip_parser_multiply_divide = 81
+    ip_parser_multiply_divide__inner = 82
+    ip_parser_power = 83
+    ip_parser_power__inner = 84
+    ip_parser_pre_unary = 85
+    ip_parser_term = 86
 
   PROPERTIES
     _tokens          : Token[]
@@ -359,6 +360,20 @@ class ParserCore [abstract]
               return
             endIf
             _throw_syntax_error
+            return
+          case ip_type_name
+            if (_next_t.type == TokenType.KEYWORD_CHARACTER)
+              _on_t
+              _push( Identifier(_cur_t,"Character"), 0 )
+              return
+            endIf
+            if (_next_t.type == TokenType.KEYWORD_INTEGER)
+              _on_t
+              _push( Identifier(_cur_t,"Integer"), 0 )
+              return
+            endIf
+            _execute(ip_identifier)
+            _pop_frame
             return
           case ip_identifier
             if (_next_t.type == TokenType.IDENTIFIER)
@@ -923,7 +938,7 @@ class ParserCore [abstract]
               _push( null, 0 )
             endIf
             if (_consume(TokenType.SYMBOL_COLON))
-              _execute(ip_identifier)
+              _execute(ip_type_name)
               _pop_frame
             else
               _push( null, 0 )
@@ -2035,7 +2050,7 @@ class ParserCore [abstract]
               _push_list( Args(_list_t) )
             endIf
             if (_consume(TokenType.SYMBOL_COLON))
-              _execute(ip_identifier)
+              _execute(ip_type_name)
               _pop_frame
             else
               _push( null, 0 )

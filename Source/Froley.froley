@@ -397,6 +397,11 @@ parser
   endOn
   syntaxError
 
+- type_name
+  on KEYWORD_CHARACTER -> Identifier(name="Character":String)
+  on KEYWORD_INTEGER   -> Identifier(name="Integer":String)
+  identifier
+
 - identifier
   on IDENTIFIER -> Identifier(name=content)
   syntaxError "Identifier expected."
@@ -736,7 +741,7 @@ parser
   else
     createNull
   endIf
-  if (consume(':')) identifier
+  if (consume(':')) type_name
   else              createNull
   produce CreateCmdArg(arg_name:String,arg_value,arg_type:String)
 
@@ -1274,7 +1279,7 @@ parser
     beginList
     createList Args
   endIf
-  if (consume(':')) identifier
+  if (consume(':')) type_name
   else              createNull
   produce CreateCmd(name:String,args:Args,base_type_name:String)
 

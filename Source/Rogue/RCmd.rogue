@@ -33,6 +33,12 @@ class RCmd : RogueSourceWriter
           @|
            |class Cmd( t:Token )
            |  METHODS
+           |    method init( existing:Cmd )
+           |      t = existing.t
+           |
+           |    method cloned->ThisType [propagated]
+           |      return ThisType(this)
+           |
            |    method add( cmd:Cmd )
            |      throw UnsupportedOperationError()
            |
@@ -126,6 +132,10 @@ class RCmd : RogueSourceWriter
            |      list.add( element1 )
            |      list.add( element2 )
            |
+           |    method init( existing:CmdList )
+           |      prior.init( existing )
+           |      list = existing.list.cloned
+           |
            |    method add( cmd:Cmd )
            |      @list.add( cmd )
            |
@@ -181,6 +191,10 @@ class RCmd : RogueSourceWriter
           @|
            |class Unary( t, operand:Cmd ) : Cmd
            |  METHODS
+           |    method init( existing:Unary )
+           |      prior.init( existing )
+           |      operand = existing.operand.cloned
+           |
            |    method description->String
            |      return "Unary($)"(%operand)
            |endClass
@@ -192,6 +206,11 @@ class RCmd : RogueSourceWriter
           @|
            |class Binary( t, left:Cmd, right:Cmd ) : Cmd
            |  METHODS
+           |    method init( existing:Binary )
+           |      prior.init( existing )
+           |      left = existing.left.cloned
+           |      right = existing.right.cloned
+           |
            |    method description->String
            |      return "Binary($,$)"(%left,%right)
            |endClass
@@ -225,7 +244,9 @@ class RCmd : RogueSourceWriter
           endIf
 
           builder.println "  METHODS"
-          if (extended_properties.count)  # else we inherit the base class constructors
+
+          if (extended_properties.count)
+            # General constructors
             forEach (constructor in node_type.constructors)
               builder.print( "    method init( t" )
               if (constructor.args)
@@ -239,6 +260,20 @@ class RCmd : RogueSourceWriter
               builder.println " )"
               builder.println
             endForEach
+
+            # Copy contructor
+            builder.print( "    method init( existing:" )
+            builder.print node_type.name
+            builder.println " )"
+            builder.println "      prior.init( existing )"
+            forEach (p in extended_properties)
+              if (p.type.is_built_in)
+                builder.println "      $ = existing.$"(p.name,p.name)
+              else
+                builder.println "      if (existing.$) $ = existing.$.cloned"(p.name,p.name,p.name)
+              endIf
+            endForEach
+            builder.println
           endIf
 
           local properties = node_type.properties

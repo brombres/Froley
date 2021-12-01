@@ -53,19 +53,20 @@ routine rogo_build
   endIf
 endRoutine
 
-routine rogo_froley
+routine rogo_froley( debug:String )
   # Updates the Froley language parser if necessary
   local def = File( "Source/Froley.froley" )
   if (def.is_newer_than("Source/TokenizerVM.rogue"))
     println "Compiling Froley language parser"
     execute "froley --main $ Source/" (def.esc)
   endIf
-  rogo_build
+  if (String.exists(debug)) rogo_debug
+  else                      rogo_build
 endRoutine
 
 routine rogo_debug
   Build.RELEASE_MODE = false
-  rogo_rebuild
+  rogo_build
 endRoutine
 
 routine rogo_rebuild

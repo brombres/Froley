@@ -8,7 +8,7 @@ $include "RParserCore.rogue"
 $include "RScanTable.rogue"
 $include "RScanner.rogue"
 $include "RScannerCore.rogue"
-$include "RSyntaxError.rogue"
+$include "RCompileError.rogue"
 $include "RToken.rogue"
 $include "RTokenType.rogue"
 $include "RVisitor.rogue"
@@ -35,7 +35,7 @@ class RogueGenerator : Visitor
 
       Program.nodes.dispatch( this )
 
-      RSyntaxError(this).create_missing
+      RCompileError(this).create_missing
       RScanTable(this).create_missing
       RTokenType(this).overwrite
       RToken(this).create_missing

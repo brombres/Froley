@@ -1,6 +1,6 @@
 module Froley
 
-class RSyntaxError : RogueSourceWriter
+class RCompileError : RogueSourceWriter
   METHODS
     method init_object
       class_name = "CompileError"

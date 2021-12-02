@@ -32,6 +32,11 @@ class RCmd : RogueSourceWriter
         builder.println ...
           @|
            |class Cmd( t:Token )
+           |  GLOBAL METHODS
+           |    method to_character( st:String )->Character
+           |      if (st is null or st.count == 0) return Character(0)
+           |      return st[0]
+           |
            |  METHODS
            |    method init( existing:Cmd )
            |      t = existing.t
@@ -324,8 +329,7 @@ class RCmd : RogueSourceWriter
                 builder.println
               case "String"
                 builder.println ''    method to->Character''
-                builder.println ''      if ($ is null or $.count == 0) return Character(0)''(name,name)
-                builder.println ''      return $[0]''(name)
+                builder.println ''      return Cmd.to_character($)'' (name)
                 builder.println
                 builder.println ''    method to->Int32:  return $'' (name)
                 builder.println ''    method to->Logical: return $?'' (name)

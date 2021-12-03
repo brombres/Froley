@@ -29,6 +29,8 @@ class RogueGenerator : Visitor
     at_newline = true
     write_replacements = StringTable<<String>>()
 
+    on_nesting_level = 0
+
   METHODS
     method init( folder )
       File.create_folder( folder )
@@ -323,12 +325,17 @@ class RogueGenerator : Visitor
       write cmd.routine_name
 
     method on( cmd:On )->Cmd
+
       write   "if (_next_t.type == "
       visit( cmd.token_type )
       writeln ")"
       indent += 2
+
+      ++on_nesting_level
       writeln "_on_t"
       visit( cmd.statements )
+      --on_nesting_level
+
       indent -= 2
 
       visit( cmd.else_ons )
@@ -336,7 +343,9 @@ class RogueGenerator : Visitor
       if (cmd._else_on_others)
         writeln "else"
         indent += 2
+        ++on_nesting_level
         visit( cmd._else_on_others )
+        --on_nesting_level
         indent -= 2
       endIf
 
@@ -348,8 +357,10 @@ class RogueGenerator : Visitor
       visit( cmd.token_type )
       writeln ")"
       indent += 2
+      ++on_nesting_level
       writeln "_on_t"
       visit( cmd.statements )
+      --on_nesting_level
       indent -= 2
       return cmd
 
@@ -419,6 +430,7 @@ class RogueGenerator : Visitor
 
     method on_enter( cmd:ProduceList )
       writeln "_push_list( $(_list_t) )" (cmd.list_type)
+      if (on_nesting_level) writeln "_cur_t = _token_stack.pop"
       write   "return"
 
     method on_enter( cmd:ScanCharacters )
@@ -432,6 +444,7 @@ class RogueGenerator : Visitor
 
     method on_leave( cmd:ParserProduce )
       writeln
+      if (on_nesting_level) writeln "_cur_t = _token_stack.pop"
       write   "return"
 
     method on_enter( cmd:ParserRead )
@@ -476,8 +489,12 @@ class RogueGenerator : Visitor
       endIf
 
     method on_enter( cmd:Return )
-      if (is_scanner) write   "return true"
-      else            write   "return"
+      if (is_scanner)
+        write   "return true"
+      else
+        if (on_nesting_level) writeln "_cur_t = _token_stack.pop"
+        write   "return"
+      endIf
 
     method on( cmd:Routine )->Cmd
       writeln "          case ip_$"(cmd.name)
@@ -487,7 +504,7 @@ class RogueGenerator : Visitor
 
       if (is_parser)
         if (not BranchAnalyzer.all_paths_return(cmd))
-          writeln "return"
+          writeln "return"  # will be outside of any 'on' so no token pop required
         endIf
       endIf
 

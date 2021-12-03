@@ -185,7 +185,6 @@ class RParserCore( generator, parser_def:ParserDef ) : RogueSourceWriter
          |    method _push( cmd:Cmd, node_arg_count:Int32 )
          |      _cmd_stack.discard_from( _cmd_stack.count - node_arg_count )
          |      _cmd_stack.add( cmd )
-         |      if (_token_stack.count) _cur_t = _token_stack.pop
          |
          |    method _push_list( list:Cmd )
          |      local i1 = _list_starts.remove_last

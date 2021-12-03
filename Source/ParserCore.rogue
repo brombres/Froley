@@ -223,7 +223,6 @@ class ParserCore [abstract]
     method _push( cmd:Cmd, node_arg_count:Int32 )
       _cmd_stack.discard_from( _cmd_stack.count - node_arg_count )
       _cmd_stack.add( cmd )
-      if (_token_stack.count) _cur_t = _token_stack.pop
 
     method _push_list( list:Cmd )
       local i1 = _list_starts.remove_last
@@ -336,6 +335,7 @@ class ParserCore [abstract]
               _execute(ip_scanner_routines)
               _pop_frame
               _push( ScannerDef(_cur_t,_string_arg(-2),_node_arg(-1)), 2 )
+              _cur_t = _token_stack.pop
               return
             elseIf (_next_t.type == TokenType.KEYWORD_PARSER)
               _on_t
@@ -345,6 +345,7 @@ class ParserCore [abstract]
               _execute(ip_parser_routines)
               _pop_frame
               _push( ParserDef(_cur_t,_string_arg(-2),_node_arg(-1)), 2 )
+              _cur_t = _token_stack.pop
               return
             elseIf (_next_t.type == TokenType.KEYWORD_TOKENS)
               _on_t
@@ -357,6 +358,7 @@ class ParserCore [abstract]
               _execute(ip_token_definitions)
               _pop_frame
               _push( TokenGroup(_cur_t,_string_arg(-2),_node_arg(-1)), 2 )
+              _cur_t = _token_stack.pop
               return
             endIf
             _throw_syntax_error
@@ -365,11 +367,13 @@ class ParserCore [abstract]
             if (_next_t.type == TokenType.KEYWORD_CHARACTER)
               _on_t
               _push( Identifier(_cur_t,"Character"), 0 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.KEYWORD_INTEGER)
               _on_t
               _push( Identifier(_cur_t,"Integer"), 0 )
+              _cur_t = _token_stack.pop
               return
             endIf
             _execute(ip_identifier)
@@ -379,6 +383,7 @@ class ParserCore [abstract]
             if (_next_t.type == TokenType.IDENTIFIER)
               _on_t
               _push( Identifier(_cur_t,_cur_t.content), 0 )
+              _cur_t = _token_stack.pop
               return
             endIf
             _throw_syntax_error("Identifier expected.")
@@ -460,6 +465,7 @@ class ParserCore [abstract]
             if (_next_t.type == TokenType.SYMBOL)
               _on_t
               _push( Symbol(_cur_t,_cur_t.content), 0 )
+              _cur_t = _token_stack.pop
               return
             endIf
             _throw_syntax_error("Symbol expected.")
@@ -536,6 +542,7 @@ class ParserCore [abstract]
                 _pop_frame
               endIf
               _push( If(_cur_t,_node_arg(-4),_node_arg(-3) as Statements,_node_arg(-2),_node_arg(-1) as Statements), 4 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.KEYWORD_MATCH)
@@ -560,6 +567,7 @@ class ParserCore [abstract]
               _pop_frame
               if (not _consume(TokenType.KEYWORD_END_MATCH)) _throw_syntax_error( &expected=TokenType.KEYWORD_END_MATCH )
               _push( Match(_cur_t,_node_arg(-3),_node_arg(-2),_node_arg(-1)), 3 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.KEYWORD_WHILE)
@@ -581,6 +589,7 @@ class ParserCore [abstract]
                 _pop_frame
               endIf
               _push( While(_cur_t,_node_arg(-2),_node_arg(-1) as Statements), 2 )
+              _cur_t = _token_stack.pop
               return
             endIf
             _execute(ip_scanner_statement)
@@ -620,6 +629,7 @@ class ParserCore [abstract]
                 _push( ProduceAny(_cur_t,_string_arg(-1)), 1 )
               else
                 _push_list( CmdList(_list_t) )
+                _cur_t = _token_stack.pop
                 return
               endIf
             endWhile
@@ -656,6 +666,7 @@ class ParserCore [abstract]
                 else
                   _restore_position
                   _push_list( CmdList(_list_t) )
+                  _cur_t = _token_stack.pop
                   return
                 endIf
                 _execute(ip_scanner_multi_line_statements)
@@ -676,11 +687,13 @@ class ParserCore [abstract]
               if ((not _consume(TokenType.EOL)))
                 _restore_position
                 _push( null, 0 )
+                _cur_t = _token_stack.pop
                 return
               endIf
               _execute(ip_scanner_multi_line_statements)
               _pop_frame
               _discard_position
+              _cur_t = _token_stack.pop
               return
             endIf
             return
@@ -701,6 +714,7 @@ class ParserCore [abstract]
                 if ((_next_t.type == TokenType.EOL))
                   _restore_position
                   _push_list( CmdList(_list_t) )
+                  _cur_t = _token_stack.pop
                   return
                 else
                   _discard_position
@@ -723,11 +737,13 @@ class ParserCore [abstract]
               if (_consume(TokenType.EOL))
                 _restore_position
                 _push( null, 0 )
+                _cur_t = _token_stack.pop
                 return
               endIf
               _execute(ip_scanner_single_line_statements)
               _pop_frame
               _discard_position
+              _cur_t = _token_stack.pop
               return
             endIf
             return
@@ -737,6 +753,7 @@ class ParserCore [abstract]
               _execute(ip_identifier)
               _pop_frame
               _push( ScannerCallUserMethod(_cur_t,_string_arg(-1)), 1 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.KEYWORD_COLLECT)
@@ -744,6 +761,7 @@ class ParserCore [abstract]
               _execute(ip_scanner_args)
               _pop_frame
               _push( Collect(_cur_t,_node_arg(-1) as Args), 1 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.KEYWORD_CREATE)
@@ -751,21 +769,25 @@ class ParserCore [abstract]
               _execute(ip_scanner_product)
               _pop_frame
               _push( ScannerCreate(_cur_t,_node_arg(-1)), 1 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.KEYWORD_DISCARD_POSITION)
               _on_t
               _push( DiscardPosition(_cur_t), 0 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.KEYWORD_HALT)
               _on_t
               _push( Halt(_cur_t), 0 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.KEYWORD_MARK_POSITION)
               _on_t
               _push( MarkPosition(_cur_t), 0 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.KEYWORD_MODE)
@@ -773,6 +795,7 @@ class ParserCore [abstract]
               _execute(ip_identifier)
               _pop_frame
               _push( Mode(_cur_t,_string_arg(-1)), 1 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.KEYWORD_MUST_CONSUME)
@@ -780,10 +803,12 @@ class ParserCore [abstract]
               _execute(ip_sequence_args)
               _pop_frame
               _push( ScannerMustConsume(_cur_t,_node_arg(-1) as SequenceArgs), 1 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.KEYWORD_NO_ACTION)
               _on_t
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.KEYWORD_PRINT)
@@ -791,6 +816,7 @@ class ParserCore [abstract]
               _execute(ip_scanner_args)
               _pop_frame
               _push( Print(_cur_t,_node_arg(-1) as Args), 1 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.KEYWORD_PRINTLN)
@@ -803,6 +829,7 @@ class ParserCore [abstract]
                 _pop_frame
               endIf
               _push( Println(_cur_t,_node_arg(-1) as Args), 1 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.KEYWORD_PRODUCE)
@@ -812,12 +839,14 @@ class ParserCore [abstract]
               _push( ScannerCreate(_cur_t,_node_arg(-1)), 1 )
               _push( null, 0 )
               _push( Restart(_cur_t,_string_arg(-1)), 1 )
+              _cur_t = _token_stack.pop
               return
             elseIf (_next_t.type == TokenType.SYMBOL_ARROW)
               _on_t
               _push( ScannerCreate(_cur_t,_node_arg(-1)), 1 )
               _push( null, 0 )
               _push( Restart(_cur_t,_string_arg(-1)), 1 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.KEYWORD_RESTART)
@@ -829,11 +858,13 @@ class ParserCore [abstract]
                 _pop_frame
               endIf
               _push( Restart(_cur_t,_string_arg(-1)), 1 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.KEYWORD_RESTORE_POSITION)
               _on_t
               _push( RestorePosition(_cur_t), 0 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.KEYWORD_RETURN)
@@ -844,11 +875,13 @@ class ParserCore [abstract]
                 _throw_syntax_error
               endIf
               _push( Return(_cur_t,_node_arg(-1)), 1 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.KEYWORD_SAVE_POSITION)
               _on_t
               _push( SavePosition(_cur_t), 0 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.KEYWORD_SYNTAX_ERROR)
@@ -860,6 +893,7 @@ class ParserCore [abstract]
                 _pop_frame
               endIf
               _push( ThrowSyntaxError(_cur_t,_node_arg(-1) as Args), 1 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.SYMBOL_PLUS_PLUS)
@@ -867,6 +901,7 @@ class ParserCore [abstract]
               _execute(ip_scanner_expression)
               _pop_frame
               _push( Increment(_cur_t,_node_arg(-1)), 1 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.SYMBOL_MINUS_MINUS)
@@ -874,6 +909,7 @@ class ParserCore [abstract]
               _execute(ip_scanner_expression)
               _pop_frame
               _push( Decrement(_cur_t,_node_arg(-1)), 1 )
+              _cur_t = _token_stack.pop
               return
             endIf
             _execute(ip_scanner_expression)
@@ -883,16 +919,19 @@ class ParserCore [abstract]
               _execute(ip_scanner_expression)
               _pop_frame
               _push( Assign(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.SYMBOL_PLUS_PLUS)
               _on_t
               _push( Increment(_cur_t,_node_arg(-1)), 1 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.SYMBOL_MINUS_MINUS)
               _on_t
               _push( Decrement(_cur_t,_node_arg(-1)), 1 )
+              _cur_t = _token_stack.pop
               return
             endIf
             return
@@ -1057,6 +1096,7 @@ class ParserCore [abstract]
               _execute(ip_pattern_sequence)
               _pop_frame
               if (not _consume(TokenType.SYMBOL_CLOSE_CURLY)) _throw_syntax_error( &expected=TokenType.SYMBOL_CLOSE_CURLY )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.CHARSET)
@@ -1064,16 +1104,19 @@ class ParserCore [abstract]
               _push( CharSet(_cur_t,_cur_t.content), 0 )
               _execute(ip_repeat_count)
               _pop_frame
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.STRING)
               _on_t
               _push( LiteralString(_cur_t,_cur_t.content), 0 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.STRING_OR_CHARACTER)
               _on_t
               _push( LiteralStringOrCharacter(_cur_t,_cur_t.content), 0 )
+              _cur_t = _token_stack.pop
               return
             endIf
             _throw_syntax_error
@@ -1101,6 +1144,7 @@ class ParserCore [abstract]
               _push( LogicalOr(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
               _execute(ip_scanner_logical_or__inner)
               _pop_frame
+              _cur_t = _token_stack.pop
               return
             endIf
             return
@@ -1119,6 +1163,7 @@ class ParserCore [abstract]
               _push( LogicalAnd(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
               _execute(ip_scanner_logical_and__inner)
               _pop_frame
+              _cur_t = _token_stack.pop
               return
             endIf
             return
@@ -1137,6 +1182,7 @@ class ParserCore [abstract]
               _push( CompareEQ(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
               _execute(ip_scanner_comparison__inner)
               _pop_frame
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.SYMBOL_NE)
@@ -1147,6 +1193,7 @@ class ParserCore [abstract]
               _push( CompareNE(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
               _execute(ip_scanner_comparison__inner)
               _pop_frame
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.SYMBOL_LT)
@@ -1157,6 +1204,7 @@ class ParserCore [abstract]
               _push( CompareLT(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
               _execute(ip_scanner_comparison__inner)
               _pop_frame
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.SYMBOL_GT)
@@ -1167,6 +1215,7 @@ class ParserCore [abstract]
               _push( CompareGT(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
               _execute(ip_scanner_comparison__inner)
               _pop_frame
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.SYMBOL_LE)
@@ -1177,6 +1226,7 @@ class ParserCore [abstract]
               _push( CompareLE(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
               _execute(ip_scanner_comparison__inner)
               _pop_frame
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.SYMBOL_GE)
@@ -1187,6 +1237,7 @@ class ParserCore [abstract]
               _push( CompareGE(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
               _execute(ip_scanner_comparison__inner)
               _pop_frame
+              _cur_t = _token_stack.pop
               return
             endIf
             return
@@ -1205,6 +1256,7 @@ class ParserCore [abstract]
               _push( Add(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
               _execute(ip_scanner_add_subtract__inner)
               _pop_frame
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.SYMBOL_MINUS)
@@ -1215,6 +1267,7 @@ class ParserCore [abstract]
               _push( Subtract(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
               _execute(ip_scanner_add_subtract__inner)
               _pop_frame
+              _cur_t = _token_stack.pop
               return
             endIf
             return
@@ -1233,6 +1286,7 @@ class ParserCore [abstract]
               _push( Multiply(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
               _execute(ip_scanner_multiply_divide__inner)
               _pop_frame
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.SYMBOL_SLASH)
@@ -1243,6 +1297,7 @@ class ParserCore [abstract]
               _push( Divide(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
               _execute(ip_scanner_multiply_divide__inner)
               _pop_frame
+              _cur_t = _token_stack.pop
               return
             endIf
             return
@@ -1261,6 +1316,7 @@ class ParserCore [abstract]
               _push( Power(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
               _execute(ip_scanner_power__inner)
               _pop_frame
+              _cur_t = _token_stack.pop
               return
             endIf
             return
@@ -1271,6 +1327,7 @@ class ParserCore [abstract]
               _execute(ip_scanner_pre_unary)
               _pop_frame
               _push( Negate(_cur_t,_node_arg(-1)), 1 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.KEYWORD_NOT)
@@ -1279,6 +1336,7 @@ class ParserCore [abstract]
               _execute(ip_scanner_pre_unary)
               _pop_frame
               _push( LogicalNot(_cur_t,_node_arg(-1)), 1 )
+              _cur_t = _token_stack.pop
               return
             endIf
             _execute(ip_scanner_term)
@@ -1290,6 +1348,7 @@ class ParserCore [abstract]
               _execute(ip_scanner_expression)
               _pop_frame
               if (not _consume(TokenType.SYMBOL_CLOSE_PAREN)) _throw_syntax_error( &expected=TokenType.SYMBOL_CLOSE_PAREN )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.SYMBOL_OPEN_CURLY)
@@ -1297,11 +1356,13 @@ class ParserCore [abstract]
               _execute(ip_pattern_sequence)
               _pop_frame
               if (not _consume(TokenType.SYMBOL_CLOSE_CURLY)) _throw_syntax_error( &expected=TokenType.SYMBOL_CLOSE_CURLY )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.KEYWORD_BUFFER)
               _on_t
               _push( ReadBuffer(_cur_t), 0 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.KEYWORD_CHARACTER)
@@ -1311,6 +1372,7 @@ class ParserCore [abstract]
               _pop_frame
               if (not _consume(TokenType.SYMBOL_CLOSE_PAREN)) _throw_syntax_error( &expected=TokenType.SYMBOL_CLOSE_PAREN )
               _push( CastToCharacter(_cur_t,_node_arg(-1)), 1 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.KEYWORD_INTEGER)
@@ -1320,6 +1382,7 @@ class ParserCore [abstract]
               _pop_frame
               if (not _consume(TokenType.SYMBOL_CLOSE_PAREN)) _throw_syntax_error( &expected=TokenType.SYMBOL_CLOSE_PAREN )
               _push( CastToInteger(_cur_t,_node_arg(-1)), 1 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.KEYWORD_CONSUME)
@@ -1327,16 +1390,19 @@ class ParserCore [abstract]
               _execute(ip_sequence_args)
               _pop_frame
               _push( ScannerConsume(_cur_t,_node_arg(-1) as SequenceArgs), 1 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.KEYWORD_FALSE)
               _on_t
               _push( LiteralLogical(_cur_t,_string_to_Logical("false")), 0 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.KEYWORD_HAS_NEXT)
               _on_t
               _push( ScannerHasAnother(_cur_t), 0 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.KEYWORD_NEXT_IS)
@@ -1344,6 +1410,7 @@ class ParserCore [abstract]
               _execute(ip_sequence_args)
               _pop_frame
               _push( ScannerNextIs(_cur_t,_node_arg(-1) as SequenceArgs), 1 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.KEYWORD_PEEK)
@@ -1356,11 +1423,13 @@ class ParserCore [abstract]
                 _push( null, 0 )
               endIf
               _push( ScannerPeek(_cur_t,_node_arg(-1)), 1 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.KEYWORD_READ)
               _on_t
               _push( ScannerRead(_cur_t), 0 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.KEYWORD_SCAN)
@@ -1368,11 +1437,13 @@ class ParserCore [abstract]
               _execute(ip_sequence_args)
               _pop_frame
               _push( Scan(_cur_t,_node_arg(-1) as SequenceArgs), 1 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.KEYWORD_TRUE)
               _on_t
               _push( LiteralLogical(_cur_t,_string_to_Logical("true")), 0 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.CHARSET)
@@ -1380,16 +1451,19 @@ class ParserCore [abstract]
               _push( CharSet(_cur_t,_cur_t.content), 0 )
               _execute(ip_repeat_count)
               _pop_frame
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.IDENTIFIER)
               _on_t
               _push( Access(_cur_t,_cur_t.content), 0 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.INTEGER)
               _on_t
               _push( LiteralInteger(_cur_t,_string_to_Integer(_cur_t.content)), 0 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.STRING)
@@ -1397,12 +1471,14 @@ class ParserCore [abstract]
               _push( LiteralString(_cur_t,_cur_t.content), 0 )
               _execute(ip_repeat_count)
               _pop_frame
+              _cur_t = _token_stack.pop
               return
             elseIf (_next_t.type == TokenType.STRING_OR_CHARACTER)
               _on_t
               _push( LiteralStringOrCharacter(_cur_t,_cur_t.content), 0 )
               _execute(ip_repeat_count)
               _pop_frame
+              _cur_t = _token_stack.pop
               return
             endIf
             _throw_syntax_error
@@ -1411,14 +1487,17 @@ class ParserCore [abstract]
             if (_next_t.type == TokenType.SYMBOL_STAR)
               _on_t
               _push( ZeroOrMore(_cur_t,_node_arg(-1)), 1 )
+              _cur_t = _token_stack.pop
               return
             elseIf (_next_t.type == TokenType.SYMBOL_PLUS)
               _on_t
               _push( OneOrMore(_cur_t,_node_arg(-1)), 1 )
+              _cur_t = _token_stack.pop
               return
             elseIf (_next_t.type == TokenType.SYMBOL_QUESTION)
               _on_t
               _push( OptionalPattern(_cur_t,_node_arg(-1)), 1 )
+              _cur_t = _token_stack.pop
               return
             endIf
             return
@@ -1499,6 +1578,7 @@ class ParserCore [abstract]
                 _pop_frame
               endIf
               _push( If(_cur_t,_node_arg(-4),_node_arg(-3) as Statements,_node_arg(-2),_node_arg(-1) as Statements), 4 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.KEYWORD_ON)
@@ -1525,6 +1605,7 @@ class ParserCore [abstract]
                 _pop_frame
               endIf
               _push( On(_cur_t,_node_arg(-5),_node_arg(-4) as Args,_node_arg(-3) as Statements,_node_arg(-2),_node_arg(-1) as Statements), 5 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.KEYWORD_WHILE)
@@ -1546,6 +1627,7 @@ class ParserCore [abstract]
                 _pop_frame
               endIf
               _push( While(_cur_t,_node_arg(-2),_node_arg(-1) as Statements), 2 )
+              _cur_t = _token_stack.pop
               return
             endIf
             _execute(ip_parser_statement)
@@ -1570,6 +1652,7 @@ class ParserCore [abstract]
                 else
                   _restore_position
                   _push_list( CmdList(_list_t) )
+                  _cur_t = _token_stack.pop
                   return
                 endIf
                 _execute(ip_parser_multi_line_statements)
@@ -1590,11 +1673,13 @@ class ParserCore [abstract]
               if ((not _consume(TokenType.EOL)))
                 _restore_position
                 _push( null, 0 )
+                _cur_t = _token_stack.pop
                 return
               endIf
               _execute(ip_parser_multi_line_statements)
               _pop_frame
               _discard_position
+              _cur_t = _token_stack.pop
               return
             endIf
             return
@@ -1615,6 +1700,7 @@ class ParserCore [abstract]
                 if ((_next_t.type == TokenType.EOL))
                   _restore_position
                   _push_list( CmdList(_list_t) )
+                  _cur_t = _token_stack.pop
                   return
                 else
                   _discard_position
@@ -1637,11 +1723,13 @@ class ParserCore [abstract]
               if (_consume(TokenType.EOL))
                 _restore_position
                 _push( null, 0 )
+                _cur_t = _token_stack.pop
                 return
               endIf
               _execute(ip_parser_single_line_statements)
               _pop_frame
               _discard_position
+              _cur_t = _token_stack.pop
               return
             endIf
             return
@@ -1660,6 +1748,7 @@ class ParserCore [abstract]
                 else
                   _restore_position
                   _push_list( CmdList(_list_t) )
+                  _cur_t = _token_stack.pop
                   return
                 endIf
                 _execute(ip_parser_multi_line_statements)
@@ -1680,11 +1769,13 @@ class ParserCore [abstract]
               if ((not _consume(TokenType.EOL)))
                 _restore_position
                 _push( null, 0 )
+                _cur_t = _token_stack.pop
                 return
               endIf
               _execute(ip_parser_multi_line_statements)
               _pop_frame
               _discard_position
+              _cur_t = _token_stack.pop
               return
             endIf
             return
@@ -1701,6 +1792,7 @@ class ParserCore [abstract]
                 if ((_next_t.type == TokenType.EOL))
                   _restore_position
                   _push_list( CmdList(_list_t) )
+                  _cur_t = _token_stack.pop
                   return
                 else
                   _discard_position
@@ -1724,12 +1816,14 @@ class ParserCore [abstract]
               if (_consume(TokenType.EOL))
                 _restore_position
                 _push( null, 0 )
+                _cur_t = _token_stack.pop
                 return
               endIf
               _consume(TokenType.SYMBOL_COLON)
               _execute(ip_parser_single_line_statements)
               _pop_frame
               _discard_position
+              _cur_t = _token_stack.pop
               return
             endIf
             return
@@ -1737,6 +1831,7 @@ class ParserCore [abstract]
             if (_next_t.type == TokenType.KEYWORD_BEGIN_LIST)
               _on_t
               _push( BeginList(_cur_t), 0 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.KEYWORD_CALL)
@@ -1744,6 +1839,7 @@ class ParserCore [abstract]
               _execute(ip_identifier)
               _pop_frame
               _push( ParserCallUserMethod(_cur_t,_string_arg(-1)), 1 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.KEYWORD_CREATE)
@@ -1751,6 +1847,7 @@ class ParserCore [abstract]
               _execute(ip_parser_product)
               _pop_frame
               _push( ParserCreate(_cur_t,_node_arg(-1) as CreateCmd), 1 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.KEYWORD_CREATE_LIST)
@@ -1758,21 +1855,25 @@ class ParserCore [abstract]
               _execute(ip_list_type)
               _pop_frame
               _push( CreateList(_cur_t,_string_arg(-1)), 1 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.KEYWORD_CREATE_NULL)
               _on_t
               _push( CreateNull(_cur_t), 0 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.KEYWORD_DISCARD_LIST)
               _on_t
               _push( DiscardList(_cur_t), 0 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.KEYWORD_DISCARD_POSITION)
               _on_t
               _push( DiscardPosition(_cur_t), 0 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.KEYWORD_MUST_CONSUME)
@@ -1780,10 +1881,12 @@ class ParserCore [abstract]
               _execute(ip_ttype_or_literal)
               _pop_frame
               _push( ParserMustConsume(_cur_t,_node_arg(-1)), 1 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.KEYWORD_NO_ACTION)
               _on_t
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.KEYWORD_PRINT)
@@ -1791,6 +1894,7 @@ class ParserCore [abstract]
               _execute(ip_parser_args)
               _pop_frame
               _push( Print(_cur_t,_node_arg(-1) as Args), 1 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.KEYWORD_PRINTLN)
@@ -1803,6 +1907,7 @@ class ParserCore [abstract]
                 _pop_frame
               endIf
               _push( Println(_cur_t,_node_arg(-1) as Args), 1 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.KEYWORD_PRODUCE)
@@ -1810,6 +1915,7 @@ class ParserCore [abstract]
               _execute(ip_parser_product)
               _pop_frame
               _push( ParserProduce(_cur_t,_node_arg(-1) as CreateCmd), 1 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.SYMBOL_ARROW)
@@ -1817,6 +1923,7 @@ class ParserCore [abstract]
               _execute(ip_parser_product)
               _pop_frame
               _push( ParserProduce(_cur_t,_node_arg(-1) as CreateCmd), 1 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.KEYWORD_PRODUCE_NULL)
@@ -1824,6 +1931,7 @@ class ParserCore [abstract]
               _push( CreateNull(_cur_t), 0 )
               _push( null, 0 )
               _push( Return(_cur_t,_node_arg(-1)), 1 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.KEYWORD_PRODUCE_LIST)
@@ -1831,11 +1939,13 @@ class ParserCore [abstract]
               _execute(ip_list_type)
               _pop_frame
               _push( ProduceList(_cur_t,_string_arg(-1)), 1 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.KEYWORD_RESTORE_POSITION)
               _on_t
               _push( RestorePosition(_cur_t), 0 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.KEYWORD_RETURN)
@@ -1846,11 +1956,13 @@ class ParserCore [abstract]
                 _throw_syntax_error
               endIf
               _push( Return(_cur_t,_node_arg(-1)), 1 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.KEYWORD_SAVE_POSITION)
               _on_t
               _push( SavePosition(_cur_t), 0 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.KEYWORD_SYNTAX_ERROR)
@@ -1862,6 +1974,7 @@ class ParserCore [abstract]
                 _pop_frame
               endIf
               _push( ThrowSyntaxError(_cur_t,_node_arg(-1) as Args), 1 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.SYMBOL_PLUS_PLUS)
@@ -1869,6 +1982,7 @@ class ParserCore [abstract]
               _execute(ip_parser_expression)
               _pop_frame
               _push( Increment(_cur_t,_node_arg(-1)), 1 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.SYMBOL_MINUS_MINUS)
@@ -1876,6 +1990,7 @@ class ParserCore [abstract]
               _execute(ip_parser_expression)
               _pop_frame
               _push( Decrement(_cur_t,_node_arg(-1)), 1 )
+              _cur_t = _token_stack.pop
               return
             endIf
             _execute(ip_parser_expression)
@@ -1885,16 +2000,19 @@ class ParserCore [abstract]
               _execute(ip_parser_expression)
               _pop_frame
               _push( Assign(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.SYMBOL_PLUS_PLUS)
               _on_t
               _push( Increment(_cur_t,_node_arg(-1)), 1 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.SYMBOL_MINUS_MINUS)
               _on_t
               _push( Decrement(_cur_t,_node_arg(-1)), 1 )
+              _cur_t = _token_stack.pop
               return
             endIf
             return
@@ -1979,16 +2097,19 @@ class ParserCore [abstract]
             if (_next_t.type == TokenType.IDENTIFIER)
               _on_t
               _push( Identifier(_cur_t,_cur_t.content), 0 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.STRING)
               _on_t
               _push( LiteralString(_cur_t,_cur_t.content), 0 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.STRING_OR_CHARACTER)
               _on_t
               _push( LiteralString(_cur_t,_cur_t.content), 0 )
+              _cur_t = _token_stack.pop
               return
             endIf
             _throw_syntax_error("Attribute name expected.")
@@ -1997,16 +2118,19 @@ class ParserCore [abstract]
             if (_next_t.type == TokenType.IDENTIFIER)
               _on_t
               _push( Identifier(_cur_t,_cur_t.content), 0 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.STRING)
               _on_t
               _push( LiteralString(_cur_t,_cur_t.content), 0 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.STRING_OR_CHARACTER)
               _on_t
               _push( LiteralString(_cur_t,_cur_t.content), 0 )
+              _cur_t = _token_stack.pop
               return
             endIf
             _throw_syntax_error("TOKEN_ID or \"token_name\" expected.")
@@ -2024,16 +2148,19 @@ class ParserCore [abstract]
             if (_next_t.type == TokenType.IDENTIFIER)
               _on_t
               _push( Identifier(_cur_t,_cur_t.content), 0 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.STRING)
               _on_t
               _push( LiteralString(_cur_t,_cur_t.content), 0 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.STRING_OR_CHARACTER)
               _on_t
               _push( LiteralString(_cur_t,_cur_t.content), 0 )
+              _cur_t = _token_stack.pop
               return
             endIf
             _throw_syntax_error("TOKEN_ID, \"token_name\", or routine_name expected.")
@@ -2076,6 +2203,7 @@ class ParserCore [abstract]
               _push( LogicalOr(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
               _execute(ip_parser_logical_or__inner)
               _pop_frame
+              _cur_t = _token_stack.pop
               return
             endIf
             return
@@ -2094,6 +2222,7 @@ class ParserCore [abstract]
               _push( LogicalAnd(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
               _execute(ip_parser_logical_and__inner)
               _pop_frame
+              _cur_t = _token_stack.pop
               return
             endIf
             return
@@ -2112,6 +2241,7 @@ class ParserCore [abstract]
               _push( CompareEQ(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
               _execute(ip_parser_comparison__inner)
               _pop_frame
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.SYMBOL_NE)
@@ -2122,6 +2252,7 @@ class ParserCore [abstract]
               _push( CompareNE(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
               _execute(ip_parser_comparison__inner)
               _pop_frame
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.SYMBOL_LT)
@@ -2132,6 +2263,7 @@ class ParserCore [abstract]
               _push( CompareLT(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
               _execute(ip_parser_comparison__inner)
               _pop_frame
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.SYMBOL_GT)
@@ -2142,6 +2274,7 @@ class ParserCore [abstract]
               _push( CompareGT(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
               _execute(ip_parser_comparison__inner)
               _pop_frame
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.SYMBOL_LE)
@@ -2152,6 +2285,7 @@ class ParserCore [abstract]
               _push( CompareLE(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
               _execute(ip_parser_comparison__inner)
               _pop_frame
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.SYMBOL_GE)
@@ -2162,6 +2296,7 @@ class ParserCore [abstract]
               _push( CompareGE(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
               _execute(ip_parser_comparison__inner)
               _pop_frame
+              _cur_t = _token_stack.pop
               return
             endIf
             return
@@ -2180,6 +2315,7 @@ class ParserCore [abstract]
               _push( Add(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
               _execute(ip_parser_add_subtract__inner)
               _pop_frame
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.SYMBOL_MINUS)
@@ -2190,6 +2326,7 @@ class ParserCore [abstract]
               _push( Subtract(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
               _execute(ip_parser_add_subtract__inner)
               _pop_frame
+              _cur_t = _token_stack.pop
               return
             endIf
             return
@@ -2208,6 +2345,7 @@ class ParserCore [abstract]
               _push( Multiply(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
               _execute(ip_parser_multiply_divide__inner)
               _pop_frame
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.SYMBOL_SLASH)
@@ -2218,6 +2356,7 @@ class ParserCore [abstract]
               _push( Divide(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
               _execute(ip_parser_multiply_divide__inner)
               _pop_frame
+              _cur_t = _token_stack.pop
               return
             endIf
             return
@@ -2236,6 +2375,7 @@ class ParserCore [abstract]
               _push( Power(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
               _execute(ip_parser_power__inner)
               _pop_frame
+              _cur_t = _token_stack.pop
               return
             endIf
             return
@@ -2246,6 +2386,7 @@ class ParserCore [abstract]
               _execute(ip_parser_pre_unary)
               _pop_frame
               _push( Negate(_cur_t,_node_arg(-1)), 1 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.KEYWORD_NOT)
@@ -2254,6 +2395,7 @@ class ParserCore [abstract]
               _execute(ip_parser_pre_unary)
               _pop_frame
               _push( LogicalNot(_cur_t,_node_arg(-1)), 1 )
+              _cur_t = _token_stack.pop
               return
             endIf
             _execute(ip_parser_term)
@@ -2265,6 +2407,7 @@ class ParserCore [abstract]
               _execute(ip_parser_expression)
               _pop_frame
               if (not _consume(TokenType.SYMBOL_CLOSE_PAREN)) _throw_syntax_error( &expected=TokenType.SYMBOL_CLOSE_PAREN )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.KEYWORD_CONSUME)
@@ -2272,16 +2415,19 @@ class ParserCore [abstract]
               _execute(ip_ttype_or_literal)
               _pop_frame
               _push( ParserConsume(_cur_t,_node_arg(-1)), 1 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.KEYWORD_FALSE)
               _on_t
               _push( LiteralLogical(_cur_t,_string_to_Logical("false")), 0 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.KEYWORD_HAS_NEXT)
               _on_t
               _push( ParserHasAnother(_cur_t), 0 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.KEYWORD_NEXT_HAS_ATTRIBUTE)
@@ -2289,6 +2435,7 @@ class ParserCore [abstract]
               _execute(ip_attr_name_arg)
               _pop_frame
               _push( NextHasAttribute(_cur_t,_string_arg(-1)), 1 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.KEYWORD_NEXT_IS)
@@ -2296,36 +2443,43 @@ class ParserCore [abstract]
               _execute(ip_ttype_or_literal)
               _pop_frame
               _push( ParserNextIs(_cur_t,_node_arg(-1)), 1 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.KEYWORD_READ)
               _on_t
               _push( ParserRead(_cur_t), 0 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.KEYWORD_TRUE)
               _on_t
               _push( LiteralLogical(_cur_t,_string_to_Logical("true")), 0 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.IDENTIFIER)
               _on_t
               _push( Access(_cur_t,_cur_t.content), 0 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.INTEGER)
               _on_t
               _push( LiteralInteger(_cur_t,_string_to_Integer(_cur_t.content)), 0 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.STRING)
               _on_t
               _push( LiteralString(_cur_t,_cur_t.content), 0 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.STRING_OR_CHARACTER)
               _on_t
               _push( LiteralStringOrCharacter(_cur_t,_cur_t.content), 0 )
+              _cur_t = _token_stack.pop
               return
             endIf
             _throw_syntax_error

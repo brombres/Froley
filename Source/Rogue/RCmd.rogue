@@ -81,7 +81,7 @@ class RCmd : RogueSourceWriter
            |      throw UnsupportedOperationError()
            |
            |    method get<<$AsType>>( index:Int32 )->$AsType
-           |      return get(index) as $AsType
+           |      return get(index)->(as $AsType)
            |
            |    method insert( element:Cmd, before_index=0:Int32 )
            |      throw UnsupportedOperationError()
@@ -255,9 +255,9 @@ class RCmd : RogueSourceWriter
             forEach (constructor in node_type.constructors)
               builder.print( "    method init( t" )
               if (constructor.args)
-                local args = constructor.args as Args
+                local args = constructor.args->(as Args)
                 forEach (arg in args)
-                  block arg = arg as CreateCmdArg
+                  block arg = arg->(as CreateCmdArg)
                     builder.print( ", " ).print( arg.arg_name )
                   endBlock
                 endForEach

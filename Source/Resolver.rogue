@@ -103,20 +103,20 @@ class Resolver : Visitor
       if (cmd.left instanceOf Literal and cmd.right instanceOf Literal)
         which (common_type)
           case FType.LOGICAL
-            local left  = (cmd.left as LiteralLogical).value
-            local right = (cmd.right as LiteralLogical).value
+            local left  = (cmd.left->(as LiteralLogical)).value
+            local right = (cmd.right->(as LiteralLogical)).value
             return visit( LiteralLogical( cmd.t, left or right ) )
           case FType.CHARACTER
-            local left  = (cmd.left as LiteralCharacter).value
-            local right = (cmd.right as LiteralCharacter).value
+            local left  = (cmd.left->(as LiteralCharacter)).value
+            local right = (cmd.right->(as LiteralCharacter)).value
             return visit( LiteralCharacter( cmd.t, left+right ) )
           case FType.INTEGER
-            local left  = (cmd.left as LiteralInteger).value
-            local right = (cmd.right as LiteralInteger).value
+            local left  = (cmd.left->(as LiteralInteger)).value
+            local right = (cmd.right->(as LiteralInteger)).value
             return visit( LiteralInteger( cmd.t, left + right ) )
           case FType.STRING
-            local left  = (cmd.left as LiteralString).value
-            local right = (cmd.right as LiteralString).value
+            local left  = (cmd.left->(as LiteralString)).value
+            local right = (cmd.right->(as LiteralString)).value
             return visit( LiteralString( cmd.t, left + right ) )
           others
             throw UnsupportedOperationError()
@@ -196,7 +196,7 @@ class Resolver : Visitor
         cmd.statements = visit( cmd.statements )
 
         this_match.table_builder.add(
-          (cmd.expression as LiteralString).value,
+          (cmd.expression->(as LiteralString)).value,
           this_match.statement_lists.count
         )
         this_match.statement_lists.add( cmd.statements )
@@ -239,19 +239,19 @@ class Resolver : Visitor
 
     method on( cmd:ParserConsume )->Cmd
       local t = cmd.t
-      local literal_content = cmd.token_type as LiteralContent
+      local literal_content = cmd.token_type->(as LiteralContent)
       if (literal_content) return visit( ConsumeContent( t, literal_content.value ) )
       return visit( ConsumeToken( t, resolve_token_type(cmd.token_type) ) )
 
     method on( cmd:ParserMustConsume )->Cmd
       local t = cmd.t
-      local literal_content = cmd.token_type as LiteralContent
+      local literal_content = cmd.token_type->(as LiteralContent)
       if (literal_content) return visit( MustConsumeContent( t, literal_content.value ) )
       return visit( MustConsumeToken( t, resolve_token_type(cmd.token_type) ) )
 
     method on( cmd:ParserNextIs )->Cmd
       local t = cmd.t
-      local literal_content = cmd.token_type as LiteralContent
+      local literal_content = cmd.token_type->(as LiteralContent)
       if (literal_content) return visit( NextIsContent( t, literal_content.value ) )
       return visit( NextIsTokenType( t, resolve_token_type(cmd.token_type) ) )
 

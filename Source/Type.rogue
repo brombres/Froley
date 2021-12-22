@@ -63,9 +63,9 @@ class Type
       local types = StringTable<<NodeProperty>>()
       forEach (constructor in constructors)
         if (constructor.args)
-          local args = constructor.args as Args
+          local args = constructor.args->(as Args)
           forEach (arg in args)
-            block arg = arg as CreateCmdArg
+            block arg = arg->(as CreateCmdArg)
               local p = NodeProperty( arg.t, arg.arg_name, arg.arg_type )
               if (types.contains(p.name))
                 local existing = types[ p.name ]

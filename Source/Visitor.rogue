@@ -87,14 +87,14 @@ class Visitor<<$ReturnType>>
 
     method on_visit_children( cmd:Collect )
       if ($ReturnType instanceOf Cmd)
-        cmd.args = visit(cmd.args) as Args
+        cmd.args = visit(cmd.args)->(as Args)
       else
         visit( cmd.args )
       endIf
 
     method on_visit_children( cmd:CreateCmd )
       if ($ReturnType instanceOf Cmd)
-        cmd.args = visit(cmd.args) as Args
+        cmd.args = visit(cmd.args)->(as Args)
       else
         visit( cmd.args )
       endIf
@@ -116,7 +116,7 @@ class Visitor<<$ReturnType>>
     method on_visit_children( cmd:ElseIf )
       if ($ReturnType instanceOf Cmd)
         cmd.condition = visit(cmd.condition)
-        cmd.statements = visit(cmd.statements) as Statements
+        cmd.statements = visit(cmd.statements)->(as Statements)
       else
         visit( cmd.condition )
         visit( cmd.statements )
@@ -125,8 +125,8 @@ class Visitor<<$ReturnType>>
     method on_visit_children( cmd:ElseOn )
       if ($ReturnType instanceOf Cmd)
         cmd.token_type = visit(cmd.token_type)
-        cmd.token_types = visit(cmd.token_types) as Args
-        cmd.statements = visit(cmd.statements) as Statements
+        cmd.token_types = visit(cmd.token_types)->(as Args)
+        cmd.statements = visit(cmd.statements)->(as Statements)
       else
         visit( cmd.token_type )
         visit( cmd.token_types )
@@ -136,9 +136,9 @@ class Visitor<<$ReturnType>>
     method on_visit_children( cmd:If )
       if ($ReturnType instanceOf Cmd)
         cmd.condition = visit(cmd.condition)
-        cmd.statements = visit(cmd.statements) as Statements
+        cmd.statements = visit(cmd.statements)->(as Statements)
         cmd.else_ifs = visit(cmd.else_ifs)
-        cmd._else = visit(cmd._else) as Statements
+        cmd._else = visit(cmd._else)->(as Statements)
       else
         visit( cmd.condition )
         visit( cmd.statements )
@@ -185,10 +185,10 @@ class Visitor<<$ReturnType>>
     method on_visit_children( cmd:On )
       if ($ReturnType instanceOf Cmd)
         cmd.token_type = visit(cmd.token_type)
-        cmd.token_types = visit(cmd.token_types) as Args
-        cmd.statements = visit(cmd.statements) as Statements
+        cmd.token_types = visit(cmd.token_types)->(as Args)
+        cmd.statements = visit(cmd.statements)->(as Statements)
         cmd.else_ons = visit(cmd.else_ons)
-        cmd._else_on_others = visit(cmd._else_on_others) as Statements
+        cmd._else_on_others = visit(cmd._else_on_others)->(as Statements)
       else
         visit( cmd.token_type )
         visit( cmd.token_types )
@@ -220,7 +220,7 @@ class Visitor<<$ReturnType>>
 
     method on_visit_children( cmd:ParserCreate )
       if ($ReturnType instanceOf Cmd)
-        cmd.arg = visit(cmd.arg) as CreateCmd
+        cmd.arg = visit(cmd.arg)->(as CreateCmd)
       else
         visit( cmd.arg )
       endIf
@@ -250,14 +250,14 @@ class Visitor<<$ReturnType>>
 
     method on_visit_children( cmd:Print )
       if ($ReturnType instanceOf Cmd)
-        cmd.args = visit(cmd.args) as Args
+        cmd.args = visit(cmd.args)->(as Args)
       else
         visit( cmd.args )
       endIf
 
     method on_visit_children( cmd:Println )
       if ($ReturnType instanceOf Cmd)
-        cmd.args = visit(cmd.args) as Args
+        cmd.args = visit(cmd.args)->(as Args)
       else
         visit( cmd.args )
       endIf
@@ -287,21 +287,21 @@ class Visitor<<$ReturnType>>
 
     method on_visit_children( cmd:Routine )
       if ($ReturnType instanceOf Cmd)
-        cmd.statements = visit(cmd.statements) as Statements
+        cmd.statements = visit(cmd.statements)->(as Statements)
       else
         visit( cmd.statements )
       endIf
 
     method on_visit_children( cmd:Scan )
       if ($ReturnType instanceOf Cmd)
-        cmd.args = visit(cmd.args) as SequenceArgs
+        cmd.args = visit(cmd.args)->(as SequenceArgs)
       else
         visit( cmd.args )
       endIf
 
     method on_visit_children( cmd:ScannerConsume )
       if ($ReturnType instanceOf Cmd)
-        cmd.args = visit(cmd.args) as SequenceArgs
+        cmd.args = visit(cmd.args)->(as SequenceArgs)
       else
         visit( cmd.args )
       endIf
@@ -324,14 +324,14 @@ class Visitor<<$ReturnType>>
 
     method on_visit_children( cmd:ScannerMustConsume )
       if ($ReturnType instanceOf Cmd)
-        cmd.args = visit(cmd.args) as SequenceArgs
+        cmd.args = visit(cmd.args)->(as SequenceArgs)
       else
         visit( cmd.args )
       endIf
 
     method on_visit_children( cmd:ScannerNextIs )
       if ($ReturnType instanceOf Cmd)
-        cmd.args = visit(cmd.args) as SequenceArgs
+        cmd.args = visit(cmd.args)->(as SequenceArgs)
       else
         visit( cmd.args )
       endIf
@@ -345,7 +345,7 @@ class Visitor<<$ReturnType>>
 
     method on_visit_children( cmd:ThrowSyntaxError )
       if ($ReturnType instanceOf Cmd)
-        cmd.args = visit(cmd.args) as Args
+        cmd.args = visit(cmd.args)->(as Args)
       else
         visit( cmd.args )
       endIf
@@ -367,7 +367,7 @@ class Visitor<<$ReturnType>>
     method on_visit_children( cmd:While )
       if ($ReturnType instanceOf Cmd)
         cmd.condition = visit(cmd.condition)
-        cmd.statements = visit(cmd.statements) as Statements
+        cmd.statements = visit(cmd.statements)->(as Statements)
       else
         visit( cmd.condition )
         visit( cmd.statements )
@@ -403,28 +403,28 @@ class Visitor<<$ReturnType>>
 
     method on_visit_children( cmd:LiteralTokenType )
       if ($ReturnType instanceOf Cmd)
-        cmd.token_type = visit(cmd.token_type) as TokenDef
+        cmd.token_type = visit(cmd.token_type)->(as TokenDef)
       else
         visit( cmd.token_type )
       endIf
 
     method on_visit_children( cmd:ConsumeToken )
       if ($ReturnType instanceOf Cmd)
-        cmd.token_type = visit(cmd.token_type) as TokenDef
+        cmd.token_type = visit(cmd.token_type)->(as TokenDef)
       else
         visit( cmd.token_type )
       endIf
 
     method on_visit_children( cmd:MustConsumeToken )
       if ($ReturnType instanceOf Cmd)
-        cmd.token_type = visit(cmd.token_type) as TokenDef
+        cmd.token_type = visit(cmd.token_type)->(as TokenDef)
       else
         visit( cmd.token_type )
       endIf
 
     method on_visit_children( cmd:NextIsTokenType )
       if ($ReturnType instanceOf Cmd)
-        cmd.token_type = visit(cmd.token_type) as TokenDef
+        cmd.token_type = visit(cmd.token_type)->(as TokenDef)
       else
         visit( cmd.token_type )
       endIf
@@ -487,7 +487,7 @@ class Visitor<<$ReturnType>>
 
     method on_visit_children( cmd:ParserProduce )
       if ($ReturnType instanceOf Cmd)
-        cmd.arg = visit(cmd.arg) as CreateCmd
+        cmd.arg = visit(cmd.arg)->(as CreateCmd)
       else
         visit( cmd.arg )
       endIf

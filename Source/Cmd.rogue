@@ -508,7 +508,7 @@ class TokenDef : Cmd
     method init( t, name, symbol, attribute_cmd_list:Cmd )
       if (not String.exists(symbol)) symbol = name
       if (attribute_cmd_list)
-        attributes = (attribute_cmd_list as CmdList).list.map<<String>>( $->String )
+        attributes = attribute_cmd_list->(as CmdList).list.map<<String>>( $->String )
       endIf
 
     method has_attribute( attribute_name:String )->Logical
@@ -963,7 +963,7 @@ class OptionalPattern : Cmd
       return "OptionalPattern($)" (%pattern)
 
     method to->ScanPattern
-      return OptionalScanPattern( pattern->ScanPattern )
+      return ZeroOrOneScanPattern( pattern->ScanPattern )
 
     method type->FType
       return FType.PATTERN

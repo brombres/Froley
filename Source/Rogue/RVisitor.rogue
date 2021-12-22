@@ -130,7 +130,7 @@ class RVisitor : RogueSourceWriter
             builder.println
             builder.print(  "method on_visit_children( cmd:" ).print( node_type.name ).println( " )" )
             if (node_type.is_list and node_type.name != "CmdList")
-              builder.println "  on_visit_children( cmd as CmdList )"
+              builder.println "  on_visit_children( cmd->(as CmdList) )"
             endIf
 
             builder.println "  if ($ReturnType instanceOf Cmd)"
@@ -140,8 +140,9 @@ class RVisitor : RogueSourceWriter
                 if (not type.is_built_in)
                   builder.print   "    cmd.$ = visit(cmd.$)"(p.name,p.name)
                   if (type.name != "Cmd")
-                    builder.print   " as "
+                    builder.print   "->(as "
                     builder.print   type.name
+                    builder.print   ")"
                   endIf
                   builder.println
                 endIf

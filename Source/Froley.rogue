@@ -82,7 +82,7 @@ class Froley
         throw Error( ''Unable to create folder "$".'' (output_folder) )
       endIf
 
-      local ast = Parser(definition_file).parse as ProgramDef
+      local ast = Parser(definition_file).parse->(as ProgramDef)
       if (not ast)
         throw Error( ''No language definition found in file "$".'' (definition_file) )
       endIf

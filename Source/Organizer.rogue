@@ -47,10 +47,10 @@ class Organizer : Visitor
         cmd.args.dispatch( this )
 
         # Count number of args
-        local args = cmd.args as Args
+        local args = cmd.args->(as Args)
         cmd.arg_count = args.count
         forEach (arg at index in args)
-          block arg = arg as CreateCmdArg
+          block arg = arg->(as CreateCmdArg)
             arg.index = index
             if (arg.arg_value)
               if (not arg.arg_type) arg.arg_type = "String"
@@ -65,7 +65,7 @@ class Organizer : Visitor
         # Assign stack-relative offsets
         local stack_offset = -(cmd.node_arg_count)
         forEach (arg in args)
-          block arg = arg as CreateCmdArg
+          block arg = arg->(as CreateCmdArg)
             if (arg.is_node_arg)
               arg.stack_offset = stack_offset
               ++stack_offset
@@ -77,8 +77,8 @@ class Organizer : Visitor
           sig_builder.print( cmd.name )
           sig_builder.print( "(" )
           if (cmd.args)
-            forEach (arg at index in cmd.args as Args)
-              block arg = arg as CreateCmdArg
+            forEach (arg at index in cmd.args->(as Args))
+              block arg = arg->(as CreateCmdArg)
                 if (index > 0) sig_builder.print ','
                 sig_builder.print(arg.arg_type)
               endBlock
@@ -157,7 +157,7 @@ class Organizer : Visitor
       Program.parser = cmd
 
     method on( cmd:ParserProduce )->Cmd
-      cmd.arg = visit( cmd.arg ) as CreateCmd
+      cmd.arg = visit( cmd.arg )->(as CreateCmd)
       if (this_routine.is_binary or this_routine.is_post_unary)
         # Change 'produce X' to 'create X'
         # See on(Routine) for more details
@@ -174,7 +174,7 @@ class Organizer : Visitor
         throw t.error( ''No such token group "$".''(cmd.token_group_name) )
       endIf
       forEach (item in group.definitions)
-        local def = item as TokenDef
+        local def = item->(as TokenDef)
         local expr = LiteralString( t, def.symbol )
         local cmd_create = ScannerCreate( t, Access(t,def.name) )
         local cmd_restart = Restart( t, null )

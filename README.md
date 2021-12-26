@@ -21,7 +21,7 @@ Author         | Abe Pralle
 2. `morlock install abepralle/froley`
 
 # Documentation
-Refer to the [Wiki](wiki).
+Refer to the [Wiki](https://github.com/AbePralle/Froley/wiki).
 
 # Examples
 The [Examples](Examples) folder contains a number of examples of increasing scope. Run `rogo` in an example folder to compile and run the example.

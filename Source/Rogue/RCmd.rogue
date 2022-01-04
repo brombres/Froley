@@ -13,6 +13,12 @@ class RCmd : RogueSourceWriter
         if (line.begins_with("class "))
           local node_type = line.after_first(' ').before_first('(').before_first(' ').trimmed
           node_types.add( node_type )
+        elseIf (line.contains("extern class "))
+          # Write a comment containing "extern class NodeName" to prevent Froley from
+          # generating a NodeName in Cmd.rogue. This allows that particular node to be
+          # defined in its own file.
+          local node_type = line.after_first("extern class ").before_first('(').before_first(' ').trimmed
+          node_types.add( node_type )
         endIf
       endForEach
 
@@ -118,7 +124,7 @@ class RCmd : RogueSourceWriter
            |endClass
       endIf
 
-      if (not node_types.contains("CmdList"))
+      if (not is_node_defined("CmdList"))
         node_types.add( "CmdList" )
         builder.println ...
           @|
@@ -190,7 +196,7 @@ class RCmd : RogueSourceWriter
            |endClass
       endIf
 
-      if (not node_types.contains("Unary"))
+      if (not is_node_defined("Unary"))
         node_types.add( "Unary" )
         builder.println ...
           @|
@@ -205,7 +211,7 @@ class RCmd : RogueSourceWriter
            |endClass
       endIf
 
-      if (not node_types.contains("Binary"))
+      if (not is_node_defined("Binary"))
         node_types.add( "Binary" )
         builder.println ...
           @|
@@ -224,7 +230,7 @@ class RCmd : RogueSourceWriter
       forEach (node_type in Program.types.values.to_list.sorted((a,b)=>(a.name<b.name)))
         if (node_type.is_built_in or node_type.is_native) nextIteration
 
-        if (not node_types.contains(node_type.name))
+        if (not is_node_defined(node_type.name))
           node_types.add( node_type.name )
 
           builder.println
@@ -345,4 +351,10 @@ class RCmd : RogueSourceWriter
       content = builder->String
 
       return content
+
+    method is_node_defined( name:String )->Logical
+      if (node_types.contains(name)) return true
+      if (File.exists(File.folder(filepath)/(name+".rogue"))) return true
+      return false
+
 endClass

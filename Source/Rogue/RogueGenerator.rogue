@@ -334,6 +334,7 @@ class RogueGenerator : Visitor
       ++on_nesting_level
       writeln "_on_t"
       visit( cmd.statements )
+      writeln "_cur_t = _token_stack.pop"
       --on_nesting_level
 
       indent -= 2
@@ -360,6 +361,7 @@ class RogueGenerator : Visitor
       ++on_nesting_level
       writeln "_on_t"
       visit( cmd.statements )
+      writeln "_cur_t = _token_stack.pop"
       --on_nesting_level
       indent -= 2
       return cmd
@@ -430,7 +432,7 @@ class RogueGenerator : Visitor
 
     method on_enter( cmd:ProduceList )
       writeln "_push_list( $(_list_t) )" (cmd.list_type)
-      if (on_nesting_level) writeln "_cur_t = _token_stack.pop"
+      #if (on_nesting_level) writeln "_cur_t = _token_stack.pop"
       write   "return"
 
     method on_enter( cmd:ScanCharacters )
@@ -444,7 +446,7 @@ class RogueGenerator : Visitor
 
     method on_leave( cmd:ParserProduce )
       writeln
-      if (on_nesting_level) writeln "_cur_t = _token_stack.pop"
+      #if (on_nesting_level) writeln "_cur_t = _token_stack.pop"
       write   "return"
 
     method on_enter( cmd:ParserRead )
@@ -492,7 +494,7 @@ class RogueGenerator : Visitor
       if (is_scanner)
         write   "return true"
       else
-        if (on_nesting_level) writeln "_cur_t = _token_stack.pop"
+        #if (on_nesting_level) writeln "_cur_t = _token_stack.pop"
         write   "return"
       endIf
 

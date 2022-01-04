@@ -116,15 +116,15 @@ class RVisitor : RogueSourceWriter
       builder.indent = 4
 
       forEach (node_type in Program.types.values.to_list.sorted((a,b)=>(a.name<b.name)))
-        if (node_type.is_built_in) nextIteration
+        if (node_type.is_built_in or node_type.is_native) nextIteration
 
         if (not handled_node_types.contains(node_type.name))
           handled_node_types.add( node_type.name )
 
           local properties = node_type.properties
-          properties .= discarding( (p) with (Program) => p.type.is_built_in )
+          properties .= discarding( (p) with (Program) => p.type.is_built_in or p.type.is_native )
           local extended_properties = node_type.extended_properties
-          extended_properties .= discarding( (p) with (Program) => p.type.is_built_in )
+          extended_properties .= discarding( (p) with (Program) => p.type.is_built_in or p.type.is_native )
 
           if (extended_properties.count)
             builder.println
@@ -137,7 +137,7 @@ class RVisitor : RogueSourceWriter
             if (properties.count)
               forEach (p in properties)
                 local type = p.type
-                if (not type.is_built_in)
+                if (not (type.is_built_in or type.is_native))
                   builder.print   "    cmd.$ = visit(cmd.$)"(p.name,p.name)
                   if (type.name != "Cmd")
                     builder.print   "->(as "
@@ -153,7 +153,7 @@ class RVisitor : RogueSourceWriter
               builder.println "  else"
               forEach (p in properties)
                 local type = p.type
-                if (not type.is_built_in)
+                if (not (type.is_built_in or type.is_native))
                   builder.println "    visit( cmd.$ )"(p.name)
                 endIf
               endForEach

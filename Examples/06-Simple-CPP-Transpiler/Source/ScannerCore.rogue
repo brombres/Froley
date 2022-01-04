@@ -18,8 +18,8 @@ class ScannerCore [abstract]
   PROPERTIES
     _filepath     : String
     _scanner      : ::Scanner
-    _src_line     = 1
-    _src_column   = 1
+    line          = 1
+    column        = 1
 
     tokens        = Token[]
     buffer        = StringBuilder()
@@ -44,8 +44,10 @@ class ScannerCore [abstract]
   METHODS
     method init( file:File )
       init( file.filepath, ::Scanner(file) )
+      line   = 1
+      column = 1
 
-    method init( filepath:String, content:String )
+    method init( filepath:String, content:String, line=1, column=1 )
       init( filepath, ::Scanner(content) )
 
     method init( _filepath, _scanner )
@@ -76,8 +78,6 @@ class ScannerCore [abstract]
       tokens = Token[]
       buffer.clear
       output.clear
-      _src_line = 1
-      _src_column = 1
       halt = false
 
     method _describe_character( c:Character )->String
@@ -106,6 +106,14 @@ class ScannerCore [abstract]
       if (pattern.scan(_scanner)) return
       _throw_expected_string_error( pattern->String )
 
+    method _next_is( text:String )->Logical
+      if (not _scanner.has_another(text.count)) return false
+      local pos = _scanner.position
+      forEach (ch at index in text)
+        if (ch != _scanner.data[pos+index]) return false
+      endForEach
+      return true
+
     method _on_output_line
       # Default behavior: print out 'output' and clear it. Can override this method.
       print( output ).flush
@@ -122,7 +130,7 @@ class ScannerCore [abstract]
       return true
 
     method _t( type:TokenType, content=null:String )->Token
-      return Token( type, _filepath, _scanner.source, _src_line, _src_column, content )
+      return Token( type, _filepath, _scanner.source, line, column, content )
 
     method _throw_expected_string_error( st:String )
       local message = "Syntax error - expected $, found " (st)
@@ -156,8 +164,8 @@ class ScannerCore [abstract]
               halt = true
               return false
             endIf
-            _src_line   = _scanner.line
-            _src_column = _scanner.column
+            line   = _scanner.line
+            column = _scanner.column
             if (_scanner.consume('\n'))
               _add( TokenType.EOL )
               return false

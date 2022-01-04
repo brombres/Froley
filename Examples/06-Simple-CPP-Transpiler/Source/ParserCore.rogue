@@ -43,7 +43,12 @@ class ParserCore [abstract]
 
   METHODS
     method init( file:File )
-      local scanner = Scanner( file )
+      init( Scanner(file) )
+
+    method init( filepath:String, content:String )
+      init( Scanner(filepath,content) )
+
+    method init( scanner:Scanner )
       local tokens = scanner.tokenize
       if (scanner.output.count) print scanner.output; flush
       init( tokens )
@@ -150,7 +155,6 @@ class ParserCore [abstract]
     method _push( cmd:Cmd, node_arg_count:Int32 )
       _cmd_stack.discard_from( _cmd_stack.count - node_arg_count )
       _cmd_stack.add( cmd )
-      if (_token_stack.count) _cur_t = _token_stack.pop
 
     method _push_list( list:Cmd )
       local i1 = _list_starts.remove_last
@@ -264,6 +268,7 @@ class ParserCore [abstract]
               _execute(ip_arg_list)
               _pop_frame
               _push( Print(_cur_t,_node_arg(-1)), 1 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.KEYWORD_PRINTLN)
@@ -271,6 +276,7 @@ class ParserCore [abstract]
               _execute(ip_arg_list)
               _pop_frame
               _push( Println(_cur_t,_node_arg(-1)), 1 )
+              _cur_t = _token_stack.pop
               return
             endIf
             _execute(ip_expression)
@@ -301,6 +307,7 @@ class ParserCore [abstract]
               _execute(ip_assign)
               _pop_frame
               _push( Assign(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
+              _cur_t = _token_stack.pop
               return
             endIf
             return
@@ -319,6 +326,7 @@ class ParserCore [abstract]
               _push( Add(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
               _execute(ip_add_subtract__inner)
               _pop_frame
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.SYMBOL_MINUS)
@@ -329,6 +337,7 @@ class ParserCore [abstract]
               _push( Subtract(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
               _execute(ip_add_subtract__inner)
               _pop_frame
+              _cur_t = _token_stack.pop
               return
             endIf
             return
@@ -347,6 +356,7 @@ class ParserCore [abstract]
               _push( Multiply(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
               _execute(ip_multiply_divide__inner)
               _pop_frame
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.SYMBOL_SLASH)
@@ -357,6 +367,7 @@ class ParserCore [abstract]
               _push( Divide(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
               _execute(ip_multiply_divide__inner)
               _pop_frame
+              _cur_t = _token_stack.pop
               return
             endIf
             return
@@ -367,6 +378,7 @@ class ParserCore [abstract]
               _execute(ip_negate)
               _pop_frame
               _push( Negate(_cur_t,_node_arg(-1)), 1 )
+              _cur_t = _token_stack.pop
               return
             endIf
             _execute(ip_term)
@@ -378,21 +390,25 @@ class ParserCore [abstract]
               _execute(ip_expression)
               _pop_frame
               if (not _consume(TokenType.SYMBOL_CLOSE_PAREN)) _throw_syntax_error( &expected=TokenType.SYMBOL_CLOSE_PAREN )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.IDENTIFIER)
               _on_t
               _push( Access(_cur_t,_cur_t.content), 0 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.NUMBER)
               _on_t
               _push( Number(_cur_t,_string_to_Real(_cur_t.content)), 0 )
+              _cur_t = _token_stack.pop
               return
             endIf
             if (_next_t.type == TokenType.STRING)
               _on_t
               _push( LiteralString(_cur_t,_cur_t.content), 0 )
+              _cur_t = _token_stack.pop
               return
             endIf
             _throw_syntax_error

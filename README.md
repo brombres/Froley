@@ -19,8 +19,14 @@ Author         | Abe Pralle
 6. Froley is self-hosting - the Froley compiler framework is written in Froley.
 
 # Installation
+
+## New Installation
+
 1. Install [morlock.sh](https://morlock.sh)
 2. `morlock install abepralle/froley`
+
+## Updating Existing Installation
+`morlock update froley`
 
 # Documentation
 Refer to the [Wiki](https://github.com/AbePralle/Froley/wiki).

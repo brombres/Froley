@@ -8,6 +8,7 @@ class Type
     base_type    : Type
     is_node      : Logical
     is_built_in  : Logical   # String etc.
+    is_native    : Logical
     is_list      : Logical
     constructors = StringTable<<CreateCmd>>()
 
@@ -45,7 +46,7 @@ class Type
       return name.hash_code
 
     method is_defined->Logical
-      return is_node or is_built_in or is_list
+      return is_node or is_built_in or is_list or is_native
 
     method is_instance_of( other_type:Type )->Logical
       if (this is other_type) return true
@@ -86,6 +87,9 @@ class Type
     method set_base_type( t:Token, new_base_type:Type )
       if (is_built_in or new_base_type.is_built_in)
         throw t.error( "Cannot extend built-in types." )
+      endIf
+      if (is_native or new_base_type.is_native)
+        throw t.error( "Cannot extend native types." )
       endIf
       if (new_base_type.is_instance_of(this))
         throw t.error( "Illegal cyclic inheritance." )

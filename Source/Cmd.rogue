@@ -1861,3 +1861,9 @@ class ParserProduce : Cmd
       return "ParserProduce($)" (%arg)
 
 endClass
+
+class NativeTypes : CmdList
+  METHODS
+    method description->String
+      return "NativeTypes" + list_description
+endClass

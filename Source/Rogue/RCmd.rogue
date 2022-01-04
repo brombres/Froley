@@ -222,7 +222,7 @@ class RCmd : RogueSourceWriter
       endIf
 
       forEach (node_type in Program.types.values.to_list.sorted((a,b)=>(a.name<b.name)))
-        if (node_type.is_built_in) nextIteration
+        if (node_type.is_built_in or node_type.is_native) nextIteration
 
         if (not node_types.contains(node_type.name))
           node_types.add( node_type.name )
@@ -272,7 +272,7 @@ class RCmd : RogueSourceWriter
             builder.println " )"
             builder.println "      prior.init( existing )"
             forEach (p in extended_properties)
-              if (p.type.is_built_in)
+              if (p.type.is_built_in or p.type.is_native)
                 builder.println "      $ = existing.$"(p.name,p.name)
               else
                 builder.println "      if (existing.$) $ = existing.$.cloned"(p.name,p.name,p.name)

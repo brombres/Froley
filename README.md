@@ -1,3 +1,5 @@
+![Froley Logo](Media/Logo/Froley.png)
+
 # Froley
 
 About          | Current Release

@@ -310,6 +310,8 @@ scanner
       case "tokens"
         mode scan_tokens_id
         produce KEYWORD_TOKENS
+      case "elseOnOthers"
+        produce KEYWORD_ELSE_OTHERS
       produceAny CommonKeywords
       produceAny ParserKeywords
       produceAny ScannerKeywords

@@ -75,7 +75,7 @@ class CPPWriter( filepath:String ) : Visitor
 
     method on_visit( cmd:Println )
       if (cmd.args.count)
-        on_visit( cmd as Print )
+        on_visit( cmd->(as Print) )
         builder.print " << endl"
       else
         builder.print "cout << endl"

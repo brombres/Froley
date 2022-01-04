@@ -116,7 +116,12 @@ class ParserCore [abstract]
 
   METHODS
     method init( file:File )
-      local scanner = Scanner( file )
+      init( Scanner(file) )
+
+    method init( filepath:String, content:String )
+      init( Scanner(filepath,content) )
+
+    method init( scanner:Scanner )
       local tokens = scanner.tokenize
       if (scanner.output.count) print scanner.output; flush
       init( tokens )

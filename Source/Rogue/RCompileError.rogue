@@ -19,6 +19,7 @@ class RCompileError : RogueSourceWriter
          |
          |    method description->String
          |      local w = Console.width.or_smaller(80)
+         |      if (w <= 0) w = 80
          |      local builder = StringBuilder()
          |      builder.println( "=" * w )
          |      builder.print( "ERROR" )

@@ -317,8 +317,8 @@ class RogueGenerator : Visitor
       return cmd
 
     method on_enter( cmd:MarkPosition )
-      writeln "_src_line   = _scanner.line"
-      write   "_src_column = _scanner.column"
+      writeln "line   = _scanner.line"
+      write   "column = _scanner.column"
 
     method on_enter( cmd:Mode )
       write "start_ip = ip_"

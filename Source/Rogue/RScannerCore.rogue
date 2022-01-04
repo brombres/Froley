@@ -25,8 +25,8 @@ class RScannerCore( generator, scanner_def:ScannerDef ) : RogueSourceWriter
          |  PROPERTIES
          |    _filepath     : String
          |    _scanner      : ::Scanner
-         |    _src_line     = 1
-         |    _src_column   = 1
+         |    line          = 1
+         |    column        = 1
          |
          |    tokens        = Token[]
          |    buffer        = StringBuilder()
@@ -74,8 +74,10 @@ class RScannerCore( generator, scanner_def:ScannerDef ) : RogueSourceWriter
          |  METHODS
          |    method init( file:File )
          |      init( file.filepath, ::Scanner(file) )
+         |      line   = 1
+         |      column = 1
          |
-         |    method init( filepath:String, content:String )
+         |    method init( filepath:String, content:String, line=1, column=1 )
          |      init( filepath, ::Scanner(content) )
          |
          |    method init( _filepath, _scanner )
@@ -113,8 +115,6 @@ class RScannerCore( generator, scanner_def:ScannerDef ) : RogueSourceWriter
          |      tokens = Token[]
          |      buffer.clear
          |      output.clear
-         |      _src_line = 1
-         |      _src_column = 1
          |      halt = false
          |
          |    method _describe_character( c:Character )->String
@@ -167,7 +167,7 @@ class RScannerCore( generator, scanner_def:ScannerDef ) : RogueSourceWriter
          |      return true
          |
          |    method _t( type:TokenType, content=null:String )->Token
-         |      return Token( type, _filepath, _scanner.source, _src_line, _src_column, content )
+         |      return Token( type, _filepath, _scanner.source, line, column, content )
          |
          |    method _throw_expected_string_error( st:String )
          |      local message = "Syntax error - expected $, found " (st)

@@ -172,11 +172,11 @@ class RParserCore( generator, parser_def:ParserDef ) : RogueSourceWriter
          |      print( output ).flush
          |      output.clear
          |
-         |    method _on_t
-         |     _token_stack.push( _cur_t )
-         |     _cur_t = _next_t
+         |    method _on_t->Token
+         |     local result = _next_t
          |     ++_position
          |     _next_t = _peek
+         |     return result
          |
          |    method _peek->Token
          |      if (_position < _limit) return _tokens[ _position ]
@@ -186,6 +186,10 @@ class RParserCore( generator, parser_def:ParserDef ) : RogueSourceWriter
          |    method _pop_frame
          |      _token_stack.pop_frame
          |      _cur_t = _token_stack.pop
+         |
+         |    method _push_frame
+         |      _token_stack.push( _cur_t )
+         |      _token_stack.push_frame
          |
          |    method _push( cmd:Cmd, node_arg_count:Int32 )
          |      _cmd_stack.discard_from( _cmd_stack.count - node_arg_count )
@@ -275,8 +279,7 @@ class RParserCore( generator, parser_def:ParserDef ) : RogueSourceWriter
          |      throw _peek.error( message )
          |
          |    method _execute( ip:Int32 )
-         |      _token_stack.push( _cur_t )
-         |      _token_stack.push_frame
+         |      _push_frame
          |      loop
          |        ++ip
          |        which (ip-1)

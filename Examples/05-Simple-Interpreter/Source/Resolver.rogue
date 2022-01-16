@@ -64,50 +64,35 @@ class Resolver : Visitor
       else
         return cmd
       endIf
+
+    method on_visit_node( cmd:Number )
+      @trace cmd
 endClass
 
-augment Cmd
+augment
   METHODS
-    method require_value->Cmd
+    method Cmd.require_value->Cmd
       throw t.error( "Value expected." )
 
-    method resolve_assignment( resolver:Resolver, new_value:Cmd )->Cmd
+    method Cmd.resolve_assignment( resolver:Resolver, new_value:Cmd )->Cmd
       throw t.error( "Illegal assignment target." )
-endAugment
 
-augment Unary
-  METHODS
-    method require_value->Cmd
+    method Unary.require_value->Cmd
       return this
-endAugment
 
-augment Binary
-  METHODS
-    method require_value->Cmd
+    method Binary.require_value->Cmd
       return this
-endAugment
 
-augment Number
-  METHODS
-    method require_value->Cmd
+    method Number.require_value->Cmd
       return this
-endAugment
 
-augment LiteralString
-  METHODS
-    method require_value->Cmd
+    method LiteralString.require_value->Cmd
       return this
-endAugment
 
-augment ReadVar
-  METHODS
-    method require_value->Cmd
+    method ReadVar.require_value->Cmd
       return this
-endAugment
 
-augment Access
-  METHODS
-    method resolve_assignment( resolver:Resolver, new_value:Cmd )->Cmd
-      return resolver.visit( WriteVar(t,name,new_value) )
+    method Access.resolve_assignment( resolver:Resolver, new_value:Cmd )->Cmd
+      return resolver.visit_node( WriteVar(t,name,new_value) )
 endAugment
 

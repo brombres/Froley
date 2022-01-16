@@ -71,6 +71,9 @@ class RCmd : RogueSourceWriter
            |    method dispatch_on_visit<<$VisitorType>>( visitor:$VisitorType ) [propagated]
            |      visitor.on_visit( this )
            |
+           |    method dispatch_on_visit_node<<$VisitorType>>( visitor:$VisitorType ) [propagated]
+           |      visitor.on_visit_node( this )
+           |
            |    method dispatch_on_visit_children<<$VisitorType>>( visitor:$VisitorType ) [propagated]
            |      visitor.on_visit_children( this )
            |

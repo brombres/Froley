@@ -35,7 +35,7 @@ class RVisitor : RogueSourceWriter
                     |      #   visit_content(cmd)       -> on_visit(cmd:CmdType)
                     |      #     visit_node(cmd)           -> on_visit_node(cmd:CmdType)
                     |      #     visit_children(cmd)       -> on_visit_children(cmd:CmdType)
-                    |      #                            on_resolve(cmd:CmdType)->Cmd/ResultType
+                    |      #                            on_validate(cmd:CmdType)->Cmd/ResultType
                     |      #
                     |      # For a regular 'Visitor' AKA 'Visitor<<Cmd>>':
                     |      # - The AST is rebuilt with the return value of this call, so return
@@ -43,9 +43,9 @@ class RVisitor : RogueSourceWriter
                     |      #   replace this subtree.
                     |      visit_content( cmd )
                     |      if ($ReturnType instanceOf Cmd)
-                    |        return resolve( cmd )
+                    |        return validate( cmd )
                     |      else
-                    |        resolve( cmd )
+                    |        validate( cmd )
                     |        return $ReturnType.meta.default_value
                     |      endIf
                     |
@@ -56,7 +56,7 @@ class RVisitor : RogueSourceWriter
                     |      visit_node( cmd )
                     |      visit_children( cmd )
                     |
-                    |    method on_resolve( cmd:Cmd )->$ReturnType
+                    |    method on_validate( cmd:Cmd )->$ReturnType
                     |      if ($ReturnType instanceOf Cmd) return cmd
                     |      else                            return $ReturnType.meta.default_value
                     |
@@ -90,8 +90,8 @@ class RVisitor : RogueSourceWriter
                     |      cmd.dispatch_on_visit<<ThisType>>( this )
                     |      return cmd
                     |
-                    |    method resolve( cmd:Cmd )->$ReturnType [propagated]
-                    |      return cmd.dispatch_on_resolve<<ThisType,$ReturnType>>( this )
+                    |    method validate( cmd:Cmd )->$ReturnType [propagated]
+                    |      return cmd.dispatch_on_validate<<ThisType,$ReturnType>>( this )
                     |
                     |    method on_visit_node( cmd:Cmd )
                     |      # Overloaded automatically by the Froley compiler

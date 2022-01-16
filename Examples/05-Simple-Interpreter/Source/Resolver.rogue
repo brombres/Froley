@@ -64,9 +64,6 @@ class Resolver : Visitor
       else
         return cmd
       endIf
-
-    method on_resolve( cmd:Number )->Cmd
-      return cmd
 endClass
 
 augment

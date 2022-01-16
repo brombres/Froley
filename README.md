@@ -4,8 +4,8 @@
 
 About          | Current Release
 ---------------|-----------------------
-Version        | 3.6
-Date           | January 15, 2022
+Version        | 3.7
+Date           | January 16, 2022
 Platforms      | macOS, Linux, Windows
 Output Targets | Rogue
 Author         | Abe Pralle

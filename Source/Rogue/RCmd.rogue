@@ -77,6 +77,9 @@ class RCmd : RogueSourceWriter
            |    method dispatch_on_visit_children<<$VisitorType>>( visitor:$VisitorType ) [propagated]
            |      visitor.on_visit_children( this )
            |
+           |    method dispatch_on_resolve<<$VisitorType,$ReturnType>>( visitor:$VisitorType )->$ReturnType [propagated]
+           |      return visitor.on_resolve( this )
+           |
            |    method first->Cmd
            |      throw UnsupportedOperationError()
            |

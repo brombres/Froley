@@ -35,14 +35,19 @@ class RVisitor : RogueSourceWriter
                     |      #   visit_content(cmd)       -> on_visit(cmd:CmdType)
                     |      #     visit_node(cmd)           -> on_visit_node(cmd:CmdType)
                     |      #     visit_children(cmd)       -> on_visit_children(cmd:CmdType)
+                    |      #                            on_resolve(cmd:CmdType)->Cmd/ResultType
                     |      #
                     |      # For a regular 'Visitor' AKA 'Visitor<<Cmd>>':
                     |      # - The AST is rebuilt with the return value of this call, so return
                     |      #   'cmd' to keep this subtree or else return a different Cmd node to
                     |      #   replace this subtree.
                     |      visit_content( cmd )
-                    |      if ($ReturnType instanceOf Cmd) return cmd
-                    |      else                            return $ReturnType.meta.default_value
+                    |      if ($ReturnType instanceOf Cmd)
+                    |        return resolve( cmd )
+                    |      else
+                    |        resolve( cmd )
+                    |        return $ReturnType.meta.default_value
+                    |      endIf
                     |
                     |    method on_visit( cmd:Cmd )
                     |      # Called from on(CmdType). If you overload this method with an extended
@@ -50,6 +55,10 @@ class RVisitor : RogueSourceWriter
                     |      # when you call visit_children(cmd).
                     |      visit_node( cmd )
                     |      visit_children( cmd )
+                    |
+                    |    method on_resolve( cmd:Cmd )->$ReturnType
+                    |      if ($ReturnType instanceOf Cmd) return cmd
+                    |      else                            return $ReturnType.meta.default_value
                     |
                     |    method visit( cmd:Cmd )->$ReturnType [propagated]
                     |      # Call to invoke the appropriate on/on_visit() for the given Cmd type.
@@ -80,6 +89,9 @@ class RVisitor : RogueSourceWriter
                     |      # Primarily for internal use - see on(Cmd) for usage.
                     |      cmd.dispatch_on_visit<<ThisType>>( this )
                     |      return cmd
+                    |
+                    |    method resolve( cmd:Cmd )->$ReturnType [propagated]
+                    |      return cmd.dispatch_on_resolve<<ThisType,$ReturnType>>( this )
                     |
                     |    method on_visit_node( cmd:Cmd )
                     |      # Overloaded automatically by the Froley compiler

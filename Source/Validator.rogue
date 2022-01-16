@@ -2,23 +2,26 @@ module Froley
 
 class Validator : Visitor
   METHODS
-    method on_enter( cmd:Collect )
+    method on_visit( cmd:Collect )
       if (cmd.args.count == 0) throw cmd.args.t.error( "One or more arguments expected." )
+      visit_children( cmd )
 
-    method on_enter( cmd:Print )
+    method on_visit( cmd:Print )
       if (cmd.args.count == 0)
         throw cmd.t.error( "Argument expected for 'print'." )
       endIf
+      visit_children( cmd )
 
-    method on_enter( program:ProgramDef )
+    method on_visit( cmd:ProgramDef )
       forEach (type in Program.types)
         if (not type.is_defined)
           throw type.t.error( "Use of undefined node type '$'."(type.name) )
         endIf
         if (type.is_node and not type.base_type) type.base_type = Program.type_Cmd
       endForEach
+      visit_children( cmd )
 
-    method on_enter( cmd:ParserDef )
+    method on_visit( cmd:ParserDef )
       if (cmd.vars.count)
         forEach (v in cmd.vars)
           if (v.type == FType.NONE)
@@ -26,8 +29,9 @@ class Validator : Visitor
           endIf
         endForEach
       endIf
+      visit_children( cmd )
 
-    method on_enter( cmd:ScannerDef )
+    method on_visit( cmd:ScannerDef )
       if (cmd.vars.count)
         forEach (v in cmd.vars)
           if (v.type == FType.NONE)
@@ -35,5 +39,6 @@ class Validator : Visitor
           endIf
         endForEach
       endIf
+      visit_children( cmd )
 endClass
 

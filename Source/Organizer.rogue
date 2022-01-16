@@ -5,7 +5,7 @@ class Organizer : Visitor
     this_match      : Match
 
   METHODS
-    method on_enter( cmd:CreateCmd )
+    method on_visit( cmd:CreateCmd )
       local node_type = Program.type( cmd.t, cmd.name )
       if (cmd.base_type_name)
         local base_type = Program.type( cmd.t, cmd.base_type_name )
@@ -90,10 +90,12 @@ class Organizer : Visitor
 
         node_type.add( cmd )
       endIf
+      visit_children( cmd )
 
-    method on_enter( cmd:CreateList )
+    method on_visit( cmd:CreateList )
       if (not cmd.list_type) cmd.list_type = "CmdList"
       Program.type(cmd.t,cmd.list_type).is_list = true
+      visit_children( cmd )
 
     method on( cmd:Identifier )->Cmd
       if (this_element instanceOf ParserDef and cmd.name == "content")
@@ -105,12 +107,13 @@ class Organizer : Visitor
       if (cmd.value.count == 1) return visit( LiteralCharacter( cmd.t, cmd.value[0] ) )
       else                      return visit( LiteralString( cmd.t, cmd.value ) )
 
-    method on_enter( cmd:NativeTypes )
+    method on_visit( cmd:NativeTypes )
       forEach (native_type in cmd)
         Program.type( native_type.t, native_type->String ).is_native = true
       endForEach
+      visit_children( cmd )
 
-    method on_enter( cmd:On )
+    method on_visit( cmd:On )
       if (not cmd.is_organized)
         cmd.is_organized = true
         # See on(Routine) for more details
@@ -130,8 +133,9 @@ class Organizer : Visitor
           cmd.statements.add( Return(cmd.t,null) )
         endIf
       endIf
+      visit_children( cmd )
 
-    method on_enter( cmd:ElseOn )
+    method on_visit( cmd:ElseOn )
       if (not cmd.is_organized)
         cmd.is_organized = true
         if (this_routine.is_binary)
@@ -150,16 +154,19 @@ class Organizer : Visitor
           cmd.statements.add( Return(cmd.t,null) )
         endIf
       endIf
+      visit_children( cmd )
 
-    method on_enter( cmd:ParserCallUserMethod )
+    method on_visit( cmd:ParserCallUserMethod )
       Program.parser_user_calls.add( cmd.fn_name )
+      visit_children( cmd )
 
-    method on_enter( cmd:ParserDef )
+    method on_visit( cmd:ParserDef )
       if (not cmd.name) cmd.name = "Parser"
       if (Program.parser and Program.parser is not cmd)
         throw cmd.t.error( "Multiple parsers defined - only one parser can be defined." )
       endIf
       Program.parser = cmd
+      visit_children( cmd )
 
     method on( cmd:ParserProduce )->Cmd
       cmd.arg = visit( cmd.arg )->(as CreateCmd)
@@ -189,11 +196,12 @@ class Organizer : Visitor
       endForEach
       return null
 
-    method on_enter( cmd:ProduceList )
+    method on_visit( cmd:ProduceList )
       if (not cmd.list_type) cmd.list_type = "CmdList"
       Program.type(cmd.t,cmd.list_type).is_list = true
+      visit_children( cmd )
 
-    method on_enter( cmd:Routine )
+    method on_visit( cmd:Routine )
       if (not cmd.is_organized)
         cmd.is_organized = true
         if (cmd.attributes)
@@ -262,16 +270,19 @@ class Organizer : Visitor
           endIf
         endIf
       endIf
+      visit_children( cmd )
 
-    method on_enter( cmd:ScannerCallUserMethod )
+    method on_visit( cmd:ScannerCallUserMethod )
       Program.scanner_user_calls.add( cmd.fn_name )
+      visit_children( cmd )
 
-    method on_enter( cmd:ScannerDef )
+    method on_visit( cmd:ScannerDef )
       if (not cmd.name) cmd.name = "Scanner"
       if (Program.scanner and Program.scanner is not cmd)
         throw cmd.t.error( "Multiple scanners defined - only one scanner can be defined." )
       endIf
       Program.scanner = cmd
+      visit_children( cmd )
 
 endClass
 

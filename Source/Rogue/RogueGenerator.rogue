@@ -46,10 +46,11 @@ class RogueGenerator : Visitor
         RMain( this, Program.main_filename ).create_missing
       endIf
 
-    method on_enter( cmd:BeginList )
+    method on_visit( cmd:BeginList )
       write   "_begin_list"
+      visit_children( cmd )
 
-    method on_enter( cmd:Call )
+    method on_visit( cmd:Call )
       if (is_scanner)
         write "if (not _execute(ip_"
         write cmd.routine_def.name
@@ -60,17 +61,22 @@ class RogueGenerator : Visitor
         writeln ")"
         write   "_pop_frame"
       endIf
+      visit_children( cmd )
 
-    method on_leave( cmd:CastToLogical )
+    method on_visit( cmd:CastToLogical )
+      visit_children( cmd )
       write "->Logical"
 
-    method on_leave( cmd:CastToCharacter )
+    method on_visit( cmd:CastToCharacter )
+      visit_children( cmd )
       write "->Character"
 
-    method on_leave( cmd:CastToInteger )
+    method on_visit( cmd:CastToInteger )
+      visit_children( cmd )
       write "->Int32"
 
-    method on_leave( cmd:CastToString )
+    method on_visit( cmd:CastToString )
+      visit_children( cmd )
       write "->String"
 
     method on( cmd:Collect )->Cmd
@@ -130,10 +136,9 @@ class RogueGenerator : Visitor
       write ")"
       return cmd
 
-    method on_enter( cmd:ConsumeCharacters )
+    method on_visit( cmd:ConsumeCharacters )
       write "_scanner.consume("
-
-    method on_leave( cmd:ConsumeCharacters )
+      visit_children( cmd )
       write ")"
 
     method on( cmd:ConsumeContent )->Cmd
@@ -142,10 +147,12 @@ class RogueGenerator : Visitor
       write ")"
       return cmd
 
-    method on_enter( cmd:ConsumeEOLs )
+    method on_visit( cmd:ConsumeEOLs )
       write "_consume_eols"
+      visit_children( cmd )
 
-    method on_leave( cmd:ConsumePattern )
+    method on_visit( cmd:ConsumePattern )
+      visit_children( cmd )
       write ".scan(_scanner)"
 
     method on( cmd:ConsumeToken )->Cmd
@@ -185,22 +192,22 @@ class RogueGenerator : Visitor
       endIf
       return cmd
 
-    method on_enter( cmd:CreateList )
+    method on_visit( cmd:CreateList )
       write "_push_list( $(_list_t) )" (cmd.list_type)
+      visit_children( cmd )
 
-    method on_enter( cmd:CreateNull )
+    method on_visit( cmd:CreateNull )
       write "_push( null, 0 )"
+      visit_children( cmd )
 
-    method on_enter( cmd:MustConsumeCharacters )
+    method on_visit( cmd:MustConsumeCharacters )
       write "_must_consume( "
-
-    method on_leave( cmd:MustConsumeCharacters )
+      visit_children( cmd )
       write " )"
 
-    method on_enter( cmd:MustConsumePattern )
+    method on_visit( cmd:MustConsumePattern )
       write "_must_consume( "
-
-    method on_leave( cmd:MustConsumePattern )
+      visit_children( cmd )
       write " )"
 
     method on( cmd:MustConsumeToken )->Cmd
@@ -211,24 +218,29 @@ class RogueGenerator : Visitor
       write " )"
       return cmd
 
-    method on_enter( cmd:ParserHasAnother )
+    method on_visit( cmd:ParserHasAnother )
       write "(_position < _limit)"
+      visit_children( cmd )
 
-    method on_enter( cmd:Pattern )
+    method on_visit( cmd:Pattern )
       write cmd.reference_name
+      visit_children( cmd )
 
-    method on_enter( cmd:Decrement )
+    method on_visit( cmd:Decrement )
       write "--"
+      visit_children( cmd )
 
-    method on_enter( cmd:DiscardList )
+    method on_visit( cmd:DiscardList )
       write "_discard_list"
+      visit_children( cmd )
 
-    method on_enter( cmd:DiscardPosition )
+    method on_visit( cmd:DiscardPosition )
       if (is_scanner)
         write @|if (_position_stack.count) _position_stack.remove_last
       else
         write "_discard_position"
       endIf
+      visit_children( cmd )
 
     method on( cmd:If )->Cmd
       write   "if ("
@@ -259,17 +271,20 @@ class RogueGenerator : Visitor
       indent -= 2
       return cmd
 
-    method on_enter( cmd:Halt )
+    method on_visit( cmd:Halt )
       writeln "halt = true"
       write   "return false"
+      visit_children( cmd )
 
-    method on_enter( cmd:Increment )
+    method on_visit( cmd:Increment )
       write "++"
+      visit_children( cmd )
 
-    method on_enter( cmd:ScannerHasAnother )
+    method on_visit( cmd:ScannerHasAnother )
       write "_scanner.has_another"
+      visit_children( cmd )
 
-    method on_enter( cmd:LiteralCharacter )
+    method on_visit( cmd:LiteralCharacter )
       which (cmd.value)
         case '\\': write @|'\\'
         case '\n': write @|'\n'
@@ -278,19 +293,24 @@ class RogueGenerator : Visitor
         others
           write( "'$'"(to_escaped_ascii(cmd.value,"'")) )
       endWhich
+      visit_children( cmd )
 
-    method on_enter( cmd:LiteralInteger )
+    method on_visit( cmd:LiteralInteger )
       writer.print( cmd.value )
+      visit_children( cmd )
 
-    method on_enter( cmd:LiteralLogical )
+    method on_visit( cmd:LiteralLogical )
       writer.print( cmd.value )
+      visit_children( cmd )
 
-    method on_enter( cmd:LiteralString )
+    method on_visit( cmd:LiteralString )
       writer.print( ''"$"''(to_escaped_ascii(cmd.value,''"'')) )
+      visit_children( cmd )
 
-    method on_enter( cmd:LiteralTokenType )
+    method on_visit( cmd:LiteralTokenType )
       write "TokenType."
       write cmd.token_type.name
+      visit_children( cmd )
 
     method on( cmd:LogicalAnd )->Cmd
       write "("
@@ -300,10 +320,9 @@ class RogueGenerator : Visitor
       write ")"
       return cmd
 
-    method on_enter( cmd:LogicalNot )
+    method on_visit( cmd:LogicalNot )
       write "(not "
-
-    method on_leave( cmd:LogicalNot )
+      visit_children( cmd )
       write ")"
 
     method on( cmd:LogicalOr )->Cmd
@@ -314,13 +333,15 @@ class RogueGenerator : Visitor
       write ")"
       return cmd
 
-    method on_enter( cmd:MarkPosition )
+    method on_visit( cmd:MarkPosition )
       writeln "line   = _scanner.line"
       write   "column = _scanner.column"
+      visit_children( cmd )
 
-    method on_enter( cmd:Mode )
+    method on_visit( cmd:Mode )
       write "start_ip = ip_"
       write cmd.routine_name
+      visit_children( cmd )
 
     method on( cmd:On )->Cmd
 
@@ -364,18 +385,21 @@ class RogueGenerator : Visitor
       indent -= 2
       return cmd
 
-    method on_enter( cmd:ScannerCallUserMethod )
+    method on_visit( cmd:ScannerCallUserMethod )
       writeln "this.ip = ip"
       writeln cmd.fn_name
       write   "ip = this.ip"
+      visit_children( cmd )
 
-    method on_enter( cmd:MustConsumeContent )
+    method on_visit( cmd:MustConsumeContent )
       write "_must_consume_content("
       write ''"$"'' (to_escaped_ascii(cmd.content, "\""))
       write ")"
+      visit_children( cmd )
 
-    method on_enter( cmd:NextHasAttribute )
+    method on_visit( cmd:NextHasAttribute )
       write "(_next_t.type.attributes & TokenType.ATTRIBUTE_$)?"(cmd.name.to_uppercase)
+      visit_children( cmd )
 
     method on( cmd:NextIsCharacters )->Cmd
       if (cmd.value.type == FType.CHARACTER)
@@ -389,18 +413,21 @@ class RogueGenerator : Visitor
       endIf
       return cmd
 
-    method on_enter( cmd:NextIsContent )
+    method on_visit( cmd:NextIsContent )
       write ''(_next_t.content and _next_t.content == "''
       write to_escaped_ascii( cmd.content, "\"" )
       write ''")''
+      visit_children( cmd )
 
-    method on_leave( cmd:NextIsPattern )
+    method on_visit( cmd:NextIsPattern )
+      visit_children( cmd )
       write ".is_next(_scanner)"
 
-    method on_enter( cmd:ParserCallUserMethod )
+    method on_visit( cmd:ParserCallUserMethod )
       writeln "this.ip = ip"
       writeln cmd.fn_name
       write   "ip = this.ip"
+      visit_children( cmd )
 
     method on( cmd:NextIsTokenType )->Cmd
       write "(_next_t.type == TokenType."
@@ -428,30 +455,32 @@ class RogueGenerator : Visitor
       write "_on_output_line"
       return cmd
 
-    method on_enter( cmd:ProduceList )
+    method on_visit( cmd:ProduceList )
       writeln "_push_list( $(_list_t) )" (cmd.list_type)
       write   "return"
+      visit_children( cmd )
 
-    method on_enter( cmd:ScanCharacters )
+    method on_visit( cmd:ScanCharacters )
       write "_scan("
-
-    method on_leave( cmd:ScanCharacters )
+      visit_children( cmd )
       write ")"
 
-    method on_leave( cmd:ScanPatternCmd )
+    method on_visit( cmd:ScanPatternCmd )
+      visit_children( cmd )
       write ".scan(_scanner,buffer)"
 
-    method on_leave( cmd:ParserProduce )
+    method on_visit( cmd:ParserProduce )
+      visit_children( cmd )
       writeln
       write   "return"
 
-    method on_enter( cmd:ParserRead )
+    method on_visit( cmd:ParserRead )
       write "_read"
+      visit_children( cmd )
 
-    method on_enter( cmd:ScannerCreate )
+    method on_visit( cmd:ScannerCreate )
       write   "_add( "
-
-    method on_leave( cmd:ScannerCreate )
+      visit_children( cmd )
       write " )"
 
     method on( cmd:ScannerPeek )->Cmd
@@ -463,35 +492,41 @@ class RogueGenerator : Visitor
       endIf
       return cmd
 
-    method on_enter( cmd:ScannerRead )
+    method on_visit( cmd:ScannerRead )
       write "_scanner.read"
+      visit_children( cmd )
 
-    method on_enter( cmd:ReadBuffer )
+    method on_visit( cmd:ReadBuffer )
       write "buffer"
+      visit_children( cmd )
 
-    method on_enter( cmd:ReadVar )
+    method on_visit( cmd:ReadVar )
       write cmd.var.name
+      visit_children( cmd )
 
-    method on_enter( cmd:Restart )
+    method on_visit( cmd:Restart )
       if (cmd.start_ip)
         write "start_ip = ip_"
         writeln cmd.start_ip
       endIf
       write "return false"
+      visit_children( cmd )
 
-    method on_enter( cmd:RestorePosition )
+    method on_visit( cmd:RestorePosition )
       if (is_scanner)
         write "if (_position_stack.count) _scanner.seek( _position_stack.remove_last )"
       else
         write "_restore_position"
       endIf
+      visit_children( cmd )
 
-    method on_enter( cmd:Return )
+    method on_visit( cmd:Return )
       if (is_scanner)
         write   "return true"
       else
         write   "return"
       endIf
+      visit_children( cmd )
 
     method on( cmd:Routine )->Cmd
       writeln "          case ip_$"(cmd.name)
@@ -509,12 +544,13 @@ class RogueGenerator : Visitor
       return null
 
 
-    method on_enter( cmd:SavePosition )
+    method on_visit( cmd:SavePosition )
       if (is_scanner)
         write "_position_stack.add( _scanner.position )"
       else
         write "_save_position"
       endIf
+      visit_children( cmd )
 
     method on( cmd:ScannerDef )->Cmd
       temporarily this_element = cmd
@@ -597,14 +633,17 @@ class RogueGenerator : Visitor
       endIf
       return cmd
 
-    method on_enter( cmd:TokenContent )
+    method on_visit( cmd:TokenContent )
       write "_cur_t.content"
+      visit_children( cmd )
 
-    method on_enter( cmd:WriteBuffer )
+    method on_visit( cmd:WriteBuffer )
       write "buffer.clear.print "
+      visit_children( cmd )
 
-    method on_enter( cmd:WriteVar )
+    method on_visit( cmd:WriteVar )
       write "$ = " (cmd.var.name)
+      visit_children( cmd )
 
     method on( cmd:While )->Cmd
       write   "while ("
@@ -693,8 +732,9 @@ class RogueGenerator : Visitor
       write ")"
       return cmd
 
-    method on_enter( cmd:Negate )
+    method on_visit( cmd:Negate )
       write "-"
+      visit_children( cmd )
 
 endClass
 

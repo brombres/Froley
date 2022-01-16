@@ -5,7 +5,7 @@ class CPPWriter( filepath:String ) : Visitor
     builder = StringBuilder()
 
   METHODS
-    method on_enter( cmd:AST )
+    method on_visit( cmd:AST )
       builder.println ...
         @|#include <iostream>
          |#include <string>
@@ -14,6 +14,7 @@ class CPPWriter( filepath:String ) : Visitor
          |int main()
          |{
       builder.indent += 2
+      visit_children( cmd )
 
       # Declare variables
       local number_vars = Program.vars.values.to_list.keeping($.type == "Number")
@@ -57,14 +58,17 @@ class CPPWriter( filepath:String ) : Visitor
       visit( cmd.right )
       builder.print ')'
 
-    method on_enter( cmd:Negate )
+    method on_visit( cmd:Negate )
       builder.print '-'
+      visit_children( cmd )
 
-    method on_enter( cmd:Number )
+    method on_visit( cmd:Number )
       builder.print cmd.value
+      visit_children( cmd )
 
-    method on_enter( cmd:LiteralString )
+    method on_visit( cmd:LiteralString )
       builder.print '"$"'(cmd.value.to_escaped_ascii('"'))
+      visit_children( cmd )
 
     method on_visit( cmd:Print )
       builder.print "cout"
@@ -81,10 +85,12 @@ class CPPWriter( filepath:String ) : Visitor
         builder.print "cout << endl"
       endIf
 
-    method on_enter( cmd:ReadVar )
+    method on_visit( cmd:ReadVar )
       builder.print cmd.name
+      visit_children( cmd )
 
-    method on_enter( cmd:WriteVar )
+    method on_visit( cmd:WriteVar )
       builder.print( cmd.name ).print( " = " )
+      visit_children( cmd )
 
 endClass

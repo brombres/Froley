@@ -12,14 +12,17 @@ class Resolver : Visitor
     method on( cmd:Access )->Cmd
       return visit( ReadVar(cmd.t,cmd.name) )
 
-    method on_leave( cmd:Binary )
+    method on_visit( cmd:Binary )
+      visit_children( cmd )
       require_value( cmd.t, cmd.left )
       require_value( cmd.t, cmd.right )
 
-    method on_leave( cmd:Unary )
+    method on_visit( cmd:Unary )
+      visit_children( cmd )
       require_value( cmd.t, cmd.operand )
 
-    method on_leave( cmd:Args )
+    method on_visit( cmd:Args )
+      visit_children( cmd )
       forEach (arg in cmd) require_value(cmd.t,arg)
 
     method on( cmd:Add )->Cmd

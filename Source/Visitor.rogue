@@ -18,16 +18,10 @@ class Visitor<<$ReturnType>>
     method is_scanner->Logical
       return this_element instanceOf ScannerDef
 
-    method on_enter( cmd:Cmd )
-      noAction
-
     method on_visit( cmd:Cmd )
       visit_children( cmd )
 
     method on_visit_children( cmd:Cmd )
-      noAction
-
-    method on_leave( cmd:Cmd )
       noAction
 
     method visit( cmd:Cmd )->$ReturnType [propagated]
@@ -38,16 +32,10 @@ class Visitor<<$ReturnType>>
       endIf
       return cmd.dispatch<<ThisType,$ReturnType>>( this )
 
-    method enter( cmd:Cmd ) [propagated]
-      cmd.dispatch_on_enter<<ThisType>>( this )
-
-    method leave( cmd:Cmd ) [propagated]
-      cmd.dispatch_on_leave<<ThisType>>( this )
-
     method visit_children( cmd:Cmd ) [propagated]
       cmd.dispatch_on_visit_children<<ThisType>>( this )
 
-    method call_on_visit( cmd:Cmd ) [propagated]
+    method handle_visit( cmd:Cmd ) [propagated]
       cmd.dispatch_on_visit<<ThisType>>( this )
 
     method on_visit_children( cmd:CmdList )
@@ -61,9 +49,7 @@ class Visitor<<$ReturnType>>
       endIf
 
     method on( cmd:Cmd )->$ReturnType
-      enter( cmd )
-      call_on_visit( cmd )
-      leave( cmd )
+      handle_visit( cmd )
       if ($ReturnType instanceOf Cmd) return cmd
       else                            return $ReturnType.meta.default_value
 
@@ -155,9 +141,7 @@ class Visitor<<$ReturnType>>
 
     method on( cmd:Match )->$ReturnType
       temporarily this_match = cmd
-        enter( cmd )
-        visit_children( cmd )
-        leave( cmd )
+        handle_visit( cmd )
       endTemporarily
       if ($ReturnType instanceOf Cmd) return cmd
       else                            return $ReturnType.meta.default_value
@@ -227,9 +211,7 @@ class Visitor<<$ReturnType>>
 
     method on( cmd:ParserDef )->$ReturnType
       temporarily this_element = cmd
-        enter( cmd )
-        visit_children( cmd )
-        leave( cmd )
+        handle_visit( cmd )
       endTemporarily
       if ($ReturnType instanceOf Cmd) return cmd
       else                            return $ReturnType.meta.default_value
@@ -278,9 +260,7 @@ class Visitor<<$ReturnType>>
 
     method on( cmd:Routine )->$ReturnType
       temporarily this_routine = cmd
-        enter( cmd )
-        visit_children( cmd )
-        leave( cmd )
+        handle_visit( cmd )
       endTemporarily
       if ($ReturnType instanceOf Cmd) return cmd
       else                            return $ReturnType.meta.default_value
@@ -315,9 +295,7 @@ class Visitor<<$ReturnType>>
 
     method on( cmd:ScannerDef )->$ReturnType
       temporarily this_element = cmd
-        enter( cmd )
-        visit_children( cmd )
-        leave( cmd )
+        handle_visit( cmd )
       endTemporarily
       if ($ReturnType instanceOf Cmd) return cmd
       else                            return $ReturnType.meta.default_value

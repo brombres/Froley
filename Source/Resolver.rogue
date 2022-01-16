@@ -124,7 +124,8 @@ class Resolver : Visitor
       endIf
       return cmd
 
-    method on_leave( cmd:SequenceArgs )
+    method on_visit( cmd:SequenceArgs )
+      visit_children( cmd )
       (forEach in cmd.list).require_value
 
     method on( cmd:Assign )->Cmd
@@ -169,7 +170,7 @@ class Resolver : Visitor
       cmd.arg = cast_to( cmd.arg, FType.TOKEN_TYPE )
       return cmd
 
-    method on_enter( cmd:Match )
+    method on_visit( cmd:Match )
       if (not cmd.id)
         cmd.id = "_scan_table_" + next_scan_table_id
         ++next_scan_table_id
@@ -181,6 +182,7 @@ class Resolver : Visitor
         cmd.table_builder.default = 0  # index 0 in statement_lists
         cmd.statement_lists.add( cmd._others )
       endIf
+      visit_children( cmd )
 
     method on( cmd:MatchCase )->Cmd
       if (not cmd.is_resolved)
@@ -203,7 +205,7 @@ class Resolver : Visitor
       endIf
       return cmd
 
-    method on_enter( cmd:On )
+    method on_visit( cmd:On )
       cmd.token_type = LiteralTokenType( cmd.token_type.t, resolve_token_type(cmd.token_type) )
       while (cmd.token_types.count)
         local ttype = cmd.token_types.remove_last
@@ -219,8 +221,9 @@ class Resolver : Visitor
           endIf
         endIf
       endWhile
+      visit_children( cmd )
 
-    method on_enter( cmd:ElseOn )
+    method on_visit( cmd:ElseOn )
       cmd.token_type = LiteralTokenType( cmd.token_type.t, resolve_token_type(cmd.token_type) )
       while (cmd.token_types.count)
         local ttype = cmd.token_types.remove_last
@@ -231,11 +234,13 @@ class Resolver : Visitor
           cmd.statements.insert( Access(ttype.t,ttype->String) )
         endIf
       endWhile
+      visit_children( cmd )
 
-    method on_enter( cmd:NextHasAttribute )
+    method on_visit( cmd:NextHasAttribute )
       if (not Program.token_attributes.contains(cmd.name))
         throw cmd.t.error( "No token has the attribute '$'."(cmd.name) )
       endIf
+      visit_children( cmd )
 
     method on( cmd:ParserConsume )->Cmd
       local t = cmd.t
@@ -285,10 +290,12 @@ class Resolver : Visitor
       endIf
       return cmd
 
-    method on_leave( cmd:WriteBuffer )
+    method on_visit( cmd:WriteBuffer )
+      visit_children( cmd )
       cmd.new_value.require_value
 
-    method on_leave( cmd:WriteVar )
+    method on_visit( cmd:WriteVar )
+      visit_children( cmd )
       cmd.new_value.require_value
 
 endClass

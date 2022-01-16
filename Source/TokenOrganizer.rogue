@@ -20,7 +20,7 @@ class TokenOrganizer : Visitor
 
       return cmd
 
-    method on_enter( cmd:TokenDef )
+    method on_visit( cmd:TokenDef )
       if (not cmd.symbol) cmd.symbol = cmd.name
       Program.tokens_by_name[cmd.name] = cmd
       Program.tokens_by_symbol[cmd.symbol] = cmd
@@ -31,5 +31,6 @@ class TokenOrganizer : Visitor
           endIf
         endForEach
       endIf
+      visit_children( cmd )
 endClass
 

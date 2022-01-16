@@ -4,7 +4,7 @@
 
 About          | Current Release
 ---------------|-----------------------
-Version        | 3.7
+Version        | 3.7.1
 Date           | January 16, 2022
 Platforms      | macOS, Linux, Windows
 Output Targets | Rogue

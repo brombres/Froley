@@ -14,7 +14,7 @@ augment Build
     PROJECT           = "Froley"
     LAUNCHER_NAME     = PROJECT.to_lowercase : String
 
-    RELEASE_MODE      = false #FIXME
+    RELEASE_MODE      = true
     LAUNCHER_FOLDER   = "/usr/local/bin"
     ROGUEC_FLAGS      = ""
     CPP_FLAGS_UNIX    = ""

@@ -91,6 +91,11 @@ class RVisitor : RogueSourceWriter
                     |      return cmd
                     |
                     |    method validate( cmd:Cmd )->$ReturnType [propagated]
+                    |      if ($ReturnType instanceOf Cmd)
+                    |        if (cmd is null) return null
+                    |      else
+                    |        if (cmd is null) return $ReturnType.meta.default_value
+                    |      endIf
                     |      return cmd.dispatch_on_validate<<ThisType,$ReturnType>>( this )
                     |
                     |    method on_visit_node( cmd:Cmd )

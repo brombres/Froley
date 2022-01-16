@@ -7,9 +7,7 @@ class ScanTableDeclarationWriter : Visitor
   METHODS
     method init( generator )
 
-    method on_enter( cmd:Cmd )
-      noAction
-
-    method on_enter( cmd:Match )
+    method on_visit( cmd:Match )
       generator.writeln ''$ = ScanTable("$")'' (cmd.id,cmd.table_builder.to_encoded_scan_table)
+      visit_children( cmd )
 endClass

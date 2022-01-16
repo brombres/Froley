@@ -124,7 +124,8 @@ class Resolver : Visitor
       endIf
       return cmd
 
-    method on_leave( cmd:SequenceArgs )
+    method on_visit( cmd:SequenceArgs )
+      visit_children( cmd )
       (forEach in cmd.list).require_value
 
     method on( cmd:Assign )->Cmd
@@ -285,10 +286,12 @@ class Resolver : Visitor
       endIf
       return cmd
 
-    method on_leave( cmd:WriteBuffer )
+    method on_visit( cmd:WriteBuffer )
+      visit_children( cmd )
       cmd.new_value.require_value
 
-    method on_leave( cmd:WriteVar )
+    method on_visit( cmd:WriteVar )
+      visit_children( cmd )
       cmd.new_value.require_value
 
 endClass

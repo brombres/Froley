@@ -579,6 +579,7 @@ parser
       on "case"
         scanner_expression
         if (consume("->"))
+          consume_eols
           beginList
             scanner_product
             create ScannerCreate(arg)
@@ -696,6 +697,7 @@ parser
     createNull
     produce Restart(start_ip:String)
   elseOn "->"
+    consume_eols
     create ScannerCreate(arg)
     createNull
     produce Restart(start_ip:String)
@@ -1290,6 +1292,7 @@ parser
   syntaxError "TOKEN_ID, \"token_name\", or routine_name expected."
 
 - parser_product
+  consume_eols
   identifier
   if (consume('('))
     cmd_args

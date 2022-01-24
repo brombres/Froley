@@ -90,6 +90,6 @@ augment
       return this
 
     method Access.resolve_assignment( resolver:Resolver, new_value:Cmd )->Cmd
-      return resolver.visit_node( WriteVar(t,name,new_value) )
+      return resolver.visit( WriteVar(t,name,new_value) )
 endAugment
 

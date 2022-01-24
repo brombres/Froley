@@ -33,7 +33,6 @@ class RVisitor : RogueSourceWriter
                     |      #   --------------------  -----------------------------------------
                     |      #   visit(cmd)            -> on(cmd:CmdType)->Cmd (or ->ResultType)
                     |      #   visit_content(cmd)       -> on_visit(cmd:CmdType)
-                    |      #     visit_node(cmd)           -> on_visit_node(cmd:CmdType)
                     |      #     visit_children(cmd)       -> on_visit_children(cmd:CmdType)
                     |      #                            on_validate(cmd:CmdType)->Cmd/ResultType
                     |      #
@@ -53,7 +52,6 @@ class RVisitor : RogueSourceWriter
                     |      # Called from on(CmdType). If you overload this method with an extended
                     |      # Cmd type, this node's children will only be visited if and
                     |      # when you call visit_children(cmd).
-                    |      visit_node( cmd )
                     |      visit_children( cmd )
                     |
                     |    method on_validate( cmd:Cmd )->$ReturnType
@@ -75,11 +73,6 @@ class RVisitor : RogueSourceWriter
                     |      endIf
                     |      return cmd.dispatch<<ThisType,$ReturnType>>( this )
                     |
-                    |    method visit_node( cmd:Cmd )->Cmd [propagated]
-                    |      # Call from 'on()' or 'on_visit()' handler to visit the current node's properties.
-                    |      cmd.dispatch_on_visit_node<<ThisType>>( this )
-                    |      return cmd
-                    |
                     |    method visit_children( cmd:Cmd )->Cmd [propagated]
                     |      # Call from 'on()' or 'on_visit()' handler to visit subtrees.
                     |      cmd.dispatch_on_visit_children<<ThisType>>( this )
@@ -97,10 +90,6 @@ class RVisitor : RogueSourceWriter
                     |        if (cmd is null) return $ReturnType.meta.default_value
                     |      endIf
                     |      return cmd.dispatch_on_validate<<ThisType,$ReturnType>>( this )
-                    |
-                    |    method on_visit_node( cmd:Cmd )
-                    |      # Overloaded automatically by the Froley compiler
-                    |      noAction
                     |
                     |    method on_visit_children( cmd:Cmd )
                     |      # Overloaded automatically by the Froley compiler

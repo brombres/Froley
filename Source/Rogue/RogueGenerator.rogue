@@ -350,7 +350,8 @@ class RogueGenerator : Visitor
       writeln ")"
       indent += 2
 
-      writeln "temporarily _cur_t = _on_t"
+      if (cmd.is_peek) writeln "temporarily _cur_t = _next_t"
+      else             writeln "temporarily _cur_t = _on_t"
       indent += 2
       visit( cmd.statements )
       indent -= 2
@@ -376,7 +377,8 @@ class RogueGenerator : Visitor
       writeln ")"
       indent += 2
 
-      writeln "temporarily _cur_t = _on_t"
+      if (cmd.is_peek) writeln "temporarily _cur_t = _next_t"
+      else             writeln "temporarily _cur_t = _on_t"
       indent += 2
       visit( cmd.statements )
       indent -= 2

@@ -51,7 +51,7 @@ class ScannerCore [abstract]
     _scan_table_0 = ScanTable("gQoAFi0uPThAPl5AfUIpRF1GOkgsSi5MW1I+WDxeIWR7aihsK24/dDt2J3gvgQYqgQgSAj40LTYBABMAAgE9PAwAAwAEAAUABgAHAAgACQD/AS5QCgAWAV1WCwAOAT1cDQAQAT1iDwD/AT1oEQAUABUAFwErchgAGQAaAP8BXHz/ASeBAP8BJ4EEGwAcAB0A")
     _scan_table_1 = ScanTable("egAEbgpwNHNKdGT/AWEO/wF0Ev8BaRb/AXYa/wFlHv8BVCL/AXkm/wFwKv8BZS7/AXMyAQD/AWE4/wFyPP8Bc0D/AWVE/wFySAIA/wFjTv8BYVL/AW5W/wFuWv8BZV7/AXJiAwD/AW9o/wFrbP8BZXD/AW50/wFzeAQA")
     _scan_table_2 = ScanTable("Ev8ECgpbDF0OLBAAAAEAAgADAA==")
-    _scan_table_3 = ScanTable("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")
+    _scan_table_3 = ScanTable("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")
 
   METHODS
     method init( file:File )
@@ -641,54 +641,60 @@ class ScannerCore [abstract]
                     _add( TokenType.KEYWORD_ELSE_ON )
                     return false
                   case 44
-                    _add( TokenType.KEYWORD_ELSE_OTHERS )
+                    _add( TokenType.KEYWORD_ELSE_ON_PEEK )
                     return false
                   case 45
-                    _add( TokenType.KEYWORD_END_ON )
+                    _add( TokenType.KEYWORD_ELSE_OTHERS )
                     return false
                   case 46
-                    _add( TokenType.KEYWORD_NEXT_HAS_ATTRIBUTE )
+                    _add( TokenType.KEYWORD_END_ON )
                     return false
                   case 47
-                    _add( TokenType.KEYWORD_ON )
+                    _add( TokenType.KEYWORD_NEXT_HAS_ATTRIBUTE )
                     return false
                   case 48
-                    _add( TokenType.KEYWORD_PRODUCE_LIST )
+                    _add( TokenType.KEYWORD_ON )
                     return false
                   case 49
-                    _add( TokenType.KEYWORD_PRODUCE_NULL )
+                    _add( TokenType.KEYWORD_ON_PEEK )
                     return false
                   case 50
-                    _add( TokenType.KEYWORD_BUFFER )
+                    _add( TokenType.KEYWORD_PRODUCE_LIST )
                     return false
                   case 51
-                    _add( TokenType.KEYWORD_CASE )
+                    _add( TokenType.KEYWORD_PRODUCE_NULL )
                     return false
                   case 52
-                    _add( TokenType.KEYWORD_CHARACTER )
+                    _add( TokenType.KEYWORD_BUFFER )
                     return false
                   case 53
-                    _add( TokenType.KEYWORD_COLLECT )
+                    _add( TokenType.KEYWORD_CASE )
                     return false
                   case 54
-                    _add( TokenType.KEYWORD_END_MATCH )
+                    _add( TokenType.KEYWORD_CHARACTER )
                     return false
                   case 55
-                    _add( TokenType.KEYWORD_INPUT )
+                    _add( TokenType.KEYWORD_COLLECT )
                     return false
                   case 56
-                    _add( TokenType.KEYWORD_INTEGER )
+                    _add( TokenType.KEYWORD_END_MATCH )
                     return false
                   case 57
-                    _add( TokenType.KEYWORD_PEEK )
+                    _add( TokenType.KEYWORD_INPUT )
                     return false
                   case 58
-                    _add( TokenType.KEYWORD_PRODUCE_ANY )
+                    _add( TokenType.KEYWORD_INTEGER )
                     return false
                   case 59
-                    _add( TokenType.KEYWORD_MATCH )
+                    _add( TokenType.KEYWORD_PEEK )
                     return false
                   case 60
+                    _add( TokenType.KEYWORD_PRODUCE_ANY )
+                    return false
+                  case 61
+                    _add( TokenType.KEYWORD_MATCH )
+                    return false
+                  case 62
                     _add( TokenType.KEYWORD_RESTART )
                     return false
                   others

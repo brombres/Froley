@@ -41,10 +41,12 @@ KEYWORD_CREATE_LIST        createList
 KEYWORD_CREATE_NULL        createNull
 KEYWORD_DISCARD_LIST       discardList
 KEYWORD_ELSE_ON            elseOn       [structural]
+KEYWORD_ELSE_ON_PEEK       elseOnPeek   [structural]
 KEYWORD_ELSE_OTHERS        elseOthers   [structural]
 KEYWORD_END_ON             endOn        [structural]
 KEYWORD_NEXT_HAS_ATTRIBUTE nextHasAttribute
 KEYWORD_ON                 on
+KEYWORD_ON_PEEK            onPeek
 KEYWORD_PRODUCE_LIST       produceList
 KEYWORD_PRODUCE_NULL       produceNull
 
@@ -999,20 +1001,12 @@ parser
   endOn
 
   on "on"
-    token_id
-    collect_parse_list
-    if (consume(EOL))
-      parser_multi_line_statements
-      parser_multi_line_else_ons
-      parser_multi_line_else_on_others
-      mustConsume( "endOn" )
-    else
-      consume(':')
-      parser_single_line_statements
-      parser_single_line_else_ons
-      parser_single_line_else_on_others
-    endIf
+    on_block
     produce On( token_type, token_types:Args, statements:Statements, else_ons, _else_on_others:Statements )
+  elseOn "onPeek"
+    on_block
+    produce On( token_type, token_types:Args, statements:Statements, else_ons, _else_on_others:Statements,
+                is_peek="true":Logical )
   endOn
 
   on "while"
@@ -1032,6 +1026,21 @@ parser
   endOn
 
   parser_statement
+
+- on_block
+  token_id
+  collect_parse_list
+  if (consume(EOL))
+    parser_multi_line_statements
+    parser_multi_line_else_ons
+    parser_multi_line_else_on_others
+    mustConsume( "endOn" )
+  else
+    consume(':')
+    parser_single_line_statements
+    parser_single_line_else_ons
+    parser_single_line_else_on_others
+  endIf
 
 - parser_multi_line_else_ifs
   beginList
@@ -1098,7 +1107,7 @@ parser
 - parser_multi_line_else_ons
   beginList
 
-  while (nextIs("elseOn"))
+  while (nextIs("elseOn") or nextIs("elseOnPeek"))
     savePosition
     on "elseOn"
       token_id
@@ -1107,6 +1116,13 @@ parser
       else             restorePosition; produceList
       parser_multi_line_statements
       create ElseOn(token_type,token_types:Args,statements:Statements)
+    elseOn "elseOnPeek"
+      token_id
+      collect_parse_list
+      if (nextIs(EOL)) discardPosition
+      else             restorePosition; produceList
+      parser_multi_line_statements
+      create ElseOn(token_type,token_types:Args,statements:Statements,is_peek="true":Logical)
     endOn
   endWhile
 

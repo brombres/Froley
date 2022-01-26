@@ -62,41 +62,42 @@ class ParserCore [abstract]
     ip_parser_multi_line_statements = 49
     ip_parser_single_line_statements = 50
     ip_parser_control_structure = 51
-    ip_parser_multi_line_else_ifs = 52
-    ip_parser_multi_line_else = 53
-    ip_parser_single_line_else_ifs = 54
-    ip_parser_single_line_else = 55
-    ip_parser_multi_line_else_ons = 56
-    ip_parser_multi_line_else_on_others = 57
-    ip_parser_single_line_else_ons = 58
-    ip_parser_single_line_else_on_others = 59
-    ip_parser_statement = 60
-    ip_list_type = 61
-    ip_parser_args = 62
-    ip_parser_arg_list = 63
-    ip_ttype_or_literal = 64
-    ip_ttype_or_literal_inner = 65
-    ip_attr_name_arg = 66
-    ip_attribute_name = 67
-    ip_token_id = 68
-    ip_collect_parse_list = 69
-    ip_string_id_or_routine = 70
-    ip_parser_product = 71
-    ip_parser_expression = 72
-    ip_parser_logical_or = 73
-    ip_parser_logical_or__inner = 74
-    ip_parser_logical_and = 75
-    ip_parser_logical_and__inner = 76
-    ip_parser_comparison = 77
-    ip_parser_comparison__inner = 78
-    ip_parser_add_subtract = 79
-    ip_parser_add_subtract__inner = 80
-    ip_parser_multiply_divide = 81
-    ip_parser_multiply_divide__inner = 82
-    ip_parser_power = 83
-    ip_parser_power__inner = 84
-    ip_parser_pre_unary = 85
-    ip_parser_term = 86
+    ip_on_block = 52
+    ip_parser_multi_line_else_ifs = 53
+    ip_parser_multi_line_else = 54
+    ip_parser_single_line_else_ifs = 55
+    ip_parser_single_line_else = 56
+    ip_parser_multi_line_else_ons = 57
+    ip_parser_multi_line_else_on_others = 58
+    ip_parser_single_line_else_ons = 59
+    ip_parser_single_line_else_on_others = 60
+    ip_parser_statement = 61
+    ip_list_type = 62
+    ip_parser_args = 63
+    ip_parser_arg_list = 64
+    ip_ttype_or_literal = 65
+    ip_ttype_or_literal_inner = 66
+    ip_attr_name_arg = 67
+    ip_attribute_name = 68
+    ip_token_id = 69
+    ip_collect_parse_list = 70
+    ip_string_id_or_routine = 71
+    ip_parser_product = 72
+    ip_parser_expression = 73
+    ip_parser_logical_or = 74
+    ip_parser_logical_or__inner = 75
+    ip_parser_logical_and = 76
+    ip_parser_logical_and__inner = 77
+    ip_parser_comparison = 78
+    ip_parser_comparison__inner = 79
+    ip_parser_add_subtract = 80
+    ip_parser_add_subtract__inner = 81
+    ip_parser_multiply_divide = 82
+    ip_parser_multiply_divide__inner = 83
+    ip_parser_power = 84
+    ip_parser_power__inner = 85
+    ip_parser_pre_unary = 86
+    ip_parser_term = 87
 
   PROPERTIES
     _tokens          : Token[]
@@ -1615,28 +1616,16 @@ class ParserCore [abstract]
             endIf
             if (_next_t.type == TokenType.KEYWORD_ON)
               temporarily _cur_t = _on_t
-                _execute(ip_token_id)
+                _execute(ip_on_block)
                 _pop_frame
-                _execute(ip_collect_parse_list)
-                _pop_frame
-                if (_consume(TokenType.EOL))
-                  _execute(ip_parser_multi_line_statements)
-                  _pop_frame
-                  _execute(ip_parser_multi_line_else_ons)
-                  _pop_frame
-                  _execute(ip_parser_multi_line_else_on_others)
-                  _pop_frame
-                  if (not _consume(TokenType.KEYWORD_END_ON)) _throw_syntax_error( &expected=TokenType.KEYWORD_END_ON )
-                else
-                  _consume(TokenType.SYMBOL_COLON)
-                  _execute(ip_parser_single_line_statements)
-                  _pop_frame
-                  _execute(ip_parser_single_line_else_ons)
-                  _pop_frame
-                  _execute(ip_parser_single_line_else_on_others)
-                  _pop_frame
-                endIf
                 _push( On(_cur_t,_node_arg(-5),_node_arg(-4)->(as Args),_node_arg(-3)->(as Statements),_node_arg(-2),_node_arg(-1)->(as Statements)), 5 )
+                return
+              endTemporarily
+            elseIf (_next_t.type == TokenType.KEYWORD_ON_PEEK)
+              temporarily _cur_t = _on_t
+                _execute(ip_on_block)
+                _pop_frame
+                _push( On(_cur_t,_node_arg(-5),_node_arg(-4)->(as Args),_node_arg(-3)->(as Statements),_node_arg(-2),_node_arg(-1)->(as Statements),_string_to_Logical("true")), 5 )
                 return
               endTemporarily
             endIf
@@ -1664,6 +1653,29 @@ class ParserCore [abstract]
             endIf
             _execute(ip_parser_statement)
             _pop_frame
+            return
+          case ip_on_block
+            _execute(ip_token_id)
+            _pop_frame
+            _execute(ip_collect_parse_list)
+            _pop_frame
+            if (_consume(TokenType.EOL))
+              _execute(ip_parser_multi_line_statements)
+              _pop_frame
+              _execute(ip_parser_multi_line_else_ons)
+              _pop_frame
+              _execute(ip_parser_multi_line_else_on_others)
+              _pop_frame
+              if (not _consume(TokenType.KEYWORD_END_ON)) _throw_syntax_error( &expected=TokenType.KEYWORD_END_ON )
+            else
+              _consume(TokenType.SYMBOL_COLON)
+              _execute(ip_parser_single_line_statements)
+              _pop_frame
+              _execute(ip_parser_single_line_else_ons)
+              _pop_frame
+              _execute(ip_parser_single_line_else_on_others)
+              _pop_frame
+            endIf
             return
           case ip_parser_multi_line_else_ifs
             _begin_list
@@ -1765,7 +1777,7 @@ class ParserCore [abstract]
             return
           case ip_parser_multi_line_else_ons
             _begin_list
-            while ((_next_t.type == TokenType.KEYWORD_ELSE_ON))
+            while (((_next_t.type == TokenType.KEYWORD_ELSE_ON) or (_next_t.type == TokenType.KEYWORD_ELSE_ON_PEEK)))
               _save_position
               if (_next_t.type == TokenType.KEYWORD_ELSE_ON)
                 temporarily _cur_t = _on_t
@@ -1783,6 +1795,23 @@ class ParserCore [abstract]
                   _execute(ip_parser_multi_line_statements)
                   _pop_frame
                   _push( ElseOn(_cur_t,_node_arg(-3),_node_arg(-2)->(as Args),_node_arg(-1)->(as Statements)), 3 )
+                endTemporarily
+              elseIf (_next_t.type == TokenType.KEYWORD_ELSE_ON_PEEK)
+                temporarily _cur_t = _on_t
+                  _execute(ip_token_id)
+                  _pop_frame
+                  _execute(ip_collect_parse_list)
+                  _pop_frame
+                  if ((_next_t.type == TokenType.EOL))
+                    _discard_position
+                  else
+                    _restore_position
+                    _push_list( CmdList(_list_t) )
+                    return
+                  endIf
+                  _execute(ip_parser_multi_line_statements)
+                  _pop_frame
+                  _push( ElseOn(_cur_t,_node_arg(-3),_node_arg(-2)->(as Args),_node_arg(-1)->(as Statements),_string_to_Logical("true")), 3 )
                 endTemporarily
               endIf
             endWhile

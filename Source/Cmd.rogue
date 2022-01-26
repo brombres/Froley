@@ -1218,12 +1218,14 @@ class On : Cmd
     else_ons        : Cmd
     _else_on_others : Statements
     is_organized    : Logical
+    is_peek         : Logical
 
   METHODS
-    method init( t, token_type, token_types, statements, else_ons, _else_on_others )
+    method init( t, token_type, token_types, statements, else_ons, _else_on_others, is_peek=false )
 
     method description->String
-      return "On($,$,$,$,$)" (%token_type,%token_types,%statements,%else_ons,%_else_on_others)
+      local peek = which{ is_peek:"Peek" || "" }
+      return "On$($,$,$,$,$)" (peek,%token_type,%token_types,%statements,%else_ons,%_else_on_others)
 
 endClass
 
@@ -1233,12 +1235,14 @@ class ElseOn : Cmd
     token_types  : Args
     statements   : Statements
     is_organized : Logical
+    is_peek      : Logical
 
   METHODS
-    method init( t, token_type, token_types, statements )
+    method init( t, token_type, token_types, statements, is_peek=false )
 
     method description->String
-      return "ElseOn($,$,$)" (%token_type,%token_types,%statements)
+      local peek = which{ is_peek:"Peek" || "" }
+      return "ElseOn$($,$,$)" (peek,%token_type,%token_types,%statements)
 
 endClass
 

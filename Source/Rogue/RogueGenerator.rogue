@@ -532,10 +532,9 @@ class RogueGenerator : Visitor
       indent += 12
       prior.on( cmd )
 
-      if (is_parser)
-        if (not BranchAnalyzer.all_paths_return(cmd))
-          writeln "return"  # will be outside of any 'on' so no token pop required
-        endIf
+      if (not BranchAnalyzer.all_paths_return(cmd))
+        if (is_parser) writeln "return"
+        else           writeln "return true"
       endIf
 
       indent -= 12

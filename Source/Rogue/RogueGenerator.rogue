@@ -515,11 +515,7 @@ class RogueGenerator : Visitor
       visit_children( cmd )
 
     method on_visit( cmd:RestorePosition )
-      if (is_scanner)
-        write "if (_position_stack.count) _scanner.seek( _position_stack.remove_last )"
-      else
-        write "_restore_position"
-      endIf
+      write "_restore_position"
       visit_children( cmd )
 
     method on_visit( cmd:Return )
@@ -547,11 +543,7 @@ class RogueGenerator : Visitor
 
 
     method on_visit( cmd:SavePosition )
-      if (is_scanner)
-        write "_position_stack.add( _scanner.position )"
-      else
-        write "_save_position"
-      endIf
+      write "_save_position"
       visit_children( cmd )
 
     method on( cmd:ScannerDef )->Cmd

@@ -37,6 +37,8 @@ class RScannerCore( generator, scanner_def:ScannerDef ) : RogueSourceWriter
          |    halt          = false
          |
          |    _position_stack = Int32[]
+         |    _line_stack     = Int32[]
+         |    _column_stack   = Int32[]
          |
          |    # GENERATED PROPERTIES
 
@@ -155,6 +157,19 @@ class RScannerCore( generator, scanner_def:ScannerDef ) : RogueSourceWriter
          |      # Default behavior: print out 'output' and clear it. Can override this method.
          |      print( output ).flush
          |      output.clear
+         |
+         |    method _restore_position
+         |      if (_position_stack.is_empty)
+         |        _throw_syntax_error( "restorePosition without prior savePosition." )
+         |      endIf
+         |      _scanner.position = _position_stack.remove_last
+         |      _scanner.line     = _line_stack.remove_last
+         |      _scanner.column   = _column_stack.remove_last
+         |
+         |    method _save_position
+         |      _position_stack.add( _scanner.position )
+         |      _line_stack.add( _scanner.line )
+         |      _column_stack.add( _scanner.column )
          |
          |    method _scan( ch:Character )->Logical
          |      if (not _scanner.consume(ch)) return false

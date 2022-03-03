@@ -1,5 +1,5 @@
-$define VERSION "Froley v3.8"
-$define AUTHOR "January 25, 2022 by Abe Pralle"
+$define VERSION "Froley v3.9"
+$define AUTHOR "March 2, 2022 by Abe Pralle"
 
 module Froley
 

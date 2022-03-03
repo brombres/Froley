@@ -28,6 +28,7 @@ KEYWORD_COLLECT          collect
 KEYWORD_END_MATCH        endMatch    [structural]
 KEYWORD_INPUT            input
 KEYWORD_INTEGER          Integer
+KEYWORD_OUTPUT           output
 KEYWORD_PEEK             peek
 KEYWORD_PRODUCE_ANY      produceAny  [structural]
 KEYWORD_MATCH            match
@@ -905,6 +906,7 @@ parser
   on "false"                        -> LiteralLogical(value="false":Logical)
   on "hasAnother"                   -> ScannerHasAnother
   on "nextIs", sequence_args        -> ScannerNextIs(args:SequenceArgs)
+  on "output"                       -> ReadOutput
   on "peek"
     if (consume('(')) scanner_expression; mustConsume(')')
     else              createNull
@@ -1355,11 +1357,13 @@ parser
 
 - parser_term
   on '(' parser_expression ')':           return
+  on "buffer"                           -> ReadBuffer
   on "consume", ttype_or_literal        -> ParserConsume(token_type)
   on "false"                            -> LiteralLogical(value="false":Logical)
   on "hasAnother"                       -> ParserHasAnother
   on "nextHasAttribute", attr_name_arg  -> NextHasAttribute(name:String)
   on "nextIs", ttype_or_literal         -> ParserNextIs(token_type)
+  on "output"                           -> ReadOutput
   on "read"                             -> ParserRead
   on "true"                             -> LiteralLogical(value="true":Logical)
   on IDENTIFIER                         -> Access( name=content )
@@ -1367,3 +1371,7 @@ parser
   on STRING                             -> LiteralString( value=content )
   on STRING_OR_CHARACTER                -> LiteralStringOrCharacter( value=content )
   syntaxError
+
+- additional_node_types
+  create WriteBuffer(new_value)
+  create WriteOutput(new_value)

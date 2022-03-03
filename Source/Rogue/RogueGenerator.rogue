@@ -502,6 +502,10 @@ class RogueGenerator : Visitor
       write "buffer"
       visit_children( cmd )
 
+    method on_visit( cmd:ReadOutput )
+      write "output"
+      visit_children( cmd )
+
     method on_visit( cmd:ReadVar )
       write cmd.var.name
       visit_children( cmd )
@@ -631,8 +635,18 @@ class RogueGenerator : Visitor
       visit_children( cmd )
 
     method on_visit( cmd:WriteBuffer )
-      write "buffer.clear.print "
-      visit_children( cmd )
+      write "buffer.clear"
+      if (not (cmd instanceOf LiteralString and cmd->String == ""))
+        write ".print "
+        visit_children( cmd )
+      endIf
+
+    method on_visit( cmd:WriteOutput )
+      write "output.clear"
+      if (not (cmd instanceOf LiteralString and cmd->String == ""))
+        write ".print "
+        visit_children( cmd )
+      endIf
 
     method on_visit( cmd:WriteVar )
       write "$ = " (cmd.var.name)

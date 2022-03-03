@@ -487,4 +487,11 @@ class Visitor<<$ReturnType>>
     method on_visit_children( cmd:TokenDef )
       noAction
 
+    method on_visit_children( cmd:WriteOutput )
+      if ($ReturnType instanceOf Cmd)
+        cmd.new_value = visit(cmd.new_value)
+      else
+        visit( cmd.new_value )
+      endIf
+
 endClass

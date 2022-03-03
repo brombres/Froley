@@ -40,6 +40,8 @@ class ScannerCore [abstract]
     halt          = false
 
     _position_stack = Int32[]
+    _line_stack     = Int32[]
+    _column_stack   = Int32[]
 
     # GENERATED PROPERTIES
     ch    : Character
@@ -51,7 +53,7 @@ class ScannerCore [abstract]
     _scan_table_0 = ScanTable("gQoAFi0uPThAPl5AfUIpRF1GOkgsSi5MW1I+WDxeIWR7aihsK24/dDt2J3gvgQYqgQgSAj40LTYBABMAAgE9PAwAAwAEAAUABgAHAAgACQD/AS5QCgAWAV1WCwAOAT1cDQAQAT1iDwD/AT1oEQAUABUAFwErchgAGQAaAP8BXHz/ASeBAP8BJ4EEGwAcAB0A")
     _scan_table_1 = ScanTable("egAEbgpwNHNKdGT/AWEO/wF0Ev8BaRb/AXYa/wFlHv8BVCL/AXkm/wFwKv8BZS7/AXMyAQD/AWE4/wFyPP8Bc0D/AWVE/wFySAIA/wFjTv8BYVL/AW5W/wFuWv8BZV7/AXJiAwD/AW9o/wFrbP8BZXD/AW50/wFzeAQA")
     _scan_table_2 = ScanTable("Ev8ECgpbDF0OLBAAAAEAAgADAA==")
-    _scan_table_3 = ScanTable("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")
+    _scan_table_3 = ScanTable("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")
 
   METHODS
     method init( file:File )
@@ -130,6 +132,19 @@ class ScannerCore [abstract]
       # Default behavior: print out 'output' and clear it. Can override this method.
       print( output ).flush
       output.clear
+
+    method _restore_position
+      if (_position_stack.is_empty)
+        _throw_syntax_error( "restorePosition without prior savePosition." )
+      endIf
+      _scanner.position = _position_stack.remove_last
+      _scanner.line     = _line_stack.remove_last
+      _scanner.column   = _column_stack.remove_last
+
+    method _save_position
+      _position_stack.add( _scanner.position )
+      _line_stack.add( _scanner.line )
+      _column_stack.add( _scanner.column )
 
     method _scan( ch:Character )->Logical
       if (not _scanner.consume(ch)) return false
@@ -296,6 +311,7 @@ class ScannerCore [abstract]
               endIf
             endContingent
             _throw_syntax_error
+            return true
           case ip_scan_charset
             if ((not _scanner.consume('[')))
               return true
@@ -374,6 +390,7 @@ class ScannerCore [abstract]
             else
               return true
             endIf
+            return true
           case ip_scan_optional_plain_id
             if ((not _scan_pattern_1.scan(_scanner,buffer)))
               return true
@@ -396,6 +413,7 @@ class ScannerCore [abstract]
             endIf
             if (not _execute(ip_scan_optional_plain_id)) return false
             _throw_syntax_error("Identifier expected.")
+            return true
           case ip_scan_token_name
             if (not _execute(ip_consume_whitespace)) return false
             if (not _execute(ip_consume_comment)) return false
@@ -441,6 +459,7 @@ class ScannerCore [abstract]
               return false
             endIf
             _throw_syntax_error("Identifier expected.")
+            return true
           case ip_scan_token_symbol
             if (_scanner.consume('('))
               while (((_scanner.has_another and (not _scanner.next_is(')'))) and (not _scanner.next_is('\n'))))
@@ -500,6 +519,7 @@ class ScannerCore [abstract]
               endWhich
             endContingent
             if (not _execute(ip_must_scan_attribute_identifier)) return false
+            return true
           case ip_scan_identifier
             ch = _scanner.peek 
             if (_scan_pattern_2.scan(_scanner,buffer))
@@ -686,15 +706,18 @@ class ScannerCore [abstract]
                     _add( TokenType.KEYWORD_INTEGER )
                     return false
                   case 59
-                    _add( TokenType.KEYWORD_PEEK )
+                    _add( TokenType.KEYWORD_OUTPUT )
                     return false
                   case 60
-                    _add( TokenType.KEYWORD_PRODUCE_ANY )
+                    _add( TokenType.KEYWORD_PEEK )
                     return false
                   case 61
-                    _add( TokenType.KEYWORD_MATCH )
+                    _add( TokenType.KEYWORD_PRODUCE_ANY )
                     return false
                   case 62
+                    _add( TokenType.KEYWORD_MATCH )
+                    return false
+                  case 63
                     _add( TokenType.KEYWORD_RESTART )
                     return false
                   others
@@ -712,6 +735,7 @@ class ScannerCore [abstract]
               return false
             endIf
             _throw_syntax_error("Identifier expected.")
+            return true
           case ip_scan_integer
             while (_scan_pattern_3.is_next(_scanner))
               ch = _scanner.read
@@ -739,6 +763,7 @@ class ScannerCore [abstract]
               if (not _execute(ip_scan_literal_character)) return false
             endWhile
             _throw_syntax_error("Unterminated string.")
+            return true
           case ip_scan_double_quoted_string
             if ((not _scanner.consume('"')))
               return true
@@ -754,6 +779,7 @@ class ScannerCore [abstract]
               if (not _execute(ip_scan_literal_character)) return false
             endWhile
             _throw_syntax_error("Unterminated string.")
+            return true
           case ip_scan_literal_character
             ch = _scanner.read
             if ((ch=='\\'))

@@ -1865,3 +1865,27 @@ class NativeTypes : CmdList
     method description->String
       return "NativeTypes" + list_description
 endClass
+
+class ReadOutput : Cmd
+  METHODS
+    method description->String
+      return "ReadOutput"
+
+    method resolve_assignment( cmd:Assign, resolver:Resolver )->Cmd
+      return resolver.visit( WriteOutput( t, cmd.new_value ) )
+
+    method type->FType
+      return FType.STRING
+endClass
+
+class WriteOutput : Cmd
+  PROPERTIES
+    new_value : Cmd
+
+  METHODS
+    method init( t, new_value )
+
+    method description->String
+      return "WriteOutput($)" (%new_value)
+
+endClass

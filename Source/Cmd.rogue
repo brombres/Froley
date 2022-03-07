@@ -251,6 +251,10 @@ endClass
 
 class ParserDef : Element
   METHODS
+    method init( t, name, routine_defs )
+      prior.init( t, name, routine_defs )
+      define_var( t, "disable_output", FType.INTEGER )
+
     method description->String
       return "ParserDef($,$)" (%name,%routine_defs)
 

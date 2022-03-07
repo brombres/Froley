@@ -37,19 +37,19 @@ KEYWORD_RESTART          restart
 --------------------------------------------------------------------------------
 tokens ParserKeywords
 --------------------------------------------------------------------------------
-KEYWORD_BEGIN_LIST         beginList
-KEYWORD_CREATE_LIST        createList
-KEYWORD_CREATE_NULL        createNull
-KEYWORD_DISCARD_LIST       discardList
-KEYWORD_ELSE_ON            elseOn       [structural]
-KEYWORD_ELSE_ON_PEEK       elseOnPeek   [structural]
-KEYWORD_ELSE_OTHERS        elseOthers   [structural]
-KEYWORD_END_ON             endOn        [structural]
-KEYWORD_NEXT_HAS_ATTRIBUTE nextHasAttribute
-KEYWORD_ON                 on
-KEYWORD_ON_PEEK            onPeek
-KEYWORD_PRODUCE_LIST       produceList
-KEYWORD_PRODUCE_NULL       produceNull
+KEYWORD_BEGIN_LIST          beginList
+KEYWORD_CREATE_LIST         createList
+KEYWORD_CREATE_NULL         createNull
+KEYWORD_DISCARD_LIST        discardList
+KEYWORD_ELSE_ON             elseOn       [structural]
+KEYWORD_ELSE_ON_PEEK        elseOnPeek   [structural]
+KEYWORD_ELSE_OTHERS         elseOthers   [structural]
+KEYWORD_END_ON              endOn        [structural]
+KEYWORD_NEXT_HAS_ATTRIBUTE  nextHasAttribute
+KEYWORD_ON                  on
+KEYWORD_ON_PEEK             onPeek
+KEYWORD_PRODUCE_LIST        produceList
+KEYWORD_PRODUCE_NULL        produceNull
 
 --------------------------------------------------------------------------------
 tokens CommonKeywords

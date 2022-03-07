@@ -162,7 +162,7 @@ class RogueGenerator : Visitor
       return cmd
 
     method on( cmd:CreateCmd )->Cmd
-      write "_push( "
+      write "if (not disable_output) _push( "
       write cmd.name
       write "(_cur_t"
       cmd.args.dispatch( this )
@@ -193,11 +193,11 @@ class RogueGenerator : Visitor
       return cmd
 
     method on_visit( cmd:CreateList )
-      write "_push_list( $(_list_t) )" (cmd.list_type)
+      write "if (not disable_output) _push_list( $(_list_t) )" (cmd.list_type)
       visit_children( cmd )
 
     method on_visit( cmd:CreateNull )
-      write "_push( null, 0 )"
+      write "if (not disable_output) _push( null, 0 )"
       visit_children( cmd )
 
     method on_visit( cmd:MustConsumeCharacters )
@@ -458,7 +458,7 @@ class RogueGenerator : Visitor
       return cmd
 
     method on_visit( cmd:ProduceList )
-      writeln "_push_list( $(_list_t) )" (cmd.list_type)
+      writeln "if (not disable_output) _push_list( $(_list_t) )" (cmd.list_type)
       write   "return"
       visit_children( cmd )
 

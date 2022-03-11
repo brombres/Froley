@@ -41,7 +41,7 @@ class RVisitor : RogueSourceWriter
                     |      #   'cmd' to keep this subtree or else return a different Cmd node to
                     |      #   replace this subtree.
                     |      visit_content( cmd )
-                    |      if ($ReturnType instanceOf Cmd)
+                    |      if ($ReturnType isType Cmd)
                     |        return validate( cmd )
                     |      else
                     |        validate( cmd )
@@ -55,8 +55,8 @@ class RVisitor : RogueSourceWriter
                     |      visit_children( cmd )
                     |
                     |    method on_validate( cmd:Cmd )->$ReturnType
-                    |      if ($ReturnType instanceOf Cmd) return cmd
-                    |      else                            return $ReturnType.meta.default_value
+                    |      if ($ReturnType isType Cmd) return cmd
+                    |      else                        return $ReturnType.meta.default_value
                     |
                     |    method visit( cmd:Cmd )->$ReturnType [propagated]
                     |      # Call to invoke the appropriate on/on_visit() for the given Cmd type.
@@ -66,7 +66,7 @@ class RVisitor : RogueSourceWriter
                     |      #     cmd.left  = visit(cmd.left)
                     |      #     cmd.right = visit(cmd.right)
                     |      #     return cmd
-                    |      if ($ReturnType instanceOf Cmd)
+                    |      if ($ReturnType isType Cmd)
                     |        if (cmd is null) return null
                     |      else
                     |        if (cmd is null) return $ReturnType.meta.default_value
@@ -84,7 +84,7 @@ class RVisitor : RogueSourceWriter
                     |      return cmd
                     |
                     |    method validate( cmd:Cmd )->$ReturnType [propagated]
-                    |      if ($ReturnType instanceOf Cmd)
+                    |      if ($ReturnType isType Cmd)
                     |        if (cmd is null) return null
                     |      else
                     |        if (cmd is null) return $ReturnType.meta.default_value
@@ -96,7 +96,7 @@ class RVisitor : RogueSourceWriter
                     |      noAction
                     |
                     |    method on_visit_children( cmd:CmdList )
-                    |      if ($ReturnType instanceOf Cmd)
+                    |      if ($ReturnType isType Cmd)
                     |        forEach (element in writer=cmd.list.rewriter)
                     |          local visited_element = visit( element )
                     |          if (visited_element) writer.write( visited_element )
@@ -139,7 +139,7 @@ class RVisitor : RogueSourceWriter
               builder.println "  on_visit_children( cmd->(as CmdList) )"
             endIf
 
-            builder.println "  if ($ReturnType instanceOf Cmd)"
+            builder.println "  if ($ReturnType isType Cmd)"
             if (properties.count)
               forEach (p in properties)
                 local type = p.type

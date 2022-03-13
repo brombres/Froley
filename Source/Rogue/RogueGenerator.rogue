@@ -193,7 +193,8 @@ class RogueGenerator : Visitor
       return cmd
 
     method on_visit( cmd:CreateList )
-      write "if (not disable_output) _push_list( $(_list_t) )" (cmd.list_type)
+      writeln "if (disable_output)     _discard_list"
+      write   "else                    _push_list( $(_list_t) )" (cmd.list_type)
       visit_children( cmd )
 
     method on_visit( cmd:CreateNull )
@@ -458,7 +459,8 @@ class RogueGenerator : Visitor
       return cmd
 
     method on_visit( cmd:ProduceList )
-      writeln "if (not disable_output) _push_list( $(_list_t) )" (cmd.list_type)
+      writeln "if (disable_output)     _discard_list"
+      writeln "else                    _push_list( $(_list_t) )" (cmd.list_type)
       write   "return"
       visit_children( cmd )
 

@@ -111,6 +111,7 @@ class RParserCore( generator, parser_def:ParserDef ) : RogueSourceWriter
          |      _on_output_line # flush any buffered output
          |      if (disable_output) return null
          |      if (_cmd_stack.count != 1)
+         |        @trace _cmd_stack
          |        throw _peek.error( "[INTERNAL] Expected exactly one command node remaining on stack." )
          |      endIf
          |      return _cmd_stack.remove_last

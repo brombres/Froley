@@ -152,6 +152,7 @@ class ParserCore [abstract]
       _on_output_line # flush any buffered output
       if (disable_output) return null
       if (_cmd_stack.count != 1)
+        @trace _cmd_stack
         throw _peek.error( "[INTERNAL] Expected exactly one command node remaining on stack." )
       endIf
       return _cmd_stack.remove_last
@@ -336,7 +337,8 @@ class ParserCore [abstract]
               _execute(ip_consume_eols)
               _pop_frame
             endWhile
-            if (not disable_output) _push_list( CmdList(_list_t) )
+            if (disable_output)     _discard_list
+            else                    _push_list( CmdList(_list_t) )
             if (not disable_output) _push( ProgramDef(_cur_t,_node_arg(-1)), 1 )
             return
           case ip_section
@@ -362,7 +364,8 @@ class ParserCore [abstract]
                   _execute(ip_consume_eols)
                   _pop_frame
                 endWhile
-                if (not disable_output) _push_list( NativeTypes(_list_t) )
+                if (disable_output)     _discard_list
+                else                    _push_list( NativeTypes(_list_t) )
                 return
               endTemporarily
             elseIf (_next_t.type == TokenType.KEYWORD_PARSER)
@@ -433,7 +436,8 @@ class ParserCore [abstract]
               _execute(ip_consume_eols)
               _pop_frame
             endWhile
-            if (not disable_output) _push_list( CmdList(_list_t) )
+            if (disable_output)     _discard_list
+            else                    _push_list( CmdList(_list_t) )
             return
           case ip_routine_name_and_attributes
             _execute(ip_identifier)
@@ -467,7 +471,8 @@ class ParserCore [abstract]
               _execute(ip_consume_eols)
               _pop_frame
             endWhile
-            if (not disable_output) _push_list( CmdList(_list_t) )
+            if (disable_output)     _discard_list
+            else                    _push_list( CmdList(_list_t) )
             return
           case ip_attributes
             if ((not _consume(TokenType.SYMBOL_OPEN_SQUARE)))
@@ -489,7 +494,8 @@ class ParserCore [abstract]
               _pop_frame
             endWhile
             if (not _consume(TokenType.SYMBOL_CLOSE_SQUARE)) _throw_syntax_error( &expected=TokenType.SYMBOL_CLOSE_SQUARE )
-            if (not disable_output) _push_list( CmdList(_list_t) )
+            if (disable_output)     _discard_list
+            else                    _push_list( CmdList(_list_t) )
             return
           case ip_symbol
             if (_next_t.type == TokenType.SYMBOL)
@@ -526,12 +532,14 @@ class ParserCore [abstract]
               _execute(ip_consume_eols_and_semicolons)
               _pop_frame
             endWhile
-            if (not disable_output) _push_list( Statements(_list_t) )
+            if (disable_output)     _discard_list
+            else                    _push_list( Statements(_list_t) )
             return
           case ip_scanner_single_line_statements
             _begin_list
             if (_consume(TokenType.EOL))
-              if (not disable_output) _push_list( Statements(_list_t) )
+              if (disable_output)     _discard_list
+              else                    _push_list( Statements(_list_t) )
               return
             endIf
             _execute(ip_scanner_statement)
@@ -542,7 +550,8 @@ class ParserCore [abstract]
             endWhile
             _execute(ip_must_consume_eols)
             _pop_frame
-            if (not disable_output) _push_list( Statements(_list_t) )
+            if (disable_output)     _discard_list
+            else                    _push_list( Statements(_list_t) )
             return
           case ip_scanner_control_structure
             if (_next_t.type == TokenType.KEYWORD_IF)
@@ -645,7 +654,8 @@ class ParserCore [abstract]
                     if (not disable_output) _push( ScannerCreate(_cur_t,_node_arg(-1)), 1 )
                     if (not disable_output) _push( null, 0 )
                     if (not disable_output) _push( Restart(_cur_t,_string_arg(-1)), 1 )
-                    if (not disable_output) _push_list( Statements(_list_t) )
+                    if (disable_output)     _discard_list
+                    else                    _push_list( Statements(_list_t) )
                   else
                     _consume(TokenType.SYMBOL_COLON)
                     _execute(ip_consume_eols)
@@ -662,11 +672,13 @@ class ParserCore [abstract]
                   if (not disable_output) _push( ProduceAny(_cur_t,_string_arg(-1)), 1 )
                 endTemporarily
               else
-                if (not disable_output) _push_list( CmdList(_list_t) )
+                if (disable_output)     _discard_list
+                else                    _push_list( CmdList(_list_t) )
                 return
               endIf
             endWhile
-            if (not disable_output) _push_list( CmdList(_list_t) )
+            if (disable_output)     _discard_list
+            else                    _push_list( CmdList(_list_t) )
             return
           case ip__others
             if (_next_t.type == TokenType.KEYWORD_OTHERS)
@@ -699,7 +711,8 @@ class ParserCore [abstract]
                     _discard_position
                   else
                     _restore_position
-                    if (not disable_output) _push_list( CmdList(_list_t) )
+                    if (disable_output)     _discard_list
+                    else                    _push_list( CmdList(_list_t) )
                     return
                   endIf
                   _execute(ip_scanner_multi_line_statements)
@@ -708,7 +721,8 @@ class ParserCore [abstract]
                 endTemporarily
               endIf
             endWhile
-            if (not disable_output) _push_list( CmdList(_list_t) )
+            if (disable_output)     _discard_list
+            else                    _push_list( CmdList(_list_t) )
             return
           case ip_scanner_multi_line_else
             if ((not (_next_t.type == TokenType.KEYWORD_ELSE)))
@@ -746,7 +760,8 @@ class ParserCore [abstract]
                   endIf
                   if ((_next_t.type == TokenType.EOL))
                     _restore_position
-                    if (not disable_output) _push_list( CmdList(_list_t) )
+                    if (disable_output)     _discard_list
+                    else                    _push_list( CmdList(_list_t) )
                     return
                   else
                     _discard_position
@@ -757,7 +772,8 @@ class ParserCore [abstract]
                 endTemporarily
               endIf
             endWhile
-            if (not disable_output) _push_list( CmdList(_list_t) )
+            if (disable_output)     _discard_list
+            else                    _push_list( CmdList(_list_t) )
             return
           case ip_scanner_single_line_else
             if ((not (_next_t.type == TokenType.KEYWORD_ELSE)))
@@ -855,7 +871,8 @@ class ParserCore [abstract]
               temporarily _cur_t = _on_t
                 if (((not (_position < _limit)) or (_next_t.type.attributes & TokenType.ATTRIBUTE_STRUCTURAL)?))
                   _begin_list
-                  if (not disable_output) _push_list( Args(_list_t) )
+                  if (disable_output)     _discard_list
+                  else                    _push_list( Args(_list_t) )
                 else
                   _execute(ip_scanner_args)
                   _pop_frame
@@ -979,7 +996,8 @@ class ParserCore [abstract]
             _execute(ip_consume_eols)
             _pop_frame
             if (_consume(TokenType.SYMBOL_CLOSE_PAREN))
-              if (not disable_output) _push_list( Args(_list_t) )
+              if (disable_output)     _discard_list
+              else                    _push_list( Args(_list_t) )
               return
             endIf
             _execute(ip_cmd_arg)
@@ -992,7 +1010,8 @@ class ParserCore [abstract]
               _execute(ip_consume_eols)
               _pop_frame
             endWhile
-            if (not disable_output) _push_list( Args(_list_t) )
+            if (disable_output)     _discard_list
+            else                    _push_list( Args(_list_t) )
             return
           case ip_cmd_arg
             _execute(ip_identifier)
@@ -1037,7 +1056,8 @@ class ParserCore [abstract]
           case ip_scanner_arg_list
             _begin_list
             if ((_next_t.type.attributes & TokenType.ATTRIBUTE_STRUCTURAL)?)
-              if (not disable_output) _push_list( Args(_list_t) )
+              if (disable_output)     _discard_list
+              else                    _push_list( Args(_list_t) )
               return
             endIf
             _execute(ip_scanner_expression)
@@ -1049,14 +1069,16 @@ class ParserCore [abstract]
                 _execute(ip_scanner_expression)
                 _pop_frame
               elseIf (((_next_t.type == TokenType.EOL) or (_next_t.type.attributes & TokenType.ATTRIBUTE_STRUCTURAL)?))
-                if (not disable_output) _push_list( Args(_list_t) )
+                if (disable_output)     _discard_list
+                else                    _push_list( Args(_list_t) )
                 return
               else
                 _execute(ip_scanner_expression)
                 _pop_frame
               endIf
             endWhile
-            if (not disable_output) _push_list( Args(_list_t) )
+            if (disable_output)     _discard_list
+            else                    _push_list( Args(_list_t) )
             return
           case ip_sequence_args
             if (_consume(TokenType.SYMBOL_OPEN_PAREN))
@@ -1075,7 +1097,8 @@ class ParserCore [abstract]
           case ip_sequence_arg_list
             _begin_list
             if ((_next_t.type.attributes & TokenType.ATTRIBUTE_STRUCTURAL)?)
-              if (not disable_output) _push_list( SequenceArgs(_list_t) )
+              if (disable_output)     _discard_list
+              else                    _push_list( SequenceArgs(_list_t) )
               return
             endIf
             _execute(ip_scanner_expression)
@@ -1087,19 +1110,22 @@ class ParserCore [abstract]
                 _execute(ip_scanner_expression)
                 _pop_frame
               elseIf (((_next_t.type == TokenType.EOL) or (_next_t.type.attributes & TokenType.ATTRIBUTE_STRUCTURAL)?))
-                if (not disable_output) _push_list( SequenceArgs(_list_t) )
+                if (disable_output)     _discard_list
+                else                    _push_list( SequenceArgs(_list_t) )
                 return
               else
                 _execute(ip_scanner_expression)
                 _pop_frame
               endIf
             endWhile
-            if (not disable_output) _push_list( SequenceArgs(_list_t) )
+            if (disable_output)     _discard_list
+            else                    _push_list( SequenceArgs(_list_t) )
             return
           case ip_pattern_sequence
             _begin_list
             if ((_next_t.type.attributes & TokenType.ATTRIBUTE_STRUCTURAL)?)
-              if (not disable_output) _push_list( PatternSequence(_list_t) )
+              if (disable_output)     _discard_list
+              else                    _push_list( PatternSequence(_list_t) )
               return
             endIf
             _execute(ip_sequence_item)
@@ -1117,14 +1143,16 @@ class ParserCore [abstract]
                 _execute(ip_sequence_item)
                 _pop_frame
               elseIf (((_next_t.type == TokenType.EOL) or (_next_t.type.attributes & TokenType.ATTRIBUTE_STRUCTURAL)?))
-                if (not disable_output) _push_list( PatternSequence(_list_t) )
+                if (disable_output)     _discard_list
+                else                    _push_list( PatternSequence(_list_t) )
                 return
               else
                 _execute(ip_sequence_item)
                 _pop_frame
               endIf
             endWhile
-            if (not disable_output) _push_list( PatternSequence(_list_t) )
+            if (disable_output)     _discard_list
+            else                    _push_list( PatternSequence(_list_t) )
             return
           case ip_sequence_item
             if (_next_t.type == TokenType.SYMBOL_OPEN_CURLY)
@@ -1159,7 +1187,8 @@ class ParserCore [abstract]
             return
           case ip_empty_statements
             _begin_list
-            if (not disable_output) _push_list( Statements(_list_t) )
+            if (disable_output)     _discard_list
+            else                    _push_list( Statements(_list_t) )
             return
           case ip_scanner_expression
             _execute(ip_scanner_logical_or)
@@ -1560,7 +1589,8 @@ class ParserCore [abstract]
               _execute(ip_consume_eols)
               _pop_frame
             endWhile
-            if (not disable_output) _push_list( CmdList(_list_t) )
+            if (disable_output)     _discard_list
+            else                    _push_list( CmdList(_list_t) )
             return
           case ip_parser_multi_line_statements
             _execute(ip_consume_eols_and_semicolons)
@@ -1575,12 +1605,14 @@ class ParserCore [abstract]
               _execute(ip_consume_eols_and_semicolons)
               _pop_frame
             endWhile
-            if (not disable_output) _push_list( Statements(_list_t) )
+            if (disable_output)     _discard_list
+            else                    _push_list( Statements(_list_t) )
             return
           case ip_parser_single_line_statements
             _begin_list
             if (_consume(TokenType.EOL))
-              if (not disable_output) _push_list( Statements(_list_t) )
+              if (disable_output)     _discard_list
+              else                    _push_list( Statements(_list_t) )
               return
             endIf
             _execute(ip_parser_statement)
@@ -1591,7 +1623,8 @@ class ParserCore [abstract]
             endWhile
             _execute(ip_must_consume_eols)
             _pop_frame
-            if (not disable_output) _push_list( Statements(_list_t) )
+            if (disable_output)     _discard_list
+            else                    _push_list( Statements(_list_t) )
             return
           case ip_parser_control_structure
             if (_next_t.type == TokenType.KEYWORD_IF)
@@ -1665,7 +1698,7 @@ class ParserCore [abstract]
             _pop_frame
             return
           case ip_on_block
-            _execute(ip_token_id)
+            _execute(ip_ttype_or_literal)
             _pop_frame
             _execute(ip_collect_parse_list)
             _pop_frame
@@ -1705,7 +1738,8 @@ class ParserCore [abstract]
                     _discard_position
                   else
                     _restore_position
-                    if (not disable_output) _push_list( CmdList(_list_t) )
+                    if (disable_output)     _discard_list
+                    else                    _push_list( CmdList(_list_t) )
                     return
                   endIf
                   _execute(ip_parser_multi_line_statements)
@@ -1714,7 +1748,8 @@ class ParserCore [abstract]
                 endTemporarily
               endIf
             endWhile
-            if (not disable_output) _push_list( CmdList(_list_t) )
+            if (disable_output)     _discard_list
+            else                    _push_list( CmdList(_list_t) )
             return
           case ip_parser_multi_line_else
             if ((not (_next_t.type == TokenType.KEYWORD_ELSE)))
@@ -1752,7 +1787,8 @@ class ParserCore [abstract]
                   endIf
                   if ((_next_t.type == TokenType.EOL))
                     _restore_position
-                    if (not disable_output) _push_list( CmdList(_list_t) )
+                    if (disable_output)     _discard_list
+                    else                    _push_list( CmdList(_list_t) )
                     return
                   else
                     _discard_position
@@ -1763,7 +1799,8 @@ class ParserCore [abstract]
                 endTemporarily
               endIf
             endWhile
-            if (not disable_output) _push_list( CmdList(_list_t) )
+            if (disable_output)     _discard_list
+            else                    _push_list( CmdList(_list_t) )
             return
           case ip_parser_single_line_else
             if ((not (_next_t.type == TokenType.KEYWORD_ELSE)))
@@ -1799,7 +1836,8 @@ class ParserCore [abstract]
                     _discard_position
                   else
                     _restore_position
-                    if (not disable_output) _push_list( CmdList(_list_t) )
+                    if (disable_output)     _discard_list
+                    else                    _push_list( CmdList(_list_t) )
                     return
                   endIf
                   _execute(ip_parser_multi_line_statements)
@@ -1816,7 +1854,8 @@ class ParserCore [abstract]
                     _discard_position
                   else
                     _restore_position
-                    if (not disable_output) _push_list( CmdList(_list_t) )
+                    if (disable_output)     _discard_list
+                    else                    _push_list( CmdList(_list_t) )
                     return
                   endIf
                   _execute(ip_parser_multi_line_statements)
@@ -1825,7 +1864,8 @@ class ParserCore [abstract]
                 endTemporarily
               endIf
             endWhile
-            if (not disable_output) _push_list( CmdList(_list_t) )
+            if (disable_output)     _discard_list
+            else                    _push_list( CmdList(_list_t) )
             return
           case ip_parser_multi_line_else_on_others
             if ((not (_next_t.type == TokenType.KEYWORD_ELSE_OTHERS)))
@@ -1859,7 +1899,8 @@ class ParserCore [abstract]
                   _pop_frame
                   if ((_next_t.type == TokenType.EOL))
                     _restore_position
-                    if (not disable_output) _push_list( CmdList(_list_t) )
+                    if (disable_output)     _discard_list
+                    else                    _push_list( CmdList(_list_t) )
                     return
                   else
                     _discard_position
@@ -1871,7 +1912,8 @@ class ParserCore [abstract]
                 endTemporarily
               endIf
             endWhile
-            if (not disable_output) _push_list( CmdList(_list_t) )
+            if (disable_output)     _discard_list
+            else                    _push_list( CmdList(_list_t) )
             return
           case ip_parser_single_line_else_on_others
             if ((not (_next_t.type == TokenType.KEYWORD_ELSE_OTHERS)))
@@ -1968,7 +2010,8 @@ class ParserCore [abstract]
               temporarily _cur_t = _on_t
                 if (((not (_position < _limit)) or (_next_t.type.attributes & TokenType.ATTRIBUTE_STRUCTURAL)?))
                   _begin_list
-                  if (not disable_output) _push_list( Args(_list_t) )
+                  if (disable_output)     _discard_list
+                  else                    _push_list( Args(_list_t) )
                 else
                   _execute(ip_parser_args)
                   _pop_frame
@@ -2109,7 +2152,8 @@ class ParserCore [abstract]
           case ip_parser_arg_list
             _begin_list
             if ((_next_t.type.attributes & TokenType.ATTRIBUTE_STRUCTURAL)?)
-              if (not disable_output) _push_list( Args(_list_t) )
+              if (disable_output)     _discard_list
+              else                    _push_list( Args(_list_t) )
               return
             endIf
             _execute(ip_parser_expression)
@@ -2121,14 +2165,16 @@ class ParserCore [abstract]
                 _execute(ip_parser_expression)
                 _pop_frame
               elseIf (((_next_t.type == TokenType.EOL) or (_next_t.type.attributes & TokenType.ATTRIBUTE_STRUCTURAL)?))
-                if (not disable_output) _push_list( Args(_list_t) )
+                if (disable_output)     _discard_list
+                else                    _push_list( Args(_list_t) )
                 return
               else
                 _execute(ip_parser_expression)
                 _pop_frame
               endIf
             endWhile
-            if (not disable_output) _push_list( Args(_list_t) )
+            if (disable_output)     _discard_list
+            else                    _push_list( Args(_list_t) )
             return
           case ip_ttype_or_literal
             if (_consume(TokenType.SYMBOL_OPEN_PAREN))
@@ -2209,7 +2255,8 @@ class ParserCore [abstract]
               _execute(ip_string_id_or_routine)
               _pop_frame
             endWhile
-            if (not disable_output) _push_list( Args(_list_t) )
+            if (disable_output)     _discard_list
+            else                    _push_list( Args(_list_t) )
             return
           case ip_string_id_or_routine
             if (_next_t.type == TokenType.IDENTIFIER)
@@ -2243,7 +2290,8 @@ class ParserCore [abstract]
               if (not _consume(TokenType.SYMBOL_CLOSE_PAREN)) _throw_syntax_error( &expected=TokenType.SYMBOL_CLOSE_PAREN )
             else
               _begin_list
-              if (not disable_output) _push_list( Args(_list_t) )
+              if (disable_output)     _discard_list
+              else                    _push_list( Args(_list_t) )
             endIf
             if (_consume(TokenType.SYMBOL_COLON))
               _execute(ip_type_name)

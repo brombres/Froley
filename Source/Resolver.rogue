@@ -206,7 +206,9 @@ class Resolver : Visitor
       return cmd
 
     method on_visit( cmd:On )
-      cmd.token_type = LiteralTokenType( cmd.token_type.t, resolve_token_type(cmd.token_type) )
+      if (cmd.token_type not instanceOf LiteralContent)
+        cmd.token_type = LiteralTokenType( cmd.token_type.t, resolve_token_type(cmd.token_type) )
+      endIf
       while (cmd.token_types.count)
         local ttype = cmd.token_types.remove_last
         local def = resolve_token_type( ttype, &optional )
@@ -224,7 +226,9 @@ class Resolver : Visitor
       visit_children( cmd )
 
     method on_visit( cmd:ElseOn )
-      cmd.token_type = LiteralTokenType( cmd.token_type.t, resolve_token_type(cmd.token_type) )
+      if (cmd.token_type not instanceOf LiteralContent)
+        cmd.token_type = LiteralTokenType( cmd.token_type.t, resolve_token_type(cmd.token_type) )
+      endIf
       while (cmd.token_types.count)
         local ttype = cmd.token_types.remove_last
         local def = resolve_token_type( ttype, &optional )

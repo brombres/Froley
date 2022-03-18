@@ -1030,7 +1030,7 @@ parser
   parser_statement
 
 - on_block
-  token_id
+  ttype_or_literal
   collect_parse_list
   if (consume(EOL))
     parser_multi_line_statements

@@ -296,6 +296,11 @@ class RogueGenerator : Visitor
       endWhich
       visit_children( cmd )
 
+    method on_visit( cmd:LiteralContent )
+      writer.print '"'
+      writer.print cmd.value.to_escaped_ascii("\"")
+      writer.print '"'
+
     method on_visit( cmd:LiteralInteger )
       writer.print( cmd.value )
       visit_children( cmd )
@@ -345,8 +350,11 @@ class RogueGenerator : Visitor
       visit_children( cmd )
 
     method on( cmd:On )->Cmd
-
-      write   "if (_next_t.type == "
+      if (cmd.token_type instanceOf LiteralContent)
+        write   "if (_next_t.content and _next_t.content == "
+      else
+        write   "if (_next_t.type == "
+      endIf
       visit( cmd.token_type )
       writeln ")"
       indent += 2

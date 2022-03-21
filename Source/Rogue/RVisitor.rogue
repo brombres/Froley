@@ -17,36 +17,26 @@ class RVisitor : RogueSourceWriter
       endForEach
 
     method update_content( content:String )->String
-      if (not String.exists(content) or not content.contains("class Visitor<<"))
+      if (not String.exists(content) or not content.contains("class Visitor"))
         if (content is null) content = ""
         content +=  "# Generated and updated by Froley. Custom changes will not be overwritten; customize as desired.\n"
         content += "module $\n\n"(Program.project_name)
-        content += @|class Visitor : Visitor<<Cmd>>
-                    |  # Standard tree-rebuilding visitor.
-                    |endClass
-                    |
-                    |class Visitor<<$ReturnType>>
+        content += @|class Visitor
                     |  METHODS
-                    |    method on( cmd:Cmd )->$ReturnType
-                    |      # Default per-node call sequence for regular 'Visitor' AKA 'Visitor<<Cmd>>':
+                    |    method on( cmd:Cmd )->Cmd
+                    |      # Default per-node call sequence for regular 'Visitor'
                     |      #   CALL                  OVERLOADABLE METHOD
                     |      #   --------------------  -----------------------------------------
-                    |      #   visit(cmd)            -> on(cmd:CmdType)->Cmd (or ->ResultType)
+                    |      #   visit(cmd)            -> on(cmd:CmdType)->Cmd
                     |      #   visit_content(cmd)       -> on_visit(cmd:CmdType)
                     |      #     visit_children(cmd)       -> on_visit_children(cmd:CmdType)
-                    |      #                            on_validate(cmd:CmdType)->Cmd/ResultType
+                    |      #                            on_validate(cmd:CmdType)->Cmd
                     |      #
-                    |      # For a regular 'Visitor' AKA 'Visitor<<Cmd>>':
-                    |      # - The AST is rebuilt with the return value of this call, so return
-                    |      #   'cmd' to keep this subtree or else return a different Cmd node to
-                    |      #   replace this subtree.
+                    |      # For any method on(CmdType) or on_validate(CmdType):
+                    |      # - The AST is rebuilt with the return value, so return 'cmd' to keep
+                    |      #   this subtree or else return a different Cmd node to replace it.
                     |      visit_content( cmd )
-                    |      if ($ReturnType isType Cmd)
-                    |        return validate( cmd )
-                    |      else
-                    |        validate( cmd )
-                    |        return $ReturnType.meta.default_value
-                    |      endIf
+                    |      return validate( cmd )
                     |
                     |    method on_visit( cmd:Cmd )
                     |      # Called from on(CmdType). If you overload this method with an extended
@@ -54,11 +44,10 @@ class RVisitor : RogueSourceWriter
                     |      # when you call visit_children(cmd).
                     |      visit_children( cmd )
                     |
-                    |    method on_validate( cmd:Cmd )->$ReturnType
-                    |      if ($ReturnType isType Cmd) return cmd
-                    |      else                        return $ReturnType.meta.default_value
+                    |    method on_validate( cmd:Cmd )->Cmd
+                    |      return cmd
                     |
-                    |    method visit( cmd:Cmd )->$ReturnType [propagated]
+                    |    method visit( cmd:Cmd )->Cmd [propagated]
                     |      # Call to invoke the appropriate on/on_visit() for the given Cmd type.
                     |      #
                     |      # For example:
@@ -66,12 +55,8 @@ class RVisitor : RogueSourceWriter
                     |      #     cmd.left  = visit(cmd.left)
                     |      #     cmd.right = visit(cmd.right)
                     |      #     return cmd
-                    |      if ($ReturnType isType Cmd)
-                    |        if (cmd is null) return null
-                    |      else
-                    |        if (cmd is null) return $ReturnType.meta.default_value
-                    |      endIf
-                    |      return cmd.dispatch<<ThisType,$ReturnType>>( this )
+                    |      if (cmd is null) return null
+                    |      return cmd.dispatch<<ThisType>>( this )
                     |
                     |    method visit_children( cmd:Cmd )->Cmd [propagated]
                     |      # Call from 'on()' or 'on_visit()' handler to visit subtrees.
@@ -83,27 +68,19 @@ class RVisitor : RogueSourceWriter
                     |      cmd.dispatch_on_visit<<ThisType>>( this )
                     |      return cmd
                     |
-                    |    method validate( cmd:Cmd )->$ReturnType [propagated]
-                    |      if ($ReturnType isType Cmd)
-                    |        if (cmd is null) return null
-                    |      else
-                    |        if (cmd is null) return $ReturnType.meta.default_value
-                    |      endIf
-                    |      return cmd.dispatch_on_validate<<ThisType,$ReturnType>>( this )
+                    |    method validate( cmd:Cmd )->Cmd [propagated]
+                    |      if (cmd is null) return null
+                    |      return cmd.dispatch_on_validate<<ThisType>>( this )
                     |
                     |    method on_visit_children( cmd:Cmd )
                     |      # Overloaded automatically by the Froley compiler
                     |      noAction
                     |
                     |    method on_visit_children( cmd:CmdList )
-                    |      if ($ReturnType isType Cmd)
-                    |        forEach (element in writer=cmd.list.rewriter)
-                    |          local visited_element = visit( element )
-                    |          if (visited_element) writer.write( visited_element )
-                    |        endForEach
-                    |      else
-                    |        visit( forEach in cmd.list )
-                    |      endIf
+                    |      forEach (element in writer=cmd.list.rewriter)
+                    |        local visited_element = visit( element )
+                    |        if (visited_element) writer.write( visited_element )
+                    |      endForEach
                     |
       endIf
 
@@ -111,7 +88,7 @@ class RVisitor : RogueSourceWriter
 
       local builder = StringBuilder(content.count*2)
 
-      local end_class_location = content.locate( "endClass", content.locate("class Visitor<<").value )
+      local end_class_location = content.locate( "endClass", content.locate("class Visitor").value )
       local bottom = "endClass\n"
       if (end_class_location)
         bottom = content.from( end_class_location.value )
@@ -139,7 +116,6 @@ class RVisitor : RogueSourceWriter
               builder.println "  on_visit_children( cmd->(as CmdList) )"
             endIf
 
-            builder.println "  if ($ReturnType isType Cmd)"
             if (properties.count)
               forEach (p in properties)
                 local type = p.type
@@ -155,17 +131,6 @@ class RVisitor : RogueSourceWriter
               endForEach
             endIf
 
-            if (properties.count)
-              builder.println "  else"
-              forEach (p in properties)
-                local type = p.type
-                if (not (type.is_built_in or type.is_native))
-                  builder.println "    visit( cmd.$ )"(p.name)
-                endIf
-              endForEach
-            endIf
-
-            builder.println "  endIf"
           endIf
         endIf
       endForEach

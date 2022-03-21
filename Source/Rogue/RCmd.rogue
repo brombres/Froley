@@ -62,10 +62,7 @@ class RCmd : RogueSourceWriter
            |    method description->String
            |      return "Cmd"
            |
-           |    method dispatch<<$VisitorType>>( visitor:$VisitorType ) [propagated]
-           |      visitor.visit( this )
-           |
-           |    method dispatch<<$VisitorType,$ReturnType>>( visitor:$VisitorType )->$ReturnType [propagated]
+           |    method dispatch<<$VisitorType>>( visitor:$VisitorType )->Cmd [propagated]
            |      return visitor.on( this )
            |
            |    method dispatch_on_visit<<$VisitorType>>( visitor:$VisitorType ) [propagated]
@@ -74,7 +71,7 @@ class RCmd : RogueSourceWriter
            |    method dispatch_on_visit_children<<$VisitorType>>( visitor:$VisitorType ) [propagated]
            |      visitor.on_visit_children( this )
            |
-           |    method dispatch_on_validate<<$VisitorType,$ReturnType>>( visitor:$VisitorType )->$ReturnType [propagated]
+           |    method dispatch_on_validate<<$VisitorType>>( visitor:$VisitorType )->Cmd [propagated]
            |      return visitor.on_validate( this )
            |
            |    method first->Cmd

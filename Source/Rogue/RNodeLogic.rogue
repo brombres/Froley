@@ -92,7 +92,11 @@ class RNodeLogic : RogueSourceWriter
             builder.println "      local result : $"(return_type)
             builder.println "      forEach (cmd in list)"
             builder.println "        result = cmd.$"(call_signature)
-            builder.println "        if (result) return result"
+            if (logic.attributes.is_and)
+              builder.println "        if (result) return result"
+            else
+              builder.println "        if (not result) return result"
+            endIf
             builder.println "      endForEach"
             builder.println "      return $"(default_value)
             builder.println
@@ -145,7 +149,11 @@ class RNodeLogic : RogueSourceWriter
                   if (not (type.is_built_in or type.is_native))
                     builder.println "  if ($)"(p.name)
                     builder.println "    result = $.$"(p.name,call_signature)
-                    builder.println "    if (result) return result"
+                    if (logic.attributes.is_and)
+                      builder.println "    if (not result) return result"
+                    else
+                      builder.println "    if (result) return result"
+                    endIf
                     builder.println "  endIf"
                   endIf
                 endForEach

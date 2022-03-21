@@ -1,0 +1,29 @@
+module Froley
+
+class Attribute
+  DEFINITIONS
+    AND = (1:<<:0)
+    OR  = (1:<<:1)
+endClass
+
+augment Cmd
+  METHODS
+    method attribute_flags->Int32
+      return 0
+endAugment
+
+class Attributes : CmdList
+  FROLEY_ATTRIBUTE( is_and, Attribute.AND )
+  FROLEY_ATTRIBUTE( is_or,  Attribute.OR )
+
+  PROPERTIES
+    flags : Int32
+
+  METHODS
+    method add( cmd:Cmd )
+      prior.add( cmd )
+      flags |= cmd.attribute_flags
+
+    method description->String
+      return "Attributes" + list_description
+endClass

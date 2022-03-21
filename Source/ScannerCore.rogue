@@ -44,8 +44,9 @@ class ScannerCore [abstract]
     _column_stack   = Int32[]
 
     # GENERATED PROPERTIES
-    ch    : Character
-    count : Int32
+    scanning_node_logic : Logical
+    ch                  : Character
+    count               : Int32
     _scan_pattern_0 = ScanPattern( "[0-9]" )
     _scan_pattern_1 = ScanPattern( "{[a-zA-Z_][a-zA-Z_0-9]*}" )
     _scan_pattern_2 = ScanPattern( "{[a-zA-Z_][a-zA-Z0-9_]*}" )
@@ -198,7 +199,9 @@ class ScannerCore [abstract]
             if (not _execute(ip_scan_identifier)) return false
             if (not _execute(ip_scan_single_quoted_string)) return false
             if (not _execute(ip_scan_double_quoted_string)) return false
-            if (not _execute(ip_scan_charset)) return false
+            if ((not scanning_node_logic))
+              if (not _execute(ip_scan_charset)) return false
+            endIf
             _scan_table_0.reset
             contingent
               block n=1
@@ -430,22 +433,27 @@ class ScannerCore [abstract]
                 necessary (_scan_table_1.accept(forEach in buffer))
                 which (_scan_table_1.product)
                   case 1
+                    scanning_node_logic = false
                     start_ip = ip_scan_standard_token
                     _add( TokenType.KEYWORD_NATIVE_TYPES )
                     return false
                   case 2
+                    scanning_node_logic = true
                     start_ip = ip_scan_standard_token
                     _add( TokenType.KEYWORD_NODE_LOGIC )
                     return false
                   case 3
+                    scanning_node_logic = false
                     start_ip = ip_scan_standard_token
                     _add( TokenType.KEYWORD_PARSER )
                     return false
                   case 4
+                    scanning_node_logic = false
                     start_ip = ip_scan_standard_token
                     _add( TokenType.KEYWORD_SCANNER )
                     return false
                   case 5
+                    scanning_node_logic = false
                     start_ip = ip_scan_tokens_id
                     _add( TokenType.KEYWORD_TOKENS )
                     return false
@@ -532,22 +540,27 @@ class ScannerCore [abstract]
                 necessary (_scan_table_3.accept(forEach in buffer))
                 which (_scan_table_3.product)
                   case 1
+                    scanning_node_logic = false
                     start_ip = ip_scan_standard_token
                     _add( TokenType.KEYWORD_NATIVE_TYPES )
                     return false
                   case 2
+                    scanning_node_logic = true
                     start_ip = ip_scan_standard_token
                     _add( TokenType.KEYWORD_NODE_LOGIC )
                     return false
                   case 3
+                    scanning_node_logic = false
                     start_ip = ip_scan_standard_token
                     _add( TokenType.KEYWORD_PARSER )
                     return false
                   case 4
+                    scanning_node_logic = false
                     start_ip = ip_scan_standard_token
                     _add( TokenType.KEYWORD_SCANNER )
                     return false
                   case 5
+                    scanning_node_logic = false
                     start_ip = ip_scan_tokens_id
                     _add( TokenType.KEYWORD_TOKENS )
                     return false

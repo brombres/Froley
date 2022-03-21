@@ -1918,12 +1918,13 @@ class NodeLogic : Cmd
     method_name : String
     parameters  : Cmd
     return_info : ReturnInfo
+    attributes  : Attributes
 
   METHODS
-    method init( t, filename, method_name, parameters, return_info )
+    method init( t, filename, method_name, parameters, return_info, attributes )
 
     method description->String
-      return "NodeLogic($,$,$,$)" (%filename,%method_name,%parameters,%return_info)
+      return "NodeLogic($,$,$,$,$)" (%filename,%method_name,%parameters,%return_info,%attributes)
 
 endClass
 
@@ -1966,3 +1967,22 @@ class ReturnInfo : Cmd
       return "ReturnInfo($,$,$)" (%default_value,%_type_name,%is_optional)
 
 endClass
+
+class AttributeAnd : Cmd
+  METHODS
+    method attribute_flags->Int32
+      return Attribute.AND
+
+    method description->String
+      return "AttributeAnd"
+endClass
+
+class AttributeOr : Cmd
+  METHODS
+    method attribute_flags->Int32
+      return Attribute.OR
+
+    method description->String
+      return "AttributeOr"
+endClass
+

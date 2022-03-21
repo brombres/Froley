@@ -3,6 +3,9 @@ $define AUTHOR "March 5, 2022 by Abe Pralle"
 
 module Froley
 
+$include "Macros.rogue"
+
+$include "Attributes.rogue"
 $include "BranchAnalyzer.rogue"
 $include "BuildfileGenerator.rogue"
 $include "Collector.rogue"

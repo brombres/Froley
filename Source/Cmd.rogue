@@ -41,6 +41,9 @@ class Cmd( t:Token )
     method dispatch<<$VisitorType,$ReturnType>>( visitor:$VisitorType )->$ReturnType [propagated]
       return visitor.on( this )
 
+    method dispatch_on_enter<<$VisitorType>>( visitor:$VisitorType ) [propagated]
+      visitor.on_enter( this )
+
    method dispatch_on_visit<<$VisitorType>>( visitor:$VisitorType ) [propagated]
      visitor.on_visit( this )
 

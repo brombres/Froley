@@ -24,13 +24,14 @@ class RVisitor : RogueSourceWriter
         content += @|class Visitor
                     |  METHODS
                     |    method on( cmd:Cmd )->Cmd
-                    |      # Default per-node call sequence for regular 'Visitor'
-                    |      #   CALL                  OVERLOADABLE METHOD
-                    |      #   --------------------  -----------------------------------------
-                    |      #   visit(cmd)            -> on(cmd:CmdType)->Cmd
-                    |      #   visit_content(cmd)       -> on_visit(cmd:CmdType)
-                    |      #     visit_children(cmd)       -> on_visit_children(cmd:CmdType)
-                    |      #                            on_validate(cmd:CmdType)->Cmd
+                    |      # Default per-node Visitor call sequence.
+                    |      #
+                    |      #   CALL                       OVERLOADABLE METHOD
+                    |      #   --------------------       -----------------------------------------
+                    |      #   visit(cmd)->Cmd         -> on(cmd:CmdType)->Cmd
+                    |      #     visit_content(cmd)    ->   on_visit(cmd:CmdType)
+                    |      #       visit_children(cmd) ->     on_visit_children(cmd:CmdType)
+                    |      #     validate(cmd)->Cmd    ->   on_validate(cmd:CmdType)->Cmd
                     |      #
                     |      # For any method on(CmdType) or on_validate(CmdType):
                     |      # - The AST is rebuilt with the return value, so return 'cmd' to keep
@@ -58,15 +59,13 @@ class RVisitor : RogueSourceWriter
                     |      if (cmd is null) return null
                     |      return cmd.dispatch<<ThisType>>( this )
                     |
-                    |    method visit_children( cmd:Cmd )->Cmd [propagated]
+                    |    method visit_children( cmd:Cmd ) [propagated]
                     |      # Call from 'on()' or 'on_visit()' handler to visit subtrees.
                     |      cmd.dispatch_on_visit_children<<ThisType>>( this )
-                    |      return cmd
                     |
-                    |    method visit_content( cmd:Cmd )->Cmd [propagated]
+                    |    method visit_content( cmd:Cmd ) [propagated]
                     |      # Primarily for internal use - see on(Cmd) for usage.
                     |      cmd.dispatch_on_visit<<ThisType>>( this )
-                    |      return cmd
                     |
                     |    method validate( cmd:Cmd )->Cmd [propagated]
                     |      if (cmd is null) return null

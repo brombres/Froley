@@ -3,6 +3,7 @@ module Froley
 $include "RCmd.rogue"
 $include "RFrameStack.rogue"
 $include "RMain.rogue"
+$include "RInspectionVisitor.rogue"
 $include "RParser.rogue"
 $include "RParserCore.rogue"
 $include "RScanTable.rogue"
@@ -704,6 +705,7 @@ class RogueGenerator : Visitor
       temporarily this_element = cmd
         RCmd(this).update
         RVisitor(this).update
+        RInspectionVisitor(this).update
         RParser(this).create_missing
         RParserCore(this,cmd).overwrite
       endTemporarily

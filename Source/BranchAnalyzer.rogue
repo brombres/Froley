@@ -1,6 +1,6 @@
 module Froley
 
-class BranchAnalyzer : Visitor<<Logical>> [singleton]
+class BranchAnalyzer : InspectionVisitor<<Logical>> [singleton]
   METHODS
     method all_paths_return( cmd:Cmd )->Logical
       return visit( cmd )

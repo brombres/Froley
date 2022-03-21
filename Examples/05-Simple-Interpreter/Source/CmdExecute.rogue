@@ -1,0 +1,62 @@
+module Simple
+
+class Runtime [singleton]
+  PROPERTIES
+    variables = StringTable<<Value>>()
+endClass
+
+augment
+  METHODS
+    method Cmd.execute->Value
+      throw t.error( "[INTERNAL] $.execute() is undefined"(type_name) )
+
+    method Statements.execute->Value
+      local result : Value
+      result = (forEach in this).execute
+      return result
+      throw t.error( "[INTERNAL] $.execute() is undefined"(type_name) )
+
+    method Number.execute->Value
+      return value
+
+    method LiteralString.execute->Value
+      return value
+
+    method Add.execute->Value
+      return left.execute + right.execute
+
+    method Subtract.execute->Value
+      return left.execute - right.execute
+
+    method Multiply.execute->Value
+      return left.execute * right.execute
+
+    method Divide.execute->Value
+      return left.execute / right.execute
+
+    method Power.execute->Value
+      return left.execute ^ right.execute
+
+    method Factorial.execute->Value
+      local result = 1
+      result *= (forEach in 2..(operand.execute->Int32))
+      return result
+
+    method Negate.execute->Value
+      return -operand.execute
+
+    method ReadVar.execute->Value
+      local entry = Runtime.variables.find( name )
+      if (entry) return entry.value
+      throw t.error( "'$' is undefined."(name) )
+
+    method WriteVar.execute->Value
+      Runtime.variables[name] = new_value.execute
+      return null
+
+    method Println.execute->Value
+      print ((forEach in args).execute)
+      println
+      return null
+
+endAugment

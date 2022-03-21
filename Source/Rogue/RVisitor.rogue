@@ -105,9 +105,9 @@ class RVisitor : RogueSourceWriter
           handled_node_types.add( node_type.name )
 
           local properties = node_type.properties
-          properties .= discarding( (p) with (Program) => p.type.is_built_in or p.type.is_native )
+          properties .= discarding( (p) => p.type.is_built_in or p.type.is_native )
           local extended_properties = node_type.extended_properties
-          extended_properties .= discarding( (p) with (Program) => p.type.is_built_in or p.type.is_native )
+          extended_properties .= discarding( (p) => p.type.is_built_in or p.type.is_native )
 
           if (extended_properties.count)
             builder.println

@@ -113,6 +113,11 @@ class Organizer : Visitor
       endForEach
       visit_children( cmd )
 
+    method on_visit( cmd:NodeLogicDeclarations )
+      forEach (declaration in cmd)
+        Program.node_logic.add( declaration->(as NodeLogic) )
+      endForEach
+
     method on_visit( cmd:On )
       if (not cmd.is_organized)
         cmd.is_organized = true

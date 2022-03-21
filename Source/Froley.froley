@@ -14,6 +14,7 @@ SYMBOL              symbol     [content]
 tokens SectionKeywords
 --------------------------------------------------------------------------------
 KEYWORD_NATIVE_TYPES    nativeTypes [structural]
+KEYWORD_NODE_LOGIC      nodeLogic   [structural]
 KEYWORD_PARSER          parser      [structural]
 KEYWORD_SCANNER         scanner     [structural]
 KEYWORD_TOKENS          tokens      [structural]
@@ -247,6 +248,9 @@ scanner
       case "nativeTypes"
         mode scan_standard_token
         produce KEYWORD_NATIVE_TYPES
+      case "nodeLogic"
+        mode scan_standard_token
+        produce KEYWORD_NODE_LOGIC
       case "parser"
         mode scan_standard_token
         produce KEYWORD_PARSER
@@ -311,6 +315,9 @@ scanner
       case "nativeTypes"
         mode scan_standard_token
         produce KEYWORD_NATIVE_TYPES
+      case "nodeLogic"
+        mode scan_standard_token
+        produce KEYWORD_NODE_LOGIC
       case "parser"
         mode scan_standard_token
         produce KEYWORD_PARSER
@@ -405,6 +412,19 @@ parser
       endWhile
     produceList NativeTypes
 
+  elseOn "nodeLogic"
+    beginList
+      consume_eols
+      while (hasAnother and not nextHasAttribute(structural))
+        identifier
+        identifier
+        optional_parameters
+        optional_return_info
+        create NodeLogic( filename:String, method_name:String, parameters, return_info:ReturnInfo )
+        consume_eols
+      endWhile
+    produceList NodeLogicDeclarations
+
   elseOn "parser"
     createNull
     must_consume_eols
@@ -418,6 +438,48 @@ parser
     produce TokenGroup(name:String,definitions)
   endOn
   syntaxError
+
+- optional_parameters
+  beginList
+    if (not consume('(')) produceList
+    parameter
+    while (consume(',')) parameter
+    mustConsume ')'
+  produceList
+
+- parameter
+  identifier
+  mustConsume ':'
+  identifier
+  if (consume('?')) create OptionalType
+  else              createNull
+  produce Parameter(name:String,_type_name:String,is_optional)
+
+- optional_return_info
+  if (not consume('->')) produceNull
+
+  on IDENTIFIER
+    create Identifier(name=content)
+  elseOn STRING
+    create Identifier(name=content)
+  elseOn INTEGER
+    create Identifier(name=content)
+  elseOn "false"
+    create Identifier(name="false":String)
+  elseOn "true"
+    create Identifier(name="true":String)
+  elseOnOthers
+    syntaxError "Expected default return value as an identifier, string, or integer."
+  endOn
+
+  mustConsume ':'
+
+  identifier
+
+  if (consume('?')) create OptionalType
+  else              createNull
+
+  produce ReturnInfo(default_value:String,_type_name:String,is_optional)
 
 - type_name
   on KEYWORD_CHARACTER -> Identifier(name="Character":String)
@@ -1375,3 +1437,4 @@ parser
 - additional_node_types
   create WriteBuffer(new_value)
   create WriteOutput(new_value)
+

@@ -1893,3 +1893,76 @@ class WriteOutput : Cmd
       return "WriteOutput($)" (%new_value)
 
 endClass
+
+class TokenList : Cmd
+  PROPERTIES
+    list : Token[]
+
+  METHODS
+    method init( t )
+      list = Token[]
+
+    method init( t, list )
+
+    method init( existing:TokenList )
+      prior.init( existing )
+      list = existing.list.cloned
+
+    method to->Token[]
+      return list
+endClass
+
+class NodeLogic : Cmd
+  PROPERTIES
+    filename    : String
+    method_name : String
+    parameters  : Cmd
+    return_info : ReturnInfo
+
+  METHODS
+    method init( t, filename, method_name, parameters, return_info )
+
+    method description->String
+      return "NodeLogic($,$,$,$)" (%filename,%method_name,%parameters,%return_info)
+
+endClass
+
+class NodeLogicDeclarations : CmdList
+  METHODS
+    method description->String
+      return "NodeLogicDeclarations" + list_description
+endClass
+
+class OptionalType : Cmd
+  METHODS
+    method description->String
+      return "OptionalType"
+endClass
+
+class Parameter : Cmd
+  PROPERTIES
+    name        : String
+    _type_name  : String
+    is_optional : Cmd
+
+  METHODS
+    method init( t, name, _type_name, is_optional )
+
+    method description->String
+      return "Parameter($,$,$)" (%name,%_type_name,%is_optional)
+
+endClass
+
+class ReturnInfo : Cmd
+  PROPERTIES
+    default_value : String
+    _type_name    : String
+    is_optional   : Cmd
+
+  METHODS
+    method init( t, default_value, _type_name, is_optional )
+
+    method description->String
+      return "ReturnInfo($,$,$)" (%default_value,%_type_name,%is_optional)
+
+endClass

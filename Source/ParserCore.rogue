@@ -12,93 +12,96 @@ class ParserCore [abstract]
   DEFINITIONS
     ip_program = 0
     ip_section = 1
-    ip_type_name = 2
-    ip_identifier = 3
-    ip_scanner_routines = 4
-    ip_routine_name_and_attributes = 5
-    ip_token_definitions = 6
-    ip_attributes = 7
-    ip_symbol = 8
-    ip_consume_eols = 9
-    ip_consume_eols_and_semicolons = 10
-    ip_must_consume_eols = 11
-    ip_scanner_multi_line_statements = 12
-    ip_scanner_single_line_statements = 13
-    ip_scanner_control_structure = 14
-    ip_cases = 15
-    ip__others = 16
-    ip_scanner_multi_line_else_ifs = 17
-    ip_scanner_multi_line_else = 18
-    ip_scanner_single_line_else_ifs = 19
-    ip_scanner_single_line_else = 20
-    ip_scanner_statement = 21
-    ip_scanner_product = 22
-    ip_cmd_args = 23
-    ip_cmd_arg = 24
-    ip_scanner_args = 25
-    ip_scanner_arg_list = 26
-    ip_sequence_args = 27
-    ip_sequence_arg_list = 28
-    ip_pattern_sequence = 29
-    ip_sequence_item = 30
-    ip_empty_statements = 31
-    ip_scanner_expression = 32
-    ip_scanner_logical_or = 33
-    ip_scanner_logical_or__inner = 34
-    ip_scanner_logical_and = 35
-    ip_scanner_logical_and__inner = 36
-    ip_scanner_comparison = 37
-    ip_scanner_comparison__inner = 38
-    ip_scanner_add_subtract = 39
-    ip_scanner_add_subtract__inner = 40
-    ip_scanner_multiply_divide = 41
-    ip_scanner_multiply_divide__inner = 42
-    ip_scanner_power = 43
-    ip_scanner_power__inner = 44
-    ip_scanner_pre_unary = 45
-    ip_scanner_term = 46
-    ip_repeat_count = 47
-    ip_parser_routines = 48
-    ip_parser_multi_line_statements = 49
-    ip_parser_single_line_statements = 50
-    ip_parser_control_structure = 51
-    ip_on_block = 52
-    ip_parser_multi_line_else_ifs = 53
-    ip_parser_multi_line_else = 54
-    ip_parser_single_line_else_ifs = 55
-    ip_parser_single_line_else = 56
-    ip_parser_multi_line_else_ons = 57
-    ip_parser_multi_line_else_on_others = 58
-    ip_parser_single_line_else_ons = 59
-    ip_parser_single_line_else_on_others = 60
-    ip_parser_statement = 61
-    ip_list_type = 62
-    ip_parser_args = 63
-    ip_parser_arg_list = 64
-    ip_ttype_or_literal = 65
-    ip_ttype_or_literal_inner = 66
-    ip_attr_name_arg = 67
-    ip_attribute_name = 68
-    ip_token_id = 69
-    ip_collect_parse_list = 70
-    ip_string_id_or_routine = 71
-    ip_parser_product = 72
-    ip_parser_expression = 73
-    ip_parser_logical_or = 74
-    ip_parser_logical_or__inner = 75
-    ip_parser_logical_and = 76
-    ip_parser_logical_and__inner = 77
-    ip_parser_comparison = 78
-    ip_parser_comparison__inner = 79
-    ip_parser_add_subtract = 80
-    ip_parser_add_subtract__inner = 81
-    ip_parser_multiply_divide = 82
-    ip_parser_multiply_divide__inner = 83
-    ip_parser_power = 84
-    ip_parser_power__inner = 85
-    ip_parser_pre_unary = 86
-    ip_parser_term = 87
-    ip_additional_node_types = 88
+    ip_optional_parameters = 2
+    ip_parameter = 3
+    ip_optional_return_info = 4
+    ip_type_name = 5
+    ip_identifier = 6
+    ip_scanner_routines = 7
+    ip_routine_name_and_attributes = 8
+    ip_token_definitions = 9
+    ip_attributes = 10
+    ip_symbol = 11
+    ip_consume_eols = 12
+    ip_consume_eols_and_semicolons = 13
+    ip_must_consume_eols = 14
+    ip_scanner_multi_line_statements = 15
+    ip_scanner_single_line_statements = 16
+    ip_scanner_control_structure = 17
+    ip_cases = 18
+    ip__others = 19
+    ip_scanner_multi_line_else_ifs = 20
+    ip_scanner_multi_line_else = 21
+    ip_scanner_single_line_else_ifs = 22
+    ip_scanner_single_line_else = 23
+    ip_scanner_statement = 24
+    ip_scanner_product = 25
+    ip_cmd_args = 26
+    ip_cmd_arg = 27
+    ip_scanner_args = 28
+    ip_scanner_arg_list = 29
+    ip_sequence_args = 30
+    ip_sequence_arg_list = 31
+    ip_pattern_sequence = 32
+    ip_sequence_item = 33
+    ip_empty_statements = 34
+    ip_scanner_expression = 35
+    ip_scanner_logical_or = 36
+    ip_scanner_logical_or__inner = 37
+    ip_scanner_logical_and = 38
+    ip_scanner_logical_and__inner = 39
+    ip_scanner_comparison = 40
+    ip_scanner_comparison__inner = 41
+    ip_scanner_add_subtract = 42
+    ip_scanner_add_subtract__inner = 43
+    ip_scanner_multiply_divide = 44
+    ip_scanner_multiply_divide__inner = 45
+    ip_scanner_power = 46
+    ip_scanner_power__inner = 47
+    ip_scanner_pre_unary = 48
+    ip_scanner_term = 49
+    ip_repeat_count = 50
+    ip_parser_routines = 51
+    ip_parser_multi_line_statements = 52
+    ip_parser_single_line_statements = 53
+    ip_parser_control_structure = 54
+    ip_on_block = 55
+    ip_parser_multi_line_else_ifs = 56
+    ip_parser_multi_line_else = 57
+    ip_parser_single_line_else_ifs = 58
+    ip_parser_single_line_else = 59
+    ip_parser_multi_line_else_ons = 60
+    ip_parser_multi_line_else_on_others = 61
+    ip_parser_single_line_else_ons = 62
+    ip_parser_single_line_else_on_others = 63
+    ip_parser_statement = 64
+    ip_list_type = 65
+    ip_parser_args = 66
+    ip_parser_arg_list = 67
+    ip_ttype_or_literal = 68
+    ip_ttype_or_literal_inner = 69
+    ip_attr_name_arg = 70
+    ip_attribute_name = 71
+    ip_token_id = 72
+    ip_collect_parse_list = 73
+    ip_string_id_or_routine = 74
+    ip_parser_product = 75
+    ip_parser_expression = 76
+    ip_parser_logical_or = 77
+    ip_parser_logical_or__inner = 78
+    ip_parser_logical_and = 79
+    ip_parser_logical_and__inner = 80
+    ip_parser_comparison = 81
+    ip_parser_comparison__inner = 82
+    ip_parser_add_subtract = 83
+    ip_parser_add_subtract__inner = 84
+    ip_parser_multiply_divide = 85
+    ip_parser_multiply_divide__inner = 86
+    ip_parser_power = 87
+    ip_parser_power__inner = 88
+    ip_parser_pre_unary = 89
+    ip_parser_term = 90
+    ip_additional_node_types = 91
 
   PROPERTIES
     _tokens          : Token[]
@@ -368,6 +371,28 @@ class ParserCore [abstract]
                 else                    _push_list( NativeTypes(_list_t) )
                 return
               endTemporarily
+            elseIf (_next_t.type == TokenType.KEYWORD_NODE_LOGIC)
+              temporarily _cur_t = _on_t
+                _begin_list
+                _execute(ip_consume_eols)
+                _pop_frame
+                while (((_position < _limit) and (not (_next_t.type.attributes & TokenType.ATTRIBUTE_STRUCTURAL)?)))
+                  _execute(ip_identifier)
+                  _pop_frame
+                  _execute(ip_identifier)
+                  _pop_frame
+                  _execute(ip_optional_parameters)
+                  _pop_frame
+                  _execute(ip_optional_return_info)
+                  _pop_frame
+                  if (not disable_output) _push( NodeLogic(_cur_t,_string_arg(-4),_string_arg(-3),_node_arg(-2),_node_arg(-1)->(as ReturnInfo)), 4 )
+                  _execute(ip_consume_eols)
+                  _pop_frame
+                endWhile
+                if (disable_output)     _discard_list
+                else                    _push_list( NodeLogicDeclarations(_list_t) )
+                return
+              endTemporarily
             elseIf (_next_t.type == TokenType.KEYWORD_PARSER)
               temporarily _cur_t = _on_t
                 if (not disable_output) _push( null, 0 )
@@ -393,6 +418,74 @@ class ParserCore [abstract]
               endTemporarily
             endIf
             _throw_syntax_error
+            return
+          case ip_optional_parameters
+            _begin_list
+            if ((not _consume(TokenType.SYMBOL_OPEN_PAREN)))
+              if (disable_output)     _discard_list
+              else                    _push_list( CmdList(_list_t) )
+              return
+            endIf
+            _execute(ip_parameter)
+            _pop_frame
+            while (_consume(TokenType.SYMBOL_COMMA))
+              _execute(ip_parameter)
+              _pop_frame
+            endWhile
+            if (not _consume(TokenType.SYMBOL_CLOSE_PAREN)) _throw_syntax_error( &expected=TokenType.SYMBOL_CLOSE_PAREN )
+            if (disable_output)     _discard_list
+            else                    _push_list( CmdList(_list_t) )
+            return
+          case ip_parameter
+            _execute(ip_identifier)
+            _pop_frame
+            if (not _consume(TokenType.SYMBOL_COLON)) _throw_syntax_error( &expected=TokenType.SYMBOL_COLON )
+            _execute(ip_identifier)
+            _pop_frame
+            if (_consume(TokenType.SYMBOL_QUESTION))
+              if (not disable_output) _push( OptionalType(_cur_t), 0 )
+            else
+              if (not disable_output) _push( null, 0 )
+            endIf
+            if (not disable_output) _push( Parameter(_cur_t,_string_arg(-3),_string_arg(-2),_node_arg(-1)), 3 )
+            return
+          case ip_optional_return_info
+            if ((not _consume(TokenType.SYMBOL_ARROW)))
+              if (not disable_output) _push( null, 0 )
+              return
+            endIf
+            if (_next_t.type == TokenType.IDENTIFIER)
+              temporarily _cur_t = _on_t
+                if (not disable_output) _push( Identifier(_cur_t,_cur_t.content), 0 )
+              endTemporarily
+            elseIf (_next_t.type == TokenType.STRING)
+              temporarily _cur_t = _on_t
+                if (not disable_output) _push( Identifier(_cur_t,_cur_t.content), 0 )
+              endTemporarily
+            elseIf (_next_t.type == TokenType.INTEGER)
+              temporarily _cur_t = _on_t
+                if (not disable_output) _push( Identifier(_cur_t,_cur_t.content), 0 )
+              endTemporarily
+            elseIf (_next_t.type == TokenType.KEYWORD_FALSE)
+              temporarily _cur_t = _on_t
+                if (not disable_output) _push( Identifier(_cur_t,"false"), 0 )
+              endTemporarily
+            elseIf (_next_t.type == TokenType.KEYWORD_TRUE)
+              temporarily _cur_t = _on_t
+                if (not disable_output) _push( Identifier(_cur_t,"true"), 0 )
+              endTemporarily
+            else
+              _throw_syntax_error("Expected default return value as an identifier, string, or integer.")
+            endIf
+            if (not _consume(TokenType.SYMBOL_COLON)) _throw_syntax_error( &expected=TokenType.SYMBOL_COLON )
+            _execute(ip_identifier)
+            _pop_frame
+            if (_consume(TokenType.SYMBOL_QUESTION))
+              if (not disable_output) _push( OptionalType(_cur_t), 0 )
+            else
+              if (not disable_output) _push( null, 0 )
+            endIf
+            if (not disable_output) _push( ReturnInfo(_cur_t,_string_arg(-3),_string_arg(-2),_node_arg(-1)), 3 )
             return
           case ip_type_name
             if (_next_t.type == TokenType.KEYWORD_CHARACTER)

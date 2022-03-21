@@ -1,10 +1,6 @@
 # Generated and updated by Froley. Custom changes will not be overwritten; customize as desired.
 module Froley
 
-class Visitor : Visitor<<Cmd>>
-  # Standard tree-rebuilding visitor.
-endClass
-
 class Visitor<<$ReturnType>>
   PROPERTIES
     this_element : Element
@@ -494,4 +490,25 @@ class Visitor<<$ReturnType>>
         visit( cmd.new_value )
       endIf
 
+    method on_visit_children( cmd:NodeLogic )
+      if ($ReturnType instanceOf Cmd)
+        cmd.parameters = visit(cmd.parameters)
+        cmd.return_info = visit(cmd.return_info)->(as ReturnInfo)
+      endIf
+
+    method on_visit_children( cmd:Parameter )
+      if ($ReturnType instanceOf Cmd)
+        cmd.is_optional = visit(cmd.is_optional)
+      endIf
+
+    method on_visit_children( cmd:ReturnInfo )
+      if ($ReturnType instanceOf Cmd)
+        cmd.is_optional = visit(cmd.is_optional)
+      endIf
+
 endClass
+
+class Visitor : Visitor<<Cmd>>
+  # Standard tree-rebuilding visitor.
+endClass
+

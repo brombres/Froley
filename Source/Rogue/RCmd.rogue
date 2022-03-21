@@ -118,6 +118,9 @@ class RCmd : RogueSourceWriter
            |
            |    method to->String
            |      return description
+           |
+           |    method to->Token[]
+           |      throw UnsupportedOperationError()
            |endClass
       endIf
 
@@ -190,6 +193,29 @@ class RCmd : RogueSourceWriter
            |
            |    method set( index:Int32, value:Cmd )
            |      @list[index] = value
+           |endClass
+      endIf
+
+      if (not is_node_defined("TokenList"))
+        node_types.add( "TokenList" )
+        builder.println ...
+          @|
+           |class TokenList : Cmd
+           |  PROPERTIES
+           |    list : Token[]
+           |
+           |  METHODS
+           |    method init( t )
+           |      list = Token[]
+           |
+           |    method init( t, list )
+           |
+           |    method init( existing:TokenList )
+           |      prior.init( existing )
+           |      list = existing.list.cloned
+           |
+           |    method to->Token[]
+           |      return list
            |endClass
       endIf
 

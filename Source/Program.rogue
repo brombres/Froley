@@ -24,8 +24,6 @@ class Program [singleton]
     scanner_user_calls = Set<<String>>()
     parser_user_calls  = Set<<String>>()
 
-    node_logic         = NodeLogic[]
-
   METHODS
     method compile( command, nodes )
       project_name  = File.filename( command//args.first ).before_last('.')

@@ -14,7 +14,6 @@ SYMBOL              symbol     [content]
 tokens SectionKeywords
 --------------------------------------------------------------------------------
 KEYWORD_NATIVE_TYPES    nativeTypes [structural]
-KEYWORD_NODE_LOGIC      nodeLogic   [structural]
 KEYWORD_PARSER          parser      [structural]
 KEYWORD_SCANNER         scanner     [structural]
 KEYWORD_TOKENS          tokens      [structural]
@@ -138,7 +137,7 @@ scanner
   scan_identifier
   scan_single_quoted_string
   scan_double_quoted_string
-  if (not scanning_node_logic) scan_charset
+  scan_charset
 
   match (input)
     produceAny Symbols
@@ -246,23 +245,15 @@ scanner
     # May switch sections here
     match buffer
       case "nativeTypes"
-        scanning_node_logic = false
         mode scan_standard_token
         produce KEYWORD_NATIVE_TYPES
-      case "nodeLogic"
-        scanning_node_logic = true
-        mode scan_standard_token
-        produce KEYWORD_NODE_LOGIC
       case "parser"
-        scanning_node_logic = false
         mode scan_standard_token
         produce KEYWORD_PARSER
       case "scanner"
-        scanning_node_logic = false
         mode scan_standard_token
         produce KEYWORD_SCANNER
       case "tokens"
-        scanning_node_logic = false
         mode scan_tokens_id
         produce KEYWORD_TOKENS
       others
@@ -318,23 +309,15 @@ scanner
   if (scan [a-zA-Z_][a-zA-Z0-9_]*)
     match (buffer)
       case "nativeTypes"
-        scanning_node_logic = false
         mode scan_standard_token
         produce KEYWORD_NATIVE_TYPES
-      case "nodeLogic"
-        scanning_node_logic = true
-        mode scan_standard_token
-        produce KEYWORD_NODE_LOGIC
       case "parser"
-        scanning_node_logic = false
         mode scan_standard_token
         produce KEYWORD_PARSER
       case "scanner"
-        scanning_node_logic = false
         mode scan_standard_token
         produce KEYWORD_SCANNER
       case "tokens"
-        scanning_node_logic = false
         mode scan_tokens_id
         produce KEYWORD_TOKENS
       case "elseOnOthers"
@@ -422,20 +405,6 @@ parser
       endWhile
     produceList NativeTypes
 
-  elseOn "nodeLogic"
-    beginList
-      consume_eols
-      while (hasAnother and not nextHasAttribute(structural))
-        identifier
-        identifier
-        optional_parameters
-        optional_return_info
-        node_logic_attributes
-        create NodeLogic( filename:String, method_name:String, parameters, return_info:ReturnInfo, attributes:Attributes )
-        consume_eols
-      endWhile
-    produceList NodeLogicDeclarations
-
   elseOn "parser"
     createNull
     must_consume_eols
@@ -449,62 +418,6 @@ parser
     produce TokenGroup(name:String,definitions)
   endOn
   syntaxError
-
-- optional_parameters
-  beginList
-    if (not consume('(')) produceList
-    parameter
-    while (consume(',')) parameter
-    mustConsume ')'
-  produceList
-
-- parameter
-  identifier
-  mustConsume ':'
-  identifier
-  if (consume('?')) create OptionalType
-  else              createNull
-  produce Parameter(name:String,_type_name:String,is_optional)
-
-- optional_return_info
-  if (not consume('->')) produceNull
-
-  on IDENTIFIER
-    create Identifier(name=content)
-  elseOn STRING
-    create Identifier(name=content)
-  elseOn INTEGER
-    create Identifier(name=content)
-  elseOn "false"
-    create Identifier(name="false":String)
-  elseOn "true"
-    create Identifier(name="true":String)
-  elseOnOthers
-    syntaxError "Expected default return value as an identifier, string, or integer."
-  endOn
-
-  mustConsume ':'
-
-  identifier
-
-  if (consume('?')) create OptionalType
-  else              createNull
-
-  produce ReturnInfo(default_value:String,_type_name:String,is_optional)
-
-- node_logic_attributes
-  beginList
-    if (not consume('[')) produceList Attributes
-    if (not nextIs(']'))
-      node_logic_attribute
-    endIf
-    mustConsume ']'
-  produceList Attributes
-
-- node_logic_attribute
-  on "and" -> AttributeAnd
-  on "or"  -> AttributeOr
-  syntaxError "Expected one of: [and or]."
 
 - type_name
   on KEYWORD_CHARACTER -> Identifier(name="Character":String)
@@ -1462,9 +1375,4 @@ parser
 - additional_node_types
   create WriteBuffer(new_value)
   create WriteOutput(new_value)
-
---------------------------------------------------------------------------------
-nodeLogic
---------------------------------------------------------------------------------
-BranchAnalyzer2 all_paths_return->false:Logical [and]
 

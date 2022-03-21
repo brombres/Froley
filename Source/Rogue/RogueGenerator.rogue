@@ -3,7 +3,6 @@ module Froley
 $include "RCmd.rogue"
 $include "RFrameStack.rogue"
 $include "RMain.rogue"
-$include "RNodeLogic.rogue"
 $include "RParser.rogue"
 $include "RParserCore.rogue"
 $include "RScanTable.rogue"
@@ -41,8 +40,6 @@ class RogueGenerator : Visitor
       RTokenType(this).overwrite
       RToken(this).create_missing
       RFrameStack(this).create_missing
-
-      RNodeLogic(this,forEach in Program.node_logic).update
 
       # Main
       if (Program.main_filename)

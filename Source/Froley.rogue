@@ -5,7 +5,6 @@ module Froley
 
 $include "Macros.rogue"
 
-$include "Attributes.rogue"
 $include "BranchAnalyzer.rogue"
 $include "BuildfileGenerator.rogue"
 $include "Collector.rogue"

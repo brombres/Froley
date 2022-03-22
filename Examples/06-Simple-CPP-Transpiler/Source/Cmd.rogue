@@ -29,6 +29,12 @@ class Cmd( t:Token )
     method dispatch<<$VisitorType>>( visitor:$VisitorType )->Cmd [propagated]
       return visitor.on( this )
 
+    method dispatch<<$VisitorType,$ReturnType>>( visitor:$VisitorType )->$ReturnType [propagated]
+      return visitor.on( this )
+
+    method dispatch_on_enter<<$VisitorType>>( visitor:$VisitorType ) [propagated]
+      visitor.on_enter( this )
+
     method dispatch_on_visit<<$VisitorType>>( visitor:$VisitorType ) [propagated]
       visitor.on_visit( this )
 
@@ -53,9 +59,6 @@ class Cmd( t:Token )
     method last->Cmd
       throw UnsupportedOperationError()
 
-    method list->Cmd[]
-      throw UnsupportedOperationError()
-
     method remove_first->Cmd
       throw UnsupportedOperationError()
 
@@ -67,6 +70,9 @@ class Cmd( t:Token )
 
     method to->Character
       return Character(this->Int32)
+
+    method to->Cmd[]
+      throw UnsupportedOperationError()
 
     method to->Int32
       return 0
@@ -127,9 +133,6 @@ class CmdList : Cmd
     method last->Cmd
       return @list.last
 
-    method list->Cmd[]
-      return @list
-
     method list_description->String
       use builder = StringBuilder.pool
         builder.print '['
@@ -149,24 +152,30 @@ class CmdList : Cmd
 
     method set( index:Int32, value:Cmd )
       @list[index] = value
+
+    method to->Cmd[]
+      return @list
+
 endClass
 
 class TokenList : Cmd
   PROPERTIES
-    list : Token[]
+    tokens : Token[]
 
   METHODS
     method init( t )
-      list = Token[]
+      tokens = Token[]
 
-    method init( t, list )
+    method init( t, tokens )
 
     method init( existing:TokenList )
-      prior.init( existing )
-      list = existing.list.cloned
+      tokens = existing.tokens.cloned
+
+    method description->String
+      return "TokenList($)"(tokens)
 
     method to->Token[]
-      return list
+      return tokens
 endClass
 
 class Unary( t, operand:Cmd ) : Cmd

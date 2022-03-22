@@ -11,7 +11,7 @@ class TokenOrganizer : Visitor
       if (entry)
         if (entry is not cmd)
           # Merge this token group's definitions into existing group with the same name
-          entry.value.definitions.list.add( cmd.definitions.list )
+          entry.value.definitions.add( forEach in cmd.definitions )
           return null
         endIf
       else

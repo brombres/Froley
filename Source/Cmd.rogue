@@ -65,9 +65,6 @@ class Cmd( t:Token )
     method last->Cmd
       throw UnsupportedOperationError()
 
-    method list->Cmd[]
-      throw UnsupportedOperationError()
-
     method remove_first->Cmd
       throw UnsupportedOperationError()
 
@@ -94,6 +91,9 @@ class Cmd( t:Token )
 
     method to->Character
       return Character(this->Int32)
+
+    method to->Cmd[]
+      throw UnsupportedOperationError()
 
     method to->Int32
       return 0
@@ -156,9 +156,6 @@ class CmdList : Cmd
     method last->Cmd
       return @list.last
 
-    method list->Cmd[]
-      return @list
-
     method list_description->String
       use builder = StringBuilder.pool
         builder.print '['
@@ -178,6 +175,10 @@ class CmdList : Cmd
 
     method set( index:Int32, value:Cmd )
       @list[index] = value
+
+    method to->Cmd[]
+      return @list
+
 endClass
 
 class Unary( t, operand:Cmd ) : Cmd

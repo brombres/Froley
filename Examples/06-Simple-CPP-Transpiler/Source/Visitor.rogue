@@ -1,22 +1,22 @@
 # Generated and updated by Froley. Custom changes will not be overwritten; customize as desired.
 module Simple
 
-class Visitor : Visitor<<Cmd>>
-  # Standard tree-rebuilding visitor.
-endClass
-
-class Visitor<<$ReturnType>>
+class Visitor
   METHODS
-    method on( cmd:Cmd )->$ReturnType
-      # Overload with extended Cmd type to redefine handling, or else overload
-      # on_visit(CmdType) and optionally call visit_children(cmd) from it.
-      # For a regular 'Visitor' (Visitor<<Cmd>>) the AST is rebuilt with the
-      # return value of this call, so return 'cmd' to keep this subtree or else
-      # return a different Cmd to replace this subtree. There is no need to
-      # overload methods for any particular command.
-      handle_visit( cmd )
-      if ($ReturnType instanceOf Cmd) return cmd
-      else                            return $ReturnType.meta.default_value
+    method on( cmd:Cmd )->Cmd
+      # Default per-node call sequence for regular 'Visitor'
+      #   CALL                  OVERLOADABLE METHOD
+      #   --------------------  -----------------------------------------
+      #   visit(cmd)            -> on(cmd:CmdType)->Cmd
+      #   visit_content(cmd)       -> on_visit(cmd:CmdType)
+      #     visit_children(cmd)       -> on_visit_children(cmd:CmdType)
+      #                            on_validate(cmd:CmdType)->Cmd
+      #
+      # For any method on(CmdType) or on_validate(CmdType):
+      # - The AST is rebuilt with the return value, so return 'cmd' to keep
+      #   this subtree or else return a different Cmd node to replace it.
+      visit_content( cmd )
+      return validate( cmd )
 
     method on_visit( cmd:Cmd )
       # Called from on(CmdType). If you overload this method with an extended
@@ -24,7 +24,10 @@ class Visitor<<$ReturnType>>
       # when you call visit_children(cmd).
       visit_children( cmd )
 
-    method visit( cmd:Cmd )->$ReturnType [propagated]
+    method on_validate( cmd:Cmd )->Cmd
+      return cmd
+
+    method visit( cmd:Cmd )->Cmd [propagated]
       # Call to invoke the appropriate on/on_visit() for the given Cmd type.
       #
       # For example:
@@ -32,71 +35,48 @@ class Visitor<<$ReturnType>>
       #     cmd.left  = visit(cmd.left)
       #     cmd.right = visit(cmd.right)
       #     return cmd
-      if ($ReturnType instanceOf Cmd)
-        if (cmd is null) return null
-      else
-        if (cmd is null) return $ReturnType.meta.default_value
-      endIf
-      return cmd.dispatch<<ThisType,$ReturnType>>( this )
+      if (cmd is null) return null
+      return cmd.dispatch<<ThisType>>( this )
 
-    method visit_children( cmd:Cmd ) [propagated]
-      # Call from an 'on()' handler to visit subtrees.
+    method visit_children( cmd:Cmd )->Cmd [propagated]
+      # Call from 'on()' or 'on_visit()' handler to visit subtrees.
       cmd.dispatch_on_visit_children<<ThisType>>( this )
+      return cmd
 
-    method handle_visit( cmd:Cmd ) [propagated]
+    method visit_content( cmd:Cmd )->Cmd [propagated]
       # Primarily for internal use - see on(Cmd) for usage.
       cmd.dispatch_on_visit<<ThisType>>( this )
+      return cmd
+
+    method validate( cmd:Cmd )->Cmd [propagated]
+      if (cmd is null) return null
+      return cmd.dispatch_on_validate<<ThisType>>( this )
 
     method on_visit_children( cmd:Cmd )
       # Overloaded automatically by the Froley compiler
       noAction
 
     method on_visit_children( cmd:CmdList )
-      if ($ReturnType instanceOf Cmd)
-        forEach (element in writer=cmd.list.rewriter)
-          local visited_element = visit( element )
-          if (visited_element) writer.write( visited_element )
-        endForEach
-      else
-        visit( forEach in cmd.list )
-      endIf
+      forEach (element in writer=cmd.list.rewriter)
+        local visited_element = visit( element )
+        if (visited_element) writer.write( visited_element )
+      endForEach
 
 
     method on_visit_children( cmd:AST )
-      if ($ReturnType instanceOf Cmd)
         cmd.statements = visit(cmd.statements)
-      else
-        visit( cmd.statements )
-      endIf
 
     method on_visit_children( cmd:Binary )
-      if ($ReturnType instanceOf Cmd)
         cmd.left = visit(cmd.left)
         cmd.right = visit(cmd.right)
-      else
-        visit( cmd.left )
-        visit( cmd.right )
-      endIf
 
     method on_visit_children( cmd:Print )
-      if ($ReturnType instanceOf Cmd)
         cmd.args = visit(cmd.args)
-      else
-        visit( cmd.args )
-      endIf
 
     method on_visit_children( cmd:Unary )
-      if ($ReturnType instanceOf Cmd)
         cmd.operand = visit(cmd.operand)
-      else
-        visit( cmd.operand )
-      endIf
 
     method on_visit_children( cmd:WriteVar )
-      if ($ReturnType instanceOf Cmd)
         cmd.new_value = visit(cmd.new_value)
-      else
-        visit( cmd.new_value )
-      endIf
 
 endClass

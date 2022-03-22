@@ -1,0 +1,69 @@
+# Generated and updated by Froley. Custom changes will not be overwritten; customize as desired.
+module Simple
+
+class InspectionVisitor<<$ReturnType>>
+  PROPERTIES
+    is_halting     : Logical
+    default_result = $ReturnType.meta.default_value : $ReturnType
+
+  METHODS
+    method on( cmd:Cmd )->$ReturnType
+      # Default per-node InspectionVisitor call sequence.
+      #
+      #   CALL                        OVERLOADABLE METHOD
+      #   --------------------        ------------------------
+      #   visit(cmd)->$ReturnType  -> on(cmd:CmdType)->$ReturnType
+      #     enter(cmd) ->               on_enter(cmd:CmdType)
+      enter( cmd )
+      return default_result
+
+    method on( cmd:CmdList )->Logical
+      local result = default_result
+      forEach (statement in cmd.list)
+        result = visit(statement)
+        if (is_halting) return result
+      endForEach
+      return result
+
+    method on_enter( cmd:Cmd )
+      # By default this method is called from the default on(CmdType) before
+      # children are visited.
+
+    method visit( cmd:Cmd )->$ReturnType [propagated]
+      if (cmd is null or is_halting) return default_result
+      return cmd.dispatch<<ThisType,$ReturnType>>( this )
+
+    method enter( cmd:Cmd ) [propagated]
+      cmd.dispatch_on_enter<<ThisType>>( this )
+
+    method halt
+      is_halting = true
+
+    method on( cmd:AST )->$ReturnType
+      local result = default_result
+      result = visit(cmd.statements)
+      return result
+
+    method on( cmd:Binary )->$ReturnType
+      local result = default_result
+      result = visit(cmd.left)
+      if (is_halting) return result
+      result = visit(cmd.right)
+      return result
+
+    method on( cmd:Print )->$ReturnType
+      local result = default_result
+      result = visit(cmd.args)
+      return result
+
+    method on( cmd:Unary )->$ReturnType
+      local result = default_result
+      result = visit(cmd.operand)
+      return result
+
+    method on( cmd:WriteVar )->$ReturnType
+      local result = default_result
+      result = visit(cmd.new_value)
+      return result
+
+endClass

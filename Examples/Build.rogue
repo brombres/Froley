@@ -6,12 +6,15 @@ routine rogo_default
 endRoutine
 
 routine rogo_all
-  execute @|cd 01-Hello && rogo clean && rogo
-  execute @|cd 02-NCat && rogo clean && rogo
-  execute @|cd 03-Simple-Scanner && rogo clean && rogo
-  execute @|cd 04-Simple-Parser && rogo clean && rogo
-  execute @|cd 05-Simple-Interpreter && rogo clean && rogo
-  execute @|cd 06-Simple-CPP-Transpiler && rogo clean && rogo
+  execute "cd $ && rogo clean && rogo" (forEach in examples)
+endRoutine
+
+routine rogo_clean
+  execute "cd $ && rogo clean" (forEach in examples)
+endRoutine
+
+routine examples->String[]
+  return File.listing( ".", &folders, &ignore_hidden )
 endRoutine
 
 routine execute( commands:String, error_message=null:String, &suppress_error )->Logical

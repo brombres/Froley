@@ -472,6 +472,10 @@ class RogueGenerator : Visitor
       write   "return"
       visit_children( cmd )
 
+    method on_visit( cmd:ProduceTokenList )
+      write "if (not disable_output) _create_token_list"
+      write "return"
+
     method on_visit( cmd:ScanCharacters )
       write "_scan("
       visit_children( cmd )

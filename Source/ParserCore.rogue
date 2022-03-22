@@ -179,9 +179,9 @@ class ParserCore [abstract]
 
     method _create_token_list
       if (_saved_positions.is_empty)
-        throw _peek.error( "[INTERNAL] createTokenList without prior savePosition." )
+        throw _peek.error( "[INTERNAL] createTokenList/produceTokenlist without prior savePosition." )
       endIf
-      local i1 = _saved_positions.last.position
+      local i1 = _saved_positions.remove_last.position
       local limit = _position
       local list = Token[]( limit - i1 )
       forEach (i in i1..<limit) list.add( _tokens[i] )
@@ -2065,6 +2065,12 @@ class ParserCore [abstract]
                 _execute(ip_list_type)
                 _pop_frame
                 if (not disable_output) _push( ProduceList(_cur_t,_string_arg(-1)), 1 )
+                return
+              endTemporarily
+            endIf
+            if (_next_t.type == TokenType.KEYWORD_PRODUCE_TOKEN_LIST)
+              temporarily _cur_t = _on_t
+                if (not disable_output) _push( ProduceTokenList(_cur_t), 0 )
                 return
               endTemporarily
             endIf

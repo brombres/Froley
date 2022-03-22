@@ -46,6 +46,9 @@ class BranchAnalyzer : InspectionVisitor<<Logical>> [singleton]
     method on( cmd:ProduceList )->Logical
       return true
 
+    method on( cmd:ProduceTokenList )->Logical
+      return true
+
     method on( cmd:Restart )->Logical
       return true
 

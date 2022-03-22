@@ -1923,3 +1923,9 @@ class CreateTokenList : Cmd
     method description->String
       return "CreateTokenList"
 endClass
+
+class ProduceTokenList : Cmd
+  METHODS
+    method description->String
+      return "ProduceTokenList"
+endClass

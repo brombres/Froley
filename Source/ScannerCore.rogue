@@ -54,7 +54,7 @@ class ScannerCore [abstract]
     _scan_table_0 = ScanTable("gQoAFi0uPThAPl5AfUIpRF1GOkgsSi5MW1I+WDxeIWR7aihsK24/dDt2J3gvgQYqgQgSAj40LTYBABMAAgE9PAwAAwAEAAUABgAHAAgACQD/AS5QCgAWAV1WCwAOAT1cDQAQAT1iDwD/AT1oEQAUABUAFwErchgAGQAaAP8BXHz/ASeBAP8BJ4EEGwAcAB0A")
     _scan_table_1 = ScanTable("egAEbgpwNHNKdGT/AWEO/wF0Ev8BaRb/AXYa/wFlHv8BVCL/AXkm/wFwKv8BZS7/AXMyAQD/AWE4/wFyPP8Bc0D/AWVE/wFySAIA/wFjTv8BYVL/AW5W/wFuWv8BZV7/AXJiAwD/AW9o/wFrbP8BZXD/AW50/wFzeAQA")
     _scan_table_2 = ScanTable("Ev8ECgpbDF0OLBAAAAEAAgADAA==")
-    _scan_table_3 = ScanTable("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")
+    _scan_table_3 = ScanTable("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")
 
   METHODS
     method init( file:File )
@@ -700,39 +700,42 @@ class ScannerCore [abstract]
                     _add( TokenType.KEYWORD_PRODUCE_NULL )
                     return false
                   case 53
-                    _add( TokenType.KEYWORD_BUFFER )
+                    _add( TokenType.KEYWORD_PRODUCE_TOKEN_LIST )
                     return false
                   case 54
-                    _add( TokenType.KEYWORD_CASE )
+                    _add( TokenType.KEYWORD_BUFFER )
                     return false
                   case 55
-                    _add( TokenType.KEYWORD_CHARACTER )
+                    _add( TokenType.KEYWORD_CASE )
                     return false
                   case 56
-                    _add( TokenType.KEYWORD_COLLECT )
+                    _add( TokenType.KEYWORD_CHARACTER )
                     return false
                   case 57
-                    _add( TokenType.KEYWORD_END_MATCH )
+                    _add( TokenType.KEYWORD_COLLECT )
                     return false
                   case 58
-                    _add( TokenType.KEYWORD_INPUT )
+                    _add( TokenType.KEYWORD_END_MATCH )
                     return false
                   case 59
-                    _add( TokenType.KEYWORD_INTEGER )
+                    _add( TokenType.KEYWORD_INPUT )
                     return false
                   case 60
-                    _add( TokenType.KEYWORD_OUTPUT )
+                    _add( TokenType.KEYWORD_INTEGER )
                     return false
                   case 61
-                    _add( TokenType.KEYWORD_PEEK )
+                    _add( TokenType.KEYWORD_OUTPUT )
                     return false
                   case 62
-                    _add( TokenType.KEYWORD_PRODUCE_ANY )
+                    _add( TokenType.KEYWORD_PEEK )
                     return false
                   case 63
-                    _add( TokenType.KEYWORD_MATCH )
+                    _add( TokenType.KEYWORD_PRODUCE_ANY )
                     return false
                   case 64
+                    _add( TokenType.KEYWORD_MATCH )
+                    return false
+                  case 65
                     _add( TokenType.KEYWORD_RESTART )
                     return false
                   others

@@ -51,6 +51,7 @@ KEYWORD_ON                  on
 KEYWORD_ON_PEEK             onPeek
 KEYWORD_PRODUCE_LIST        produceList
 KEYWORD_PRODUCE_NULL        produceNull
+KEYWORD_PRODUCE_TOKEN_LIST  produceTokenList
 
 --------------------------------------------------------------------------------
 tokens CommonKeywords
@@ -1201,6 +1202,7 @@ parser
     produce Return(value)
   endOn
   on "produceList" list_type -> ProduceList(list_type:String)
+  on "produceTokenList"      -> ProduceTokenList
   on "restorePosition"       -> RestorePosition
   on "return"
     if (nextIs(EOL)) createNull

@@ -72,7 +72,7 @@ routine rogo_clean
   local files = Files( "Source/*.rogue" )
   files.remove( "Source/Simple.rogue" )
   files.remove( "Source/Resolver.rogue" )
-  files.remove( "Source/Interpreter.rogue" )
+  files.remove( "Source/CmdExecute.rogue" )
   files.delete
 endRoutine
 

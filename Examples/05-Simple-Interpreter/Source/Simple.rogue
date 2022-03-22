@@ -1,6 +1,6 @@
 module Simple
 
-$include "Interpreter.rogue"
+$include "CmdExecute.rogue"
 $include "Scanner.rogue"
 $include "Parser.rogue"
 $include "Resolver.rogue"
@@ -44,7 +44,7 @@ class Simple
         println
 
         println "INTERPRETED"
-        Interpreter().visit( ast )
+        ast.execute
         println
       endForEach
 

@@ -6,4 +6,5 @@ scanner
     ch = read  # These two lines could be condensed into 'print read'
     print ch
   endWhile
+  halt
 

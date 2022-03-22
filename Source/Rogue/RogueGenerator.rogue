@@ -237,11 +237,7 @@ class RogueGenerator : Visitor
       visit_children( cmd )
 
     method on_visit( cmd:DiscardPosition )
-      if (is_scanner)
-        write @|if (_position_stack.count) _position_stack.remove_last
-      else
-        write "_discard_position"
-      endIf
+      write "_discard_position"
       visit_children( cmd )
 
     method on( cmd:If )->Cmd

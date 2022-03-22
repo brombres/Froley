@@ -202,6 +202,9 @@ class RogueGenerator : Visitor
       write "if (not disable_output) _push( null, 0 )"
       visit_children( cmd )
 
+    method on_visit( cmd:CreateTokenList )
+      write "if (not disable_output) _create_token_list"
+
     method on_visit( cmd:MustConsumeCharacters )
       write "_must_consume( "
       visit_children( cmd )

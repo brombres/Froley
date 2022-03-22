@@ -40,6 +40,7 @@ tokens ParserKeywords
 KEYWORD_BEGIN_LIST          beginList
 KEYWORD_CREATE_LIST         createList
 KEYWORD_CREATE_NULL         createNull
+KEYWORD_CREATE_TOKEN_LIST   createTokenList
 KEYWORD_DISCARD_LIST        discardList
 KEYWORD_ELSE_ON             elseOn       [structural]
 KEYWORD_ELSE_ON_PEEK        elseOnPeek   [structural]
@@ -1175,6 +1176,7 @@ parser
   on "create"     parser_product     -> ParserCreate(arg:CreateCmd)
   on "createList" list_type          -> CreateList(list_type:String)
   on "createNull"                    -> CreateNull
+  on "createTokenList"               -> CreateTokenList
   on "discardList"                   -> DiscardList
   on "discardPosition"               -> DiscardPosition
   on "mustConsume"  ttype_or_literal -> ParserMustConsume(token_type)

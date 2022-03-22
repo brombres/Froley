@@ -177,6 +177,16 @@ class ParserCore [abstract]
         _next_t = _peek
       endWhile
 
+    method _create_token_list
+      if (_saved_positions.is_empty)
+        throw _peek.error( "[INTERNAL] createTokenList without prior savePosition." )
+      endIf
+      local i1 = _saved_positions.last.position
+      local limit = _position
+      local list = Token[]( limit - i1 )
+      forEach (i in i1..<limit) list.add( _tokens[i] )
+      _push( TokenList(_tokens[i1],list), 0 )
+
     method _describe( type:TokenType )->String
       if (type.symbol[0].is_letter) return type.symbol
       return "'$'" (type.symbol)
@@ -236,7 +246,7 @@ class ParserCore [abstract]
       _token_stack.push_frame
 
     method _push( cmd:Cmd, node_arg_count:Int32 )
-      _cmd_stack.discard_from( _cmd_stack.count - node_arg_count )
+      if (node_arg_count) _cmd_stack.discard_from( _cmd_stack.count - node_arg_count )
       _cmd_stack.add( cmd )
 
     method _push_list( list:Cmd )
@@ -1970,6 +1980,12 @@ class ParserCore [abstract]
             if (_next_t.type == TokenType.KEYWORD_CREATE_NULL)
               temporarily _cur_t = _on_t
                 if (not disable_output) _push( CreateNull(_cur_t), 0 )
+                return
+              endTemporarily
+            endIf
+            if (_next_t.type == TokenType.KEYWORD_CREATE_TOKEN_LIST)
+              temporarily _cur_t = _on_t
+                if (not disable_output) _push( CreateTokenList(_cur_t), 0 )
                 return
               endTemporarily
             endIf

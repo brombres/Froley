@@ -205,20 +205,22 @@ class RCmd : RogueSourceWriter
           @|
            |class TokenList : Cmd
            |  PROPERTIES
-           |    list : Token[]
+           |    tokens : Token[]
            |
            |  METHODS
            |    method init( t )
-           |      list = Token[]
+           |      tokens = Token[]
            |
-           |    method init( t, list )
+           |    method init( t, tokens )
            |
            |    method init( existing:TokenList )
-           |      prior.init( existing )
-           |      list = existing.list.cloned
+           |      tokens = existing.tokens.cloned
+           |
+           |    method description->String
+           |      return "TokenList($)"(tokens)
            |
            |    method to->Token[]
-           |      return list
+           |      return tokens
            |endClass
       endIf
 

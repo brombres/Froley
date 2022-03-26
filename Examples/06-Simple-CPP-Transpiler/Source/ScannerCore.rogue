@@ -239,7 +239,6 @@ class ScannerCore [abstract]
             if (not _execute(ip_scan_number)) return false
             if (not _execute(ip_scan_string)) return false
             _throw_syntax_error
-            return true
           case ip_scan_id_or_keyword
             if ((not _scan_pattern_2.scan(_scanner,buffer)))
               return true

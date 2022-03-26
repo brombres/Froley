@@ -323,7 +323,6 @@ class ScannerCore [abstract]
               endIf
             endContingent
             _throw_syntax_error
-            return true
           case ip_scan_charset
             if ((not _scanner.consume('[')))
               return true
@@ -531,7 +530,6 @@ class ScannerCore [abstract]
               endWhich
             endContingent
             if (not _execute(ip_must_scan_attribute_identifier)) return false
-            return true
           case ip_scan_identifier
             ch = _scanner.peek 
             if (_scan_pattern_2.scan(_scanner,buffer))

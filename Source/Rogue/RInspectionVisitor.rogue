@@ -21,11 +21,10 @@ class RInspectionVisitor : RogueSourceWriter
         if (content is null) content = ""
         content +=  "# Generated and updated by Froley. Custom changes will not be overwritten; customize as desired.\n"
         content += "module $\n\n"(Program.project_name)
-        content += @|class InspectionVisitor<<$ReturnType>>
-                    |  PROPERTIES
-                    |    is_halting     : Logical
-                    |    default_result = $ReturnType.meta.default_value : $ReturnType
+        content += @|class InspectonVisitor : InspectionVisitor<<Logical>>
+                    |endClass
                     |
+                    |class InspectionVisitor<<$ReturnType>>
                     |  METHODS
                     |    method on( cmd:Cmd )->$ReturnType
                     |      # Default per-node InspectionVisitor call sequence.
@@ -35,36 +34,32 @@ class RInspectionVisitor : RogueSourceWriter
                     |      #   visit(cmd)->$ReturnType  -> on(cmd:CmdType)->$ReturnType
                     |      #     enter(cmd) ->               on_enter(cmd:CmdType)
                     |      enter( cmd )
-                    |      return default_result
+                    |      return $ReturnType.meta.default_value
                     |
                     |    method on( cmd:CmdList )->Logical
-                    |      local result = default_result
                     |      forEach (statement in cmd.list)
-                    |        result = visit(statement)
-                    |        if (is_halting) return result
+                    |        local result = visit(statement)
+                    |        if (result?) return result
                     |      endForEach
-                    |      return result
+                    |      return $ReturnType.meta.default_value
                     |
                     |    method on_enter( cmd:Cmd )
-                    |      # By default this method is called from the default on(CmdType) before
+                    |      # This method is called from the default on(CmdType) before
                     |      # children are visited.
                     |
                     |    method visit( cmd:Cmd )->$ReturnType [propagated]
-                    |      if (cmd is null or is_halting) return default_result
+                    |      if (cmd is null) return $ReturnType.meta.default_value
                     |      return cmd.dispatch<<ThisType,$ReturnType>>( this )
                     |
                     |    method enter( cmd:Cmd ) [propagated]
                     |      cmd.dispatch_on_enter<<ThisType>>( this )
-                    |
-                    |    method halt
-                    |      is_halting = true
       endIf
 
       scan_node_types( content )
 
       local builder = StringBuilder(content.count*2)
 
-      local end_class_location = content.locate( "endClass", content.locate("class InspectionVisitor").value )
+      local end_class_location = content.locate( "endClass", content.locate("class InspectionVisitor<<").value )
       local bottom = "endClass\n"
       if (end_class_location)
         bottom = content.from( end_class_location.value )
@@ -86,25 +81,25 @@ class RInspectionVisitor : RogueSourceWriter
           extended_properties .= discarding( (p) => p.type.is_built_in or p.type.is_native )
 
           if (extended_properties.count)
-            local check_halt = false
+            local check_return = false
 
             builder.println
             builder.print(  "method on( cmd:" ).print( node_type.name ).println( " )->$ReturnType" )
             if (node_type.is_list and node_type.name != "CmdList")
               builder.println "  local result = on( cmd->(as CmdList) )"
-              check_halt = true
+              check_return = true
             else
-              builder.println "  local result = default_result"
+              builder.println "  local result : $ReturnType"
             endIf
 
             if (properties.count)
               forEach (p in properties)
                 local type = p.type
                 if (not (type.is_built_in or type.is_native))
-                  if (check_halt) builder.println   "  if (is_halting) return result"
+                  if (check_return) builder.println   "  if (result?) return result"
                   builder.println   "  result = visit(cmd.$)"(p.name)
                 endIf
-                check_halt = true
+                check_return = true
               endForEach
             endIf
 

@@ -119,7 +119,7 @@ class RVisitor : RogueSourceWriter
               forEach (p in properties)
                 local type = p.type
                 if (not (type.is_built_in or type.is_native))
-                  builder.print   "    cmd.$ = visit(cmd.$)"(p.name,p.name)
+                  builder.print   "  cmd.$ = visit(cmd.$)"(p.name,p.name)
                   if (type.name != "Cmd")
                     builder.print   "->(as "
                     builder.print   type.name

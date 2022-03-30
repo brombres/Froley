@@ -21,7 +21,7 @@ class RInspectionVisitor : RogueSourceWriter
         if (content is null) content = ""
         content +=  "# Generated and updated by Froley. Custom changes will not be overwritten; customize as desired.\n"
         content += "module $\n\n"(Program.project_name)
-        content += @|class InspectonVisitor : InspectionVisitor<<Logical>>
+        content += @|class InspectionVisitor : InspectionVisitor<<Logical>>
                     |endClass
                     |
                     |class InspectionVisitor<<$ReturnType>>

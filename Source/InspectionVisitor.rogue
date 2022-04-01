@@ -1,7 +1,7 @@
 # Generated and updated by Froley. Custom changes will not be overwritten; customize as desired.
 module Froley
 
-class InspectonVisitor : InspectionVisitor<<Logical>>
+class InspectionVisitor : InspectionVisitor<<Logical>>
 endClass
 
 class InspectionVisitor<<$ReturnType>>
@@ -12,18 +12,19 @@ class InspectionVisitor<<$ReturnType>>
       #   CALL                        OVERLOADABLE METHOD
       #   --------------------        ------------------------
       #   visit(cmd)->$ReturnType  -> on(cmd:CmdType)->$ReturnType
-      #     enter(cmd) ->               on_enter(cmd:CmdType)
-      enter( cmd )
+      #     handle(cmd)            -> on_visit(cmd:CmdType)
+      handle( cmd )
       return $ReturnType.meta.default_value
 
     method on( cmd:CmdList )->Logical
+      handle( cmd )
       forEach (statement in cmd.list)
         local result = visit(statement)
         if (result?) return result
       endForEach
       return $ReturnType.meta.default_value
 
-    method on_enter( cmd:Cmd )
+    method on_visit( cmd:Cmd )
       # This method is called from the default on(CmdType) before
       # children are visited.
 
@@ -31,10 +32,11 @@ class InspectionVisitor<<$ReturnType>>
       if (cmd is null) return $ReturnType.meta.default_value
       return cmd.dispatch<<ThisType,$ReturnType>>( this )
 
-    method enter( cmd:Cmd ) [propagated]
-      cmd.dispatch_on_enter<<ThisType>>( this )
+    method handle( cmd:Cmd ) [propagated]
+      cmd.dispatch_on_visit<<ThisType>>( this )
 
     method on( cmd:Assign )->$ReturnType
+      handle( cmd )
       local result : $ReturnType
       result = visit(cmd.target)
       if (result?) return result
@@ -42,6 +44,7 @@ class InspectionVisitor<<$ReturnType>>
       return result
 
     method on( cmd:Binary )->$ReturnType
+      handle( cmd )
       local result : $ReturnType
       result = visit(cmd.left)
       if (result?) return result
@@ -49,26 +52,31 @@ class InspectionVisitor<<$ReturnType>>
       return result
 
     method on( cmd:Collect )->$ReturnType
+      handle( cmd )
       local result : $ReturnType
       result = visit(cmd.args)
       return result
 
     method on( cmd:CreateCmd )->$ReturnType
+      handle( cmd )
       local result : $ReturnType
       result = visit(cmd.args)
       return result
 
     method on( cmd:CreateCmdArg )->$ReturnType
+      handle( cmd )
       local result : $ReturnType
       result = visit(cmd.arg_value)
       return result
 
     method on( cmd:Decrement )->$ReturnType
+      handle( cmd )
       local result : $ReturnType
       result = visit(cmd.target)
       return result
 
     method on( cmd:ElseIf )->$ReturnType
+      handle( cmd )
       local result : $ReturnType
       result = visit(cmd.condition)
       if (result?) return result
@@ -76,6 +84,7 @@ class InspectionVisitor<<$ReturnType>>
       return result
 
     method on( cmd:ElseOn )->$ReturnType
+      handle( cmd )
       local result : $ReturnType
       result = visit(cmd.token_type)
       if (result?) return result
@@ -85,6 +94,7 @@ class InspectionVisitor<<$ReturnType>>
       return result
 
     method on( cmd:If )->$ReturnType
+      handle( cmd )
       local result : $ReturnType
       result = visit(cmd.condition)
       if (result?) return result
@@ -96,11 +106,13 @@ class InspectionVisitor<<$ReturnType>>
       return result
 
     method on( cmd:Increment )->$ReturnType
+      handle( cmd )
       local result : $ReturnType
       result = visit(cmd.target)
       return result
 
     method on( cmd:Match )->$ReturnType
+      handle( cmd )
       local result : $ReturnType
       result = visit(cmd.expression)
       if (result?) return result
@@ -110,6 +122,7 @@ class InspectionVisitor<<$ReturnType>>
       return result
 
     method on( cmd:MatchCase )->$ReturnType
+      handle( cmd )
       local result : $ReturnType
       result = visit(cmd.expression)
       if (result?) return result
@@ -117,6 +130,7 @@ class InspectionVisitor<<$ReturnType>>
       return result
 
     method on( cmd:On )->$ReturnType
+      handle( cmd )
       local result : $ReturnType
       result = visit(cmd.token_type)
       if (result?) return result
@@ -130,106 +144,127 @@ class InspectionVisitor<<$ReturnType>>
       return result
 
     method on( cmd:OneOrMore )->$ReturnType
+      handle( cmd )
       local result : $ReturnType
       result = visit(cmd.pattern)
       return result
 
     method on( cmd:OptionalPattern )->$ReturnType
+      handle( cmd )
       local result : $ReturnType
       result = visit(cmd.pattern)
       return result
 
     method on( cmd:ParserConsume )->$ReturnType
+      handle( cmd )
       local result : $ReturnType
       result = visit(cmd.token_type)
       return result
 
     method on( cmd:ParserCreate )->$ReturnType
+      handle( cmd )
       local result : $ReturnType
       result = visit(cmd.arg)
       return result
 
     method on( cmd:ParserDef )->$ReturnType
+      handle( cmd )
       local result : $ReturnType
       result = visit(cmd.routine_defs)
       return result
 
     method on( cmd:ParserMustConsume )->$ReturnType
+      handle( cmd )
       local result : $ReturnType
       result = visit(cmd.token_type)
       return result
 
     method on( cmd:ParserNextIs )->$ReturnType
+      handle( cmd )
       local result : $ReturnType
       result = visit(cmd.token_type)
       return result
 
     method on( cmd:ParserProduce )->$ReturnType
+      handle( cmd )
       local result : $ReturnType
       result = visit(cmd.arg)
       return result
 
     method on( cmd:Print )->$ReturnType
+      handle( cmd )
       local result : $ReturnType
       result = visit(cmd.args)
       return result
 
     method on( cmd:Println )->$ReturnType
+      handle( cmd )
       local result : $ReturnType
       result = visit(cmd.args)
       return result
 
     method on( cmd:ProgramDef )->$ReturnType
+      handle( cmd )
       local result : $ReturnType
       result = visit(cmd.sections)
       return result
 
     method on( cmd:Return )->$ReturnType
+      handle( cmd )
       local result : $ReturnType
       result = visit(cmd.value)
       return result
 
     method on( cmd:Routine )->$ReturnType
+      handle( cmd )
       local result : $ReturnType
       result = visit(cmd.statements)
       return result
 
     method on( cmd:Scan )->$ReturnType
+      handle( cmd )
       local result : $ReturnType
       result = visit(cmd.args)
       return result
 
     method on( cmd:ScannerConsume )->$ReturnType
+      handle( cmd )
       local result : $ReturnType
       result = visit(cmd.args)
       return result
 
     method on( cmd:ScannerCreate )->$ReturnType
+      handle( cmd )
       local result : $ReturnType
       result = visit(cmd.arg)
       return result
 
     method on( cmd:ScannerDef )->$ReturnType
+      handle( cmd )
       local result : $ReturnType
       result = visit(cmd.routine_defs)
       return result
 
     method on( cmd:ScannerMustConsume )->$ReturnType
+      handle( cmd )
       local result : $ReturnType
       result = visit(cmd.args)
       return result
 
     method on( cmd:ScannerNextIs )->$ReturnType
+      handle( cmd )
       local result : $ReturnType
       result = visit(cmd.args)
       return result
 
     method on( cmd:ScannerPeek )->$ReturnType
+      handle( cmd )
       local result : $ReturnType
       result = visit(cmd.lookahead)
       return result
 
     method on( cmd:ThrowSyntaxError )->$ReturnType
+      handle( cmd )
       local result : $ReturnType
       result = visit(cmd.args)
       return result
@@ -237,16 +272,19 @@ class InspectionVisitor<<$ReturnType>>
     #method on( cmd:TokenDef )->$ReturnType
 
     method on( cmd:TokenGroup )->$ReturnType
+      handle( cmd )
       local result : $ReturnType
       result = visit(cmd.definitions)
       return result
 
     method on( cmd:Unary )->$ReturnType
+      handle( cmd )
       local result : $ReturnType
       result = visit(cmd.operand)
       return result
 
     method on( cmd:While )->$ReturnType
+      handle( cmd )
       local result : $ReturnType
       result = visit(cmd.condition)
       if (result?) return result
@@ -254,16 +292,19 @@ class InspectionVisitor<<$ReturnType>>
       return result
 
     method on( cmd:WriteBuffer )->$ReturnType
+      handle( cmd )
       local result : $ReturnType
       result = visit(cmd.new_value)
       return result
 
     method on( cmd:WriteOutput )->$ReturnType
+      handle( cmd )
       local result : $ReturnType
       result = visit(cmd.new_value)
       return result
 
     method on( cmd:ZeroOrMore )->$ReturnType
+      handle( cmd )
       local result : $ReturnType
       result = visit(cmd.pattern)
       return result

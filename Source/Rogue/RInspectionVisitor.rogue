@@ -32,18 +32,19 @@ class RInspectionVisitor : RogueSourceWriter
                     |      #   CALL                        OVERLOADABLE METHOD
                     |      #   --------------------        ------------------------
                     |      #   visit(cmd)->$ReturnType  -> on(cmd:CmdType)->$ReturnType
-                    |      #     enter(cmd) ->               on_enter(cmd:CmdType)
-                    |      enter( cmd )
+                    |      #     handle(cmd)            -> on_visit(cmd:CmdType)
+                    |      handle( cmd )
                     |      return $ReturnType.meta.default_value
                     |
                     |    method on( cmd:CmdList )->Logical
+                    |      handle( cmd )
                     |      forEach (statement in cmd.list)
                     |        local result = visit(statement)
                     |        if (result?) return result
                     |      endForEach
                     |      return $ReturnType.meta.default_value
                     |
-                    |    method on_enter( cmd:Cmd )
+                    |    method on_visit( cmd:Cmd )
                     |      # This method is called from the default on(CmdType) before
                     |      # children are visited.
                     |
@@ -51,8 +52,8 @@ class RInspectionVisitor : RogueSourceWriter
                     |      if (cmd is null) return $ReturnType.meta.default_value
                     |      return cmd.dispatch<<ThisType,$ReturnType>>( this )
                     |
-                    |    method enter( cmd:Cmd ) [propagated]
-                    |      cmd.dispatch_on_enter<<ThisType>>( this )
+                    |    method handle( cmd:Cmd ) [propagated]
+                    |      cmd.dispatch_on_visit<<ThisType>>( this )
       endIf
 
       scan_node_types( content )
@@ -85,6 +86,7 @@ class RInspectionVisitor : RogueSourceWriter
 
             builder.println
             builder.print(  "method on( cmd:" ).print( node_type.name ).println( " )->$ReturnType" )
+            builder.println "  handle( cmd )"
             if (node_type.is_list and node_type.name != "CmdList")
               builder.println "  local result = on( cmd->(as CmdList) )"
               check_return = true

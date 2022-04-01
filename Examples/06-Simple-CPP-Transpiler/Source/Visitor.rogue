@@ -4,18 +4,19 @@ module Simple
 class Visitor
   METHODS
     method on( cmd:Cmd )->Cmd
-      # Default per-node call sequence for regular 'Visitor'
-      #   CALL                  OVERLOADABLE METHOD
-      #   --------------------  -----------------------------------------
-      #   visit(cmd)            -> on(cmd:CmdType)->Cmd
-      #   visit_content(cmd)       -> on_visit(cmd:CmdType)
-      #     visit_children(cmd)       -> on_visit_children(cmd:CmdType)
-      #                            on_validate(cmd:CmdType)->Cmd
+      # Default per-node Visitor call sequence.
+      #
+      #   CALL                       OVERLOADABLE METHOD
+      #   --------------------       -----------------------------------------
+      #   visit(cmd)->Cmd         -> on(cmd:CmdType)->Cmd
+      #     handle(cmd)           ->   on_visit(cmd:CmdType)
+      #       visit_children(cmd) ->     on_visit_children(cmd:CmdType)
+      #     validate(cmd)->Cmd    ->   on_validate(cmd:CmdType)->Cmd
       #
       # For any method on(CmdType) or on_validate(CmdType):
       # - The AST is rebuilt with the return value, so return 'cmd' to keep
       #   this subtree or else return a different Cmd node to replace it.
-      visit_content( cmd )
+      handle( cmd )
       return validate( cmd )
 
     method on_visit( cmd:Cmd )
@@ -38,15 +39,13 @@ class Visitor
       if (cmd is null) return null
       return cmd.dispatch<<ThisType>>( this )
 
-    method visit_children( cmd:Cmd )->Cmd [propagated]
+    method visit_children( cmd:Cmd ) [propagated]
       # Call from 'on()' or 'on_visit()' handler to visit subtrees.
       cmd.dispatch_on_visit_children<<ThisType>>( this )
-      return cmd
 
-    method visit_content( cmd:Cmd )->Cmd [propagated]
+    method handle( cmd:Cmd ) [propagated]
       # Primarily for internal use - see on(Cmd) for usage.
       cmd.dispatch_on_visit<<ThisType>>( this )
-      return cmd
 
     method validate( cmd:Cmd )->Cmd [propagated]
       if (cmd is null) return null
@@ -64,19 +63,19 @@ class Visitor
 
 
     method on_visit_children( cmd:AST )
-        cmd.statements = visit(cmd.statements)
+      cmd.statements = visit(cmd.statements)
 
     method on_visit_children( cmd:Binary )
-        cmd.left = visit(cmd.left)
-        cmd.right = visit(cmd.right)
+      cmd.left = visit(cmd.left)
+      cmd.right = visit(cmd.right)
 
     method on_visit_children( cmd:Print )
-        cmd.args = visit(cmd.args)
+      cmd.args = visit(cmd.args)
 
     method on_visit_children( cmd:Unary )
-        cmd.operand = visit(cmd.operand)
+      cmd.operand = visit(cmd.operand)
 
     method on_visit_children( cmd:WriteVar )
-        cmd.new_value = visit(cmd.new_value)
+      cmd.new_value = visit(cmd.new_value)
 
 endClass

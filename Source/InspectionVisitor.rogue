@@ -6,85 +6,84 @@ endClass
 
 class InspectionVisitor<<$ReturnType>>
   METHODS
+    method visit( cmd:Cmd )->$ReturnType [propagated]
+      if (cmd is null) return $ReturnType.meta.default_value
+      return cmd.dispatch<<on,ThisType,$ReturnType>>( this )
+
+    method visit_content( cmd:Cmd ) [propagated]
+      cmd.dispatch<<on_visit,ThisType>>( this )
+
+    method visit_children( cmd:Cmd )->$ReturnType [propagated]
+      # Call from 'on()' or 'on_visit()' handler to visit subtrees.
+      return cmd.dispatch<<on_visit_children,ThisType,$ReturnType>>( this )
+
     method on( cmd:Cmd )->$ReturnType
       # Default per-node InspectionVisitor call sequence.
       #
-      #   CALL                        OVERLOADABLE METHOD
-      #   --------------------        ------------------------
-      #   visit(cmd)->$ReturnType  -> on(cmd:CmdType)->$ReturnType
-      #     visit_content(cmd)            -> on_visit(cmd:CmdType)
+      #   CALL                                   OVERLOADABLE METHOD
+      #   --------------------                   ------------------------
+      #   visit(cmd)->$ReturnType            ->  on(cmd:CmdType)->$ReturnType
+      #     visit_content(cmd)               ->    on_visit(cmd:CmdType)
+      #     visit_children(cmd)->$ReturnType ->    on_visit_children(cmd:CmdType)
       visit_content( cmd )
+      return visit_children( cmd )
+
+    method on_visit( cmd:Cmd )
+      # This method is called from the default on(CmdType) before
+      # children are visited.
+
+    method on_visit_children( cmd:Cmd )->$ReturnType
       return $ReturnType.meta.default_value
 
-    method on( cmd:CmdList )->Logical
-      visit_content( cmd )
+    method on_visit_children( cmd:CmdList )->$ReturnType
       forEach (statement in cmd.list)
         local result = visit(statement)
         if (result?) return result
       endForEach
       return $ReturnType.meta.default_value
 
-    method on_visit( cmd:Cmd )
-      # This method is called from the default on(CmdType) before
-      # children are visited.
-
-    method visit( cmd:Cmd )->$ReturnType [propagated]
-      if (cmd is null) return $ReturnType.meta.default_value
-      return cmd.dispatch<<ThisType,$ReturnType>>( this )
-
-    method visit_content( cmd:Cmd ) [propagated]
-      cmd.dispatch_on_visit<<ThisType>>( this )
-
-    method on( cmd:Assign )->$ReturnType
-      visit_content( cmd )
+    method on_visit_children( cmd:Assign )->$ReturnType
       local result : $ReturnType
       result = visit(cmd.target)
       if (result?) return result
       result = visit(cmd.new_value)
       return result
 
-    method on( cmd:Binary )->$ReturnType
-      visit_content( cmd )
+    method on_visit_children( cmd:Binary )->$ReturnType
       local result : $ReturnType
       result = visit(cmd.left)
       if (result?) return result
       result = visit(cmd.right)
       return result
 
-    method on( cmd:Collect )->$ReturnType
-      visit_content( cmd )
+    method on_visit_children( cmd:Collect )->$ReturnType
       local result : $ReturnType
       result = visit(cmd.args)
       return result
 
-    method on( cmd:CreateCmd )->$ReturnType
-      visit_content( cmd )
+    method on_visit_children( cmd:CreateCmd )->$ReturnType
       local result : $ReturnType
       result = visit(cmd.args)
       return result
 
-    method on( cmd:CreateCmdArg )->$ReturnType
-      visit_content( cmd )
+    method on_visit_children( cmd:CreateCmdArg )->$ReturnType
       local result : $ReturnType
       result = visit(cmd.arg_value)
       return result
 
-    method on( cmd:Decrement )->$ReturnType
-      visit_content( cmd )
+    method on_visit_children( cmd:Decrement )->$ReturnType
       local result : $ReturnType
       result = visit(cmd.target)
       return result
 
-    method on( cmd:ElseIf )->$ReturnType
-      visit_content( cmd )
+    method on_visit_children( cmd:ElseIf )->$ReturnType
       local result : $ReturnType
       result = visit(cmd.condition)
       if (result?) return result
       result = visit(cmd.statements)
       return result
 
-    method on( cmd:ElseOn )->$ReturnType
-      visit_content( cmd )
+    method on_visit_children( cmd:ElseOn )->$ReturnType
       local result : $ReturnType
       result = visit(cmd.token_type)
       if (result?) return result
@@ -93,8 +92,7 @@ class InspectionVisitor<<$ReturnType>>
       result = visit(cmd.statements)
       return result
 
-    method on( cmd:If )->$ReturnType
-      visit_content( cmd )
+    method on_visit_children( cmd:If )->$ReturnType
       local result : $ReturnType
       result = visit(cmd.condition)
       if (result?) return result
@@ -105,14 +103,12 @@ class InspectionVisitor<<$ReturnType>>
       result = visit(cmd._else)
       return result
 
-    method on( cmd:Increment )->$ReturnType
-      visit_content( cmd )
+    method on_visit_children( cmd:Increment )->$ReturnType
       local result : $ReturnType
       result = visit(cmd.target)
       return result
 
-    method on( cmd:Match )->$ReturnType
-      visit_content( cmd )
+    method on_visit_children( cmd:Match )->$ReturnType
       local result : $ReturnType
       result = visit(cmd.expression)
       if (result?) return result
@@ -121,16 +117,14 @@ class InspectionVisitor<<$ReturnType>>
       result = visit(cmd._others)
       return result
 
-    method on( cmd:MatchCase )->$ReturnType
-      visit_content( cmd )
+    method on_visit_children( cmd:MatchCase )->$ReturnType
       local result : $ReturnType
       result = visit(cmd.expression)
       if (result?) return result
       result = visit(cmd.statements)
       return result
 
-    method on( cmd:On )->$ReturnType
-      visit_content( cmd )
+    method on_visit_children( cmd:On )->$ReturnType
       local result : $ReturnType
       result = visit(cmd.token_type)
       if (result?) return result
@@ -143,168 +137,144 @@ class InspectionVisitor<<$ReturnType>>
       result = visit(cmd._else_on_others)
       return result
 
-    method on( cmd:OneOrMore )->$ReturnType
-      visit_content( cmd )
+    method on_visit_children( cmd:OneOrMore )->$ReturnType
       local result : $ReturnType
       result = visit(cmd.pattern)
       return result
 
-    method on( cmd:OptionalPattern )->$ReturnType
-      visit_content( cmd )
+    method on_visit_children( cmd:OptionalPattern )->$ReturnType
       local result : $ReturnType
       result = visit(cmd.pattern)
       return result
 
-    method on( cmd:ParserConsume )->$ReturnType
-      visit_content( cmd )
+    method on_visit_children( cmd:ParserConsume )->$ReturnType
       local result : $ReturnType
       result = visit(cmd.token_type)
       return result
 
-    method on( cmd:ParserCreate )->$ReturnType
-      visit_content( cmd )
+    method on_visit_children( cmd:ParserCreate )->$ReturnType
       local result : $ReturnType
       result = visit(cmd.arg)
       return result
 
-    method on( cmd:ParserDef )->$ReturnType
-      visit_content( cmd )
+    method on_visit_children( cmd:ParserDef )->$ReturnType
       local result : $ReturnType
       result = visit(cmd.routine_defs)
       return result
 
-    method on( cmd:ParserMustConsume )->$ReturnType
-      visit_content( cmd )
+    method on_visit_children( cmd:ParserMustConsume )->$ReturnType
       local result : $ReturnType
       result = visit(cmd.token_type)
       return result
 
-    method on( cmd:ParserNextIs )->$ReturnType
-      visit_content( cmd )
+    method on_visit_children( cmd:ParserNextIs )->$ReturnType
       local result : $ReturnType
       result = visit(cmd.token_type)
       return result
 
-    method on( cmd:ParserProduce )->$ReturnType
-      visit_content( cmd )
+    method on_visit_children( cmd:ParserProduce )->$ReturnType
       local result : $ReturnType
       result = visit(cmd.arg)
       return result
 
-    method on( cmd:Print )->$ReturnType
-      visit_content( cmd )
+    method on_visit_children( cmd:Print )->$ReturnType
       local result : $ReturnType
       result = visit(cmd.args)
       return result
 
-    method on( cmd:Println )->$ReturnType
-      visit_content( cmd )
+    method on_visit_children( cmd:Println )->$ReturnType
       local result : $ReturnType
       result = visit(cmd.args)
       return result
 
-    method on( cmd:ProgramDef )->$ReturnType
-      visit_content( cmd )
+    method on_visit_children( cmd:ProgramDef )->$ReturnType
       local result : $ReturnType
       result = visit(cmd.sections)
       return result
 
-    method on( cmd:Return )->$ReturnType
-      visit_content( cmd )
+    method on_visit_children( cmd:Return )->$ReturnType
       local result : $ReturnType
       result = visit(cmd.value)
       return result
 
-    method on( cmd:Routine )->$ReturnType
-      visit_content( cmd )
+    method on_visit_children( cmd:Routine )->$ReturnType
       local result : $ReturnType
       result = visit(cmd.statements)
       return result
 
-    method on( cmd:Scan )->$ReturnType
-      visit_content( cmd )
+    method on_visit_children( cmd:Scan )->$ReturnType
       local result : $ReturnType
       result = visit(cmd.args)
       return result
 
-    method on( cmd:ScannerConsume )->$ReturnType
-      visit_content( cmd )
+    method on_visit_children( cmd:ScannerConsume )->$ReturnType
       local result : $ReturnType
       result = visit(cmd.args)
       return result
 
-    method on( cmd:ScannerCreate )->$ReturnType
-      visit_content( cmd )
+    method on_visit_children( cmd:ScannerCreate )->$ReturnType
       local result : $ReturnType
       result = visit(cmd.arg)
       return result
 
-    method on( cmd:ScannerDef )->$ReturnType
-      visit_content( cmd )
+    method on_visit_children( cmd:ScannerDef )->$ReturnType
       local result : $ReturnType
       result = visit(cmd.routine_defs)
       return result
 
-    method on( cmd:ScannerMustConsume )->$ReturnType
-      visit_content( cmd )
+    method on_visit_children( cmd:ScannerMustConsume )->$ReturnType
       local result : $ReturnType
       result = visit(cmd.args)
       return result
 
-    method on( cmd:ScannerNextIs )->$ReturnType
-      visit_content( cmd )
+    method on_visit_children( cmd:ScannerNextIs )->$ReturnType
       local result : $ReturnType
       result = visit(cmd.args)
       return result
 
-    method on( cmd:ScannerPeek )->$ReturnType
-      visit_content( cmd )
+    method on_visit_children( cmd:ScannerPeek )->$ReturnType
       local result : $ReturnType
       result = visit(cmd.lookahead)
       return result
 
-    method on( cmd:ThrowSyntaxError )->$ReturnType
-      visit_content( cmd )
+    method on_visit_children( cmd:ThrowSyntaxError )->$ReturnType
       local result : $ReturnType
       result = visit(cmd.args)
       return result
 
-    #method on( cmd:TokenDef )->$ReturnType
+    #method on_visit_children( cmd:TokenDef )->$ReturnType
+    #  local result : $ReturnType
+    #  result = visit(cmd.attribute_cmd_list)
+    #  return result
 
-    method on( cmd:TokenGroup )->$ReturnType
-      visit_content( cmd )
+    method on_visit_children( cmd:TokenGroup )->$ReturnType
       local result : $ReturnType
       result = visit(cmd.definitions)
       return result
 
-    method on( cmd:Unary )->$ReturnType
-      visit_content( cmd )
+    method on_visit_children( cmd:Unary )->$ReturnType
       local result : $ReturnType
       result = visit(cmd.operand)
       return result
 
-    method on( cmd:While )->$ReturnType
-      visit_content( cmd )
+    method on_visit_children( cmd:While )->$ReturnType
       local result : $ReturnType
       result = visit(cmd.condition)
       if (result?) return result
       result = visit(cmd.statements)
       return result
 
-    method on( cmd:WriteBuffer )->$ReturnType
-      visit_content( cmd )
+    method on_visit_children( cmd:WriteBuffer )->$ReturnType
       local result : $ReturnType
       result = visit(cmd.new_value)
       return result
 
-    method on( cmd:WriteOutput )->$ReturnType
-      visit_content( cmd )
+    method on_visit_children( cmd:WriteOutput )->$ReturnType
       local result : $ReturnType
       result = visit(cmd.new_value)
       return result
 
-    method on( cmd:ZeroOrMore )->$ReturnType
-      visit_content( cmd )
+    method on_visit_children( cmd:ZeroOrMore )->$ReturnType
       local result : $ReturnType
       result = visit(cmd.pattern)
       return result

@@ -26,13 +26,13 @@ class Visitor<<$ReturnType>>
       else
         if (cmd is null) return $ReturnType.meta.default_value
       endIf
-      return cmd.dispatch<<ThisType,$ReturnType>>( this )
+      return cmd.dispatch<<on,ThisType,$ReturnType>>( this )
 
     method visit_children( cmd:Cmd ) [propagated]
-      cmd.dispatch_on_visit_children<<ThisType>>( this )
+      cmd.dispatch<<on_visit_children,ThisType>>( this )
 
     method handle_visit( cmd:Cmd ) [propagated]
-      cmd.dispatch_on_visit<<ThisType>>( this )
+      cmd.dispatch<<on_visit,ThisType>>( this )
 
     method on_visit_children( cmd:CmdList )
       if ($ReturnType instanceOf Cmd)

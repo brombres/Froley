@@ -23,6 +23,29 @@ class RVisitor : RogueSourceWriter
         content += "module $\n\n"(Program.project_name)
         content += @|class Visitor
                     |  METHODS
+                    |    method visit( cmd:Cmd )->Cmd [propagated]
+                    |      # Call to invoke the appropriate on/on_visit() for the given Cmd type.
+                    |      #
+                    |      # For example:
+                    |      #   method on( cmd:Binary )->Cmd
+                    |      #     cmd.left  = visit(cmd.left)
+                    |      #     cmd.right = visit(cmd.right)
+                    |      #     return cmd
+                    |      if (cmd is null) return null
+                    |      return cmd.dispatch<<on,ThisType,Cmd>>( this )
+                    |
+                    |    method visit_content( cmd:Cmd ) [propagated]
+                    |      # Primarily for internal use - see on(Cmd) for usage.
+                    |      cmd.dispatch<<on_visit,ThisType>>( this )
+                    |
+                    |    method visit_children( cmd:Cmd ) [propagated]
+                    |      # Call from 'on()' or 'on_visit()' handler to visit subtrees.
+                    |      cmd.dispatch<<on_visit_children,ThisType>>( this )
+                    |
+                    |    method validate( cmd:Cmd )->Cmd [propagated]
+                    |      if (cmd is null) return null
+                    |      return cmd.dispatch<<on_validate,ThisType,Cmd>>( this )
+                    |
                     |    method on( cmd:Cmd )->Cmd
                     |      # Default per-node Visitor call sequence.
                     |      #
@@ -47,29 +70,6 @@ class RVisitor : RogueSourceWriter
                     |
                     |    method on_validate( cmd:Cmd )->Cmd
                     |      return cmd
-                    |
-                    |    method visit( cmd:Cmd )->Cmd [propagated]
-                    |      # Call to invoke the appropriate on/on_visit() for the given Cmd type.
-                    |      #
-                    |      # For example:
-                    |      #   method on( cmd:Binary )->Cmd
-                    |      #     cmd.left  = visit(cmd.left)
-                    |      #     cmd.right = visit(cmd.right)
-                    |      #     return cmd
-                    |      if (cmd is null) return null
-                    |      return cmd.dispatch<<ThisType>>( this )
-                    |
-                    |    method visit_children( cmd:Cmd ) [propagated]
-                    |      # Call from 'on()' or 'on_visit()' handler to visit subtrees.
-                    |      cmd.dispatch_on_visit_children<<ThisType>>( this )
-                    |
-                    |    method visit_content( cmd:Cmd ) [propagated]
-                    |      # Primarily for internal use - see on(Cmd) for usage.
-                    |      cmd.dispatch_on_visit<<ThisType>>( this )
-                    |
-                    |    method validate( cmd:Cmd )->Cmd [propagated]
-                    |      if (cmd is null) return null
-                    |      return cmd.dispatch_on_validate<<ThisType>>( this )
                     |
                     |    method on_visit_children( cmd:Cmd )
                     |      # Overloaded automatically by the Froley compiler

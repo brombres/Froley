@@ -297,7 +297,7 @@ class RParserCore( generator, parser_def:ParserDef ) : RogueSourceWriter
          |        ++ip
          |        which (ip-1)
 
-      parser_def.routine_defs.dispatch( generator )
+      generator.visit( parser_def.routine_defs )
 
       writeln ...
         @|          others

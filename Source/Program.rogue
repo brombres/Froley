@@ -51,11 +51,11 @@ class Program [singleton]
       type(t,"Real").is_built_in = true
       type(t,"String").is_built_in = true
 
-      nodes.dispatch( Collector() )
-      nodes.dispatch( TokenOrganizer() )
-      nodes.dispatch( Organizer() )
-      nodes.dispatch( Resolver() )
-      nodes.dispatch( Validator() )
+      Collector().visit( nodes )
+      TokenOrganizer().visit( nodes )
+      Organizer().visit( nodes )
+      Resolver().visit( nodes )
+      Validator().visit( nodes )
 
       local main = command//options//main
       if (main)

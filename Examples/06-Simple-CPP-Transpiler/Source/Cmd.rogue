@@ -26,23 +26,11 @@ class Cmd( t:Token )
     method description->String
       return "Cmd"
 
-    method dispatch<<$VisitorType>>( visitor:$VisitorType )->Cmd [propagated]
-      return visitor.on( this )
+    method dispatch<<$m,$VisitorType>>( visitor:$VisitorType )  [propagated]
+      visitor.$m( this )
 
-    method dispatch<<$VisitorType,$ReturnType>>( visitor:$VisitorType )->$ReturnType [propagated]
-      return visitor.on( this )
-
-    method dispatch_on_enter<<$VisitorType>>( visitor:$VisitorType ) [propagated]
-      visitor.on_enter( this )
-
-    method dispatch_on_visit<<$VisitorType>>( visitor:$VisitorType ) [propagated]
-      visitor.on_visit( this )
-
-    method dispatch_on_visit_children<<$VisitorType>>( visitor:$VisitorType ) [propagated]
-      visitor.on_visit_children( this )
-
-    method dispatch_on_validate<<$VisitorType>>( visitor:$VisitorType )->Cmd [propagated]
-      return visitor.on_validate( this )
+    method dispatch<<$m,$VisitorType,$ReturnType>>( visitor:$VisitorType )->$ReturnType [propagated]
+      return visitor.$m( this )
 
     method first->Cmd
       throw UnsupportedOperationError()

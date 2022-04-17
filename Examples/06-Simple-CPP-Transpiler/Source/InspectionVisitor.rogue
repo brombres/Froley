@@ -6,63 +6,65 @@ endClass
 
 class InspectionVisitor<<$ReturnType>>
   METHODS
+    method visit( cmd:Cmd )->$ReturnType [propagated]
+      if (cmd is null) return $ReturnType.meta.default_value
+      return cmd.dispatch<<on,ThisType,$ReturnType>>( this )
+
+    method visit_content( cmd:Cmd ) [propagated]
+      cmd.dispatch<<on_visit,ThisType>>( this )
+
+    method visit_children( cmd:Cmd )->$ReturnType [propagated]
+      # Call from 'on()' or 'on_visit()' handler to visit subtrees.
+      return cmd.dispatch<<on_visit_children,ThisType,$ReturnType>>( this )
+
     method on( cmd:Cmd )->$ReturnType
       # Default per-node InspectionVisitor call sequence.
       #
-      #   CALL                        OVERLOADABLE METHOD
-      #   --------------------        ------------------------
-      #   visit(cmd)->$ReturnType  -> on(cmd:CmdType)->$ReturnType
-      #     visit_content(cmd)     -> on_visit(cmd:CmdType)
+      #   CALL                                   OVERLOADABLE METHOD
+      #   --------------------                   ------------------------
+      #   visit(cmd)->$ReturnType            ->  on(cmd:CmdType)->$ReturnType
+      #     visit_content(cmd)               ->    on_visit(cmd:CmdType)
+      #     visit_children(cmd)->$ReturnType ->    on_visit_children(cmd:CmdType)
       visit_content( cmd )
+      return visit_children( cmd )
+
+    method on_visit( cmd:Cmd )
+      # This method is called from the default on(CmdType) before
+      # children are visited.
+
+    method on_visit_children( cmd:Cmd )->$ReturnType
       return $ReturnType.meta.default_value
 
-    method on( cmd:CmdList )->Logical
-      visit_content( cmd )
+    method on_visit_children( cmd:CmdList )->$ReturnType
       forEach (statement in cmd.list)
         local result = visit(statement)
         if (result?) return result
       endForEach
       return $ReturnType.meta.default_value
 
-    method on_visit( cmd:Cmd )
-      # This method is called from the default on(CmdType) before
-      # children are visited.
-
-    method visit( cmd:Cmd )->$ReturnType [propagated]
-      if (cmd is null) return $ReturnType.meta.default_value
-      return cmd.dispatch<<ThisType,$ReturnType>>( this )
-
-    method visit_content( cmd:Cmd ) [propagated]
-      cmd.dispatch_on_visit<<ThisType>>( this )
-
-    method on( cmd:AST )->$ReturnType
-      visit_content( cmd )
+    method on_visit_children( cmd:AST )->$ReturnType
       local result : $ReturnType
       result = visit(cmd.statements)
       return result
 
-    method on( cmd:Binary )->$ReturnType
-      visit_content( cmd )
+    method on_visit_children( cmd:Binary )->$ReturnType
       local result : $ReturnType
       result = visit(cmd.left)
       if (result?) return result
       result = visit(cmd.right)
       return result
 
-    method on( cmd:Print )->$ReturnType
-      visit_content( cmd )
+    method on_visit_children( cmd:Print )->$ReturnType
       local result : $ReturnType
       result = visit(cmd.args)
       return result
 
-    method on( cmd:Unary )->$ReturnType
-      visit_content( cmd )
+    method on_visit_children( cmd:Unary )->$ReturnType
       local result : $ReturnType
       result = visit(cmd.operand)
       return result
 
-    method on( cmd:WriteVar )->$ReturnType
-      visit_content( cmd )
+    method on_visit_children( cmd:WriteVar )->$ReturnType
       local result : $ReturnType
       result = visit(cmd.new_value)
       return result

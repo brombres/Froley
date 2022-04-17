@@ -69,7 +69,7 @@ class RScannerCore( generator, scanner_def:ScannerDef ) : RogueSourceWriter
         writeln ''$ = ScanPattern( "$" )'' (entry.value,entry.key)
       endForEach
 
-      scanner_def.dispatch( ScanTableDeclarationWriter(generator) )
+      ScanTableDeclarationWriter(generator).visit( scanner_def )
       indent -= 4
 
       writeln ...
@@ -220,7 +220,7 @@ class RScannerCore( generator, scanner_def:ScannerDef ) : RogueSourceWriter
          |        ++ip
          |        which (ip-1)
 
-      scanner_def.routine_defs.dispatch( generator )
+      generator.visit( scanner_def.routine_defs )
 
       writeln ...
         @|          others

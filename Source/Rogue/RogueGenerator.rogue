@@ -34,7 +34,7 @@ class RogueGenerator : Visitor
     method init( folder )
       File.create_folder( folder )
 
-      Program.nodes.dispatch( this )
+      visit( Program.nodes )
 
       RCompileError(this).create_missing
       RScanTable(this).create_missing
@@ -166,7 +166,7 @@ class RogueGenerator : Visitor
       write "if (not disable_output) _push( "
       write cmd.name
       write "(_cur_t"
-      cmd.args.dispatch( this )
+      visit( cmd.args )
       write "), "
       write cmd.node_arg_count
       write " )"
@@ -178,10 +178,10 @@ class RogueGenerator : Visitor
       if (cmd.arg_value)
         if (arg_type.is_built_in and arg_type.name != "String")
           write "_string_to_$(" (arg_type.name)
-          cmd.arg_value.dispatch( this )
+          visit( cmd.arg_value )
           write ")"
         else
-          cmd.arg_value.dispatch( this )
+          visit( cmd.arg_value )
         endIf
       else
         if (arg_type.is_built_in)
@@ -321,9 +321,9 @@ class RogueGenerator : Visitor
 
     method on( cmd:LogicalAnd )->Cmd
       write "("
-      cmd.left.dispatch( this )
+      visit( cmd.left )
       write " and "
-      cmd.right.dispatch( this )
+      visit( cmd.right )
       write ")"
       return cmd
 
@@ -334,9 +334,9 @@ class RogueGenerator : Visitor
 
     method on( cmd:LogicalOr )->Cmd
       write "("
-      cmd.left.dispatch( this )
+      visit( cmd.left )
       write " or "
-      cmd.right.dispatch( this )
+      visit( cmd.right )
       write ")"
       return cmd
 
@@ -451,7 +451,7 @@ class RogueGenerator : Visitor
       write "output"
       forEach (arg in cmd.args)
         write ".print("
-        arg.require_value.dispatch( this )
+        visit( arg.require_value )
         write ")"
       endForEach
       return cmd
@@ -460,7 +460,7 @@ class RogueGenerator : Visitor
       write "output"
       forEach (arg in cmd.args)
         write ".print("
-        arg.require_value.dispatch( this )
+        visit( arg.require_value )
         write ")"
       endForEach
       writeln ".println"
@@ -505,7 +505,7 @@ class RogueGenerator : Visitor
       write   "_scanner.peek "
       if (cmd.lookahead)
         write "("
-        cmd.lookahead.dispatch( this )
+        visit( cmd.lookahead )
         write ")"
       endIf
       return cmd
@@ -575,7 +575,7 @@ class RogueGenerator : Visitor
     method on( cmd:Statements )->Cmd
       forEach (element in cmd)
         if (element)
-          element.dispatch( this )
+          visit( element )
           writeln
         endIf
       endForEach
@@ -590,7 +590,7 @@ class RogueGenerator : Visitor
         # ScannerRead from string; must accept all characters.
         write @|  necessary ($scan_table.accept(forEach in
         write " "
-        cmd.expression.dispatch(this)
+        visit( cmd.expression )
         writeln @|))
       else
         # ScannerRead longest match from input
@@ -614,7 +614,7 @@ class RogueGenerator : Visitor
       forEach (statements at i in cmd.statement_lists from i1)
         writeln "case "+i
         indent += 2
-        statements.dispatch(this)
+        visit( statements )
         indent -= 2
       endForEach
       writeln @|others
@@ -625,7 +625,7 @@ class RogueGenerator : Visitor
       if (cmd._others)
         writeln "unsatisfied"
         indent += 2
-        cmd.statement_lists[0].dispatch(this)
+        visit( cmd.statement_lists[0] )
         indent -= 2
       endIf
 
@@ -640,7 +640,7 @@ class RogueGenerator : Visitor
         write "("
         forEach (arg at i in cmd.args)
           if (i > 0) write "+"
-          cmd.args.dispatch( this )
+          visit( cmd.args )
         endForEach
         write ")"
       endIf

@@ -44,7 +44,7 @@ class Organizer : Visitor
 
         endIf
 
-        cmd.args.dispatch( this )
+        visit( cmd.args )
 
         # Count number of args
         local args = cmd.args->(as Args)
@@ -192,7 +192,7 @@ class Organizer : Visitor
         local cmd_restart = Restart( t, null )
         local _case = MatchCase( t, expr, Statements(t,cmd_create,cmd_restart) )
         this_match.cases.add( _case )
-        _case.dispatch( this )
+        visit( _case )
       endForEach
       return null
 

@@ -12,12 +12,12 @@ class InspectionVisitor<<$ReturnType>>
       #   CALL                        OVERLOADABLE METHOD
       #   --------------------        ------------------------
       #   visit(cmd)->$ReturnType  -> on(cmd:CmdType)->$ReturnType
-      #     handle(cmd)            -> on_visit(cmd:CmdType)
-      handle( cmd )
+      #     visit_content(cmd)     -> on_visit(cmd:CmdType)
+      visit_content( cmd )
       return $ReturnType.meta.default_value
 
     method on( cmd:CmdList )->Logical
-      handle( cmd )
+      visit_content( cmd )
       forEach (statement in cmd.list)
         local result = visit(statement)
         if (result?) return result
@@ -32,17 +32,17 @@ class InspectionVisitor<<$ReturnType>>
       if (cmd is null) return $ReturnType.meta.default_value
       return cmd.dispatch<<ThisType,$ReturnType>>( this )
 
-    method handle( cmd:Cmd ) [propagated]
+    method visit_content( cmd:Cmd ) [propagated]
       cmd.dispatch_on_visit<<ThisType>>( this )
 
     method on( cmd:AST )->$ReturnType
-      handle( cmd )
+      visit_content( cmd )
       local result : $ReturnType
       result = visit(cmd.statements)
       return result
 
     method on( cmd:Binary )->$ReturnType
-      handle( cmd )
+      visit_content( cmd )
       local result : $ReturnType
       result = visit(cmd.left)
       if (result?) return result
@@ -50,19 +50,19 @@ class InspectionVisitor<<$ReturnType>>
       return result
 
     method on( cmd:Print )->$ReturnType
-      handle( cmd )
+      visit_content( cmd )
       local result : $ReturnType
       result = visit(cmd.args)
       return result
 
     method on( cmd:Unary )->$ReturnType
-      handle( cmd )
+      visit_content( cmd )
       local result : $ReturnType
       result = visit(cmd.operand)
       return result
 
     method on( cmd:WriteVar )->$ReturnType
-      handle( cmd )
+      visit_content( cmd )
       local result : $ReturnType
       result = visit(cmd.new_value)
       return result

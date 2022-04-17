@@ -116,7 +116,7 @@ class StarterFroleyGenerator [singleton]
          |  while (hasAnother and not nextIs('\n'))
          |    ch = read
          |    if (ch == '"') produce STRING
-         |    elseIf (ch == '\\' and hasAnother) ch = read  # Handle backslash escapes
+         |    elseIf (ch == '\\' and hasAnother) ch = read  # VisitContent backslash escapes
          |    collect ch
          |  endWhile
          |  syntaxError "Unterminated string."

@@ -232,7 +232,7 @@ class BuildfileGenerator [singleton]
          |# which uses introspection to turn command line arguments into parameterized
          |# routine calls.
          |
-         |# Example: to handle the command "rogo abc xyz 5", define
+         |# Example: to visit_content the command "rogo abc xyz 5", define
          |# "routine rogo_abc_xyz( n:Int32 )".
          |
          |# "rogo_default" will run in the absence of any other command line argument.

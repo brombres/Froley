@@ -33,7 +33,6 @@ class RScannerCore( generator, scanner_def:ScannerDef ) : RogueSourceWriter
          |    output        = StringBuilder()
          |
          |    start_ip      = 0
-         |    ip            : Int32
          |    halt          = false
          |
          |    _position_stack  = Int32[]
@@ -216,19 +215,20 @@ class RScannerCore( generator, scanner_def:ScannerDef ) : RogueSourceWriter
          |      throw CompileError( message, _filepath, _scanner.source, _scanner.line, _scanner.column )
          |
          |    method _execute( ip:Int32 )->Logical
-         |      loop
-         |        ++ip
-         |        which (ip-1)
+         |      which (ip)
+      forEach (r in scanner_def.routines)
+        writeln "        case ip_$: return r_$" (r.name,r.name)
+      endForEach
+      writeln ...
+        @|        others
+         |          halt = true
+         |          return false
+         |      endWhich
+         |
 
       generator.visit( scanner_def.routine_defs )
 
       writeln ...
-        @|          others
-         |            halt = true
-         |            return false
-         |        endWhich
-         |      endLoop
-         |
-         |endClass
+        @|endClass
 endClass
 

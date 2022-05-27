@@ -292,19 +292,20 @@ class RParserCore( generator, parser_def:ParserDef ) : RogueSourceWriter
          |      throw _peek.error( message )
          |
          |    method _execute( ip:Int32 )
-         |      _push_frame
-         |      loop
-         |        ++ip
-         |        which (ip-1)
+         |      which (ip)
+      forEach (r in parser_def.routines)
+        writeln "        case ip_$: r_$" (r.name,r.name)
+      endForEach
+      writeln ...
+        @|        others
+         |          return
+         |      endWhich
+         |
 
       generator.visit( parser_def.routine_defs )
 
       writeln ...
-        @|          others
-         |            return
-         |        endWhich
-         |      endLoop
-         |endClass
+        @|endClass
          |
          |class ParserPosition( position:Int32, cmd_stack_count:Int32, cur_t:Token ) [compound];
 endClass

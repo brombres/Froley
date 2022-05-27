@@ -333,2316 +333,2521 @@ class ParserCore [abstract]
       throw _peek.error( message )
 
     method _execute( ip:Int32 )
+      which (ip)
+        case ip_program: r_program
+        case ip_section: r_section
+        case ip_type_name: r_type_name
+        case ip_identifier: r_identifier
+        case ip_scanner_routines: r_scanner_routines
+        case ip_routine_name_and_attributes: r_routine_name_and_attributes
+        case ip_token_definitions: r_token_definitions
+        case ip_attributes: r_attributes
+        case ip_symbol: r_symbol
+        case ip_consume_eols: r_consume_eols
+        case ip_consume_eols_and_semicolons: r_consume_eols_and_semicolons
+        case ip_must_consume_eols: r_must_consume_eols
+        case ip_scanner_multi_line_statements: r_scanner_multi_line_statements
+        case ip_scanner_single_line_statements: r_scanner_single_line_statements
+        case ip_scanner_control_structure: r_scanner_control_structure
+        case ip_cases: r_cases
+        case ip__others: r__others
+        case ip_scanner_multi_line_else_ifs: r_scanner_multi_line_else_ifs
+        case ip_scanner_multi_line_else: r_scanner_multi_line_else
+        case ip_scanner_single_line_else_ifs: r_scanner_single_line_else_ifs
+        case ip_scanner_single_line_else: r_scanner_single_line_else
+        case ip_scanner_statement: r_scanner_statement
+        case ip_scanner_product: r_scanner_product
+        case ip_cmd_args: r_cmd_args
+        case ip_cmd_arg: r_cmd_arg
+        case ip_scanner_args: r_scanner_args
+        case ip_scanner_arg_list: r_scanner_arg_list
+        case ip_sequence_args: r_sequence_args
+        case ip_sequence_arg_list: r_sequence_arg_list
+        case ip_pattern_sequence: r_pattern_sequence
+        case ip_sequence_item: r_sequence_item
+        case ip_empty_statements: r_empty_statements
+        case ip_scanner_expression: r_scanner_expression
+        case ip_scanner_logical_or: r_scanner_logical_or
+        case ip_scanner_logical_or__inner: r_scanner_logical_or__inner
+        case ip_scanner_logical_and: r_scanner_logical_and
+        case ip_scanner_logical_and__inner: r_scanner_logical_and__inner
+        case ip_scanner_comparison: r_scanner_comparison
+        case ip_scanner_comparison__inner: r_scanner_comparison__inner
+        case ip_scanner_add_subtract: r_scanner_add_subtract
+        case ip_scanner_add_subtract__inner: r_scanner_add_subtract__inner
+        case ip_scanner_multiply_divide: r_scanner_multiply_divide
+        case ip_scanner_multiply_divide__inner: r_scanner_multiply_divide__inner
+        case ip_scanner_power: r_scanner_power
+        case ip_scanner_power__inner: r_scanner_power__inner
+        case ip_scanner_pre_unary: r_scanner_pre_unary
+        case ip_scanner_term: r_scanner_term
+        case ip_repeat_count: r_repeat_count
+        case ip_parser_routines: r_parser_routines
+        case ip_parser_multi_line_statements: r_parser_multi_line_statements
+        case ip_parser_single_line_statements: r_parser_single_line_statements
+        case ip_parser_control_structure: r_parser_control_structure
+        case ip_on_block: r_on_block
+        case ip_parser_multi_line_else_ifs: r_parser_multi_line_else_ifs
+        case ip_parser_multi_line_else: r_parser_multi_line_else
+        case ip_parser_single_line_else_ifs: r_parser_single_line_else_ifs
+        case ip_parser_single_line_else: r_parser_single_line_else
+        case ip_parser_multi_line_else_ons: r_parser_multi_line_else_ons
+        case ip_parser_multi_line_else_on_others: r_parser_multi_line_else_on_others
+        case ip_parser_single_line_else_ons: r_parser_single_line_else_ons
+        case ip_parser_single_line_else_on_others: r_parser_single_line_else_on_others
+        case ip_parser_statement: r_parser_statement
+        case ip_list_type: r_list_type
+        case ip_parser_args: r_parser_args
+        case ip_parser_arg_list: r_parser_arg_list
+        case ip_ttype_or_literal: r_ttype_or_literal
+        case ip_ttype_or_literal_inner: r_ttype_or_literal_inner
+        case ip_attr_name_arg: r_attr_name_arg
+        case ip_attribute_name: r_attribute_name
+        case ip_token_id: r_token_id
+        case ip_collect_parse_list: r_collect_parse_list
+        case ip_string_id_or_routine: r_string_id_or_routine
+        case ip_parser_product: r_parser_product
+        case ip_parser_expression: r_parser_expression
+        case ip_parser_logical_or: r_parser_logical_or
+        case ip_parser_logical_or__inner: r_parser_logical_or__inner
+        case ip_parser_logical_and: r_parser_logical_and
+        case ip_parser_logical_and__inner: r_parser_logical_and__inner
+        case ip_parser_comparison: r_parser_comparison
+        case ip_parser_comparison__inner: r_parser_comparison__inner
+        case ip_parser_add_subtract: r_parser_add_subtract
+        case ip_parser_add_subtract__inner: r_parser_add_subtract__inner
+        case ip_parser_multiply_divide: r_parser_multiply_divide
+        case ip_parser_multiply_divide__inner: r_parser_multiply_divide__inner
+        case ip_parser_power: r_parser_power
+        case ip_parser_power__inner: r_parser_power__inner
+        case ip_parser_pre_unary: r_parser_pre_unary
+        case ip_parser_term: r_parser_term
+        case ip_additional_node_types: r_additional_node_types
+        others
+          return
+      endWhich
+
+    method r_program
       _push_frame
-      loop
-        ++ip
-        which (ip-1)
-          case ip_program
-            _begin_list
-            _execute(ip_consume_eols)
-            _pop_frame
-            while ((_position < _limit))
-              _execute(ip_section)
-              _pop_frame
-              _execute(ip_consume_eols)
-              _pop_frame
-            endWhile
-            if (disable_output)     _discard_list
-            else                    _push_list( CmdList(_list_t) )
-            if (not disable_output) _push( ProgramDef(_cur_t,_node_arg(-1)), 1 )
-            return
-          case ip_section
-            if (_next_t.type == TokenType.KEYWORD_SCANNER)
-              temporarily _cur_t = _on_t
-                if (not disable_output) _push( null, 0 )
-                _execute(ip_must_consume_eols)
-                _pop_frame
-                _execute(ip_scanner_routines)
-                _pop_frame
-                if (not disable_output) _push( ScannerDef(_cur_t,_string_arg(-2),_node_arg(-1)), 2 )
-                return
-              endTemporarily
-            elseIf (_next_t.type == TokenType.KEYWORD_NATIVE_TYPES)
-              temporarily _cur_t = _on_t
-                _begin_list
-                _execute(ip_consume_eols)
-                _pop_frame
-                while (((_position < _limit) and (not (_next_t.type.attributes & TokenType.ATTRIBUTE_STRUCTURAL)?)))
-                  _execute(ip_identifier)
-                  _pop_frame
-                  _consume(TokenType.SYMBOL_COMMA)
-                  _execute(ip_consume_eols)
-                  _pop_frame
-                endWhile
-                if (disable_output)     _discard_list
-                else                    _push_list( NativeTypes(_list_t) )
-                return
-              endTemporarily
-            elseIf (_next_t.type == TokenType.KEYWORD_PARSER)
-              temporarily _cur_t = _on_t
-                if (not disable_output) _push( null, 0 )
-                _execute(ip_must_consume_eols)
-                _pop_frame
-                _execute(ip_parser_routines)
-                _pop_frame
-                if (not disable_output) _push( ParserDef(_cur_t,_string_arg(-2),_node_arg(-1)), 2 )
-                return
-              endTemporarily
-            elseIf (_next_t.type == TokenType.KEYWORD_TOKENS)
-              temporarily _cur_t = _on_t
-                if (_consume(TokenType.EOL))
-                  if (not disable_output) _push( null, 0 )
-                else
-                  _execute(ip_identifier)
-                  _pop_frame
-                endIf
-                _execute(ip_token_definitions)
-                _pop_frame
-                if (not disable_output) _push( TokenGroup(_cur_t,_string_arg(-2),_node_arg(-1)), 2 )
-                return
-              endTemporarily
-            endIf
-            _throw_syntax_error
-            return
-          case ip_type_name
-            if (_next_t.type == TokenType.KEYWORD_CHARACTER)
-              temporarily _cur_t = _on_t
-                if (not disable_output) _push( Identifier(_cur_t,"Character"), 0 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.KEYWORD_INTEGER)
-              temporarily _cur_t = _on_t
-                if (not disable_output) _push( Identifier(_cur_t,"Integer"), 0 )
-                return
-              endTemporarily
-            endIf
-            _execute(ip_identifier)
-            _pop_frame
-            return
-          case ip_identifier
-            if (_next_t.type == TokenType.IDENTIFIER)
-              temporarily _cur_t = _on_t
-                if (not disable_output) _push( Identifier(_cur_t,_cur_t.content), 0 )
-                return
-              endTemporarily
-            endIf
-            _throw_syntax_error("Identifier expected.")
-            return
-          case ip_scanner_routines
-            _begin_list
-            _execute(ip_consume_eols)
-            _pop_frame
-            while ((_next_t.type == TokenType.SYMBOL_MINUS))
-              if (_next_t.type == TokenType.SYMBOL_MINUS)
-                temporarily _cur_t = _on_t
-                  _execute(ip_routine_name_and_attributes)
-                  _pop_frame
-                  _execute(ip_scanner_multi_line_statements)
-                  _pop_frame
-                  if (not disable_output) _push( Routine(_cur_t,_string_arg(-3),_string_arg(-2),_node_arg(-1)->(as Statements)), 3 )
-                endTemporarily
-              endIf
-              _execute(ip_consume_eols)
-              _pop_frame
-            endWhile
-            if (disable_output)     _discard_list
-            else                    _push_list( CmdList(_list_t) )
-            return
-          case ip_routine_name_and_attributes
-            _execute(ip_identifier)
-            _pop_frame
-            if (_next_t.type == TokenType.CHARSET)
-              temporarily _cur_t = _on_t
-                if (not disable_output) _push( LiteralString(_cur_t,_cur_t.content), 0 )
-              endTemporarily
+      _begin_list
+      r_consume_eols
+      while ((_position < _limit))
+        r_section
+        r_consume_eols
+      endWhile
+      if (disable_output)     _discard_list
+      else                    _push_list( CmdList(_list_t) )
+      if (not disable_output) _push( ProgramDef(_cur_t,_node_arg(-1)), 1 )
+      _pop_frame
+      return
+
+    method r_section
+      _push_frame
+      if (_next_t.type == TokenType.KEYWORD_SCANNER)
+        temporarily _cur_t = _on_t
+          if (not disable_output) _push( null, 0 )
+          r_must_consume_eols
+          r_scanner_routines
+          if (not disable_output) _push( ScannerDef(_cur_t,_string_arg(-2),_node_arg(-1)), 2 )
+          _pop_frame
+          return
+        endTemporarily
+      elseIf (_next_t.type == TokenType.KEYWORD_NATIVE_TYPES)
+        temporarily _cur_t = _on_t
+          _begin_list
+          r_consume_eols
+          while (((_position < _limit) and (not (_next_t.type.attributes & TokenType.ATTRIBUTE_STRUCTURAL)?)))
+            r_identifier
+            _consume(TokenType.SYMBOL_COMMA)
+            r_consume_eols
+          endWhile
+          if (disable_output)     _discard_list
+          else                    _push_list( NativeTypes(_list_t) )
+          _pop_frame
+          return
+        endTemporarily
+      elseIf (_next_t.type == TokenType.KEYWORD_PARSER)
+        temporarily _cur_t = _on_t
+          if (not disable_output) _push( null, 0 )
+          r_must_consume_eols
+          r_parser_routines
+          if (not disable_output) _push( ParserDef(_cur_t,_string_arg(-2),_node_arg(-1)), 2 )
+          _pop_frame
+          return
+        endTemporarily
+      elseIf (_next_t.type == TokenType.KEYWORD_TOKENS)
+        temporarily _cur_t = _on_t
+          if (_consume(TokenType.EOL))
+            if (not disable_output) _push( null, 0 )
+          else
+            r_identifier
+          endIf
+          r_token_definitions
+          if (not disable_output) _push( TokenGroup(_cur_t,_string_arg(-2),_node_arg(-1)), 2 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      _throw_syntax_error
+      _pop_frame
+      return
+      _pop_frame
+
+    method r_type_name
+      _push_frame
+      if (_next_t.type == TokenType.KEYWORD_CHARACTER)
+        temporarily _cur_t = _on_t
+          if (not disable_output) _push( Identifier(_cur_t,"Character"), 0 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.KEYWORD_INTEGER)
+        temporarily _cur_t = _on_t
+          if (not disable_output) _push( Identifier(_cur_t,"Integer"), 0 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      r_identifier
+      _pop_frame
+
+    method r_identifier
+      _push_frame
+      if (_next_t.type == TokenType.IDENTIFIER)
+        temporarily _cur_t = _on_t
+          if (not disable_output) _push( Identifier(_cur_t,_cur_t.content), 0 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      _throw_syntax_error("Identifier expected.")
+      _pop_frame
+      return
+      _pop_frame
+
+    method r_scanner_routines
+      _push_frame
+      _begin_list
+      r_consume_eols
+      while ((_next_t.type == TokenType.SYMBOL_MINUS))
+        if (_next_t.type == TokenType.SYMBOL_MINUS)
+          temporarily _cur_t = _on_t
+            r_routine_name_and_attributes
+            r_scanner_multi_line_statements
+            if (not disable_output) _push( Routine(_cur_t,_string_arg(-3),_string_arg(-2),_node_arg(-1)->(as Statements)), 3 )
+          endTemporarily
+        endIf
+        r_consume_eols
+      endWhile
+      if (disable_output)     _discard_list
+      else                    _push_list( CmdList(_list_t) )
+      _pop_frame
+      return
+
+    method r_routine_name_and_attributes
+      _push_frame
+      r_identifier
+      if (_next_t.type == TokenType.CHARSET)
+        temporarily _cur_t = _on_t
+          if (not disable_output) _push( LiteralString(_cur_t,_cur_t.content), 0 )
+        endTemporarily
+      else
+        if (not disable_output) _push( null, 0 )
+      endIf
+      r_must_consume_eols
+      _pop_frame
+
+    method r_token_definitions
+      _push_frame
+      _begin_list
+      r_consume_eols
+      while (((_position < _limit) and (not (_next_t.type.attributes & TokenType.ATTRIBUTE_STRUCTURAL)?)))
+        r_identifier
+        if ((_next_t.type == TokenType.SYMBOL))
+          r_symbol
+        else
+          if (not disable_output) _push( null, 0 )
+        endIf
+        r_attributes
+        if (not disable_output) _push( TokenDef(_cur_t,_string_arg(-3),_string_arg(-2),_node_arg(-1)), 3 )
+        r_consume_eols
+      endWhile
+      if (disable_output)     _discard_list
+      else                    _push_list( CmdList(_list_t) )
+      _pop_frame
+      return
+
+    method r_attributes
+      _push_frame
+      if ((not _consume(TokenType.SYMBOL_OPEN_SQUARE)))
+        if (not disable_output) _push( null, 0 )
+        _pop_frame
+        return
+      endIf
+      if (_consume(TokenType.SYMBOL_CLOSE_SQUARE))
+        if (not disable_output) _push( null, 0 )
+        _pop_frame
+        return
+      endIf
+      _begin_list
+      r_identifier
+      while ((_consume(TokenType.SYMBOL_COMMA) or (not (_next_t.type == TokenType.SYMBOL_CLOSE_SQUARE))))
+        if (((not (_position < _limit)) or (_next_t.type == TokenType.EOL)))
+          _throw_syntax_error("Closing ']' expected.")
+          _pop_frame
+          return
+        endIf
+        r_identifier
+      endWhile
+      if (not _consume(TokenType.SYMBOL_CLOSE_SQUARE)) _throw_syntax_error( &expected=TokenType.SYMBOL_CLOSE_SQUARE )
+      if (disable_output)     _discard_list
+      else                    _push_list( CmdList(_list_t) )
+      _pop_frame
+      return
+
+    method r_symbol
+      _push_frame
+      if (_next_t.type == TokenType.SYMBOL)
+        temporarily _cur_t = _on_t
+          if (not disable_output) _push( Symbol(_cur_t,_cur_t.content), 0 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      _throw_syntax_error("Symbol expected.")
+      _pop_frame
+      return
+      _pop_frame
+
+    method r_consume_eols
+      _push_frame
+      while (_consume(TokenType.EOL))
+      endWhile
+      _pop_frame
+
+    method r_consume_eols_and_semicolons
+      _push_frame
+      while ((_consume(TokenType.EOL) or _consume(TokenType.SYMBOL_SEMICOLON)))
+      endWhile
+      _pop_frame
+
+    method r_must_consume_eols
+      _push_frame
+      if (not _consume(TokenType.EOL)) _throw_syntax_error( &expected=TokenType.EOL )
+      while (_consume(TokenType.EOL))
+      endWhile
+      _pop_frame
+
+    method r_scanner_multi_line_statements
+      _push_frame
+      r_consume_eols_and_semicolons
+      if ((not (_position < _limit)))
+        _throw_syntax_error
+        _pop_frame
+        return
+      endIf
+      _begin_list
+      while (((_position < _limit) and (not ((_next_t.type == TokenType.SYMBOL_MINUS) or (_next_t.type.attributes & TokenType.ATTRIBUTE_STRUCTURAL)?))))
+        r_scanner_control_structure
+        r_consume_eols_and_semicolons
+      endWhile
+      if (disable_output)     _discard_list
+      else                    _push_list( Statements(_list_t) )
+      _pop_frame
+      return
+
+    method r_scanner_single_line_statements
+      _push_frame
+      _begin_list
+      if (_consume(TokenType.EOL))
+        if (disable_output)     _discard_list
+        else                    _push_list( Statements(_list_t) )
+        _pop_frame
+        return
+      endIf
+      r_scanner_statement
+      while (_consume(TokenType.SYMBOL_SEMICOLON))
+        r_scanner_statement
+      endWhile
+      r_must_consume_eols
+      if (disable_output)     _discard_list
+      else                    _push_list( Statements(_list_t) )
+      _pop_frame
+      return
+
+    method r_scanner_control_structure
+      _push_frame
+      if (_next_t.type == TokenType.KEYWORD_IF)
+        temporarily _cur_t = _on_t
+          if (_consume(TokenType.SYMBOL_OPEN_PAREN))
+            r_scanner_expression
+            if (not _consume(TokenType.SYMBOL_CLOSE_PAREN)) _throw_syntax_error( &expected=TokenType.SYMBOL_CLOSE_PAREN )
+          else
+            r_scanner_expression
+          endIf
+          if (_consume(TokenType.EOL))
+            r_scanner_multi_line_statements
+            r_scanner_multi_line_else_ifs
+            r_scanner_multi_line_else
+            if (not _consume(TokenType.KEYWORD_END_IF)) _throw_syntax_error( &expected=TokenType.KEYWORD_END_IF )
+          else
+            r_scanner_single_line_statements
+            r_scanner_single_line_else_ifs
+            r_scanner_single_line_else
+          endIf
+          if (not disable_output) _push( If(_cur_t,_node_arg(-4),_node_arg(-3)->(as Statements),_node_arg(-2),_node_arg(-1)->(as Statements)), 4 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.KEYWORD_MATCH)
+        temporarily _cur_t = _on_t
+          if ((_consume(TokenType.EOL) or _consume(TokenType.KEYWORD_INPUT)))
+            if (not disable_output) _push( null, 0 )
+          elseIf (_consume(TokenType.SYMBOL_OPEN_PAREN))
+            if (_consume(TokenType.KEYWORD_INPUT))
+              if (not disable_output) _push( null, 0 )
             else
+              r_scanner_expression
+            endIf
+            if (not _consume(TokenType.SYMBOL_CLOSE_PAREN)) _throw_syntax_error( &expected=TokenType.SYMBOL_CLOSE_PAREN )
+          else
+            r_scanner_expression
+          endIf
+          r_cases
+          r__others
+          if (not _consume(TokenType.KEYWORD_END_MATCH)) _throw_syntax_error( &expected=TokenType.KEYWORD_END_MATCH )
+          if (not disable_output) _push( Match(_cur_t,_node_arg(-3),_node_arg(-2),_node_arg(-1)), 3 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.KEYWORD_WHILE)
+        temporarily _cur_t = _on_t
+          if (_consume(TokenType.SYMBOL_OPEN_PAREN))
+            r_scanner_expression
+            if (not _consume(TokenType.SYMBOL_CLOSE_PAREN)) _throw_syntax_error( &expected=TokenType.SYMBOL_CLOSE_PAREN )
+          else
+            r_scanner_expression
+          endIf
+          if (_consume(TokenType.EOL))
+            r_scanner_multi_line_statements
+            if (not _consume(TokenType.KEYWORD_END_WHILE)) _throw_syntax_error( &expected=TokenType.KEYWORD_END_WHILE )
+          else
+            r_scanner_single_line_statements
+          endIf
+          if (not disable_output) _push( While(_cur_t,_node_arg(-2),_node_arg(-1)->(as Statements)), 2 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      r_scanner_statement
+      _pop_frame
+
+    method r_cases
+      _push_frame
+      _begin_list
+      r_consume_eols
+      while ((_position < _limit))
+        r_consume_eols
+        if (_next_t.type == TokenType.KEYWORD_CASE)
+          temporarily _cur_t = _on_t
+            r_scanner_expression
+            if (_consume(TokenType.SYMBOL_ARROW))
+              r_consume_eols
+              _begin_list
+              r_scanner_product
+              if (not disable_output) _push( ScannerCreate(_cur_t,_node_arg(-1)), 1 )
               if (not disable_output) _push( null, 0 )
-            endIf
-            _execute(ip_must_consume_eols)
-            _pop_frame
-            return
-          case ip_token_definitions
-            _begin_list
-            _execute(ip_consume_eols)
-            _pop_frame
-            while (((_position < _limit) and (not (_next_t.type.attributes & TokenType.ATTRIBUTE_STRUCTURAL)?)))
-              _execute(ip_identifier)
-              _pop_frame
-              if ((_next_t.type == TokenType.SYMBOL))
-                _execute(ip_symbol)
-                _pop_frame
-              else
-                if (not disable_output) _push( null, 0 )
-              endIf
-              _execute(ip_attributes)
-              _pop_frame
-              if (not disable_output) _push( TokenDef(_cur_t,_string_arg(-3),_string_arg(-2),_node_arg(-1)), 3 )
-              _execute(ip_consume_eols)
-              _pop_frame
-            endWhile
-            if (disable_output)     _discard_list
-            else                    _push_list( CmdList(_list_t) )
-            return
-          case ip_attributes
-            if ((not _consume(TokenType.SYMBOL_OPEN_SQUARE)))
-              if (not disable_output) _push( null, 0 )
-              return
-            endIf
-            if (_consume(TokenType.SYMBOL_CLOSE_SQUARE))
-              if (not disable_output) _push( null, 0 )
-              return
-            endIf
-            _begin_list
-            _execute(ip_identifier)
-            _pop_frame
-            while ((_consume(TokenType.SYMBOL_COMMA) or (not (_next_t.type == TokenType.SYMBOL_CLOSE_SQUARE))))
-              if (((not (_position < _limit)) or (_next_t.type == TokenType.EOL)))
-                _throw_syntax_error("Closing ']' expected.")
-              endIf
-              _execute(ip_identifier)
-              _pop_frame
-            endWhile
-            if (not _consume(TokenType.SYMBOL_CLOSE_SQUARE)) _throw_syntax_error( &expected=TokenType.SYMBOL_CLOSE_SQUARE )
-            if (disable_output)     _discard_list
-            else                    _push_list( CmdList(_list_t) )
-            return
-          case ip_symbol
-            if (_next_t.type == TokenType.SYMBOL)
-              temporarily _cur_t = _on_t
-                if (not disable_output) _push( Symbol(_cur_t,_cur_t.content), 0 )
-                return
-              endTemporarily
-            endIf
-            _throw_syntax_error("Symbol expected.")
-            return
-          case ip_consume_eols
-            while (_consume(TokenType.EOL))
-            endWhile
-            return
-          case ip_consume_eols_and_semicolons
-            while ((_consume(TokenType.EOL) or _consume(TokenType.SYMBOL_SEMICOLON)))
-            endWhile
-            return
-          case ip_must_consume_eols
-            if (not _consume(TokenType.EOL)) _throw_syntax_error( &expected=TokenType.EOL )
-            while (_consume(TokenType.EOL))
-            endWhile
-            return
-          case ip_scanner_multi_line_statements
-            _execute(ip_consume_eols_and_semicolons)
-            _pop_frame
-            if ((not (_position < _limit)))
-              _throw_syntax_error
-            endIf
-            _begin_list
-            while (((_position < _limit) and (not ((_next_t.type == TokenType.SYMBOL_MINUS) or (_next_t.type.attributes & TokenType.ATTRIBUTE_STRUCTURAL)?))))
-              _execute(ip_scanner_control_structure)
-              _pop_frame
-              _execute(ip_consume_eols_and_semicolons)
-              _pop_frame
-            endWhile
-            if (disable_output)     _discard_list
-            else                    _push_list( Statements(_list_t) )
-            return
-          case ip_scanner_single_line_statements
-            _begin_list
-            if (_consume(TokenType.EOL))
+              if (not disable_output) _push( Restart(_cur_t,_string_arg(-1)), 1 )
               if (disable_output)     _discard_list
               else                    _push_list( Statements(_list_t) )
-              return
-            endIf
-            _execute(ip_scanner_statement)
-            _pop_frame
-            while (_consume(TokenType.SYMBOL_SEMICOLON))
-              _execute(ip_scanner_statement)
-              _pop_frame
-            endWhile
-            _execute(ip_must_consume_eols)
-            _pop_frame
-            if (disable_output)     _discard_list
-            else                    _push_list( Statements(_list_t) )
-            return
-          case ip_scanner_control_structure
-            if (_next_t.type == TokenType.KEYWORD_IF)
-              temporarily _cur_t = _on_t
-                if (_consume(TokenType.SYMBOL_OPEN_PAREN))
-                  _execute(ip_scanner_expression)
-                  _pop_frame
-                  if (not _consume(TokenType.SYMBOL_CLOSE_PAREN)) _throw_syntax_error( &expected=TokenType.SYMBOL_CLOSE_PAREN )
-                else
-                  _execute(ip_scanner_expression)
-                  _pop_frame
-                endIf
-                if (_consume(TokenType.EOL))
-                  _execute(ip_scanner_multi_line_statements)
-                  _pop_frame
-                  _execute(ip_scanner_multi_line_else_ifs)
-                  _pop_frame
-                  _execute(ip_scanner_multi_line_else)
-                  _pop_frame
-                  if (not _consume(TokenType.KEYWORD_END_IF)) _throw_syntax_error( &expected=TokenType.KEYWORD_END_IF )
-                else
-                  _execute(ip_scanner_single_line_statements)
-                  _pop_frame
-                  _execute(ip_scanner_single_line_else_ifs)
-                  _pop_frame
-                  _execute(ip_scanner_single_line_else)
-                  _pop_frame
-                endIf
-                if (not disable_output) _push( If(_cur_t,_node_arg(-4),_node_arg(-3)->(as Statements),_node_arg(-2),_node_arg(-1)->(as Statements)), 4 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.KEYWORD_MATCH)
-              temporarily _cur_t = _on_t
-                if ((_consume(TokenType.EOL) or _consume(TokenType.KEYWORD_INPUT)))
-                  if (not disable_output) _push( null, 0 )
-                elseIf (_consume(TokenType.SYMBOL_OPEN_PAREN))
-                  if (_consume(TokenType.KEYWORD_INPUT))
-                    if (not disable_output) _push( null, 0 )
-                  else
-                    _execute(ip_scanner_expression)
-                    _pop_frame
-                  endIf
-                  if (not _consume(TokenType.SYMBOL_CLOSE_PAREN)) _throw_syntax_error( &expected=TokenType.SYMBOL_CLOSE_PAREN )
-                else
-                  _execute(ip_scanner_expression)
-                  _pop_frame
-                endIf
-                _execute(ip_cases)
-                _pop_frame
-                _execute(ip__others)
-                _pop_frame
-                if (not _consume(TokenType.KEYWORD_END_MATCH)) _throw_syntax_error( &expected=TokenType.KEYWORD_END_MATCH )
-                if (not disable_output) _push( Match(_cur_t,_node_arg(-3),_node_arg(-2),_node_arg(-1)), 3 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.KEYWORD_WHILE)
-              temporarily _cur_t = _on_t
-                if (_consume(TokenType.SYMBOL_OPEN_PAREN))
-                  _execute(ip_scanner_expression)
-                  _pop_frame
-                  if (not _consume(TokenType.SYMBOL_CLOSE_PAREN)) _throw_syntax_error( &expected=TokenType.SYMBOL_CLOSE_PAREN )
-                else
-                  _execute(ip_scanner_expression)
-                  _pop_frame
-                endIf
-                if (_consume(TokenType.EOL))
-                  _execute(ip_scanner_multi_line_statements)
-                  _pop_frame
-                  if (not _consume(TokenType.KEYWORD_END_WHILE)) _throw_syntax_error( &expected=TokenType.KEYWORD_END_WHILE )
-                else
-                  _execute(ip_scanner_single_line_statements)
-                  _pop_frame
-                endIf
-                if (not disable_output) _push( While(_cur_t,_node_arg(-2),_node_arg(-1)->(as Statements)), 2 )
-                return
-              endTemporarily
-            endIf
-            _execute(ip_scanner_statement)
-            _pop_frame
-            return
-          case ip_cases
-            _begin_list
-            _execute(ip_consume_eols)
-            _pop_frame
-            while ((_position < _limit))
-              _execute(ip_consume_eols)
-              _pop_frame
-              if (_next_t.type == TokenType.KEYWORD_CASE)
-                temporarily _cur_t = _on_t
-                  _execute(ip_scanner_expression)
-                  _pop_frame
-                  if (_consume(TokenType.SYMBOL_ARROW))
-                    _execute(ip_consume_eols)
-                    _pop_frame
-                    _begin_list
-                    _execute(ip_scanner_product)
-                    _pop_frame
-                    if (not disable_output) _push( ScannerCreate(_cur_t,_node_arg(-1)), 1 )
-                    if (not disable_output) _push( null, 0 )
-                    if (not disable_output) _push( Restart(_cur_t,_string_arg(-1)), 1 )
-                    if (disable_output)     _discard_list
-                    else                    _push_list( Statements(_list_t) )
-                  else
-                    _consume(TokenType.SYMBOL_COLON)
-                    _execute(ip_consume_eols)
-                    _pop_frame
-                    _execute(ip_scanner_multi_line_statements)
-                    _pop_frame
-                  endIf
-                  if (not disable_output) _push( MatchCase(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
-                endTemporarily
-              elseIf (_next_t.type == TokenType.KEYWORD_PRODUCE_ANY)
-                temporarily _cur_t = _on_t
-                  _execute(ip_identifier)
-                  _pop_frame
-                  if (not disable_output) _push( ProduceAny(_cur_t,_string_arg(-1)), 1 )
-                endTemporarily
-              else
-                if (disable_output)     _discard_list
-                else                    _push_list( CmdList(_list_t) )
-                return
-              endIf
-            endWhile
-            if (disable_output)     _discard_list
-            else                    _push_list( CmdList(_list_t) )
-            return
-          case ip__others
-            if (_next_t.type == TokenType.KEYWORD_OTHERS)
-              temporarily _cur_t = _on_t
-                _consume(TokenType.SYMBOL_COLON)
-                _execute(ip_consume_eols)
-                _pop_frame
-                _execute(ip_scanner_multi_line_statements)
-                _pop_frame
-              endTemporarily
-            else
-              if (not disable_output) _push( null, 0 )
-            endIf
-            return
-          case ip_scanner_multi_line_else_ifs
-            _begin_list
-            while ((_next_t.type == TokenType.KEYWORD_ELSE_IF))
-              _save_position
-              if (_next_t.type == TokenType.KEYWORD_ELSE_IF)
-                temporarily _cur_t = _on_t
-                  if (_consume(TokenType.SYMBOL_OPEN_PAREN))
-                    _execute(ip_scanner_expression)
-                    _pop_frame
-                    if (not _consume(TokenType.SYMBOL_CLOSE_PAREN)) _throw_syntax_error( &expected=TokenType.SYMBOL_CLOSE_PAREN )
-                  else
-                    _execute(ip_scanner_expression)
-                    _pop_frame
-                  endIf
-                  if ((_next_t.type == TokenType.EOL))
-                    _discard_position
-                  else
-                    _restore_position
-                    if (disable_output)     _discard_list
-                    else                    _push_list( CmdList(_list_t) )
-                    return
-                  endIf
-                  _execute(ip_scanner_multi_line_statements)
-                  _pop_frame
-                  if (not disable_output) _push( ElseIf(_cur_t,_node_arg(-2),_node_arg(-1)->(as Statements)), 2 )
-                endTemporarily
-              endIf
-            endWhile
-            if (disable_output)     _discard_list
-            else                    _push_list( CmdList(_list_t) )
-            return
-          case ip_scanner_multi_line_else
-            if ((not (_next_t.type == TokenType.KEYWORD_ELSE)))
-              if (not disable_output) _push( null, 0 )
-              return
-            endIf
-            _save_position
-            if (_next_t.type == TokenType.KEYWORD_ELSE)
-              temporarily _cur_t = _on_t
-                if ((not _consume(TokenType.EOL)))
-                  _restore_position
-                  if (not disable_output) _push( null, 0 )
-                  return
-                endIf
-                _execute(ip_scanner_multi_line_statements)
-                _pop_frame
-                _discard_position
-                return
-              endTemporarily
-            endIf
-            return
-          case ip_scanner_single_line_else_ifs
-            _begin_list
-            while ((_next_t.type == TokenType.KEYWORD_ELSE_IF))
-              _save_position
-              if (_next_t.type == TokenType.KEYWORD_ELSE_IF)
-                temporarily _cur_t = _on_t
-                  if (_consume(TokenType.SYMBOL_OPEN_PAREN))
-                    _execute(ip_scanner_expression)
-                    _pop_frame
-                    if (not _consume(TokenType.SYMBOL_CLOSE_PAREN)) _throw_syntax_error( &expected=TokenType.SYMBOL_CLOSE_PAREN )
-                  else
-                    _execute(ip_scanner_expression)
-                    _pop_frame
-                  endIf
-                  if ((_next_t.type == TokenType.EOL))
-                    _restore_position
-                    if (disable_output)     _discard_list
-                    else                    _push_list( CmdList(_list_t) )
-                    return
-                  else
-                    _discard_position
-                  endIf
-                  _execute(ip_scanner_single_line_statements)
-                  _pop_frame
-                  if (not disable_output) _push( ElseIf(_cur_t,_node_arg(-2),_node_arg(-1)->(as Statements)), 2 )
-                endTemporarily
-              endIf
-            endWhile
-            if (disable_output)     _discard_list
-            else                    _push_list( CmdList(_list_t) )
-            return
-          case ip_scanner_single_line_else
-            if ((not (_next_t.type == TokenType.KEYWORD_ELSE)))
-              if (not disable_output) _push( null, 0 )
-              return
-            endIf
-            _save_position
-            if (_next_t.type == TokenType.KEYWORD_ELSE)
-              temporarily _cur_t = _on_t
-                if (_consume(TokenType.EOL))
-                  _restore_position
-                  if (not disable_output) _push( null, 0 )
-                  return
-                endIf
-                _execute(ip_scanner_single_line_statements)
-                _pop_frame
-                _discard_position
-                return
-              endTemporarily
-            endIf
-            return
-          case ip_scanner_statement
-            if (_next_t.type == TokenType.KEYWORD_CALL)
-              temporarily _cur_t = _on_t
-                _execute(ip_identifier)
-                _pop_frame
-                if (not disable_output) _push( ScannerCallUserMethod(_cur_t,_string_arg(-1)), 1 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.KEYWORD_COLLECT)
-              temporarily _cur_t = _on_t
-                _execute(ip_scanner_args)
-                _pop_frame
-                if (not disable_output) _push( Collect(_cur_t,_node_arg(-1)->(as Args)), 1 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.KEYWORD_CREATE)
-              temporarily _cur_t = _on_t
-                _execute(ip_scanner_product)
-                _pop_frame
-                if (not disable_output) _push( ScannerCreate(_cur_t,_node_arg(-1)), 1 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.KEYWORD_DISCARD_POSITION)
-              temporarily _cur_t = _on_t
-                if (not disable_output) _push( DiscardPosition(_cur_t), 0 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.KEYWORD_HALT)
-              temporarily _cur_t = _on_t
-                if (not disable_output) _push( Halt(_cur_t), 0 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.KEYWORD_MARK_POSITION)
-              temporarily _cur_t = _on_t
-                if (not disable_output) _push( MarkPosition(_cur_t), 0 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.KEYWORD_MODE)
-              temporarily _cur_t = _on_t
-                _execute(ip_identifier)
-                _pop_frame
-                if (not disable_output) _push( Mode(_cur_t,_string_arg(-1)), 1 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.KEYWORD_MUST_CONSUME)
-              temporarily _cur_t = _on_t
-                _execute(ip_sequence_args)
-                _pop_frame
-                if (not disable_output) _push( ScannerMustConsume(_cur_t,_node_arg(-1)->(as SequenceArgs)), 1 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.KEYWORD_NO_ACTION)
-              temporarily _cur_t = _on_t
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.KEYWORD_PRINT)
-              temporarily _cur_t = _on_t
-                _execute(ip_scanner_args)
-                _pop_frame
-                if (not disable_output) _push( Print(_cur_t,_node_arg(-1)->(as Args)), 1 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.KEYWORD_PRINTLN)
-              temporarily _cur_t = _on_t
-                if (((not (_position < _limit)) or (_next_t.type.attributes & TokenType.ATTRIBUTE_STRUCTURAL)?))
-                  _begin_list
-                  if (disable_output)     _discard_list
-                  else                    _push_list( Args(_list_t) )
-                else
-                  _execute(ip_scanner_args)
-                  _pop_frame
-                endIf
-                if (not disable_output) _push( Println(_cur_t,_node_arg(-1)->(as Args)), 1 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.KEYWORD_PRODUCE)
-              temporarily _cur_t = _on_t
-                _execute(ip_scanner_product)
-                _pop_frame
-                if (not disable_output) _push( ScannerCreate(_cur_t,_node_arg(-1)), 1 )
-                if (not disable_output) _push( null, 0 )
-                if (not disable_output) _push( Restart(_cur_t,_string_arg(-1)), 1 )
-                return
-              endTemporarily
-            elseIf (_next_t.type == TokenType.SYMBOL_ARROW)
-              temporarily _cur_t = _on_t
-                _execute(ip_consume_eols)
-                _pop_frame
-                if (not disable_output) _push( ScannerCreate(_cur_t,_node_arg(-1)), 1 )
-                if (not disable_output) _push( null, 0 )
-                if (not disable_output) _push( Restart(_cur_t,_string_arg(-1)), 1 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.KEYWORD_RESTART)
-              temporarily _cur_t = _on_t
-                if ((_next_t.type == TokenType.EOL))
-                  if (not disable_output) _push( null, 0 )
-                else
-                  _execute(ip_identifier)
-                  _pop_frame
-                endIf
-                if (not disable_output) _push( Restart(_cur_t,_string_arg(-1)), 1 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.KEYWORD_RESTORE_POSITION)
-              temporarily _cur_t = _on_t
-                if (not disable_output) _push( RestorePosition(_cur_t), 0 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.KEYWORD_RETURN)
-              temporarily _cur_t = _on_t
-                if ((_next_t.type == TokenType.EOL))
-                  if (not disable_output) _push( null, 0 )
-                else
-                  _throw_syntax_error
-                endIf
-                if (not disable_output) _push( Return(_cur_t,_node_arg(-1)), 1 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.KEYWORD_SAVE_POSITION)
-              temporarily _cur_t = _on_t
-                if (not disable_output) _push( SavePosition(_cur_t), 0 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.KEYWORD_SYNTAX_ERROR)
-              temporarily _cur_t = _on_t
-                if ((_next_t.type == TokenType.EOL))
-                  if (not disable_output) _push( null, 0 )
-                else
-                  _execute(ip_scanner_args)
-                  _pop_frame
-                endIf
-                if (not disable_output) _push( ThrowSyntaxError(_cur_t,_node_arg(-1)->(as Args)), 1 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.SYMBOL_PLUS_PLUS)
-              temporarily _cur_t = _on_t
-                _execute(ip_scanner_expression)
-                _pop_frame
-                if (not disable_output) _push( Increment(_cur_t,_node_arg(-1)), 1 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.SYMBOL_MINUS_MINUS)
-              temporarily _cur_t = _on_t
-                _execute(ip_scanner_expression)
-                _pop_frame
-                if (not disable_output) _push( Decrement(_cur_t,_node_arg(-1)), 1 )
-                return
-              endTemporarily
-            endIf
-            _execute(ip_scanner_expression)
-            _pop_frame
-            if (_next_t.type == TokenType.SYMBOL_ASSIGN)
-              temporarily _cur_t = _on_t
-                _execute(ip_scanner_expression)
-                _pop_frame
-                if (not disable_output) _push( Assign(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.SYMBOL_PLUS_PLUS)
-              temporarily _cur_t = _on_t
-                if (not disable_output) _push( Increment(_cur_t,_node_arg(-1)), 1 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.SYMBOL_MINUS_MINUS)
-              temporarily _cur_t = _on_t
-                if (not disable_output) _push( Decrement(_cur_t,_node_arg(-1)), 1 )
-                return
-              endTemporarily
-            endIf
-            return
-          case ip_scanner_product
-            _execute(ip_identifier)
-            _pop_frame
-            if (not disable_output) _push( Access(_cur_t,_string_arg(-1)), 1 )
-            return
-          case ip_cmd_args
-            _begin_list
-            _execute(ip_consume_eols)
-            _pop_frame
-            if (_consume(TokenType.SYMBOL_CLOSE_PAREN))
-              if (disable_output)     _discard_list
-              else                    _push_list( Args(_list_t) )
-              return
-            endIf
-            _execute(ip_cmd_arg)
-            _pop_frame
-            while (_consume(TokenType.SYMBOL_COMMA))
-              _execute(ip_consume_eols)
-              _pop_frame
-              _execute(ip_cmd_arg)
-              _pop_frame
-              _execute(ip_consume_eols)
-              _pop_frame
-            endWhile
-            if (disable_output)     _discard_list
-            else                    _push_list( Args(_list_t) )
-            return
-          case ip_cmd_arg
-            _execute(ip_identifier)
-            _pop_frame
-            if (_consume(TokenType.SYMBOL_ASSIGN))
-              if (_next_t.type == TokenType.IDENTIFIER)
-                temporarily _cur_t = _on_t
-                  if (not disable_output) _push( Identifier(_cur_t,_cur_t.content), 0 )
-                endTemporarily
-              elseIf (_next_t.type == TokenType.STRING)
-                temporarily _cur_t = _on_t
-                  if (not disable_output) _push( LiteralString(_cur_t,_cur_t.content), 0 )
-                endTemporarily
-              else
-                _throw_syntax_error("Content or \"quoted expression\" expected.")
-              endIf
-            else
-              if (not disable_output) _push( null, 0 )
-            endIf
-            if (_consume(TokenType.SYMBOL_COLON))
-              _execute(ip_type_name)
-              _pop_frame
-            else
-              if (not disable_output) _push( null, 0 )
-            endIf
-            if (not disable_output) _push( CreateCmdArg(_cur_t,_string_arg(-3),_node_arg(-2),_string_arg(-1)), 3 )
-            return
-          case ip_scanner_args
-            if (_consume(TokenType.SYMBOL_OPEN_PAREN))
-              _execute(ip_consume_eols)
-              _pop_frame
-              _execute(ip_scanner_arg_list)
-              _pop_frame
-              _execute(ip_consume_eols)
-              _pop_frame
-              if (not _consume(TokenType.SYMBOL_CLOSE_PAREN)) _throw_syntax_error( &expected=TokenType.SYMBOL_CLOSE_PAREN )
-            else
-              _execute(ip_scanner_arg_list)
-              _pop_frame
-            endIf
-            return
-          case ip_scanner_arg_list
-            _begin_list
-            if ((_next_t.type.attributes & TokenType.ATTRIBUTE_STRUCTURAL)?)
-              if (disable_output)     _discard_list
-              else                    _push_list( Args(_list_t) )
-              return
-            endIf
-            _execute(ip_scanner_expression)
-            _pop_frame
-            while ((_position < _limit))
-              if (_consume(TokenType.SYMBOL_COMMA))
-                _execute(ip_consume_eols)
-                _pop_frame
-                _execute(ip_scanner_expression)
-                _pop_frame
-              elseIf (((_next_t.type == TokenType.EOL) or (_next_t.type.attributes & TokenType.ATTRIBUTE_STRUCTURAL)?))
-                if (disable_output)     _discard_list
-                else                    _push_list( Args(_list_t) )
-                return
-              else
-                _execute(ip_scanner_expression)
-                _pop_frame
-              endIf
-            endWhile
-            if (disable_output)     _discard_list
-            else                    _push_list( Args(_list_t) )
-            return
-          case ip_sequence_args
-            if (_consume(TokenType.SYMBOL_OPEN_PAREN))
-              _execute(ip_consume_eols)
-              _pop_frame
-              _execute(ip_sequence_arg_list)
-              _pop_frame
-              _execute(ip_consume_eols)
-              _pop_frame
-              if (not _consume(TokenType.SYMBOL_CLOSE_PAREN)) _throw_syntax_error( &expected=TokenType.SYMBOL_CLOSE_PAREN )
-            else
-              _execute(ip_sequence_arg_list)
-              _pop_frame
-            endIf
-            return
-          case ip_sequence_arg_list
-            _begin_list
-            if ((_next_t.type.attributes & TokenType.ATTRIBUTE_STRUCTURAL)?)
-              if (disable_output)     _discard_list
-              else                    _push_list( SequenceArgs(_list_t) )
-              return
-            endIf
-            _execute(ip_scanner_expression)
-            _pop_frame
-            while ((_position < _limit))
-              if (_consume(TokenType.SYMBOL_COMMA))
-                _execute(ip_consume_eols)
-                _pop_frame
-                _execute(ip_scanner_expression)
-                _pop_frame
-              elseIf (((_next_t.type == TokenType.EOL) or (_next_t.type.attributes & TokenType.ATTRIBUTE_STRUCTURAL)?))
-                if (disable_output)     _discard_list
-                else                    _push_list( SequenceArgs(_list_t) )
-                return
-              else
-                _execute(ip_scanner_expression)
-                _pop_frame
-              endIf
-            endWhile
-            if (disable_output)     _discard_list
-            else                    _push_list( SequenceArgs(_list_t) )
-            return
-          case ip_pattern_sequence
-            _begin_list
-            if ((_next_t.type.attributes & TokenType.ATTRIBUTE_STRUCTURAL)?)
-              if (disable_output)     _discard_list
-              else                    _push_list( PatternSequence(_list_t) )
-              return
-            endIf
-            _execute(ip_sequence_item)
-            _pop_frame
-            while ((_position < _limit))
-              if (_consume(TokenType.SYMBOL_STAR))
-                if (not disable_output) _push( ZeroOrMore(_cur_t,_node_arg(-1)), 1 )
-              elseIf (_consume(TokenType.SYMBOL_PLUS))
-                if (not disable_output) _push( OneOrMore(_cur_t,_node_arg(-1)), 1 )
-              elseIf (_consume(TokenType.SYMBOL_QUESTION))
-                if (not disable_output) _push( OptionalPattern(_cur_t,_node_arg(-1)), 1 )
-              elseIf (_consume(TokenType.SYMBOL_COMMA))
-                _execute(ip_consume_eols)
-                _pop_frame
-                _execute(ip_sequence_item)
-                _pop_frame
-              elseIf (((_next_t.type == TokenType.EOL) or (_next_t.type.attributes & TokenType.ATTRIBUTE_STRUCTURAL)?))
-                if (disable_output)     _discard_list
-                else                    _push_list( PatternSequence(_list_t) )
-                return
-              else
-                _execute(ip_sequence_item)
-                _pop_frame
-              endIf
-            endWhile
-            if (disable_output)     _discard_list
-            else                    _push_list( PatternSequence(_list_t) )
-            return
-          case ip_sequence_item
-            if (_next_t.type == TokenType.SYMBOL_OPEN_CURLY)
-              temporarily _cur_t = _on_t
-                _execute(ip_pattern_sequence)
-                _pop_frame
-                if (not _consume(TokenType.SYMBOL_CLOSE_CURLY)) _throw_syntax_error( &expected=TokenType.SYMBOL_CLOSE_CURLY )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.CHARSET)
-              temporarily _cur_t = _on_t
-                if (not disable_output) _push( CharSet(_cur_t,_cur_t.content), 0 )
-                _execute(ip_repeat_count)
-                _pop_frame
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.STRING)
-              temporarily _cur_t = _on_t
-                if (not disable_output) _push( LiteralString(_cur_t,_cur_t.content), 0 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.STRING_OR_CHARACTER)
-              temporarily _cur_t = _on_t
-                if (not disable_output) _push( LiteralStringOrCharacter(_cur_t,_cur_t.content), 0 )
-                return
-              endTemporarily
-            endIf
-            _throw_syntax_error
-            return
-          case ip_empty_statements
-            _begin_list
-            if (disable_output)     _discard_list
-            else                    _push_list( Statements(_list_t) )
-            return
-          case ip_scanner_expression
-            _execute(ip_scanner_logical_or)
-            _pop_frame
-            return
-          case ip_scanner_logical_or
-            _execute(ip_scanner_logical_and)
-            _pop_frame
-            _execute(ip_scanner_logical_or__inner)
-            _pop_frame
-            return
-          case ip_scanner_logical_or__inner
-            if (_next_t.type == TokenType.KEYWORD_OR)
-              temporarily _cur_t = _on_t
-                _consume_eols
-                _execute(ip_scanner_logical_and)
-                _pop_frame
-                if (not disable_output) _push( LogicalOr(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
-                _execute(ip_scanner_logical_or__inner)
-                _pop_frame
-                return
-              endTemporarily
-            endIf
-            return
-          case ip_scanner_logical_and
-            _execute(ip_scanner_comparison)
-            _pop_frame
-            _execute(ip_scanner_logical_and__inner)
-            _pop_frame
-            return
-          case ip_scanner_logical_and__inner
-            if (_next_t.type == TokenType.KEYWORD_AND)
-              temporarily _cur_t = _on_t
-                _consume_eols
-                _execute(ip_scanner_comparison)
-                _pop_frame
-                if (not disable_output) _push( LogicalAnd(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
-                _execute(ip_scanner_logical_and__inner)
-                _pop_frame
-                return
-              endTemporarily
-            endIf
-            return
-          case ip_scanner_comparison
-            _execute(ip_scanner_add_subtract)
-            _pop_frame
-            _execute(ip_scanner_comparison__inner)
-            _pop_frame
-            return
-          case ip_scanner_comparison__inner
-            if (_next_t.type == TokenType.SYMBOL_EQ)
-              temporarily _cur_t = _on_t
-                _consume_eols
-                _execute(ip_scanner_add_subtract)
-                _pop_frame
-                if (not disable_output) _push( CompareEQ(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
-                _execute(ip_scanner_comparison__inner)
-                _pop_frame
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.SYMBOL_NE)
-              temporarily _cur_t = _on_t
-                _consume_eols
-                _execute(ip_scanner_add_subtract)
-                _pop_frame
-                if (not disable_output) _push( CompareNE(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
-                _execute(ip_scanner_comparison__inner)
-                _pop_frame
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.SYMBOL_LT)
-              temporarily _cur_t = _on_t
-                _consume_eols
-                _execute(ip_scanner_add_subtract)
-                _pop_frame
-                if (not disable_output) _push( CompareLT(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
-                _execute(ip_scanner_comparison__inner)
-                _pop_frame
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.SYMBOL_GT)
-              temporarily _cur_t = _on_t
-                _consume_eols
-                _execute(ip_scanner_add_subtract)
-                _pop_frame
-                if (not disable_output) _push( CompareGT(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
-                _execute(ip_scanner_comparison__inner)
-                _pop_frame
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.SYMBOL_LE)
-              temporarily _cur_t = _on_t
-                _consume_eols
-                _execute(ip_scanner_add_subtract)
-                _pop_frame
-                if (not disable_output) _push( CompareLE(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
-                _execute(ip_scanner_comparison__inner)
-                _pop_frame
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.SYMBOL_GE)
-              temporarily _cur_t = _on_t
-                _consume_eols
-                _execute(ip_scanner_add_subtract)
-                _pop_frame
-                if (not disable_output) _push( CompareGE(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
-                _execute(ip_scanner_comparison__inner)
-                _pop_frame
-                return
-              endTemporarily
-            endIf
-            return
-          case ip_scanner_add_subtract
-            _execute(ip_scanner_multiply_divide)
-            _pop_frame
-            _execute(ip_scanner_add_subtract__inner)
-            _pop_frame
-            return
-          case ip_scanner_add_subtract__inner
-            if (_next_t.type == TokenType.SYMBOL_PLUS)
-              temporarily _cur_t = _on_t
-                _consume_eols
-                _execute(ip_scanner_multiply_divide)
-                _pop_frame
-                if (not disable_output) _push( Add(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
-                _execute(ip_scanner_add_subtract__inner)
-                _pop_frame
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.SYMBOL_MINUS)
-              temporarily _cur_t = _on_t
-                _consume_eols
-                _execute(ip_scanner_multiply_divide)
-                _pop_frame
-                if (not disable_output) _push( Subtract(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
-                _execute(ip_scanner_add_subtract__inner)
-                _pop_frame
-                return
-              endTemporarily
-            endIf
-            return
-          case ip_scanner_multiply_divide
-            _execute(ip_scanner_power)
-            _pop_frame
-            _execute(ip_scanner_multiply_divide__inner)
-            _pop_frame
-            return
-          case ip_scanner_multiply_divide__inner
-            if (_next_t.type == TokenType.SYMBOL_STAR)
-              temporarily _cur_t = _on_t
-                _consume_eols
-                _execute(ip_scanner_power)
-                _pop_frame
-                if (not disable_output) _push( Multiply(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
-                _execute(ip_scanner_multiply_divide__inner)
-                _pop_frame
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.SYMBOL_SLASH)
-              temporarily _cur_t = _on_t
-                _consume_eols
-                _execute(ip_scanner_power)
-                _pop_frame
-                if (not disable_output) _push( Divide(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
-                _execute(ip_scanner_multiply_divide__inner)
-                _pop_frame
-                return
-              endTemporarily
-            endIf
-            return
-          case ip_scanner_power
-            _execute(ip_scanner_pre_unary)
-            _pop_frame
-            _execute(ip_scanner_power__inner)
-            _pop_frame
-            return
-          case ip_scanner_power__inner
-            if (_next_t.type == TokenType.SYMBOL_CARET)
-              temporarily _cur_t = _on_t
-                _consume_eols
-                _execute(ip_scanner_pre_unary)
-                _pop_frame
-                if (not disable_output) _push( Power(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
-                _execute(ip_scanner_power__inner)
-                _pop_frame
-                return
-              endTemporarily
-            endIf
-            return
-          case ip_scanner_pre_unary
-            if (_next_t.type == TokenType.SYMBOL_MINUS)
-              temporarily _cur_t = _on_t
-                _consume_eols
-                _execute(ip_scanner_pre_unary)
-                _pop_frame
-                if (not disable_output) _push( Negate(_cur_t,_node_arg(-1)), 1 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.KEYWORD_NOT)
-              temporarily _cur_t = _on_t
-                _consume_eols
-                _execute(ip_scanner_pre_unary)
-                _pop_frame
-                if (not disable_output) _push( LogicalNot(_cur_t,_node_arg(-1)), 1 )
-                return
-              endTemporarily
-            endIf
-            _execute(ip_scanner_term)
-            _pop_frame
-            return
-          case ip_scanner_term
-            if (_next_t.type == TokenType.SYMBOL_OPEN_PAREN)
-              temporarily _cur_t = _on_t
-                _execute(ip_scanner_expression)
-                _pop_frame
-                if (not _consume(TokenType.SYMBOL_CLOSE_PAREN)) _throw_syntax_error( &expected=TokenType.SYMBOL_CLOSE_PAREN )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.SYMBOL_OPEN_CURLY)
-              temporarily _cur_t = _on_t
-                _execute(ip_pattern_sequence)
-                _pop_frame
-                if (not _consume(TokenType.SYMBOL_CLOSE_CURLY)) _throw_syntax_error( &expected=TokenType.SYMBOL_CLOSE_CURLY )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.KEYWORD_BUFFER)
-              temporarily _cur_t = _on_t
-                if (not disable_output) _push( ReadBuffer(_cur_t), 0 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.KEYWORD_CHARACTER)
-              temporarily _cur_t = _on_t
-                if (not _consume(TokenType.SYMBOL_OPEN_PAREN)) _throw_syntax_error( &expected=TokenType.SYMBOL_OPEN_PAREN )
-                _execute(ip_scanner_expression)
-                _pop_frame
-                if (not _consume(TokenType.SYMBOL_CLOSE_PAREN)) _throw_syntax_error( &expected=TokenType.SYMBOL_CLOSE_PAREN )
-                if (not disable_output) _push( CastToCharacter(_cur_t,_node_arg(-1)), 1 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.KEYWORD_INTEGER)
-              temporarily _cur_t = _on_t
-                if (not _consume(TokenType.SYMBOL_OPEN_PAREN)) _throw_syntax_error( &expected=TokenType.SYMBOL_OPEN_PAREN )
-                _execute(ip_scanner_expression)
-                _pop_frame
-                if (not _consume(TokenType.SYMBOL_CLOSE_PAREN)) _throw_syntax_error( &expected=TokenType.SYMBOL_CLOSE_PAREN )
-                if (not disable_output) _push( CastToInteger(_cur_t,_node_arg(-1)), 1 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.KEYWORD_CONSUME)
-              temporarily _cur_t = _on_t
-                _execute(ip_sequence_args)
-                _pop_frame
-                if (not disable_output) _push( ScannerConsume(_cur_t,_node_arg(-1)->(as SequenceArgs)), 1 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.KEYWORD_FALSE)
-              temporarily _cur_t = _on_t
-                if (not disable_output) _push( LiteralLogical(_cur_t,_string_to_Logical("false")), 0 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.KEYWORD_HAS_NEXT)
-              temporarily _cur_t = _on_t
-                if (not disable_output) _push( ScannerHasAnother(_cur_t), 0 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.KEYWORD_NEXT_IS)
-              temporarily _cur_t = _on_t
-                _execute(ip_sequence_args)
-                _pop_frame
-                if (not disable_output) _push( ScannerNextIs(_cur_t,_node_arg(-1)->(as SequenceArgs)), 1 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.KEYWORD_OUTPUT)
-              temporarily _cur_t = _on_t
-                if (not disable_output) _push( ReadOutput(_cur_t), 0 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.KEYWORD_PEEK)
-              temporarily _cur_t = _on_t
-                if (_consume(TokenType.SYMBOL_OPEN_PAREN))
-                  _execute(ip_scanner_expression)
-                  _pop_frame
-                  if (not _consume(TokenType.SYMBOL_CLOSE_PAREN)) _throw_syntax_error( &expected=TokenType.SYMBOL_CLOSE_PAREN )
-                else
-                  if (not disable_output) _push( null, 0 )
-                endIf
-                if (not disable_output) _push( ScannerPeek(_cur_t,_node_arg(-1)), 1 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.KEYWORD_READ)
-              temporarily _cur_t = _on_t
-                if (not disable_output) _push( ScannerRead(_cur_t), 0 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.KEYWORD_SCAN)
-              temporarily _cur_t = _on_t
-                _execute(ip_sequence_args)
-                _pop_frame
-                if (not disable_output) _push( Scan(_cur_t,_node_arg(-1)->(as SequenceArgs)), 1 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.KEYWORD_TRUE)
-              temporarily _cur_t = _on_t
-                if (not disable_output) _push( LiteralLogical(_cur_t,_string_to_Logical("true")), 0 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.CHARSET)
-              temporarily _cur_t = _on_t
-                if (not disable_output) _push( CharSet(_cur_t,_cur_t.content), 0 )
-                _execute(ip_repeat_count)
-                _pop_frame
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.IDENTIFIER)
-              temporarily _cur_t = _on_t
-                if (not disable_output) _push( Access(_cur_t,_cur_t.content), 0 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.INTEGER)
-              temporarily _cur_t = _on_t
-                if (not disable_output) _push( LiteralInteger(_cur_t,_string_to_Integer(_cur_t.content)), 0 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.STRING)
-              temporarily _cur_t = _on_t
-                if (not disable_output) _push( LiteralString(_cur_t,_cur_t.content), 0 )
-                _execute(ip_repeat_count)
-                _pop_frame
-                return
-              endTemporarily
-            elseIf (_next_t.type == TokenType.STRING_OR_CHARACTER)
-              temporarily _cur_t = _on_t
-                if (not disable_output) _push( LiteralStringOrCharacter(_cur_t,_cur_t.content), 0 )
-                _execute(ip_repeat_count)
-                _pop_frame
-                return
-              endTemporarily
-            endIf
-            _throw_syntax_error
-            return
-          case ip_repeat_count
-            if (_next_t.type == TokenType.SYMBOL_STAR)
-              temporarily _cur_t = _on_t
-                if (not disable_output) _push( ZeroOrMore(_cur_t,_node_arg(-1)), 1 )
-                return
-              endTemporarily
-            elseIf (_next_t.type == TokenType.SYMBOL_PLUS)
-              temporarily _cur_t = _on_t
-                if (not disable_output) _push( OneOrMore(_cur_t,_node_arg(-1)), 1 )
-                return
-              endTemporarily
-            elseIf (_next_t.type == TokenType.SYMBOL_QUESTION)
-              temporarily _cur_t = _on_t
-                if (not disable_output) _push( OptionalPattern(_cur_t,_node_arg(-1)), 1 )
-                return
-              endTemporarily
-            endIf
-            return
-          case ip_parser_routines
-            _begin_list
-            _execute(ip_consume_eols)
-            _pop_frame
-            while ((_next_t.type == TokenType.SYMBOL_MINUS))
-              if (_next_t.type == TokenType.SYMBOL_MINUS)
-                temporarily _cur_t = _on_t
-                  _execute(ip_routine_name_and_attributes)
-                  _pop_frame
-                  _execute(ip_parser_multi_line_statements)
-                  _pop_frame
-                  if (not disable_output) _push( Routine(_cur_t,_string_arg(-3),_string_arg(-2),_node_arg(-1)->(as Statements)), 3 )
-                endTemporarily
-              endIf
-              _execute(ip_consume_eols)
-              _pop_frame
-            endWhile
-            if (disable_output)     _discard_list
-            else                    _push_list( CmdList(_list_t) )
-            return
-          case ip_parser_multi_line_statements
-            _execute(ip_consume_eols_and_semicolons)
-            _pop_frame
-            if ((not (_position < _limit)))
-              _throw_syntax_error
-            endIf
-            _begin_list
-            while (((_position < _limit) and (not ((_next_t.type == TokenType.SYMBOL_MINUS) or (_next_t.type.attributes & TokenType.ATTRIBUTE_STRUCTURAL)?))))
-              _execute(ip_parser_control_structure)
-              _pop_frame
-              _execute(ip_consume_eols_and_semicolons)
-              _pop_frame
-            endWhile
-            if (disable_output)     _discard_list
-            else                    _push_list( Statements(_list_t) )
-            return
-          case ip_parser_single_line_statements
-            _begin_list
-            if (_consume(TokenType.EOL))
-              if (disable_output)     _discard_list
-              else                    _push_list( Statements(_list_t) )
-              return
-            endIf
-            _execute(ip_parser_statement)
-            _pop_frame
-            while (_consume(TokenType.SYMBOL_SEMICOLON))
-              _execute(ip_parser_statement)
-              _pop_frame
-            endWhile
-            _execute(ip_must_consume_eols)
-            _pop_frame
-            if (disable_output)     _discard_list
-            else                    _push_list( Statements(_list_t) )
-            return
-          case ip_parser_control_structure
-            if (_next_t.type == TokenType.KEYWORD_IF)
-              temporarily _cur_t = _on_t
-                if (_consume(TokenType.SYMBOL_OPEN_PAREN))
-                  _execute(ip_parser_expression)
-                  _pop_frame
-                  if (not _consume(TokenType.SYMBOL_CLOSE_PAREN)) _throw_syntax_error( &expected=TokenType.SYMBOL_CLOSE_PAREN )
-                else
-                  _execute(ip_parser_expression)
-                  _pop_frame
-                endIf
-                if (_consume(TokenType.EOL))
-                  _execute(ip_parser_multi_line_statements)
-                  _pop_frame
-                  _execute(ip_parser_multi_line_else_ifs)
-                  _pop_frame
-                  _execute(ip_parser_multi_line_else)
-                  _pop_frame
-                  if (not _consume(TokenType.KEYWORD_END_IF)) _throw_syntax_error( &expected=TokenType.KEYWORD_END_IF )
-                else
-                  _execute(ip_parser_single_line_statements)
-                  _pop_frame
-                  _execute(ip_parser_single_line_else_ifs)
-                  _pop_frame
-                  _execute(ip_parser_single_line_else)
-                  _pop_frame
-                endIf
-                if (not disable_output) _push( If(_cur_t,_node_arg(-4),_node_arg(-3)->(as Statements),_node_arg(-2),_node_arg(-1)->(as Statements)), 4 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.KEYWORD_ON)
-              temporarily _cur_t = _on_t
-                _execute(ip_on_block)
-                _pop_frame
-                if (not disable_output) _push( On(_cur_t,_node_arg(-5),_node_arg(-4)->(as Args),_node_arg(-3)->(as Statements),_node_arg(-2),_node_arg(-1)->(as Statements)), 5 )
-                return
-              endTemporarily
-            elseIf (_next_t.type == TokenType.KEYWORD_ON_PEEK)
-              temporarily _cur_t = _on_t
-                _execute(ip_on_block)
-                _pop_frame
-                if (not disable_output) _push( On(_cur_t,_node_arg(-5),_node_arg(-4)->(as Args),_node_arg(-3)->(as Statements),_node_arg(-2),_node_arg(-1)->(as Statements),_string_to_Logical("true")), 5 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.KEYWORD_WHILE)
-              temporarily _cur_t = _on_t
-                if (_consume(TokenType.SYMBOL_OPEN_PAREN))
-                  _execute(ip_parser_expression)
-                  _pop_frame
-                  if (not _consume(TokenType.SYMBOL_CLOSE_PAREN)) _throw_syntax_error( &expected=TokenType.SYMBOL_CLOSE_PAREN )
-                else
-                  _execute(ip_parser_expression)
-                  _pop_frame
-                endIf
-                if (_consume(TokenType.EOL))
-                  _execute(ip_parser_multi_line_statements)
-                  _pop_frame
-                  if (not _consume(TokenType.KEYWORD_END_WHILE)) _throw_syntax_error( &expected=TokenType.KEYWORD_END_WHILE )
-                else
-                  _execute(ip_parser_single_line_statements)
-                  _pop_frame
-                endIf
-                if (not disable_output) _push( While(_cur_t,_node_arg(-2),_node_arg(-1)->(as Statements)), 2 )
-                return
-              endTemporarily
-            endIf
-            _execute(ip_parser_statement)
-            _pop_frame
-            return
-          case ip_on_block
-            _execute(ip_ttype_or_literal)
-            _pop_frame
-            _execute(ip_collect_parse_list)
-            _pop_frame
-            if (_consume(TokenType.EOL))
-              _execute(ip_parser_multi_line_statements)
-              _pop_frame
-              _execute(ip_parser_multi_line_else_ons)
-              _pop_frame
-              _execute(ip_parser_multi_line_else_on_others)
-              _pop_frame
-              if (not _consume(TokenType.KEYWORD_END_ON)) _throw_syntax_error( &expected=TokenType.KEYWORD_END_ON )
             else
               _consume(TokenType.SYMBOL_COLON)
-              _execute(ip_parser_single_line_statements)
-              _pop_frame
-              _execute(ip_parser_single_line_else_ons)
-              _pop_frame
-              _execute(ip_parser_single_line_else_on_others)
-              _pop_frame
+              r_consume_eols
+              r_scanner_multi_line_statements
             endIf
-            return
-          case ip_parser_multi_line_else_ifs
-            _begin_list
-            while ((_next_t.type == TokenType.KEYWORD_ELSE_IF))
-              _save_position
-              if (_next_t.type == TokenType.KEYWORD_ELSE_IF)
-                temporarily _cur_t = _on_t
-                  if (_consume(TokenType.SYMBOL_OPEN_PAREN))
-                    _execute(ip_parser_expression)
-                    _pop_frame
-                    if (not _consume(TokenType.SYMBOL_CLOSE_PAREN)) _throw_syntax_error( &expected=TokenType.SYMBOL_CLOSE_PAREN )
-                  else
-                    _execute(ip_parser_expression)
-                    _pop_frame
-                  endIf
-                  if ((_next_t.type == TokenType.EOL))
-                    _discard_position
-                  else
-                    _restore_position
-                    if (disable_output)     _discard_list
-                    else                    _push_list( CmdList(_list_t) )
-                    return
-                  endIf
-                  _execute(ip_parser_multi_line_statements)
-                  _pop_frame
-                  if (not disable_output) _push( ElseIf(_cur_t,_node_arg(-2),_node_arg(-1)->(as Statements)), 2 )
-                endTemporarily
-              endIf
-            endWhile
-            if (disable_output)     _discard_list
-            else                    _push_list( CmdList(_list_t) )
-            return
-          case ip_parser_multi_line_else
-            if ((not (_next_t.type == TokenType.KEYWORD_ELSE)))
-              if (not disable_output) _push( null, 0 )
-              return
-            endIf
-            _save_position
-            if (_next_t.type == TokenType.KEYWORD_ELSE)
-              temporarily _cur_t = _on_t
-                if ((not _consume(TokenType.EOL)))
-                  _restore_position
-                  if (not disable_output) _push( null, 0 )
-                  return
-                endIf
-                _execute(ip_parser_multi_line_statements)
-                _pop_frame
-                _discard_position
-                return
-              endTemporarily
-            endIf
-            return
-          case ip_parser_single_line_else_ifs
-            _begin_list
-            while ((_next_t.type == TokenType.KEYWORD_ELSE_IF))
-              _save_position
-              if (_next_t.type == TokenType.KEYWORD_ELSE_IF)
-                temporarily _cur_t = _on_t
-                  if (_consume(TokenType.SYMBOL_OPEN_PAREN))
-                    _execute(ip_parser_expression)
-                    _pop_frame
-                    if (not _consume(TokenType.SYMBOL_CLOSE_PAREN)) _throw_syntax_error( &expected=TokenType.SYMBOL_CLOSE_PAREN )
-                  else
-                    _execute(ip_parser_expression)
-                    _pop_frame
-                  endIf
-                  if ((_next_t.type == TokenType.EOL))
-                    _restore_position
-                    if (disable_output)     _discard_list
-                    else                    _push_list( CmdList(_list_t) )
-                    return
-                  else
-                    _discard_position
-                  endIf
-                  _execute(ip_parser_single_line_statements)
-                  _pop_frame
-                  if (not disable_output) _push( ElseIf(_cur_t,_node_arg(-2),_node_arg(-1)->(as Statements)), 2 )
-                endTemporarily
-              endIf
-            endWhile
-            if (disable_output)     _discard_list
-            else                    _push_list( CmdList(_list_t) )
-            return
-          case ip_parser_single_line_else
-            if ((not (_next_t.type == TokenType.KEYWORD_ELSE)))
-              if (not disable_output) _push( null, 0 )
-              return
-            endIf
-            _save_position
-            if (_next_t.type == TokenType.KEYWORD_ELSE)
-              temporarily _cur_t = _on_t
-                if (_consume(TokenType.EOL))
-                  _restore_position
-                  if (not disable_output) _push( null, 0 )
-                  return
-                endIf
-                _execute(ip_parser_single_line_statements)
-                _pop_frame
-                _discard_position
-                return
-              endTemporarily
-            endIf
-            return
-          case ip_parser_multi_line_else_ons
-            _begin_list
-            while (((_next_t.type == TokenType.KEYWORD_ELSE_ON) or (_next_t.type == TokenType.KEYWORD_ELSE_ON_PEEK)))
-              _save_position
-              if (_next_t.type == TokenType.KEYWORD_ELSE_ON)
-                temporarily _cur_t = _on_t
-                  _execute(ip_token_id)
-                  _pop_frame
-                  _execute(ip_collect_parse_list)
-                  _pop_frame
-                  if ((_next_t.type == TokenType.EOL))
-                    _discard_position
-                  else
-                    _restore_position
-                    if (disable_output)     _discard_list
-                    else                    _push_list( CmdList(_list_t) )
-                    return
-                  endIf
-                  _execute(ip_parser_multi_line_statements)
-                  _pop_frame
-                  if (not disable_output) _push( ElseOn(_cur_t,_node_arg(-3),_node_arg(-2)->(as Args),_node_arg(-1)->(as Statements)), 3 )
-                endTemporarily
-              elseIf (_next_t.type == TokenType.KEYWORD_ELSE_ON_PEEK)
-                temporarily _cur_t = _on_t
-                  _execute(ip_token_id)
-                  _pop_frame
-                  _execute(ip_collect_parse_list)
-                  _pop_frame
-                  if ((_next_t.type == TokenType.EOL))
-                    _discard_position
-                  else
-                    _restore_position
-                    if (disable_output)     _discard_list
-                    else                    _push_list( CmdList(_list_t) )
-                    return
-                  endIf
-                  _execute(ip_parser_multi_line_statements)
-                  _pop_frame
-                  if (not disable_output) _push( ElseOn(_cur_t,_node_arg(-3),_node_arg(-2)->(as Args),_node_arg(-1)->(as Statements),_string_to_Logical("true")), 3 )
-                endTemporarily
-              endIf
-            endWhile
-            if (disable_output)     _discard_list
-            else                    _push_list( CmdList(_list_t) )
-            return
-          case ip_parser_multi_line_else_on_others
-            if ((not (_next_t.type == TokenType.KEYWORD_ELSE_OTHERS)))
-              if (not disable_output) _push( null, 0 )
-              return
-            endIf
-            _save_position
-            if (_next_t.type == TokenType.KEYWORD_ELSE_OTHERS)
-              temporarily _cur_t = _on_t
-                if ((not _consume(TokenType.EOL)))
-                  _restore_position
-                  if (not disable_output) _push( null, 0 )
-                  return
-                endIf
-                _execute(ip_parser_multi_line_statements)
-                _pop_frame
-                _discard_position
-                return
-              endTemporarily
-            endIf
-            return
-          case ip_parser_single_line_else_ons
-            _begin_list
-            while ((_next_t.type == TokenType.KEYWORD_ELSE_ON))
-              _save_position
-              if (_next_t.type == TokenType.KEYWORD_ELSE_ON)
-                temporarily _cur_t = _on_t
-                  _execute(ip_token_id)
-                  _pop_frame
-                  _execute(ip_collect_parse_list)
-                  _pop_frame
-                  if ((_next_t.type == TokenType.EOL))
-                    _restore_position
-                    if (disable_output)     _discard_list
-                    else                    _push_list( CmdList(_list_t) )
-                    return
-                  else
-                    _discard_position
-                  endIf
-                  _consume(TokenType.SYMBOL_COLON)
-                  _execute(ip_parser_single_line_statements)
-                  _pop_frame
-                  if (not disable_output) _push( ElseOn(_cur_t,_node_arg(-3),_node_arg(-2)->(as Args),_node_arg(-1)->(as Statements)), 3 )
-                endTemporarily
-              endIf
-            endWhile
-            if (disable_output)     _discard_list
-            else                    _push_list( CmdList(_list_t) )
-            return
-          case ip_parser_single_line_else_on_others
-            if ((not (_next_t.type == TokenType.KEYWORD_ELSE_OTHERS)))
-              if (not disable_output) _push( null, 0 )
-              return
-            endIf
-            _save_position
-            if (_next_t.type == TokenType.KEYWORD_ELSE_OTHERS)
-              temporarily _cur_t = _on_t
-                if (_consume(TokenType.EOL))
-                  _restore_position
-                  if (not disable_output) _push( null, 0 )
-                  return
-                endIf
-                _consume(TokenType.SYMBOL_COLON)
-                _execute(ip_parser_single_line_statements)
-                _pop_frame
-                _discard_position
-                return
-              endTemporarily
-            endIf
-            return
-          case ip_parser_statement
-            if (_next_t.type == TokenType.KEYWORD_BEGIN_LIST)
-              temporarily _cur_t = _on_t
-                if (not disable_output) _push( BeginList(_cur_t), 0 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.KEYWORD_CALL)
-              temporarily _cur_t = _on_t
-                _execute(ip_identifier)
-                _pop_frame
-                if (not disable_output) _push( ParserCallUserMethod(_cur_t,_string_arg(-1)), 1 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.KEYWORD_CREATE)
-              temporarily _cur_t = _on_t
-                _execute(ip_parser_product)
-                _pop_frame
-                if (not disable_output) _push( ParserCreate(_cur_t,_node_arg(-1)->(as CreateCmd)), 1 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.KEYWORD_CREATE_LIST)
-              temporarily _cur_t = _on_t
-                _execute(ip_list_type)
-                _pop_frame
-                if (not disable_output) _push( CreateList(_cur_t,_string_arg(-1)), 1 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.KEYWORD_CREATE_NULL)
-              temporarily _cur_t = _on_t
-                if (not disable_output) _push( CreateNull(_cur_t), 0 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.KEYWORD_CREATE_TOKEN_LIST)
-              temporarily _cur_t = _on_t
-                if (not disable_output) _push( CreateTokenList(_cur_t), 0 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.KEYWORD_DISCARD_LIST)
-              temporarily _cur_t = _on_t
-                if (not disable_output) _push( DiscardList(_cur_t), 0 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.KEYWORD_DISCARD_POSITION)
-              temporarily _cur_t = _on_t
-                if (not disable_output) _push( DiscardPosition(_cur_t), 0 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.KEYWORD_MUST_CONSUME)
-              temporarily _cur_t = _on_t
-                _execute(ip_ttype_or_literal)
-                _pop_frame
-                if (not disable_output) _push( ParserMustConsume(_cur_t,_node_arg(-1)), 1 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.KEYWORD_NO_ACTION)
-              temporarily _cur_t = _on_t
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.KEYWORD_PRINT)
-              temporarily _cur_t = _on_t
-                _execute(ip_parser_args)
-                _pop_frame
-                if (not disable_output) _push( Print(_cur_t,_node_arg(-1)->(as Args)), 1 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.KEYWORD_PRINTLN)
-              temporarily _cur_t = _on_t
-                if (((not (_position < _limit)) or (_next_t.type.attributes & TokenType.ATTRIBUTE_STRUCTURAL)?))
-                  _begin_list
-                  if (disable_output)     _discard_list
-                  else                    _push_list( Args(_list_t) )
-                else
-                  _execute(ip_parser_args)
-                  _pop_frame
-                endIf
-                if (not disable_output) _push( Println(_cur_t,_node_arg(-1)->(as Args)), 1 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.KEYWORD_PRODUCE)
-              temporarily _cur_t = _on_t
-                _execute(ip_parser_product)
-                _pop_frame
-                if (not disable_output) _push( ParserProduce(_cur_t,_node_arg(-1)->(as CreateCmd)), 1 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.SYMBOL_ARROW)
-              temporarily _cur_t = _on_t
-                _execute(ip_parser_product)
-                _pop_frame
-                if (not disable_output) _push( ParserProduce(_cur_t,_node_arg(-1)->(as CreateCmd)), 1 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.KEYWORD_PRODUCE_NULL)
-              temporarily _cur_t = _on_t
-                if (not disable_output) _push( CreateNull(_cur_t), 0 )
-                if (not disable_output) _push( null, 0 )
-                if (not disable_output) _push( Return(_cur_t,_node_arg(-1)), 1 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.KEYWORD_PRODUCE_LIST)
-              temporarily _cur_t = _on_t
-                _execute(ip_list_type)
-                _pop_frame
-                if (not disable_output) _push( ProduceList(_cur_t,_string_arg(-1)), 1 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.KEYWORD_PRODUCE_TOKEN_LIST)
-              temporarily _cur_t = _on_t
-                if (not disable_output) _push( ProduceTokenList(_cur_t), 0 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.KEYWORD_RESTORE_POSITION)
-              temporarily _cur_t = _on_t
-                if (not disable_output) _push( RestorePosition(_cur_t), 0 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.KEYWORD_RETURN)
-              temporarily _cur_t = _on_t
-                if ((_next_t.type == TokenType.EOL))
-                  if (not disable_output) _push( null, 0 )
-                else
-                  _throw_syntax_error
-                endIf
-                if (not disable_output) _push( Return(_cur_t,_node_arg(-1)), 1 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.KEYWORD_SAVE_POSITION)
-              temporarily _cur_t = _on_t
-                if (not disable_output) _push( SavePosition(_cur_t), 0 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.KEYWORD_SYNTAX_ERROR)
-              temporarily _cur_t = _on_t
-                if ((_next_t.type == TokenType.EOL))
-                  if (not disable_output) _push( null, 0 )
-                else
-                  _execute(ip_parser_args)
-                  _pop_frame
-                endIf
-                if (not disable_output) _push( ThrowSyntaxError(_cur_t,_node_arg(-1)->(as Args)), 1 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.SYMBOL_PLUS_PLUS)
-              temporarily _cur_t = _on_t
-                _execute(ip_parser_expression)
-                _pop_frame
-                if (not disable_output) _push( Increment(_cur_t,_node_arg(-1)), 1 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.SYMBOL_MINUS_MINUS)
-              temporarily _cur_t = _on_t
-                _execute(ip_parser_expression)
-                _pop_frame
-                if (not disable_output) _push( Decrement(_cur_t,_node_arg(-1)), 1 )
-                return
-              endTemporarily
-            endIf
-            _execute(ip_parser_expression)
-            _pop_frame
-            if (_next_t.type == TokenType.SYMBOL_ASSIGN)
-              temporarily _cur_t = _on_t
-                _execute(ip_parser_expression)
-                _pop_frame
-                if (not disable_output) _push( Assign(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.SYMBOL_PLUS_PLUS)
-              temporarily _cur_t = _on_t
-                if (not disable_output) _push( Increment(_cur_t,_node_arg(-1)), 1 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.SYMBOL_MINUS_MINUS)
-              temporarily _cur_t = _on_t
-                if (not disable_output) _push( Decrement(_cur_t,_node_arg(-1)), 1 )
-                return
-              endTemporarily
-            endIf
-            return
-          case ip_list_type
-            if ((_next_t.type == TokenType.IDENTIFIER))
-              _execute(ip_identifier)
-              _pop_frame
-            else
-              if (not disable_output) _push( null, 0 )
-              return
-            endIf
-            return
-          case ip_parser_args
+            if (not disable_output) _push( MatchCase(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
+          endTemporarily
+        elseIf (_next_t.type == TokenType.KEYWORD_PRODUCE_ANY)
+          temporarily _cur_t = _on_t
+            r_identifier
+            if (not disable_output) _push( ProduceAny(_cur_t,_string_arg(-1)), 1 )
+          endTemporarily
+        else
+          if (disable_output)     _discard_list
+          else                    _push_list( CmdList(_list_t) )
+          _pop_frame
+          return
+        endIf
+      endWhile
+      if (disable_output)     _discard_list
+      else                    _push_list( CmdList(_list_t) )
+      _pop_frame
+      return
+
+    method r__others
+      _push_frame
+      if (_next_t.type == TokenType.KEYWORD_OTHERS)
+        temporarily _cur_t = _on_t
+          _consume(TokenType.SYMBOL_COLON)
+          r_consume_eols
+          r_scanner_multi_line_statements
+        endTemporarily
+      else
+        if (not disable_output) _push( null, 0 )
+      endIf
+      _pop_frame
+
+    method r_scanner_multi_line_else_ifs
+      _push_frame
+      _begin_list
+      while ((_next_t.type == TokenType.KEYWORD_ELSE_IF))
+        _save_position
+        if (_next_t.type == TokenType.KEYWORD_ELSE_IF)
+          temporarily _cur_t = _on_t
             if (_consume(TokenType.SYMBOL_OPEN_PAREN))
-              _execute(ip_consume_eols)
-              _pop_frame
-              _execute(ip_parser_arg_list)
-              _pop_frame
-              _execute(ip_consume_eols)
-              _pop_frame
+              r_scanner_expression
               if (not _consume(TokenType.SYMBOL_CLOSE_PAREN)) _throw_syntax_error( &expected=TokenType.SYMBOL_CLOSE_PAREN )
             else
-              _execute(ip_parser_arg_list)
-              _pop_frame
+              r_scanner_expression
             endIf
-            return
-          case ip_parser_arg_list
-            _begin_list
-            if ((_next_t.type.attributes & TokenType.ATTRIBUTE_STRUCTURAL)?)
+            if ((_next_t.type == TokenType.EOL))
+              _discard_position
+            else
+              _restore_position
               if (disable_output)     _discard_list
-              else                    _push_list( Args(_list_t) )
+              else                    _push_list( CmdList(_list_t) )
+              _pop_frame
               return
             endIf
-            _execute(ip_parser_expression)
+            r_scanner_multi_line_statements
+            if (not disable_output) _push( ElseIf(_cur_t,_node_arg(-2),_node_arg(-1)->(as Statements)), 2 )
+          endTemporarily
+        endIf
+      endWhile
+      if (disable_output)     _discard_list
+      else                    _push_list( CmdList(_list_t) )
+      _pop_frame
+      return
+
+    method r_scanner_multi_line_else
+      _push_frame
+      if ((not (_next_t.type == TokenType.KEYWORD_ELSE)))
+        if (not disable_output) _push( null, 0 )
+        _pop_frame
+        return
+      endIf
+      _save_position
+      if (_next_t.type == TokenType.KEYWORD_ELSE)
+        temporarily _cur_t = _on_t
+          if ((not _consume(TokenType.EOL)))
+            _restore_position
+            if (not disable_output) _push( null, 0 )
             _pop_frame
-            while ((_position < _limit))
-              if (_consume(TokenType.SYMBOL_COMMA))
-                _execute(ip_consume_eols)
-                _pop_frame
-                _execute(ip_parser_expression)
-                _pop_frame
-              elseIf (((_next_t.type == TokenType.EOL) or (_next_t.type.attributes & TokenType.ATTRIBUTE_STRUCTURAL)?))
-                if (disable_output)     _discard_list
-                else                    _push_list( Args(_list_t) )
-                return
-              else
-                _execute(ip_parser_expression)
-                _pop_frame
-              endIf
-            endWhile
+            return
+          endIf
+          r_scanner_multi_line_statements
+          _discard_position
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      _pop_frame
+
+    method r_scanner_single_line_else_ifs
+      _push_frame
+      _begin_list
+      while ((_next_t.type == TokenType.KEYWORD_ELSE_IF))
+        _save_position
+        if (_next_t.type == TokenType.KEYWORD_ELSE_IF)
+          temporarily _cur_t = _on_t
+            if (_consume(TokenType.SYMBOL_OPEN_PAREN))
+              r_scanner_expression
+              if (not _consume(TokenType.SYMBOL_CLOSE_PAREN)) _throw_syntax_error( &expected=TokenType.SYMBOL_CLOSE_PAREN )
+            else
+              r_scanner_expression
+            endIf
+            if ((_next_t.type == TokenType.EOL))
+              _restore_position
+              if (disable_output)     _discard_list
+              else                    _push_list( CmdList(_list_t) )
+              _pop_frame
+              return
+            else
+              _discard_position
+            endIf
+            r_scanner_single_line_statements
+            if (not disable_output) _push( ElseIf(_cur_t,_node_arg(-2),_node_arg(-1)->(as Statements)), 2 )
+          endTemporarily
+        endIf
+      endWhile
+      if (disable_output)     _discard_list
+      else                    _push_list( CmdList(_list_t) )
+      _pop_frame
+      return
+
+    method r_scanner_single_line_else
+      _push_frame
+      if ((not (_next_t.type == TokenType.KEYWORD_ELSE)))
+        if (not disable_output) _push( null, 0 )
+        _pop_frame
+        return
+      endIf
+      _save_position
+      if (_next_t.type == TokenType.KEYWORD_ELSE)
+        temporarily _cur_t = _on_t
+          if (_consume(TokenType.EOL))
+            _restore_position
+            if (not disable_output) _push( null, 0 )
+            _pop_frame
+            return
+          endIf
+          r_scanner_single_line_statements
+          _discard_position
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      _pop_frame
+
+    method r_scanner_statement
+      _push_frame
+      if (_next_t.type == TokenType.KEYWORD_CALL)
+        temporarily _cur_t = _on_t
+          r_identifier
+          if (not disable_output) _push( ScannerCallUserMethod(_cur_t,_string_arg(-1)), 1 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.KEYWORD_COLLECT)
+        temporarily _cur_t = _on_t
+          r_scanner_args
+          if (not disable_output) _push( Collect(_cur_t,_node_arg(-1)->(as Args)), 1 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.KEYWORD_CREATE)
+        temporarily _cur_t = _on_t
+          r_scanner_product
+          if (not disable_output) _push( ScannerCreate(_cur_t,_node_arg(-1)), 1 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.KEYWORD_DISCARD_POSITION)
+        temporarily _cur_t = _on_t
+          if (not disable_output) _push( DiscardPosition(_cur_t), 0 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.KEYWORD_HALT)
+        temporarily _cur_t = _on_t
+          if (not disable_output) _push( Halt(_cur_t), 0 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.KEYWORD_MARK_POSITION)
+        temporarily _cur_t = _on_t
+          if (not disable_output) _push( MarkPosition(_cur_t), 0 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.KEYWORD_MODE)
+        temporarily _cur_t = _on_t
+          r_identifier
+          if (not disable_output) _push( Mode(_cur_t,_string_arg(-1)), 1 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.KEYWORD_MUST_CONSUME)
+        temporarily _cur_t = _on_t
+          r_sequence_args
+          if (not disable_output) _push( ScannerMustConsume(_cur_t,_node_arg(-1)->(as SequenceArgs)), 1 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.KEYWORD_NO_ACTION)
+        temporarily _cur_t = _on_t
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.KEYWORD_PRINT)
+        temporarily _cur_t = _on_t
+          r_scanner_args
+          if (not disable_output) _push( Print(_cur_t,_node_arg(-1)->(as Args)), 1 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.KEYWORD_PRINTLN)
+        temporarily _cur_t = _on_t
+          if (((not (_position < _limit)) or (_next_t.type.attributes & TokenType.ATTRIBUTE_STRUCTURAL)?))
+            _begin_list
             if (disable_output)     _discard_list
             else                    _push_list( Args(_list_t) )
-            return
-          case ip_ttype_or_literal
-            if (_consume(TokenType.SYMBOL_OPEN_PAREN))
-              _execute(ip_ttype_or_literal_inner)
-              _pop_frame
-              if (not _consume(TokenType.SYMBOL_CLOSE_PAREN)) _throw_syntax_error( &expected=TokenType.SYMBOL_CLOSE_PAREN )
-            else
-              _execute(ip_ttype_or_literal_inner)
-              _pop_frame
-            endIf
-            return
-          case ip_ttype_or_literal_inner
-            if (_consume(TokenType.SYMBOL_AT))
-              _execute(ip_token_id)
-              _pop_frame
-              if (not disable_output) _push( LiteralContent(_cur_t,_string_arg(-1)), 1 )
-            else
-              _execute(ip_token_id)
-              _pop_frame
-            endIf
-            return
-          case ip_attr_name_arg
-            if (_consume(TokenType.SYMBOL_OPEN_PAREN))
-              _execute(ip_attribute_name)
-              _pop_frame
-              if (not _consume(TokenType.SYMBOL_CLOSE_PAREN)) _throw_syntax_error( &expected=TokenType.SYMBOL_CLOSE_PAREN )
-            else
-              _execute(ip_attribute_name)
-              _pop_frame
-            endIf
-            return
-          case ip_attribute_name
-            if (_next_t.type == TokenType.IDENTIFIER)
-              temporarily _cur_t = _on_t
-                if (not disable_output) _push( Identifier(_cur_t,_cur_t.content), 0 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.STRING)
-              temporarily _cur_t = _on_t
-                if (not disable_output) _push( LiteralString(_cur_t,_cur_t.content), 0 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.STRING_OR_CHARACTER)
-              temporarily _cur_t = _on_t
-                if (not disable_output) _push( LiteralString(_cur_t,_cur_t.content), 0 )
-                return
-              endTemporarily
-            endIf
-            _throw_syntax_error("Attribute name expected.")
-            return
-          case ip_token_id
-            if (_next_t.type == TokenType.IDENTIFIER)
-              temporarily _cur_t = _on_t
-                if (not disable_output) _push( Identifier(_cur_t,_cur_t.content), 0 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.STRING)
-              temporarily _cur_t = _on_t
-                if (not disable_output) _push( LiteralString(_cur_t,_cur_t.content), 0 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.STRING_OR_CHARACTER)
-              temporarily _cur_t = _on_t
-                if (not disable_output) _push( LiteralString(_cur_t,_cur_t.content), 0 )
-                return
-              endTemporarily
-            endIf
-            _throw_syntax_error("TOKEN_ID or \"token_name\" expected.")
-            return
-          case ip_collect_parse_list
-            _begin_list
-            while ((((_position < _limit) and (not (_next_t.type == TokenType.EOL))) and (not (_next_t.type.attributes & TokenType.ATTRIBUTE_STRUCTURAL)?)))
-              _consume(TokenType.SYMBOL_COMMA)
-              _execute(ip_string_id_or_routine)
-              _pop_frame
-            endWhile
-            if (disable_output)     _discard_list
-            else                    _push_list( Args(_list_t) )
-            return
-          case ip_string_id_or_routine
-            if (_next_t.type == TokenType.IDENTIFIER)
-              temporarily _cur_t = _on_t
-                if (not disable_output) _push( Identifier(_cur_t,_cur_t.content), 0 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.STRING)
-              temporarily _cur_t = _on_t
-                if (not disable_output) _push( LiteralString(_cur_t,_cur_t.content), 0 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.STRING_OR_CHARACTER)
-              temporarily _cur_t = _on_t
-                if (not disable_output) _push( LiteralString(_cur_t,_cur_t.content), 0 )
-                return
-              endTemporarily
-            endIf
-            _throw_syntax_error("TOKEN_ID, \"token_name\", or routine_name expected.")
-            return
-          case ip_parser_product
-            _execute(ip_consume_eols)
-            _pop_frame
-            _execute(ip_identifier)
-            _pop_frame
-            if (_consume(TokenType.SYMBOL_OPEN_PAREN))
-              _execute(ip_cmd_args)
-              _pop_frame
-              if (not _consume(TokenType.SYMBOL_CLOSE_PAREN)) _throw_syntax_error( &expected=TokenType.SYMBOL_CLOSE_PAREN )
-            else
-              _begin_list
-              if (disable_output)     _discard_list
-              else                    _push_list( Args(_list_t) )
-            endIf
-            if (_consume(TokenType.SYMBOL_COLON))
-              _execute(ip_type_name)
-              _pop_frame
-            else
-              if (not disable_output) _push( null, 0 )
-            endIf
-            if (not disable_output) _push( CreateCmd(_cur_t,_string_arg(-3),_node_arg(-2)->(as Args),_string_arg(-1)), 3 )
-            return
-          case ip_parser_expression
-            _execute(ip_parser_logical_or)
-            _pop_frame
-            return
-          case ip_parser_logical_or
-            _execute(ip_parser_logical_and)
-            _pop_frame
-            _execute(ip_parser_logical_or__inner)
-            _pop_frame
-            return
-          case ip_parser_logical_or__inner
-            if (_next_t.type == TokenType.KEYWORD_OR)
-              temporarily _cur_t = _on_t
-                _consume_eols
-                _execute(ip_parser_logical_and)
-                _pop_frame
-                if (not disable_output) _push( LogicalOr(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
-                _execute(ip_parser_logical_or__inner)
-                _pop_frame
-                return
-              endTemporarily
-            endIf
-            return
-          case ip_parser_logical_and
-            _execute(ip_parser_comparison)
-            _pop_frame
-            _execute(ip_parser_logical_and__inner)
-            _pop_frame
-            return
-          case ip_parser_logical_and__inner
-            if (_next_t.type == TokenType.KEYWORD_AND)
-              temporarily _cur_t = _on_t
-                _consume_eols
-                _execute(ip_parser_comparison)
-                _pop_frame
-                if (not disable_output) _push( LogicalAnd(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
-                _execute(ip_parser_logical_and__inner)
-                _pop_frame
-                return
-              endTemporarily
-            endIf
-            return
-          case ip_parser_comparison
-            _execute(ip_parser_add_subtract)
-            _pop_frame
-            _execute(ip_parser_comparison__inner)
-            _pop_frame
-            return
-          case ip_parser_comparison__inner
-            if (_next_t.type == TokenType.SYMBOL_EQ)
-              temporarily _cur_t = _on_t
-                _consume_eols
-                _execute(ip_parser_add_subtract)
-                _pop_frame
-                if (not disable_output) _push( CompareEQ(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
-                _execute(ip_parser_comparison__inner)
-                _pop_frame
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.SYMBOL_NE)
-              temporarily _cur_t = _on_t
-                _consume_eols
-                _execute(ip_parser_add_subtract)
-                _pop_frame
-                if (not disable_output) _push( CompareNE(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
-                _execute(ip_parser_comparison__inner)
-                _pop_frame
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.SYMBOL_LT)
-              temporarily _cur_t = _on_t
-                _consume_eols
-                _execute(ip_parser_add_subtract)
-                _pop_frame
-                if (not disable_output) _push( CompareLT(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
-                _execute(ip_parser_comparison__inner)
-                _pop_frame
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.SYMBOL_GT)
-              temporarily _cur_t = _on_t
-                _consume_eols
-                _execute(ip_parser_add_subtract)
-                _pop_frame
-                if (not disable_output) _push( CompareGT(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
-                _execute(ip_parser_comparison__inner)
-                _pop_frame
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.SYMBOL_LE)
-              temporarily _cur_t = _on_t
-                _consume_eols
-                _execute(ip_parser_add_subtract)
-                _pop_frame
-                if (not disable_output) _push( CompareLE(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
-                _execute(ip_parser_comparison__inner)
-                _pop_frame
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.SYMBOL_GE)
-              temporarily _cur_t = _on_t
-                _consume_eols
-                _execute(ip_parser_add_subtract)
-                _pop_frame
-                if (not disable_output) _push( CompareGE(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
-                _execute(ip_parser_comparison__inner)
-                _pop_frame
-                return
-              endTemporarily
-            endIf
-            return
-          case ip_parser_add_subtract
-            _execute(ip_parser_multiply_divide)
-            _pop_frame
-            _execute(ip_parser_add_subtract__inner)
-            _pop_frame
-            return
-          case ip_parser_add_subtract__inner
-            if (_next_t.type == TokenType.SYMBOL_PLUS)
-              temporarily _cur_t = _on_t
-                _consume_eols
-                _execute(ip_parser_multiply_divide)
-                _pop_frame
-                if (not disable_output) _push( Add(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
-                _execute(ip_parser_add_subtract__inner)
-                _pop_frame
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.SYMBOL_MINUS)
-              temporarily _cur_t = _on_t
-                _consume_eols
-                _execute(ip_parser_multiply_divide)
-                _pop_frame
-                if (not disable_output) _push( Subtract(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
-                _execute(ip_parser_add_subtract__inner)
-                _pop_frame
-                return
-              endTemporarily
-            endIf
-            return
-          case ip_parser_multiply_divide
-            _execute(ip_parser_power)
-            _pop_frame
-            _execute(ip_parser_multiply_divide__inner)
-            _pop_frame
-            return
-          case ip_parser_multiply_divide__inner
-            if (_next_t.type == TokenType.SYMBOL_STAR)
-              temporarily _cur_t = _on_t
-                _consume_eols
-                _execute(ip_parser_power)
-                _pop_frame
-                if (not disable_output) _push( Multiply(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
-                _execute(ip_parser_multiply_divide__inner)
-                _pop_frame
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.SYMBOL_SLASH)
-              temporarily _cur_t = _on_t
-                _consume_eols
-                _execute(ip_parser_power)
-                _pop_frame
-                if (not disable_output) _push( Divide(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
-                _execute(ip_parser_multiply_divide__inner)
-                _pop_frame
-                return
-              endTemporarily
-            endIf
-            return
-          case ip_parser_power
-            _execute(ip_parser_pre_unary)
-            _pop_frame
-            _execute(ip_parser_power__inner)
-            _pop_frame
-            return
-          case ip_parser_power__inner
-            if (_next_t.type == TokenType.SYMBOL_CARET)
-              temporarily _cur_t = _on_t
-                _consume_eols
-                _execute(ip_parser_pre_unary)
-                _pop_frame
-                if (not disable_output) _push( Power(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
-                _execute(ip_parser_power__inner)
-                _pop_frame
-                return
-              endTemporarily
-            endIf
-            return
-          case ip_parser_pre_unary
-            if (_next_t.type == TokenType.SYMBOL_MINUS)
-              temporarily _cur_t = _on_t
-                _consume_eols
-                _execute(ip_parser_pre_unary)
-                _pop_frame
-                if (not disable_output) _push( Negate(_cur_t,_node_arg(-1)), 1 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.KEYWORD_NOT)
-              temporarily _cur_t = _on_t
-                _consume_eols
-                _execute(ip_parser_pre_unary)
-                _pop_frame
-                if (not disable_output) _push( LogicalNot(_cur_t,_node_arg(-1)), 1 )
-                return
-              endTemporarily
-            endIf
-            _execute(ip_parser_term)
-            _pop_frame
-            return
-          case ip_parser_term
-            if (_next_t.type == TokenType.SYMBOL_OPEN_PAREN)
-              temporarily _cur_t = _on_t
-                _execute(ip_parser_expression)
-                _pop_frame
-                if (not _consume(TokenType.SYMBOL_CLOSE_PAREN)) _throw_syntax_error( &expected=TokenType.SYMBOL_CLOSE_PAREN )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.KEYWORD_BUFFER)
-              temporarily _cur_t = _on_t
-                if (not disable_output) _push( ReadBuffer(_cur_t), 0 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.KEYWORD_CONSUME)
-              temporarily _cur_t = _on_t
-                _execute(ip_ttype_or_literal)
-                _pop_frame
-                if (not disable_output) _push( ParserConsume(_cur_t,_node_arg(-1)), 1 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.KEYWORD_FALSE)
-              temporarily _cur_t = _on_t
-                if (not disable_output) _push( LiteralLogical(_cur_t,_string_to_Logical("false")), 0 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.KEYWORD_HAS_NEXT)
-              temporarily _cur_t = _on_t
-                if (not disable_output) _push( ParserHasAnother(_cur_t), 0 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.KEYWORD_NEXT_HAS_ATTRIBUTE)
-              temporarily _cur_t = _on_t
-                _execute(ip_attr_name_arg)
-                _pop_frame
-                if (not disable_output) _push( NextHasAttribute(_cur_t,_string_arg(-1)), 1 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.KEYWORD_NEXT_IS)
-              temporarily _cur_t = _on_t
-                _execute(ip_ttype_or_literal)
-                _pop_frame
-                if (not disable_output) _push( ParserNextIs(_cur_t,_node_arg(-1)), 1 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.KEYWORD_OUTPUT)
-              temporarily _cur_t = _on_t
-                if (not disable_output) _push( ReadOutput(_cur_t), 0 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.KEYWORD_READ)
-              temporarily _cur_t = _on_t
-                if (not disable_output) _push( ParserRead(_cur_t), 0 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.KEYWORD_TRUE)
-              temporarily _cur_t = _on_t
-                if (not disable_output) _push( LiteralLogical(_cur_t,_string_to_Logical("true")), 0 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.IDENTIFIER)
-              temporarily _cur_t = _on_t
-                if (not disable_output) _push( Access(_cur_t,_cur_t.content), 0 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.INTEGER)
-              temporarily _cur_t = _on_t
-                if (not disable_output) _push( LiteralInteger(_cur_t,_string_to_Integer(_cur_t.content)), 0 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.STRING)
-              temporarily _cur_t = _on_t
-                if (not disable_output) _push( LiteralString(_cur_t,_cur_t.content), 0 )
-                return
-              endTemporarily
-            endIf
-            if (_next_t.type == TokenType.STRING_OR_CHARACTER)
-              temporarily _cur_t = _on_t
-                if (not disable_output) _push( LiteralStringOrCharacter(_cur_t,_cur_t.content), 0 )
-                return
-              endTemporarily
-            endIf
+          else
+            r_scanner_args
+          endIf
+          if (not disable_output) _push( Println(_cur_t,_node_arg(-1)->(as Args)), 1 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.KEYWORD_PRODUCE)
+        temporarily _cur_t = _on_t
+          r_scanner_product
+          if (not disable_output) _push( ScannerCreate(_cur_t,_node_arg(-1)), 1 )
+          if (not disable_output) _push( null, 0 )
+          if (not disable_output) _push( Restart(_cur_t,_string_arg(-1)), 1 )
+          _pop_frame
+          return
+        endTemporarily
+      elseIf (_next_t.type == TokenType.SYMBOL_ARROW)
+        temporarily _cur_t = _on_t
+          r_consume_eols
+          if (not disable_output) _push( ScannerCreate(_cur_t,_node_arg(-1)), 1 )
+          if (not disable_output) _push( null, 0 )
+          if (not disable_output) _push( Restart(_cur_t,_string_arg(-1)), 1 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.KEYWORD_RESTART)
+        temporarily _cur_t = _on_t
+          if ((_next_t.type == TokenType.EOL))
+            if (not disable_output) _push( null, 0 )
+          else
+            r_identifier
+          endIf
+          if (not disable_output) _push( Restart(_cur_t,_string_arg(-1)), 1 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.KEYWORD_RESTORE_POSITION)
+        temporarily _cur_t = _on_t
+          if (not disable_output) _push( RestorePosition(_cur_t), 0 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.KEYWORD_RETURN)
+        temporarily _cur_t = _on_t
+          if ((_next_t.type == TokenType.EOL))
+            if (not disable_output) _push( null, 0 )
+          else
             _throw_syntax_error
+            _pop_frame
             return
-          case ip_additional_node_types
-            if (not disable_output) _push( WriteBuffer(_cur_t,_node_arg(-1)), 1 )
-            if (not disable_output) _push( WriteOutput(_cur_t,_node_arg(-1)), 1 )
+          endIf
+          if (not disable_output) _push( Return(_cur_t,_node_arg(-1)), 1 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.KEYWORD_SAVE_POSITION)
+        temporarily _cur_t = _on_t
+          if (not disable_output) _push( SavePosition(_cur_t), 0 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.KEYWORD_SYNTAX_ERROR)
+        temporarily _cur_t = _on_t
+          if ((_next_t.type == TokenType.EOL))
+            if (not disable_output) _push( null, 0 )
+          else
+            r_scanner_args
+          endIf
+          if (not disable_output) _push( ThrowSyntaxError(_cur_t,_node_arg(-1)->(as Args)), 1 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.SYMBOL_PLUS_PLUS)
+        temporarily _cur_t = _on_t
+          r_scanner_expression
+          if (not disable_output) _push( Increment(_cur_t,_node_arg(-1)), 1 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.SYMBOL_MINUS_MINUS)
+        temporarily _cur_t = _on_t
+          r_scanner_expression
+          if (not disable_output) _push( Decrement(_cur_t,_node_arg(-1)), 1 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      r_scanner_expression
+      if (_next_t.type == TokenType.SYMBOL_ASSIGN)
+        temporarily _cur_t = _on_t
+          r_scanner_expression
+          if (not disable_output) _push( Assign(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.SYMBOL_PLUS_PLUS)
+        temporarily _cur_t = _on_t
+          if (not disable_output) _push( Increment(_cur_t,_node_arg(-1)), 1 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.SYMBOL_MINUS_MINUS)
+        temporarily _cur_t = _on_t
+          if (not disable_output) _push( Decrement(_cur_t,_node_arg(-1)), 1 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      _pop_frame
+
+    method r_scanner_product
+      _push_frame
+      r_identifier
+      if (not disable_output) _push( Access(_cur_t,_string_arg(-1)), 1 )
+      _pop_frame
+      return
+
+    method r_cmd_args
+      _push_frame
+      _begin_list
+      r_consume_eols
+      if (_consume(TokenType.SYMBOL_CLOSE_PAREN))
+        if (disable_output)     _discard_list
+        else                    _push_list( Args(_list_t) )
+        _pop_frame
+        return
+      endIf
+      r_cmd_arg
+      while (_consume(TokenType.SYMBOL_COMMA))
+        r_consume_eols
+        r_cmd_arg
+        r_consume_eols
+      endWhile
+      if (disable_output)     _discard_list
+      else                    _push_list( Args(_list_t) )
+      _pop_frame
+      return
+
+    method r_cmd_arg
+      _push_frame
+      r_identifier
+      if (_consume(TokenType.SYMBOL_ASSIGN))
+        if (_next_t.type == TokenType.IDENTIFIER)
+          temporarily _cur_t = _on_t
+            if (not disable_output) _push( Identifier(_cur_t,_cur_t.content), 0 )
+          endTemporarily
+        elseIf (_next_t.type == TokenType.STRING)
+          temporarily _cur_t = _on_t
+            if (not disable_output) _push( LiteralString(_cur_t,_cur_t.content), 0 )
+          endTemporarily
+        else
+          _throw_syntax_error("Content or \"quoted expression\" expected.")
+          _pop_frame
+          return
+        endIf
+      else
+        if (not disable_output) _push( null, 0 )
+      endIf
+      if (_consume(TokenType.SYMBOL_COLON))
+        r_type_name
+      else
+        if (not disable_output) _push( null, 0 )
+      endIf
+      if (not disable_output) _push( CreateCmdArg(_cur_t,_string_arg(-3),_node_arg(-2),_string_arg(-1)), 3 )
+      _pop_frame
+      return
+
+    method r_scanner_args
+      _push_frame
+      if (_consume(TokenType.SYMBOL_OPEN_PAREN))
+        r_consume_eols
+        r_scanner_arg_list
+        r_consume_eols
+        if (not _consume(TokenType.SYMBOL_CLOSE_PAREN)) _throw_syntax_error( &expected=TokenType.SYMBOL_CLOSE_PAREN )
+      else
+        r_scanner_arg_list
+      endIf
+      _pop_frame
+
+    method r_scanner_arg_list
+      _push_frame
+      _begin_list
+      if ((_next_t.type.attributes & TokenType.ATTRIBUTE_STRUCTURAL)?)
+        if (disable_output)     _discard_list
+        else                    _push_list( Args(_list_t) )
+        _pop_frame
+        return
+      endIf
+      r_scanner_expression
+      while ((_position < _limit))
+        if (_consume(TokenType.SYMBOL_COMMA))
+          r_consume_eols
+          r_scanner_expression
+        elseIf (((_next_t.type == TokenType.EOL) or (_next_t.type.attributes & TokenType.ATTRIBUTE_STRUCTURAL)?))
+          if (disable_output)     _discard_list
+          else                    _push_list( Args(_list_t) )
+          _pop_frame
+          return
+        else
+          r_scanner_expression
+        endIf
+      endWhile
+      if (disable_output)     _discard_list
+      else                    _push_list( Args(_list_t) )
+      _pop_frame
+      return
+
+    method r_sequence_args
+      _push_frame
+      if (_consume(TokenType.SYMBOL_OPEN_PAREN))
+        r_consume_eols
+        r_sequence_arg_list
+        r_consume_eols
+        if (not _consume(TokenType.SYMBOL_CLOSE_PAREN)) _throw_syntax_error( &expected=TokenType.SYMBOL_CLOSE_PAREN )
+      else
+        r_sequence_arg_list
+      endIf
+      _pop_frame
+
+    method r_sequence_arg_list
+      _push_frame
+      _begin_list
+      if ((_next_t.type.attributes & TokenType.ATTRIBUTE_STRUCTURAL)?)
+        if (disable_output)     _discard_list
+        else                    _push_list( SequenceArgs(_list_t) )
+        _pop_frame
+        return
+      endIf
+      r_scanner_expression
+      while ((_position < _limit))
+        if (_consume(TokenType.SYMBOL_COMMA))
+          r_consume_eols
+          r_scanner_expression
+        elseIf (((_next_t.type == TokenType.EOL) or (_next_t.type.attributes & TokenType.ATTRIBUTE_STRUCTURAL)?))
+          if (disable_output)     _discard_list
+          else                    _push_list( SequenceArgs(_list_t) )
+          _pop_frame
+          return
+        else
+          r_scanner_expression
+        endIf
+      endWhile
+      if (disable_output)     _discard_list
+      else                    _push_list( SequenceArgs(_list_t) )
+      _pop_frame
+      return
+
+    method r_pattern_sequence
+      _push_frame
+      _begin_list
+      if ((_next_t.type.attributes & TokenType.ATTRIBUTE_STRUCTURAL)?)
+        if (disable_output)     _discard_list
+        else                    _push_list( PatternSequence(_list_t) )
+        _pop_frame
+        return
+      endIf
+      r_sequence_item
+      while ((_position < _limit))
+        if (_consume(TokenType.SYMBOL_STAR))
+          if (not disable_output) _push( ZeroOrMore(_cur_t,_node_arg(-1)), 1 )
+        elseIf (_consume(TokenType.SYMBOL_PLUS))
+          if (not disable_output) _push( OneOrMore(_cur_t,_node_arg(-1)), 1 )
+        elseIf (_consume(TokenType.SYMBOL_QUESTION))
+          if (not disable_output) _push( OptionalPattern(_cur_t,_node_arg(-1)), 1 )
+        elseIf (_consume(TokenType.SYMBOL_COMMA))
+          r_consume_eols
+          r_sequence_item
+        elseIf (((_next_t.type == TokenType.EOL) or (_next_t.type.attributes & TokenType.ATTRIBUTE_STRUCTURAL)?))
+          if (disable_output)     _discard_list
+          else                    _push_list( PatternSequence(_list_t) )
+          _pop_frame
+          return
+        else
+          r_sequence_item
+        endIf
+      endWhile
+      if (disable_output)     _discard_list
+      else                    _push_list( PatternSequence(_list_t) )
+      _pop_frame
+      return
+
+    method r_sequence_item
+      _push_frame
+      if (_next_t.type == TokenType.SYMBOL_OPEN_CURLY)
+        temporarily _cur_t = _on_t
+          r_pattern_sequence
+          if (not _consume(TokenType.SYMBOL_CLOSE_CURLY)) _throw_syntax_error( &expected=TokenType.SYMBOL_CLOSE_CURLY )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.CHARSET)
+        temporarily _cur_t = _on_t
+          if (not disable_output) _push( CharSet(_cur_t,_cur_t.content), 0 )
+          r_repeat_count
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.STRING)
+        temporarily _cur_t = _on_t
+          if (not disable_output) _push( LiteralString(_cur_t,_cur_t.content), 0 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.STRING_OR_CHARACTER)
+        temporarily _cur_t = _on_t
+          if (not disable_output) _push( LiteralStringOrCharacter(_cur_t,_cur_t.content), 0 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      _throw_syntax_error
+      _pop_frame
+      return
+      _pop_frame
+
+    method r_empty_statements
+      _push_frame
+      _begin_list
+      if (disable_output)     _discard_list
+      else                    _push_list( Statements(_list_t) )
+      _pop_frame
+
+    method r_scanner_expression
+      _push_frame
+      r_scanner_logical_or
+      _pop_frame
+
+    method r_scanner_logical_or
+      _push_frame
+      r_scanner_logical_and
+      r_scanner_logical_or__inner
+      _pop_frame
+
+    method r_scanner_logical_or__inner
+      _push_frame
+      if (_next_t.type == TokenType.KEYWORD_OR)
+        temporarily _cur_t = _on_t
+          _consume_eols
+          r_scanner_logical_and
+          if (not disable_output) _push( LogicalOr(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
+          r_scanner_logical_or__inner
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      _pop_frame
+
+    method r_scanner_logical_and
+      _push_frame
+      r_scanner_comparison
+      r_scanner_logical_and__inner
+      _pop_frame
+
+    method r_scanner_logical_and__inner
+      _push_frame
+      if (_next_t.type == TokenType.KEYWORD_AND)
+        temporarily _cur_t = _on_t
+          _consume_eols
+          r_scanner_comparison
+          if (not disable_output) _push( LogicalAnd(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
+          r_scanner_logical_and__inner
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      _pop_frame
+
+    method r_scanner_comparison
+      _push_frame
+      r_scanner_add_subtract
+      r_scanner_comparison__inner
+      _pop_frame
+
+    method r_scanner_comparison__inner
+      _push_frame
+      if (_next_t.type == TokenType.SYMBOL_EQ)
+        temporarily _cur_t = _on_t
+          _consume_eols
+          r_scanner_add_subtract
+          if (not disable_output) _push( CompareEQ(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
+          r_scanner_comparison__inner
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.SYMBOL_NE)
+        temporarily _cur_t = _on_t
+          _consume_eols
+          r_scanner_add_subtract
+          if (not disable_output) _push( CompareNE(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
+          r_scanner_comparison__inner
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.SYMBOL_LT)
+        temporarily _cur_t = _on_t
+          _consume_eols
+          r_scanner_add_subtract
+          if (not disable_output) _push( CompareLT(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
+          r_scanner_comparison__inner
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.SYMBOL_GT)
+        temporarily _cur_t = _on_t
+          _consume_eols
+          r_scanner_add_subtract
+          if (not disable_output) _push( CompareGT(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
+          r_scanner_comparison__inner
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.SYMBOL_LE)
+        temporarily _cur_t = _on_t
+          _consume_eols
+          r_scanner_add_subtract
+          if (not disable_output) _push( CompareLE(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
+          r_scanner_comparison__inner
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.SYMBOL_GE)
+        temporarily _cur_t = _on_t
+          _consume_eols
+          r_scanner_add_subtract
+          if (not disable_output) _push( CompareGE(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
+          r_scanner_comparison__inner
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      _pop_frame
+
+    method r_scanner_add_subtract
+      _push_frame
+      r_scanner_multiply_divide
+      r_scanner_add_subtract__inner
+      _pop_frame
+
+    method r_scanner_add_subtract__inner
+      _push_frame
+      if (_next_t.type == TokenType.SYMBOL_PLUS)
+        temporarily _cur_t = _on_t
+          _consume_eols
+          r_scanner_multiply_divide
+          if (not disable_output) _push( Add(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
+          r_scanner_add_subtract__inner
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.SYMBOL_MINUS)
+        temporarily _cur_t = _on_t
+          _consume_eols
+          r_scanner_multiply_divide
+          if (not disable_output) _push( Subtract(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
+          r_scanner_add_subtract__inner
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      _pop_frame
+
+    method r_scanner_multiply_divide
+      _push_frame
+      r_scanner_power
+      r_scanner_multiply_divide__inner
+      _pop_frame
+
+    method r_scanner_multiply_divide__inner
+      _push_frame
+      if (_next_t.type == TokenType.SYMBOL_STAR)
+        temporarily _cur_t = _on_t
+          _consume_eols
+          r_scanner_power
+          if (not disable_output) _push( Multiply(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
+          r_scanner_multiply_divide__inner
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.SYMBOL_SLASH)
+        temporarily _cur_t = _on_t
+          _consume_eols
+          r_scanner_power
+          if (not disable_output) _push( Divide(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
+          r_scanner_multiply_divide__inner
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      _pop_frame
+
+    method r_scanner_power
+      _push_frame
+      r_scanner_pre_unary
+      r_scanner_power__inner
+      _pop_frame
+
+    method r_scanner_power__inner
+      _push_frame
+      if (_next_t.type == TokenType.SYMBOL_CARET)
+        temporarily _cur_t = _on_t
+          _consume_eols
+          r_scanner_pre_unary
+          if (not disable_output) _push( Power(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
+          r_scanner_power__inner
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      _pop_frame
+
+    method r_scanner_pre_unary
+      _push_frame
+      if (_next_t.type == TokenType.SYMBOL_MINUS)
+        temporarily _cur_t = _on_t
+          _consume_eols
+          r_scanner_pre_unary
+          if (not disable_output) _push( Negate(_cur_t,_node_arg(-1)), 1 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.KEYWORD_NOT)
+        temporarily _cur_t = _on_t
+          _consume_eols
+          r_scanner_pre_unary
+          if (not disable_output) _push( LogicalNot(_cur_t,_node_arg(-1)), 1 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      r_scanner_term
+      _pop_frame
+
+    method r_scanner_term
+      _push_frame
+      if (_next_t.type == TokenType.SYMBOL_OPEN_PAREN)
+        temporarily _cur_t = _on_t
+          r_scanner_expression
+          if (not _consume(TokenType.SYMBOL_CLOSE_PAREN)) _throw_syntax_error( &expected=TokenType.SYMBOL_CLOSE_PAREN )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.SYMBOL_OPEN_CURLY)
+        temporarily _cur_t = _on_t
+          r_pattern_sequence
+          if (not _consume(TokenType.SYMBOL_CLOSE_CURLY)) _throw_syntax_error( &expected=TokenType.SYMBOL_CLOSE_CURLY )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.KEYWORD_BUFFER)
+        temporarily _cur_t = _on_t
+          if (not disable_output) _push( ReadBuffer(_cur_t), 0 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.KEYWORD_CHARACTER)
+        temporarily _cur_t = _on_t
+          if (not _consume(TokenType.SYMBOL_OPEN_PAREN)) _throw_syntax_error( &expected=TokenType.SYMBOL_OPEN_PAREN )
+          r_scanner_expression
+          if (not _consume(TokenType.SYMBOL_CLOSE_PAREN)) _throw_syntax_error( &expected=TokenType.SYMBOL_CLOSE_PAREN )
+          if (not disable_output) _push( CastToCharacter(_cur_t,_node_arg(-1)), 1 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.KEYWORD_INTEGER)
+        temporarily _cur_t = _on_t
+          if (not _consume(TokenType.SYMBOL_OPEN_PAREN)) _throw_syntax_error( &expected=TokenType.SYMBOL_OPEN_PAREN )
+          r_scanner_expression
+          if (not _consume(TokenType.SYMBOL_CLOSE_PAREN)) _throw_syntax_error( &expected=TokenType.SYMBOL_CLOSE_PAREN )
+          if (not disable_output) _push( CastToInteger(_cur_t,_node_arg(-1)), 1 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.KEYWORD_CONSUME)
+        temporarily _cur_t = _on_t
+          r_sequence_args
+          if (not disable_output) _push( ScannerConsume(_cur_t,_node_arg(-1)->(as SequenceArgs)), 1 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.KEYWORD_FALSE)
+        temporarily _cur_t = _on_t
+          if (not disable_output) _push( LiteralLogical(_cur_t,_string_to_Logical("false")), 0 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.KEYWORD_HAS_NEXT)
+        temporarily _cur_t = _on_t
+          if (not disable_output) _push( ScannerHasAnother(_cur_t), 0 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.KEYWORD_NEXT_IS)
+        temporarily _cur_t = _on_t
+          r_sequence_args
+          if (not disable_output) _push( ScannerNextIs(_cur_t,_node_arg(-1)->(as SequenceArgs)), 1 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.KEYWORD_OUTPUT)
+        temporarily _cur_t = _on_t
+          if (not disable_output) _push( ReadOutput(_cur_t), 0 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.KEYWORD_PEEK)
+        temporarily _cur_t = _on_t
+          if (_consume(TokenType.SYMBOL_OPEN_PAREN))
+            r_scanner_expression
+            if (not _consume(TokenType.SYMBOL_CLOSE_PAREN)) _throw_syntax_error( &expected=TokenType.SYMBOL_CLOSE_PAREN )
+          else
+            if (not disable_output) _push( null, 0 )
+          endIf
+          if (not disable_output) _push( ScannerPeek(_cur_t,_node_arg(-1)), 1 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.KEYWORD_READ)
+        temporarily _cur_t = _on_t
+          if (not disable_output) _push( ScannerRead(_cur_t), 0 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.KEYWORD_SCAN)
+        temporarily _cur_t = _on_t
+          r_sequence_args
+          if (not disable_output) _push( Scan(_cur_t,_node_arg(-1)->(as SequenceArgs)), 1 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.KEYWORD_TRUE)
+        temporarily _cur_t = _on_t
+          if (not disable_output) _push( LiteralLogical(_cur_t,_string_to_Logical("true")), 0 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.CHARSET)
+        temporarily _cur_t = _on_t
+          if (not disable_output) _push( CharSet(_cur_t,_cur_t.content), 0 )
+          r_repeat_count
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.IDENTIFIER)
+        temporarily _cur_t = _on_t
+          if (not disable_output) _push( Access(_cur_t,_cur_t.content), 0 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.INTEGER)
+        temporarily _cur_t = _on_t
+          if (not disable_output) _push( LiteralInteger(_cur_t,_string_to_Integer(_cur_t.content)), 0 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.STRING)
+        temporarily _cur_t = _on_t
+          if (not disable_output) _push( LiteralString(_cur_t,_cur_t.content), 0 )
+          r_repeat_count
+          _pop_frame
+          return
+        endTemporarily
+      elseIf (_next_t.type == TokenType.STRING_OR_CHARACTER)
+        temporarily _cur_t = _on_t
+          if (not disable_output) _push( LiteralStringOrCharacter(_cur_t,_cur_t.content), 0 )
+          r_repeat_count
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      _throw_syntax_error
+      _pop_frame
+      return
+      _pop_frame
+
+    method r_repeat_count
+      _push_frame
+      if (_next_t.type == TokenType.SYMBOL_STAR)
+        temporarily _cur_t = _on_t
+          if (not disable_output) _push( ZeroOrMore(_cur_t,_node_arg(-1)), 1 )
+          _pop_frame
+          return
+        endTemporarily
+      elseIf (_next_t.type == TokenType.SYMBOL_PLUS)
+        temporarily _cur_t = _on_t
+          if (not disable_output) _push( OneOrMore(_cur_t,_node_arg(-1)), 1 )
+          _pop_frame
+          return
+        endTemporarily
+      elseIf (_next_t.type == TokenType.SYMBOL_QUESTION)
+        temporarily _cur_t = _on_t
+          if (not disable_output) _push( OptionalPattern(_cur_t,_node_arg(-1)), 1 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      _pop_frame
+
+    method r_parser_routines
+      _push_frame
+      _begin_list
+      r_consume_eols
+      while ((_next_t.type == TokenType.SYMBOL_MINUS))
+        if (_next_t.type == TokenType.SYMBOL_MINUS)
+          temporarily _cur_t = _on_t
+            r_routine_name_and_attributes
+            r_parser_multi_line_statements
+            if (not disable_output) _push( Routine(_cur_t,_string_arg(-3),_string_arg(-2),_node_arg(-1)->(as Statements)), 3 )
+          endTemporarily
+        endIf
+        r_consume_eols
+      endWhile
+      if (disable_output)     _discard_list
+      else                    _push_list( CmdList(_list_t) )
+      _pop_frame
+      return
+
+    method r_parser_multi_line_statements
+      _push_frame
+      r_consume_eols_and_semicolons
+      if ((not (_position < _limit)))
+        _throw_syntax_error
+        _pop_frame
+        return
+      endIf
+      _begin_list
+      while (((_position < _limit) and (not ((_next_t.type == TokenType.SYMBOL_MINUS) or (_next_t.type.attributes & TokenType.ATTRIBUTE_STRUCTURAL)?))))
+        r_parser_control_structure
+        r_consume_eols_and_semicolons
+      endWhile
+      if (disable_output)     _discard_list
+      else                    _push_list( Statements(_list_t) )
+      _pop_frame
+      return
+
+    method r_parser_single_line_statements
+      _push_frame
+      _begin_list
+      if (_consume(TokenType.EOL))
+        if (disable_output)     _discard_list
+        else                    _push_list( Statements(_list_t) )
+        _pop_frame
+        return
+      endIf
+      r_parser_statement
+      while (_consume(TokenType.SYMBOL_SEMICOLON))
+        r_parser_statement
+      endWhile
+      r_must_consume_eols
+      if (disable_output)     _discard_list
+      else                    _push_list( Statements(_list_t) )
+      _pop_frame
+      return
+
+    method r_parser_control_structure
+      _push_frame
+      if (_next_t.type == TokenType.KEYWORD_IF)
+        temporarily _cur_t = _on_t
+          if (_consume(TokenType.SYMBOL_OPEN_PAREN))
+            r_parser_expression
+            if (not _consume(TokenType.SYMBOL_CLOSE_PAREN)) _throw_syntax_error( &expected=TokenType.SYMBOL_CLOSE_PAREN )
+          else
+            r_parser_expression
+          endIf
+          if (_consume(TokenType.EOL))
+            r_parser_multi_line_statements
+            r_parser_multi_line_else_ifs
+            r_parser_multi_line_else
+            if (not _consume(TokenType.KEYWORD_END_IF)) _throw_syntax_error( &expected=TokenType.KEYWORD_END_IF )
+          else
+            r_parser_single_line_statements
+            r_parser_single_line_else_ifs
+            r_parser_single_line_else
+          endIf
+          if (not disable_output) _push( If(_cur_t,_node_arg(-4),_node_arg(-3)->(as Statements),_node_arg(-2),_node_arg(-1)->(as Statements)), 4 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.KEYWORD_ON)
+        temporarily _cur_t = _on_t
+          r_on_block
+          if (not disable_output) _push( On(_cur_t,_node_arg(-5),_node_arg(-4)->(as Args),_node_arg(-3)->(as Statements),_node_arg(-2),_node_arg(-1)->(as Statements)), 5 )
+          _pop_frame
+          return
+        endTemporarily
+      elseIf (_next_t.type == TokenType.KEYWORD_ON_PEEK)
+        temporarily _cur_t = _on_t
+          r_on_block
+          if (not disable_output) _push( On(_cur_t,_node_arg(-5),_node_arg(-4)->(as Args),_node_arg(-3)->(as Statements),_node_arg(-2),_node_arg(-1)->(as Statements),_string_to_Logical("true")), 5 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.KEYWORD_WHILE)
+        temporarily _cur_t = _on_t
+          if (_consume(TokenType.SYMBOL_OPEN_PAREN))
+            r_parser_expression
+            if (not _consume(TokenType.SYMBOL_CLOSE_PAREN)) _throw_syntax_error( &expected=TokenType.SYMBOL_CLOSE_PAREN )
+          else
+            r_parser_expression
+          endIf
+          if (_consume(TokenType.EOL))
+            r_parser_multi_line_statements
+            if (not _consume(TokenType.KEYWORD_END_WHILE)) _throw_syntax_error( &expected=TokenType.KEYWORD_END_WHILE )
+          else
+            r_parser_single_line_statements
+          endIf
+          if (not disable_output) _push( While(_cur_t,_node_arg(-2),_node_arg(-1)->(as Statements)), 2 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      r_parser_statement
+      _pop_frame
+
+    method r_on_block
+      _push_frame
+      r_ttype_or_literal
+      r_collect_parse_list
+      if (_consume(TokenType.EOL))
+        r_parser_multi_line_statements
+        r_parser_multi_line_else_ons
+        r_parser_multi_line_else_on_others
+        if (not _consume(TokenType.KEYWORD_END_ON)) _throw_syntax_error( &expected=TokenType.KEYWORD_END_ON )
+      else
+        _consume(TokenType.SYMBOL_COLON)
+        r_parser_single_line_statements
+        r_parser_single_line_else_ons
+        r_parser_single_line_else_on_others
+      endIf
+      _pop_frame
+
+    method r_parser_multi_line_else_ifs
+      _push_frame
+      _begin_list
+      while ((_next_t.type == TokenType.KEYWORD_ELSE_IF))
+        _save_position
+        if (_next_t.type == TokenType.KEYWORD_ELSE_IF)
+          temporarily _cur_t = _on_t
+            if (_consume(TokenType.SYMBOL_OPEN_PAREN))
+              r_parser_expression
+              if (not _consume(TokenType.SYMBOL_CLOSE_PAREN)) _throw_syntax_error( &expected=TokenType.SYMBOL_CLOSE_PAREN )
+            else
+              r_parser_expression
+            endIf
+            if ((_next_t.type == TokenType.EOL))
+              _discard_position
+            else
+              _restore_position
+              if (disable_output)     _discard_list
+              else                    _push_list( CmdList(_list_t) )
+              _pop_frame
+              return
+            endIf
+            r_parser_multi_line_statements
+            if (not disable_output) _push( ElseIf(_cur_t,_node_arg(-2),_node_arg(-1)->(as Statements)), 2 )
+          endTemporarily
+        endIf
+      endWhile
+      if (disable_output)     _discard_list
+      else                    _push_list( CmdList(_list_t) )
+      _pop_frame
+      return
+
+    method r_parser_multi_line_else
+      _push_frame
+      if ((not (_next_t.type == TokenType.KEYWORD_ELSE)))
+        if (not disable_output) _push( null, 0 )
+        _pop_frame
+        return
+      endIf
+      _save_position
+      if (_next_t.type == TokenType.KEYWORD_ELSE)
+        temporarily _cur_t = _on_t
+          if ((not _consume(TokenType.EOL)))
+            _restore_position
+            if (not disable_output) _push( null, 0 )
+            _pop_frame
             return
-          others
+          endIf
+          r_parser_multi_line_statements
+          _discard_position
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      _pop_frame
+
+    method r_parser_single_line_else_ifs
+      _push_frame
+      _begin_list
+      while ((_next_t.type == TokenType.KEYWORD_ELSE_IF))
+        _save_position
+        if (_next_t.type == TokenType.KEYWORD_ELSE_IF)
+          temporarily _cur_t = _on_t
+            if (_consume(TokenType.SYMBOL_OPEN_PAREN))
+              r_parser_expression
+              if (not _consume(TokenType.SYMBOL_CLOSE_PAREN)) _throw_syntax_error( &expected=TokenType.SYMBOL_CLOSE_PAREN )
+            else
+              r_parser_expression
+            endIf
+            if ((_next_t.type == TokenType.EOL))
+              _restore_position
+              if (disable_output)     _discard_list
+              else                    _push_list( CmdList(_list_t) )
+              _pop_frame
+              return
+            else
+              _discard_position
+            endIf
+            r_parser_single_line_statements
+            if (not disable_output) _push( ElseIf(_cur_t,_node_arg(-2),_node_arg(-1)->(as Statements)), 2 )
+          endTemporarily
+        endIf
+      endWhile
+      if (disable_output)     _discard_list
+      else                    _push_list( CmdList(_list_t) )
+      _pop_frame
+      return
+
+    method r_parser_single_line_else
+      _push_frame
+      if ((not (_next_t.type == TokenType.KEYWORD_ELSE)))
+        if (not disable_output) _push( null, 0 )
+        _pop_frame
+        return
+      endIf
+      _save_position
+      if (_next_t.type == TokenType.KEYWORD_ELSE)
+        temporarily _cur_t = _on_t
+          if (_consume(TokenType.EOL))
+            _restore_position
+            if (not disable_output) _push( null, 0 )
+            _pop_frame
             return
-        endWhich
-      endLoop
+          endIf
+          r_parser_single_line_statements
+          _discard_position
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      _pop_frame
+
+    method r_parser_multi_line_else_ons
+      _push_frame
+      _begin_list
+      while (((_next_t.type == TokenType.KEYWORD_ELSE_ON) or (_next_t.type == TokenType.KEYWORD_ELSE_ON_PEEK)))
+        _save_position
+        if (_next_t.type == TokenType.KEYWORD_ELSE_ON)
+          temporarily _cur_t = _on_t
+            r_token_id
+            r_collect_parse_list
+            if ((_next_t.type == TokenType.EOL))
+              _discard_position
+            else
+              _restore_position
+              if (disable_output)     _discard_list
+              else                    _push_list( CmdList(_list_t) )
+              _pop_frame
+              return
+            endIf
+            r_parser_multi_line_statements
+            if (not disable_output) _push( ElseOn(_cur_t,_node_arg(-3),_node_arg(-2)->(as Args),_node_arg(-1)->(as Statements)), 3 )
+          endTemporarily
+        elseIf (_next_t.type == TokenType.KEYWORD_ELSE_ON_PEEK)
+          temporarily _cur_t = _on_t
+            r_token_id
+            r_collect_parse_list
+            if ((_next_t.type == TokenType.EOL))
+              _discard_position
+            else
+              _restore_position
+              if (disable_output)     _discard_list
+              else                    _push_list( CmdList(_list_t) )
+              _pop_frame
+              return
+            endIf
+            r_parser_multi_line_statements
+            if (not disable_output) _push( ElseOn(_cur_t,_node_arg(-3),_node_arg(-2)->(as Args),_node_arg(-1)->(as Statements),_string_to_Logical("true")), 3 )
+          endTemporarily
+        endIf
+      endWhile
+      if (disable_output)     _discard_list
+      else                    _push_list( CmdList(_list_t) )
+      _pop_frame
+      return
+
+    method r_parser_multi_line_else_on_others
+      _push_frame
+      if ((not (_next_t.type == TokenType.KEYWORD_ELSE_OTHERS)))
+        if (not disable_output) _push( null, 0 )
+        _pop_frame
+        return
+      endIf
+      _save_position
+      if (_next_t.type == TokenType.KEYWORD_ELSE_OTHERS)
+        temporarily _cur_t = _on_t
+          if ((not _consume(TokenType.EOL)))
+            _restore_position
+            if (not disable_output) _push( null, 0 )
+            _pop_frame
+            return
+          endIf
+          r_parser_multi_line_statements
+          _discard_position
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      _pop_frame
+
+    method r_parser_single_line_else_ons
+      _push_frame
+      _begin_list
+      while ((_next_t.type == TokenType.KEYWORD_ELSE_ON))
+        _save_position
+        if (_next_t.type == TokenType.KEYWORD_ELSE_ON)
+          temporarily _cur_t = _on_t
+            r_token_id
+            r_collect_parse_list
+            if ((_next_t.type == TokenType.EOL))
+              _restore_position
+              if (disable_output)     _discard_list
+              else                    _push_list( CmdList(_list_t) )
+              _pop_frame
+              return
+            else
+              _discard_position
+            endIf
+            _consume(TokenType.SYMBOL_COLON)
+            r_parser_single_line_statements
+            if (not disable_output) _push( ElseOn(_cur_t,_node_arg(-3),_node_arg(-2)->(as Args),_node_arg(-1)->(as Statements)), 3 )
+          endTemporarily
+        endIf
+      endWhile
+      if (disable_output)     _discard_list
+      else                    _push_list( CmdList(_list_t) )
+      _pop_frame
+      return
+
+    method r_parser_single_line_else_on_others
+      _push_frame
+      if ((not (_next_t.type == TokenType.KEYWORD_ELSE_OTHERS)))
+        if (not disable_output) _push( null, 0 )
+        _pop_frame
+        return
+      endIf
+      _save_position
+      if (_next_t.type == TokenType.KEYWORD_ELSE_OTHERS)
+        temporarily _cur_t = _on_t
+          if (_consume(TokenType.EOL))
+            _restore_position
+            if (not disable_output) _push( null, 0 )
+            _pop_frame
+            return
+          endIf
+          _consume(TokenType.SYMBOL_COLON)
+          r_parser_single_line_statements
+          _discard_position
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      _pop_frame
+
+    method r_parser_statement
+      _push_frame
+      if (_next_t.type == TokenType.KEYWORD_BEGIN_LIST)
+        temporarily _cur_t = _on_t
+          if (not disable_output) _push( BeginList(_cur_t), 0 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.KEYWORD_CALL)
+        temporarily _cur_t = _on_t
+          r_identifier
+          if (not disable_output) _push( ParserCallUserMethod(_cur_t,_string_arg(-1)), 1 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.KEYWORD_CREATE)
+        temporarily _cur_t = _on_t
+          r_parser_product
+          if (not disable_output) _push( ParserCreate(_cur_t,_node_arg(-1)->(as CreateCmd)), 1 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.KEYWORD_CREATE_LIST)
+        temporarily _cur_t = _on_t
+          r_list_type
+          if (not disable_output) _push( CreateList(_cur_t,_string_arg(-1)), 1 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.KEYWORD_CREATE_NULL)
+        temporarily _cur_t = _on_t
+          if (not disable_output) _push( CreateNull(_cur_t), 0 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.KEYWORD_CREATE_TOKEN_LIST)
+        temporarily _cur_t = _on_t
+          if (not disable_output) _push( CreateTokenList(_cur_t), 0 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.KEYWORD_DISCARD_LIST)
+        temporarily _cur_t = _on_t
+          if (not disable_output) _push( DiscardList(_cur_t), 0 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.KEYWORD_DISCARD_POSITION)
+        temporarily _cur_t = _on_t
+          if (not disable_output) _push( DiscardPosition(_cur_t), 0 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.KEYWORD_MUST_CONSUME)
+        temporarily _cur_t = _on_t
+          r_ttype_or_literal
+          if (not disable_output) _push( ParserMustConsume(_cur_t,_node_arg(-1)), 1 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.KEYWORD_NO_ACTION)
+        temporarily _cur_t = _on_t
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.KEYWORD_PRINT)
+        temporarily _cur_t = _on_t
+          r_parser_args
+          if (not disable_output) _push( Print(_cur_t,_node_arg(-1)->(as Args)), 1 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.KEYWORD_PRINTLN)
+        temporarily _cur_t = _on_t
+          if (((not (_position < _limit)) or (_next_t.type.attributes & TokenType.ATTRIBUTE_STRUCTURAL)?))
+            _begin_list
+            if (disable_output)     _discard_list
+            else                    _push_list( Args(_list_t) )
+          else
+            r_parser_args
+          endIf
+          if (not disable_output) _push( Println(_cur_t,_node_arg(-1)->(as Args)), 1 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.KEYWORD_PRODUCE)
+        temporarily _cur_t = _on_t
+          r_parser_product
+          if (not disable_output) _push( ParserProduce(_cur_t,_node_arg(-1)->(as CreateCmd)), 1 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.SYMBOL_ARROW)
+        temporarily _cur_t = _on_t
+          r_parser_product
+          if (not disable_output) _push( ParserProduce(_cur_t,_node_arg(-1)->(as CreateCmd)), 1 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.KEYWORD_PRODUCE_NULL)
+        temporarily _cur_t = _on_t
+          if (not disable_output) _push( CreateNull(_cur_t), 0 )
+          if (not disable_output) _push( null, 0 )
+          if (not disable_output) _push( Return(_cur_t,_node_arg(-1)), 1 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.KEYWORD_PRODUCE_LIST)
+        temporarily _cur_t = _on_t
+          r_list_type
+          if (not disable_output) _push( ProduceList(_cur_t,_string_arg(-1)), 1 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.KEYWORD_PRODUCE_TOKEN_LIST)
+        temporarily _cur_t = _on_t
+          if (not disable_output) _push( ProduceTokenList(_cur_t), 0 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.KEYWORD_RESTORE_POSITION)
+        temporarily _cur_t = _on_t
+          if (not disable_output) _push( RestorePosition(_cur_t), 0 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.KEYWORD_RETURN)
+        temporarily _cur_t = _on_t
+          if ((_next_t.type == TokenType.EOL))
+            if (not disable_output) _push( null, 0 )
+          else
+            _throw_syntax_error
+            _pop_frame
+            return
+          endIf
+          if (not disable_output) _push( Return(_cur_t,_node_arg(-1)), 1 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.KEYWORD_SAVE_POSITION)
+        temporarily _cur_t = _on_t
+          if (not disable_output) _push( SavePosition(_cur_t), 0 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.KEYWORD_SYNTAX_ERROR)
+        temporarily _cur_t = _on_t
+          if ((_next_t.type == TokenType.EOL))
+            if (not disable_output) _push( null, 0 )
+          else
+            r_parser_args
+          endIf
+          if (not disable_output) _push( ThrowSyntaxError(_cur_t,_node_arg(-1)->(as Args)), 1 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.SYMBOL_PLUS_PLUS)
+        temporarily _cur_t = _on_t
+          r_parser_expression
+          if (not disable_output) _push( Increment(_cur_t,_node_arg(-1)), 1 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.SYMBOL_MINUS_MINUS)
+        temporarily _cur_t = _on_t
+          r_parser_expression
+          if (not disable_output) _push( Decrement(_cur_t,_node_arg(-1)), 1 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      r_parser_expression
+      if (_next_t.type == TokenType.SYMBOL_ASSIGN)
+        temporarily _cur_t = _on_t
+          r_parser_expression
+          if (not disable_output) _push( Assign(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.SYMBOL_PLUS_PLUS)
+        temporarily _cur_t = _on_t
+          if (not disable_output) _push( Increment(_cur_t,_node_arg(-1)), 1 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.SYMBOL_MINUS_MINUS)
+        temporarily _cur_t = _on_t
+          if (not disable_output) _push( Decrement(_cur_t,_node_arg(-1)), 1 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      _pop_frame
+
+    method r_list_type
+      _push_frame
+      if ((_next_t.type == TokenType.IDENTIFIER))
+        r_identifier
+      else
+        if (not disable_output) _push( null, 0 )
+        _pop_frame
+        return
+      endIf
+      _pop_frame
+
+    method r_parser_args
+      _push_frame
+      if (_consume(TokenType.SYMBOL_OPEN_PAREN))
+        r_consume_eols
+        r_parser_arg_list
+        r_consume_eols
+        if (not _consume(TokenType.SYMBOL_CLOSE_PAREN)) _throw_syntax_error( &expected=TokenType.SYMBOL_CLOSE_PAREN )
+      else
+        r_parser_arg_list
+      endIf
+      _pop_frame
+
+    method r_parser_arg_list
+      _push_frame
+      _begin_list
+      if ((_next_t.type.attributes & TokenType.ATTRIBUTE_STRUCTURAL)?)
+        if (disable_output)     _discard_list
+        else                    _push_list( Args(_list_t) )
+        _pop_frame
+        return
+      endIf
+      r_parser_expression
+      while ((_position < _limit))
+        if (_consume(TokenType.SYMBOL_COMMA))
+          r_consume_eols
+          r_parser_expression
+        elseIf (((_next_t.type == TokenType.EOL) or (_next_t.type.attributes & TokenType.ATTRIBUTE_STRUCTURAL)?))
+          if (disable_output)     _discard_list
+          else                    _push_list( Args(_list_t) )
+          _pop_frame
+          return
+        else
+          r_parser_expression
+        endIf
+      endWhile
+      if (disable_output)     _discard_list
+      else                    _push_list( Args(_list_t) )
+      _pop_frame
+      return
+
+    method r_ttype_or_literal
+      _push_frame
+      if (_consume(TokenType.SYMBOL_OPEN_PAREN))
+        r_ttype_or_literal_inner
+        if (not _consume(TokenType.SYMBOL_CLOSE_PAREN)) _throw_syntax_error( &expected=TokenType.SYMBOL_CLOSE_PAREN )
+      else
+        r_ttype_or_literal_inner
+      endIf
+      _pop_frame
+
+    method r_ttype_or_literal_inner
+      _push_frame
+      if (_consume(TokenType.SYMBOL_AT))
+        r_token_id
+        if (not disable_output) _push( LiteralContent(_cur_t,_string_arg(-1)), 1 )
+      else
+        r_token_id
+      endIf
+      _pop_frame
+
+    method r_attr_name_arg
+      _push_frame
+      if (_consume(TokenType.SYMBOL_OPEN_PAREN))
+        r_attribute_name
+        if (not _consume(TokenType.SYMBOL_CLOSE_PAREN)) _throw_syntax_error( &expected=TokenType.SYMBOL_CLOSE_PAREN )
+      else
+        r_attribute_name
+      endIf
+      _pop_frame
+
+    method r_attribute_name
+      _push_frame
+      if (_next_t.type == TokenType.IDENTIFIER)
+        temporarily _cur_t = _on_t
+          if (not disable_output) _push( Identifier(_cur_t,_cur_t.content), 0 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.STRING)
+        temporarily _cur_t = _on_t
+          if (not disable_output) _push( LiteralString(_cur_t,_cur_t.content), 0 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.STRING_OR_CHARACTER)
+        temporarily _cur_t = _on_t
+          if (not disable_output) _push( LiteralString(_cur_t,_cur_t.content), 0 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      _throw_syntax_error("Attribute name expected.")
+      _pop_frame
+      return
+      _pop_frame
+
+    method r_token_id
+      _push_frame
+      if (_next_t.type == TokenType.IDENTIFIER)
+        temporarily _cur_t = _on_t
+          if (not disable_output) _push( Identifier(_cur_t,_cur_t.content), 0 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.STRING)
+        temporarily _cur_t = _on_t
+          if (not disable_output) _push( LiteralString(_cur_t,_cur_t.content), 0 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.STRING_OR_CHARACTER)
+        temporarily _cur_t = _on_t
+          if (not disable_output) _push( LiteralString(_cur_t,_cur_t.content), 0 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      _throw_syntax_error("TOKEN_ID or \"token_name\" expected.")
+      _pop_frame
+      return
+      _pop_frame
+
+    method r_collect_parse_list
+      _push_frame
+      _begin_list
+      while ((((_position < _limit) and (not (_next_t.type == TokenType.EOL))) and (not (_next_t.type.attributes & TokenType.ATTRIBUTE_STRUCTURAL)?)))
+        _consume(TokenType.SYMBOL_COMMA)
+        r_string_id_or_routine
+      endWhile
+      if (disable_output)     _discard_list
+      else                    _push_list( Args(_list_t) )
+      _pop_frame
+      return
+
+    method r_string_id_or_routine
+      _push_frame
+      if (_next_t.type == TokenType.IDENTIFIER)
+        temporarily _cur_t = _on_t
+          if (not disable_output) _push( Identifier(_cur_t,_cur_t.content), 0 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.STRING)
+        temporarily _cur_t = _on_t
+          if (not disable_output) _push( LiteralString(_cur_t,_cur_t.content), 0 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.STRING_OR_CHARACTER)
+        temporarily _cur_t = _on_t
+          if (not disable_output) _push( LiteralString(_cur_t,_cur_t.content), 0 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      _throw_syntax_error("TOKEN_ID, \"token_name\", or routine_name expected.")
+      _pop_frame
+      return
+      _pop_frame
+
+    method r_parser_product
+      _push_frame
+      r_consume_eols
+      r_identifier
+      if (_consume(TokenType.SYMBOL_OPEN_PAREN))
+        r_cmd_args
+        if (not _consume(TokenType.SYMBOL_CLOSE_PAREN)) _throw_syntax_error( &expected=TokenType.SYMBOL_CLOSE_PAREN )
+      else
+        _begin_list
+        if (disable_output)     _discard_list
+        else                    _push_list( Args(_list_t) )
+      endIf
+      if (_consume(TokenType.SYMBOL_COLON))
+        r_type_name
+      else
+        if (not disable_output) _push( null, 0 )
+      endIf
+      if (not disable_output) _push( CreateCmd(_cur_t,_string_arg(-3),_node_arg(-2)->(as Args),_string_arg(-1)), 3 )
+      _pop_frame
+      return
+
+    method r_parser_expression
+      _push_frame
+      r_parser_logical_or
+      _pop_frame
+
+    method r_parser_logical_or
+      _push_frame
+      r_parser_logical_and
+      r_parser_logical_or__inner
+      _pop_frame
+
+    method r_parser_logical_or__inner
+      _push_frame
+      if (_next_t.type == TokenType.KEYWORD_OR)
+        temporarily _cur_t = _on_t
+          _consume_eols
+          r_parser_logical_and
+          if (not disable_output) _push( LogicalOr(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
+          r_parser_logical_or__inner
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      _pop_frame
+
+    method r_parser_logical_and
+      _push_frame
+      r_parser_comparison
+      r_parser_logical_and__inner
+      _pop_frame
+
+    method r_parser_logical_and__inner
+      _push_frame
+      if (_next_t.type == TokenType.KEYWORD_AND)
+        temporarily _cur_t = _on_t
+          _consume_eols
+          r_parser_comparison
+          if (not disable_output) _push( LogicalAnd(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
+          r_parser_logical_and__inner
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      _pop_frame
+
+    method r_parser_comparison
+      _push_frame
+      r_parser_add_subtract
+      r_parser_comparison__inner
+      _pop_frame
+
+    method r_parser_comparison__inner
+      _push_frame
+      if (_next_t.type == TokenType.SYMBOL_EQ)
+        temporarily _cur_t = _on_t
+          _consume_eols
+          r_parser_add_subtract
+          if (not disable_output) _push( CompareEQ(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
+          r_parser_comparison__inner
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.SYMBOL_NE)
+        temporarily _cur_t = _on_t
+          _consume_eols
+          r_parser_add_subtract
+          if (not disable_output) _push( CompareNE(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
+          r_parser_comparison__inner
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.SYMBOL_LT)
+        temporarily _cur_t = _on_t
+          _consume_eols
+          r_parser_add_subtract
+          if (not disable_output) _push( CompareLT(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
+          r_parser_comparison__inner
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.SYMBOL_GT)
+        temporarily _cur_t = _on_t
+          _consume_eols
+          r_parser_add_subtract
+          if (not disable_output) _push( CompareGT(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
+          r_parser_comparison__inner
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.SYMBOL_LE)
+        temporarily _cur_t = _on_t
+          _consume_eols
+          r_parser_add_subtract
+          if (not disable_output) _push( CompareLE(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
+          r_parser_comparison__inner
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.SYMBOL_GE)
+        temporarily _cur_t = _on_t
+          _consume_eols
+          r_parser_add_subtract
+          if (not disable_output) _push( CompareGE(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
+          r_parser_comparison__inner
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      _pop_frame
+
+    method r_parser_add_subtract
+      _push_frame
+      r_parser_multiply_divide
+      r_parser_add_subtract__inner
+      _pop_frame
+
+    method r_parser_add_subtract__inner
+      _push_frame
+      if (_next_t.type == TokenType.SYMBOL_PLUS)
+        temporarily _cur_t = _on_t
+          _consume_eols
+          r_parser_multiply_divide
+          if (not disable_output) _push( Add(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
+          r_parser_add_subtract__inner
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.SYMBOL_MINUS)
+        temporarily _cur_t = _on_t
+          _consume_eols
+          r_parser_multiply_divide
+          if (not disable_output) _push( Subtract(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
+          r_parser_add_subtract__inner
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      _pop_frame
+
+    method r_parser_multiply_divide
+      _push_frame
+      r_parser_power
+      r_parser_multiply_divide__inner
+      _pop_frame
+
+    method r_parser_multiply_divide__inner
+      _push_frame
+      if (_next_t.type == TokenType.SYMBOL_STAR)
+        temporarily _cur_t = _on_t
+          _consume_eols
+          r_parser_power
+          if (not disable_output) _push( Multiply(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
+          r_parser_multiply_divide__inner
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.SYMBOL_SLASH)
+        temporarily _cur_t = _on_t
+          _consume_eols
+          r_parser_power
+          if (not disable_output) _push( Divide(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
+          r_parser_multiply_divide__inner
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      _pop_frame
+
+    method r_parser_power
+      _push_frame
+      r_parser_pre_unary
+      r_parser_power__inner
+      _pop_frame
+
+    method r_parser_power__inner
+      _push_frame
+      if (_next_t.type == TokenType.SYMBOL_CARET)
+        temporarily _cur_t = _on_t
+          _consume_eols
+          r_parser_pre_unary
+          if (not disable_output) _push( Power(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
+          r_parser_power__inner
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      _pop_frame
+
+    method r_parser_pre_unary
+      _push_frame
+      if (_next_t.type == TokenType.SYMBOL_MINUS)
+        temporarily _cur_t = _on_t
+          _consume_eols
+          r_parser_pre_unary
+          if (not disable_output) _push( Negate(_cur_t,_node_arg(-1)), 1 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.KEYWORD_NOT)
+        temporarily _cur_t = _on_t
+          _consume_eols
+          r_parser_pre_unary
+          if (not disable_output) _push( LogicalNot(_cur_t,_node_arg(-1)), 1 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      r_parser_term
+      _pop_frame
+
+    method r_parser_term
+      _push_frame
+      if (_next_t.type == TokenType.SYMBOL_OPEN_PAREN)
+        temporarily _cur_t = _on_t
+          r_parser_expression
+          if (not _consume(TokenType.SYMBOL_CLOSE_PAREN)) _throw_syntax_error( &expected=TokenType.SYMBOL_CLOSE_PAREN )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.KEYWORD_BUFFER)
+        temporarily _cur_t = _on_t
+          if (not disable_output) _push( ReadBuffer(_cur_t), 0 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.KEYWORD_CONSUME)
+        temporarily _cur_t = _on_t
+          r_ttype_or_literal
+          if (not disable_output) _push( ParserConsume(_cur_t,_node_arg(-1)), 1 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.KEYWORD_FALSE)
+        temporarily _cur_t = _on_t
+          if (not disable_output) _push( LiteralLogical(_cur_t,_string_to_Logical("false")), 0 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.KEYWORD_HAS_NEXT)
+        temporarily _cur_t = _on_t
+          if (not disable_output) _push( ParserHasAnother(_cur_t), 0 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.KEYWORD_NEXT_HAS_ATTRIBUTE)
+        temporarily _cur_t = _on_t
+          r_attr_name_arg
+          if (not disable_output) _push( NextHasAttribute(_cur_t,_string_arg(-1)), 1 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.KEYWORD_NEXT_IS)
+        temporarily _cur_t = _on_t
+          r_ttype_or_literal
+          if (not disable_output) _push( ParserNextIs(_cur_t,_node_arg(-1)), 1 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.KEYWORD_OUTPUT)
+        temporarily _cur_t = _on_t
+          if (not disable_output) _push( ReadOutput(_cur_t), 0 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.KEYWORD_READ)
+        temporarily _cur_t = _on_t
+          if (not disable_output) _push( ParserRead(_cur_t), 0 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.KEYWORD_TRUE)
+        temporarily _cur_t = _on_t
+          if (not disable_output) _push( LiteralLogical(_cur_t,_string_to_Logical("true")), 0 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.IDENTIFIER)
+        temporarily _cur_t = _on_t
+          if (not disable_output) _push( Access(_cur_t,_cur_t.content), 0 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.INTEGER)
+        temporarily _cur_t = _on_t
+          if (not disable_output) _push( LiteralInteger(_cur_t,_string_to_Integer(_cur_t.content)), 0 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.STRING)
+        temporarily _cur_t = _on_t
+          if (not disable_output) _push( LiteralString(_cur_t,_cur_t.content), 0 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.STRING_OR_CHARACTER)
+        temporarily _cur_t = _on_t
+          if (not disable_output) _push( LiteralStringOrCharacter(_cur_t,_cur_t.content), 0 )
+          _pop_frame
+          return
+        endTemporarily
+      endIf
+      _throw_syntax_error
+      _pop_frame
+      return
+      _pop_frame
+
+    method r_additional_node_types
+      _push_frame
+      if (not disable_output) _push( WriteBuffer(_cur_t,_node_arg(-1)), 1 )
+      if (not disable_output) _push( WriteOutput(_cur_t,_node_arg(-1)), 1 )
+      _pop_frame
+
 endClass
 
 class ParserPosition( position:Int32, cmd_stack_count:Int32, cur_t:Token ) [compound];

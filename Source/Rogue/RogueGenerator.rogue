@@ -53,14 +53,12 @@ class RogueGenerator : Visitor
 
     method on_visit( cmd:Call )
       if (is_scanner)
-        write "if (not _execute(ip_"
+        write "if (not r_"
         write cmd.routine_def.name
-        write ")) return false"
+        write ") return false"
       else
-        write   "_execute(ip_"
+        write   "r_"
         write   cmd.routine_def.name
-        writeln ")"
-        write   "_pop_frame"
       endIf
       visit_children( cmd )
 
@@ -398,9 +396,7 @@ class RogueGenerator : Visitor
       return cmd
 
     method on_visit( cmd:ScannerCallUserMethod )
-      writeln "this.ip = ip"
       writeln cmd.fn_name
-      write   "ip = this.ip"
       visit_children( cmd )
 
     method on_visit( cmd:MustConsumeContent )
@@ -470,12 +466,14 @@ class RogueGenerator : Visitor
     method on_visit( cmd:ProduceList )
       writeln "if (disable_output)     _discard_list"
       writeln "else                    _push_list( $(_list_t) )" (cmd.list_type)
+      writeln "_pop_frame"
       write   "return"
       visit_children( cmd )
 
     method on_visit( cmd:ProduceTokenList )
       writeln "if (disable_output) _discard_position"
       writeln "else                _create_token_list"
+      writeln "_pop_frame"
       write   "return"
 
     method on_visit( cmd:ScanCharacters )
@@ -490,6 +488,7 @@ class RogueGenerator : Visitor
     method on_visit( cmd:ParserProduce )
       visit_children( cmd )
       writeln
+      writeln "_pop_frame"
       write   "return"
 
     method on_visit( cmd:ParserRead )
@@ -542,22 +541,39 @@ class RogueGenerator : Visitor
       if (is_scanner)
         write   "return true"
       else
+        writeln "_pop_frame"
         write   "return"
       endIf
       visit_children( cmd )
 
     method on( cmd:Routine )->Cmd
-      writeln "          case ip_$"(cmd.name)
+      if (is_scanner)
+        writeln "    method r_$->Logical"(cmd.name)
 
-      indent += 12
-      prior.on( cmd )
+        indent += 6
+        prior.on( cmd )
 
-      if (not BranchAnalyzer.all_paths_return(cmd))
-        if (is_parser) writeln "return"
-        else           writeln "return true"
+        if (not BranchAnalyzer.all_paths_return(cmd))
+          writeln "return true"
+        endIf
+
+        indent -= 6
+        writeln
+      else
+        writeln "    method r_$"(cmd.name)
+
+        indent += 6
+        writeln "_push_frame"
+        prior.on( cmd )
+
+        if (not BranchAnalyzer.all_paths_return(cmd))
+          writeln "_pop_frame"
+          #writeln "return"
+        endIf
+
+        indent -= 6
+        writeln
       endIf
-
-      indent -= 12
       return null
 
 
@@ -643,6 +659,13 @@ class RogueGenerator : Visitor
           visit( cmd.args )
         endForEach
         write ")"
+      endIf
+      writeln
+      if (is_scanner)
+        write "return false"
+      else
+        writeln "_pop_frame"
+        write "return"
       endIf
       return cmd
 

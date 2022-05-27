@@ -26,7 +26,6 @@ class ScannerCore [abstract]
     output        = StringBuilder()
 
     start_ip      = 0
-    ip            : Int32
     halt          = false
 
     _position_stack  = Int32[]
@@ -179,128 +178,138 @@ class ScannerCore [abstract]
       throw CompileError( message, _filepath, _scanner.source, _scanner.line, _scanner.column )
 
     method _execute( ip:Int32 )->Logical
-      loop
-        ++ip
-        which (ip-1)
-          case ip_main
-            _scan_pattern_0.scan(_scanner)
-            if (_scan_pattern_1.scan(_scanner))
-              return false
+      which (ip)
+        case ip_main: return r_main
+        case ip_scan_id_or_keyword: return r_scan_id_or_keyword
+        case ip_scan_number: return r_scan_number
+        case ip_scan_integer: return r_scan_integer
+        case ip_scan_string: return r_scan_string
+        others
+          halt = true
+          return false
+      endWhich
+
+    method r_main->Logical
+      _scan_pattern_0.scan(_scanner)
+      if (_scan_pattern_1.scan(_scanner))
+        return false
+      endIf
+      if ((not _scanner.has_another))
+        halt = true
+        return false
+      endIf
+      line   = _scanner.line
+      column = _scanner.column
+      if (_scanner.consume('\n'))
+        _add( TokenType.EOL )
+        return false
+      endIf
+      _scan_table_0.reset
+      contingent
+        block n=1
+          while (_scanner.has_another(n))
+            if (not _scan_table_0.accept(_scanner.peek(n-1)))
+              escapeWhile
             endIf
-            if ((not _scanner.has_another))
-              halt = true
-              return false
-            endIf
-            line   = _scanner.line
-            column = _scanner.column
-            if (_scanner.consume('\n'))
-              _add( TokenType.EOL )
-              return false
-            endIf
-            _scan_table_0.reset
-            contingent
-              block n=1
-                while (_scanner.has_another(n))
-                  if (not _scan_table_0.accept(_scanner.peek(n-1)))
-                    escapeWhile
-                  endIf
-                  ++n
-                endWhile
-                necessary (_scan_table_0.has_product)
-                loop (_scan_table_0.match_count) _scanner.read
-              endBlock
-              which (_scan_table_0.product)
-                case 0
-                  _add( TokenType.SYMBOL_CLOSE_PAREN )
-                  return false
-                case 1
-                  _add( TokenType.SYMBOL_EQUALS )
-                  return false
-                case 2
-                  _add( TokenType.SYMBOL_MINUS )
-                  return false
-                case 3
-                  _add( TokenType.SYMBOL_OPEN_PAREN )
-                  return false
-                case 4
-                  _add( TokenType.SYMBOL_PLUS )
-                  return false
-                case 5
-                  _add( TokenType.SYMBOL_SLASH )
-                  return false
-                case 6
-                  _add( TokenType.SYMBOL_STAR )
-                  return false
-                others
-                  necessary (false)
-              endWhich
-            endContingent
-            if (not _execute(ip_scan_id_or_keyword)) return false
-            if (not _execute(ip_scan_number)) return false
-            if (not _execute(ip_scan_string)) return false
-            _throw_syntax_error
-          case ip_scan_id_or_keyword
-            if ((not _scan_pattern_2.scan(_scanner,buffer)))
-              return true
-            endIf
-            _scan_table_1.reset
-            contingent
-              necessary (_scan_table_1.accept(forEach in buffer))
-              which (_scan_table_1.product)
-                case 1
-                  _add( TokenType.KEYWORD_PRINT )
-                  return false
-                case 2
-                  _add( TokenType.KEYWORD_PRINTLN )
-                  return false
-                others
-                  necessary (false)
-              endWhich
-            unsatisfied
-              _add( TokenType.IDENTIFIER )
-              return false
-            endContingent
-          case ip_scan_number
-            if ((not _scanner.has_another))
-              return true
-            endIf
-            if (_scan_pattern_3.scan(_scanner,buffer))
-              if (not _execute(ip_scan_integer)) return false
-              if (_scan('.'))
-                if (not _execute(ip_scan_integer)) return false
-              endIf
-              _add( TokenType.NUMBER )
-              return false
-            elseIf (_scan('.'))
-              if (not _execute(ip_scan_integer)) return false
-              _add( TokenType.NUMBER )
-              return false
-            else
-              return true
-            endIf
-          case ip_scan_integer
-            _scan_pattern_4.scan(_scanner,buffer)
-            return true
-          case ip_scan_string
-            if ((not _scanner.consume('"')))
-              return true
-            endIf
-            while ((_scanner.has_another and (not _scanner.next_is('\n'))))
-              ch = _scanner.read
-              if ((ch=='"'))
-                _add( TokenType.STRING )
-                return false
-              elseIf (((ch=='\\') and _scanner.has_another))
-                ch = _scanner.read
-              endIf
-              buffer.print(ch)
-            endWhile
-            _throw_syntax_error("Unterminated string.")
-            return true
-          others
-            halt = true
+            ++n
+          endWhile
+          necessary (_scan_table_0.has_product)
+          loop (_scan_table_0.match_count) _scanner.read
+        endBlock
+        which (_scan_table_0.product)
+          case 0
+            _add( TokenType.SYMBOL_CLOSE_PAREN )
             return false
+          case 1
+            _add( TokenType.SYMBOL_EQUALS )
+            return false
+          case 2
+            _add( TokenType.SYMBOL_MINUS )
+            return false
+          case 3
+            _add( TokenType.SYMBOL_OPEN_PAREN )
+            return false
+          case 4
+            _add( TokenType.SYMBOL_PLUS )
+            return false
+          case 5
+            _add( TokenType.SYMBOL_SLASH )
+            return false
+          case 6
+            _add( TokenType.SYMBOL_STAR )
+            return false
+          others
+            necessary (false)
         endWhich
-      endLoop
+      endContingent
+      if (not r_scan_id_or_keyword) return false
+      if (not r_scan_number) return false
+      if (not r_scan_string) return false
+      _throw_syntax_error
+      return false
+      return true
+
+    method r_scan_id_or_keyword->Logical
+      if ((not _scan_pattern_2.scan(_scanner,buffer)))
+        return true
+      endIf
+      _scan_table_1.reset
+      contingent
+        necessary (_scan_table_1.accept(forEach in buffer))
+        which (_scan_table_1.product)
+          case 1
+            _add( TokenType.KEYWORD_PRINT )
+            return false
+          case 2
+            _add( TokenType.KEYWORD_PRINTLN )
+            return false
+          others
+            necessary (false)
+        endWhich
+      unsatisfied
+        _add( TokenType.IDENTIFIER )
+        return false
+      endContingent
+
+    method r_scan_number->Logical
+      if ((not _scanner.has_another))
+        return true
+      endIf
+      if (_scan_pattern_3.scan(_scanner,buffer))
+        if (not r_scan_integer) return false
+        if (_scan('.'))
+          if (not r_scan_integer) return false
+        endIf
+        _add( TokenType.NUMBER )
+        return false
+      elseIf (_scan('.'))
+        if (not r_scan_integer) return false
+        _add( TokenType.NUMBER )
+        return false
+      else
+        return true
+      endIf
+
+    method r_scan_integer->Logical
+      _scan_pattern_4.scan(_scanner,buffer)
+      return true
+
+    method r_scan_string->Logical
+      if ((not _scanner.consume('"')))
+        return true
+      endIf
+      while ((_scanner.has_another and (not _scanner.next_is('\n'))))
+        ch = _scanner.read
+        if ((ch=='"'))
+          _add( TokenType.STRING )
+          return false
+        elseIf (((ch=='\\') and _scanner.has_another))
+          ch = _scanner.read
+        endIf
+        buffer.print(ch)
+      endWhile
+      _throw_syntax_error("Unterminated string.")
+      return false
+      return true
 
 endClass

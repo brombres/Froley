@@ -36,7 +36,6 @@ class ScannerCore [abstract]
     output        = StringBuilder()
 
     start_ip      = 0
-    ip            : Int32
     halt          = false
 
     _position_stack  = Int32[]
@@ -191,633 +190,667 @@ class ScannerCore [abstract]
       throw CompileError( message, _filepath, _scanner.source, _scanner.line, _scanner.column )
 
     method _execute( ip:Int32 )->Logical
-      loop
-        ++ip
-        which (ip-1)
-          case ip_scan_standard_token
-            if ((not _scanner.has_another))
-              halt = true
-              return false
+      which (ip)
+        case ip_scan_standard_token: return r_scan_standard_token
+        case ip_scan_charset: return r_scan_charset
+        case ip_consume_whitespace: return r_consume_whitespace
+        case ip_consume_comment: return r_consume_comment
+        case ip_scan_optional_plain_id: return r_scan_optional_plain_id
+        case ip_scan_tokens_id: return r_scan_tokens_id
+        case ip_scan_token_name: return r_scan_token_name
+        case ip_scan_token_symbol: return r_scan_token_symbol
+        case ip_scan_token_attributes: return r_scan_token_attributes
+        case ip_scan_identifier: return r_scan_identifier
+        case ip_must_scan_attribute_identifier: return r_must_scan_attribute_identifier
+        case ip_scan_integer: return r_scan_integer
+        case ip_scan_single_quoted_string: return r_scan_single_quoted_string
+        case ip_scan_double_quoted_string: return r_scan_double_quoted_string
+        case ip_scan_literal_character: return r_scan_literal_character
+        others
+          halt = true
+          return false
+      endWhich
+
+    method r_scan_standard_token->Logical
+      if ((not _scanner.has_another))
+        halt = true
+        return false
+      endIf
+      if (not r_consume_whitespace) return false
+      if (not r_consume_comment) return false
+      line   = _scanner.line
+      column = _scanner.column
+      if (_scanner.consume('\n'))
+        _add( TokenType.EOL )
+        return false
+      endIf
+      if (not r_scan_identifier) return false
+      if (not r_scan_single_quoted_string) return false
+      if (not r_scan_double_quoted_string) return false
+      if (not r_scan_charset) return false
+      _scan_table_0.reset
+      contingent
+        block n=1
+          while (_scanner.has_another(n))
+            if (not _scan_table_0.accept(_scanner.peek(n-1)))
+              escapeWhile
             endIf
-            if (not _execute(ip_consume_whitespace)) return false
-            if (not _execute(ip_consume_comment)) return false
-            line   = _scanner.line
-            column = _scanner.column
-            if (_scanner.consume('\n'))
-              _add( TokenType.EOL )
-              return false
-            endIf
-            if (not _execute(ip_scan_identifier)) return false
-            if (not _execute(ip_scan_single_quoted_string)) return false
-            if (not _execute(ip_scan_double_quoted_string)) return false
-            if (not _execute(ip_scan_charset)) return false
-            _scan_table_0.reset
-            contingent
-              block n=1
-                while (_scanner.has_another(n))
-                  if (not _scan_table_0.accept(_scanner.peek(n-1)))
-                    escapeWhile
-                  endIf
-                  ++n
-                endWhile
-                necessary (_scan_table_0.has_product)
-                loop (_scan_table_0.match_count) _scanner.read
-              endBlock
-              which (_scan_table_0.product)
-                case 1
-                  _add( TokenType.SYMBOL_ARROW )
-                  return false
-                case 2
-                  _add( TokenType.SYMBOL_ASSIGN )
-                  return false
-                case 3
-                  _add( TokenType.SYMBOL_AT )
-                  return false
-                case 4
-                  _add( TokenType.SYMBOL_CARET )
-                  return false
-                case 5
-                  _add( TokenType.SYMBOL_CLOSE_CURLY )
-                  return false
-                case 6
-                  _add( TokenType.SYMBOL_CLOSE_PAREN )
-                  return false
-                case 7
-                  _add( TokenType.SYMBOL_CLOSE_SQUARE )
-                  return false
-                case 8
-                  _add( TokenType.SYMBOL_COLON )
-                  return false
-                case 9
-                  _add( TokenType.SYMBOL_COMMA )
-                  return false
-                case 10
-                  _add( TokenType.SYMBOL_DOT_DOT )
-                  return false
-                case 11
-                  _add( TokenType.SYMBOL_EMPTY_BRACKETS )
-                  return false
-                case 12
-                  _add( TokenType.SYMBOL_EQ )
-                  return false
-                case 13
-                  _add( TokenType.SYMBOL_GE )
-                  return false
-                case 14
-                  _add( TokenType.SYMBOL_GT )
-                  return false
-                case 15
-                  _add( TokenType.SYMBOL_LE )
-                  return false
-                case 16
-                  _add( TokenType.SYMBOL_LT )
-                  return false
-                case 17
-                  _add( TokenType.SYMBOL_NE )
-                  return false
-                case 18
-                  _add( TokenType.SYMBOL_MINUS )
-                  return false
-                case 19
-                  _add( TokenType.SYMBOL_MINUS_MINUS )
-                  return false
-                case 20
-                  _add( TokenType.SYMBOL_OPEN_CURLY )
-                  return false
-                case 21
-                  _add( TokenType.SYMBOL_OPEN_PAREN )
-                  return false
-                case 22
-                  _add( TokenType.SYMBOL_OPEN_SQUARE )
-                  return false
-                case 23
-                  _add( TokenType.SYMBOL_PLUS )
-                  return false
-                case 24
-                  _add( TokenType.SYMBOL_PLUS_PLUS )
-                  return false
-                case 25
-                  _add( TokenType.SYMBOL_QUESTION )
-                  return false
-                case 26
-                  _add( TokenType.SYMBOL_SEMICOLON )
-                  return false
-                case 27
-                  _add( TokenType.SYMBOL_SINGLE_QUOTE )
-                  return false
-                case 28
-                  _add( TokenType.SYMBOL_SLASH )
-                  return false
-                case 29
-                  _add( TokenType.SYMBOL_STAR )
-                  return false
-                others
-                  necessary (false)
-              endWhich
-            unsatisfied
-              ch = _scanner.peek 
-              if (_scan_pattern_0.is_next(_scanner))
-                if (not _execute(ip_scan_integer)) return false
-                _add( TokenType.INTEGER )
-                return false
-              endIf
-            endContingent
-            _throw_syntax_error
-            return true
-          case ip_scan_charset
-            if ((not _scanner.consume('[')))
-              return true
-            endIf
-            if (_scanner.consume(']'))
-              _add( TokenType.SYMBOL_EMPTY_BRACKETS )
-              return false
-            endIf
-            buffer.print('[')
-            while ((_scanner.has_another and (not _scanner.next_is(']'))))
-              ch = _scanner.read
-              if ((ch=='\\'))
-                ch = _scanner.read
-                if ((ch=='n'))
-                  ch = '\n'
-                elseIf ((ch=='r'))
-                  ch = '\r'
-                elseIf ((ch=='t'))
-                  ch = '\t'
-                else
-                  buffer.print('\\')
-                endIf
-              endIf
-              buffer.print(ch)
-            endWhile
-            _must_consume( ']' )
-            buffer.print(']')
-            _add( TokenType.CHARSET )
+            ++n
+          endWhile
+          necessary (_scan_table_0.has_product)
+          loop (_scan_table_0.match_count) _scanner.read
+        endBlock
+        which (_scan_table_0.product)
+          case 1
+            _add( TokenType.SYMBOL_ARROW )
             return false
-          case ip_consume_whitespace
-            while ((_scanner.consume(' ') or _scanner.consume('\t')))
-            endWhile
-            return true
-          case ip_consume_comment
-            if (_scanner.consume('#'))
-              if (_scanner.consume('{'))
-                count = 1
-                while (_scanner.has_another)
-                  ch = _scanner.read
-                  if ((ch=='\n'))
-                    _add( TokenType.EOL )
-                  elseIf ((ch=='#'))
-                    if (_scanner.consume('{'))
-                      ++count
-                    endIf
-                  elseIf ((ch=='}'))
-                    if (_scanner.consume('#'))
-                      --count
-                      if ((count==0))
-                        return false
-                      endIf
-                    endIf
-                  endIf
-                endWhile
-                halt = true
-                return false
-              else
-                while (_scanner.has_another)
-                  ch = _scanner.read
-                  if ((ch=='\n'))
-                    _add( TokenType.EOL )
-                    return false
-                  endIf
-                endWhile
-                return false
-              endIf
-            elseIf ((_scanner.consume("----") or _scanner.consume("====")))
-              while (_scanner.has_another)
-                ch = _scanner.read
-                if ((ch=='\n'))
-                  _add( TokenType.EOL )
-                  return false
-                endIf
-              endWhile
-              return false
-            else
-              return true
-            endIf
-            return true
-          case ip_scan_optional_plain_id
-            if ((not _scan_pattern_1.scan(_scanner,buffer)))
-              return true
-            endIf
-            _add( TokenType.IDENTIFIER )
+          case 2
+            _add( TokenType.SYMBOL_ASSIGN )
             return false
-          case ip_scan_tokens_id
-            if (not _execute(ip_consume_whitespace)) return false
-            if (not _execute(ip_consume_comment)) return false
-            if ((not _scanner.has_another))
-              halt = true
-              return false
-            endIf
-            line   = _scanner.line
-            column = _scanner.column
-            start_ip = ip_scan_token_name
-            if (_scanner.consume('\n'))
-              _add( TokenType.EOL )
-              return false
-            endIf
-            if (not _execute(ip_scan_optional_plain_id)) return false
-            _throw_syntax_error("Identifier expected.")
-            return true
-          case ip_scan_token_name
-            if (not _execute(ip_consume_whitespace)) return false
-            if (not _execute(ip_consume_comment)) return false
-            if ((not _scanner.has_another))
-              halt = true
-              return false
-            endIf
-            line   = _scanner.line
-            column = _scanner.column
-            start_ip = ip_scan_token_symbol
-            if (_scan_pattern_1.scan(_scanner,buffer))
-              _scan_table_1.reset
-              contingent
-                necessary (_scan_table_1.accept(forEach in buffer))
-                which (_scan_table_1.product)
-                  case 1
-                    start_ip = ip_scan_standard_token
-                    _add( TokenType.KEYWORD_NATIVE_TYPES )
-                    return false
-                  case 2
-                    start_ip = ip_scan_standard_token
-                    _add( TokenType.KEYWORD_PARSER )
-                    return false
-                  case 3
-                    start_ip = ip_scan_standard_token
-                    _add( TokenType.KEYWORD_SCANNER )
-                    return false
-                  case 4
-                    start_ip = ip_scan_tokens_id
-                    _add( TokenType.KEYWORD_TOKENS )
-                    return false
-                  others
-                    necessary (false)
-                endWhich
-              unsatisfied
-                _add( TokenType.IDENTIFIER )
-                return false
-              endContingent
-            endIf
-            start_ip = ip_scan_token_name
-            if (_scanner.consume('\n'))
-              _add( TokenType.EOL )
-              return false
-            endIf
-            _throw_syntax_error("Identifier expected.")
-            return true
-          case ip_scan_token_symbol
-            if (_scanner.consume('('))
-              while (((_scanner.has_another and (not _scanner.next_is(')'))) and (not _scanner.next_is('\n'))))
-                ch = _scanner.read
-                buffer.print(ch)
-              endWhile
-              _must_consume( ')' )
-            else
-              if (not _execute(ip_consume_whitespace)) return false
-              if (_scanner.next_is('\n'))
-                start_ip = ip_scan_token_attributes
-                return false
-              endIf
-              while (((_scanner.has_another and (not _scanner.next_is(' '))) and (not _scanner.next_is('\n'))))
-                ch = _scanner.read
-                buffer.print(ch)
-              endWhile
-            endIf
-            start_ip = ip_scan_token_attributes
-            _add( TokenType.SYMBOL )
+          case 3
+            _add( TokenType.SYMBOL_AT )
             return false
-          case ip_scan_token_attributes
-            if (not _execute(ip_consume_whitespace)) return false
-            if (not _execute(ip_consume_comment)) return false
-            if ((not _scanner.has_another))
-              halt = true
-              return false
-            endIf
-            _scan_table_2.reset
-            contingent
-              block n=1
-                while (_scanner.has_another(n))
-                  if (not _scan_table_2.accept(_scanner.peek(n-1)))
-                    escapeWhile
-                  endIf
-                  ++n
-                endWhile
-                necessary (_scan_table_2.has_product)
-                loop (_scan_table_2.match_count) _scanner.read
-              endBlock
-              which (_scan_table_2.product)
-                case 0
-                  start_ip = ip_scan_token_name
-                  _add( TokenType.EOL )
-                  return false
-                case 1
-                  _add( TokenType.SYMBOL_OPEN_SQUARE )
-                  return false
-                case 2
-                  _add( TokenType.SYMBOL_CLOSE_SQUARE )
-                  return false
-                case 3
-                  _add( TokenType.SYMBOL_COMMA )
-                  return false
-                others
-                  necessary (false)
-              endWhich
-            endContingent
-            if (not _execute(ip_must_scan_attribute_identifier)) return false
-            return true
-          case ip_scan_identifier
-            ch = _scanner.peek 
-            if (_scan_pattern_2.scan(_scanner,buffer))
-              _scan_table_3.reset
-              contingent
-                necessary (_scan_table_3.accept(forEach in buffer))
-                which (_scan_table_3.product)
-                  case 1
-                    start_ip = ip_scan_standard_token
-                    _add( TokenType.KEYWORD_NATIVE_TYPES )
-                    return false
-                  case 2
-                    start_ip = ip_scan_standard_token
-                    _add( TokenType.KEYWORD_PARSER )
-                    return false
-                  case 3
-                    start_ip = ip_scan_standard_token
-                    _add( TokenType.KEYWORD_SCANNER )
-                    return false
-                  case 4
-                    start_ip = ip_scan_tokens_id
-                    _add( TokenType.KEYWORD_TOKENS )
-                    return false
-                  case 5
-                    _add( TokenType.KEYWORD_ELSE_OTHERS )
-                    return false
-                  case 6
-                    _add( TokenType.KEYWORD_AND )
-                    return false
-                  case 7
-                    _add( TokenType.KEYWORD_CALL )
-                    return false
-                  case 8
-                    _add( TokenType.KEYWORD_CONSUME )
-                    return false
-                  case 9
-                    _add( TokenType.KEYWORD_CONSUME_ANY )
-                    return false
-                  case 10
-                    _add( TokenType.KEYWORD_CREATE )
-                    return false
-                  case 11
-                    _add( TokenType.KEYWORD_DISCARD_POSITION )
-                    return false
-                  case 12
-                    _add( TokenType.KEYWORD_ELSE )
-                    return false
-                  case 13
-                    _add( TokenType.KEYWORD_ELSE_IF )
-                    return false
-                  case 14
-                    _add( TokenType.KEYWORD_END_IF )
-                    return false
-                  case 15
-                    _add( TokenType.KEYWORD_END_WHILE )
-                    return false
-                  case 16
-                    _add( TokenType.KEYWORD_FALSE )
-                    return false
-                  case 17
-                    _add( TokenType.KEYWORD_HALT )
-                    return false
-                  case 18
-                    _add( TokenType.KEYWORD_HAS_NEXT )
-                    return false
-                  case 19
-                    _add( TokenType.KEYWORD_IF )
-                    return false
-                  case 20
-                    _add( TokenType.KEYWORD_MARK_POSITION )
-                    return false
-                  case 21
-                    _add( TokenType.KEYWORD_MODE )
-                    return false
-                  case 22
-                    _add( TokenType.KEYWORD_MUST_CONSUME )
-                    return false
-                  case 23
-                    _add( TokenType.KEYWORD_NEXT_IS )
-                    return false
-                  case 24
-                    _add( TokenType.KEYWORD_NO_ACTION )
-                    return false
-                  case 25
-                    _add( TokenType.KEYWORD_NOT )
-                    return false
-                  case 26
-                    _add( TokenType.KEYWORD_OR )
-                    return false
-                  case 27
-                    _add( TokenType.KEYWORD_OTHERS )
-                    return false
-                  case 28
-                    _add( TokenType.KEYWORD_PRINT )
-                    return false
-                  case 29
-                    _add( TokenType.KEYWORD_PRINTLN )
-                    return false
-                  case 30
-                    _add( TokenType.KEYWORD_PRODUCE )
-                    return false
-                  case 31
-                    _add( TokenType.KEYWORD_READ )
-                    return false
-                  case 32
-                    _add( TokenType.KEYWORD_RESTORE_POSITION )
-                    return false
-                  case 33
-                    _add( TokenType.KEYWORD_RETURN )
-                    return false
-                  case 34
-                    _add( TokenType.KEYWORD_SAVE_POSITION )
-                    return false
-                  case 35
-                    _add( TokenType.KEYWORD_SCAN )
-                    return false
-                  case 36
-                    _add( TokenType.KEYWORD_SYNTAX_ERROR )
-                    return false
-                  case 37
-                    _add( TokenType.KEYWORD_TRUE )
-                    return false
-                  case 38
-                    _add( TokenType.KEYWORD_WHILE )
-                    return false
-                  case 39
-                    _add( TokenType.KEYWORD_BEGIN_LIST )
-                    return false
-                  case 40
-                    _add( TokenType.KEYWORD_CREATE_LIST )
-                    return false
-                  case 41
-                    _add( TokenType.KEYWORD_CREATE_NULL )
-                    return false
-                  case 42
-                    _add( TokenType.KEYWORD_CREATE_TOKEN_LIST )
-                    return false
-                  case 43
-                    _add( TokenType.KEYWORD_DISCARD_LIST )
-                    return false
-                  case 44
-                    _add( TokenType.KEYWORD_ELSE_ON )
-                    return false
-                  case 45
-                    _add( TokenType.KEYWORD_ELSE_ON_PEEK )
-                    return false
-                  case 46
-                    _add( TokenType.KEYWORD_ELSE_OTHERS )
-                    return false
-                  case 47
-                    _add( TokenType.KEYWORD_END_ON )
-                    return false
-                  case 48
-                    _add( TokenType.KEYWORD_NEXT_HAS_ATTRIBUTE )
-                    return false
-                  case 49
-                    _add( TokenType.KEYWORD_ON )
-                    return false
-                  case 50
-                    _add( TokenType.KEYWORD_ON_PEEK )
-                    return false
-                  case 51
-                    _add( TokenType.KEYWORD_PRODUCE_LIST )
-                    return false
-                  case 52
-                    _add( TokenType.KEYWORD_PRODUCE_NULL )
-                    return false
-                  case 53
-                    _add( TokenType.KEYWORD_PRODUCE_TOKEN_LIST )
-                    return false
-                  case 54
-                    _add( TokenType.KEYWORD_BUFFER )
-                    return false
-                  case 55
-                    _add( TokenType.KEYWORD_CASE )
-                    return false
-                  case 56
-                    _add( TokenType.KEYWORD_CHARACTER )
-                    return false
-                  case 57
-                    _add( TokenType.KEYWORD_COLLECT )
-                    return false
-                  case 58
-                    _add( TokenType.KEYWORD_END_MATCH )
-                    return false
-                  case 59
-                    _add( TokenType.KEYWORD_INPUT )
-                    return false
-                  case 60
-                    _add( TokenType.KEYWORD_INTEGER )
-                    return false
-                  case 61
-                    _add( TokenType.KEYWORD_OUTPUT )
-                    return false
-                  case 62
-                    _add( TokenType.KEYWORD_PEEK )
-                    return false
-                  case 63
-                    _add( TokenType.KEYWORD_PRODUCE_ANY )
-                    return false
-                  case 64
-                    _add( TokenType.KEYWORD_MATCH )
-                    return false
-                  case 65
-                    _add( TokenType.KEYWORD_RESTART )
-                    return false
-                  others
-                    necessary (false)
-                endWhich
-              unsatisfied
-                _add( TokenType.IDENTIFIER )
-                return false
-              endContingent
-            endIf
-            return true
-          case ip_must_scan_attribute_identifier
-            if (_scan_pattern_2.scan(_scanner,buffer))
-              _add( TokenType.IDENTIFIER )
-              return false
-            endIf
-            _throw_syntax_error("Identifier expected.")
-            return true
-          case ip_scan_integer
-            while (_scan_pattern_3.is_next(_scanner))
-              ch = _scanner.read
-              if ((ch!='_'))
-                buffer.print(ch)
-              endIf
-              if ((not _scanner.has_another))
-                return true
-              endIf
-              ch = _scanner.peek 
-            endWhile
-            return true
-          case ip_scan_single_quoted_string
-            if ((not _scanner.consume('\'')))
-              return true
-            endIf
-            while (_scanner.has_another)
-              if (_scanner.consume('\''))
-                _add( TokenType.STRING_OR_CHARACTER )
-                return false
-              endIf
-              if (_scanner.next_is('\n'))
-                _throw_syntax_error("Unterminated string.")
-              endIf
-              if (not _execute(ip_scan_literal_character)) return false
-            endWhile
-            _throw_syntax_error("Unterminated string.")
-            return true
-          case ip_scan_double_quoted_string
-            if ((not _scanner.consume('"')))
-              return true
-            endIf
-            while (_scanner.has_another)
-              if (_scanner.consume('"'))
-                _add( TokenType.STRING )
-                return false
-              endIf
-              if (_scanner.next_is('\n'))
-                _throw_syntax_error("Unterminated string.")
-              endIf
-              if (not _execute(ip_scan_literal_character)) return false
-            endWhile
-            _throw_syntax_error("Unterminated string.")
-            return true
-          case ip_scan_literal_character
-            ch = _scanner.read
-            if ((ch=='\\'))
-              ch = _scanner.read
-              if ((ch=='n'))
-                ch = '\n'
-              endIf
-              if ((ch=='r'))
-                ch = '\r'
-              endIf
-              if ((ch=='t'))
-                ch = '\t'
-              endIf
-            endIf
-            buffer.print(ch)
-            return true
+          case 4
+            _add( TokenType.SYMBOL_CARET )
+            return false
+          case 5
+            _add( TokenType.SYMBOL_CLOSE_CURLY )
+            return false
+          case 6
+            _add( TokenType.SYMBOL_CLOSE_PAREN )
+            return false
+          case 7
+            _add( TokenType.SYMBOL_CLOSE_SQUARE )
+            return false
+          case 8
+            _add( TokenType.SYMBOL_COLON )
+            return false
+          case 9
+            _add( TokenType.SYMBOL_COMMA )
+            return false
+          case 10
+            _add( TokenType.SYMBOL_DOT_DOT )
+            return false
+          case 11
+            _add( TokenType.SYMBOL_EMPTY_BRACKETS )
+            return false
+          case 12
+            _add( TokenType.SYMBOL_EQ )
+            return false
+          case 13
+            _add( TokenType.SYMBOL_GE )
+            return false
+          case 14
+            _add( TokenType.SYMBOL_GT )
+            return false
+          case 15
+            _add( TokenType.SYMBOL_LE )
+            return false
+          case 16
+            _add( TokenType.SYMBOL_LT )
+            return false
+          case 17
+            _add( TokenType.SYMBOL_NE )
+            return false
+          case 18
+            _add( TokenType.SYMBOL_MINUS )
+            return false
+          case 19
+            _add( TokenType.SYMBOL_MINUS_MINUS )
+            return false
+          case 20
+            _add( TokenType.SYMBOL_OPEN_CURLY )
+            return false
+          case 21
+            _add( TokenType.SYMBOL_OPEN_PAREN )
+            return false
+          case 22
+            _add( TokenType.SYMBOL_OPEN_SQUARE )
+            return false
+          case 23
+            _add( TokenType.SYMBOL_PLUS )
+            return false
+          case 24
+            _add( TokenType.SYMBOL_PLUS_PLUS )
+            return false
+          case 25
+            _add( TokenType.SYMBOL_QUESTION )
+            return false
+          case 26
+            _add( TokenType.SYMBOL_SEMICOLON )
+            return false
+          case 27
+            _add( TokenType.SYMBOL_SINGLE_QUOTE )
+            return false
+          case 28
+            _add( TokenType.SYMBOL_SLASH )
+            return false
+          case 29
+            _add( TokenType.SYMBOL_STAR )
+            return false
           others
-            halt = true
-            return false
+            necessary (false)
         endWhich
-      endLoop
+      unsatisfied
+        ch = _scanner.peek 
+        if (_scan_pattern_0.is_next(_scanner))
+          if (not r_scan_integer) return false
+          _add( TokenType.INTEGER )
+          return false
+        endIf
+      endContingent
+      _throw_syntax_error
+      return false
+
+    method r_scan_charset->Logical
+      if ((not _scanner.consume('[')))
+        return true
+      endIf
+      if (_scanner.consume(']'))
+        _add( TokenType.SYMBOL_EMPTY_BRACKETS )
+        return false
+      endIf
+      buffer.print('[')
+      while ((_scanner.has_another and (not _scanner.next_is(']'))))
+        ch = _scanner.read
+        if ((ch=='\\'))
+          ch = _scanner.read
+          if ((ch=='n'))
+            ch = '\n'
+          elseIf ((ch=='r'))
+            ch = '\r'
+          elseIf ((ch=='t'))
+            ch = '\t'
+          else
+            buffer.print('\\')
+          endIf
+        endIf
+        buffer.print(ch)
+      endWhile
+      _must_consume( ']' )
+      buffer.print(']')
+      _add( TokenType.CHARSET )
+      return false
+
+    method r_consume_whitespace->Logical
+      while ((_scanner.consume(' ') or _scanner.consume('\t')))
+      endWhile
+      return true
+
+    method r_consume_comment->Logical
+      if (_scanner.consume('#'))
+        if (_scanner.consume('{'))
+          count = 1
+          while (_scanner.has_another)
+            ch = _scanner.read
+            if ((ch=='\n'))
+              _add( TokenType.EOL )
+            elseIf ((ch=='#'))
+              if (_scanner.consume('{'))
+                ++count
+              endIf
+            elseIf ((ch=='}'))
+              if (_scanner.consume('#'))
+                --count
+                if ((count==0))
+                  return false
+                endIf
+              endIf
+            endIf
+          endWhile
+          halt = true
+          return false
+        else
+          while (_scanner.has_another)
+            ch = _scanner.read
+            if ((ch=='\n'))
+              _add( TokenType.EOL )
+              return false
+            endIf
+          endWhile
+          return false
+        endIf
+      elseIf ((_scanner.consume("----") or _scanner.consume("====")))
+        while (_scanner.has_another)
+          ch = _scanner.read
+          if ((ch=='\n'))
+            _add( TokenType.EOL )
+            return false
+          endIf
+        endWhile
+        return false
+      else
+        return true
+      endIf
+      return true
+
+    method r_scan_optional_plain_id->Logical
+      if ((not _scan_pattern_1.scan(_scanner,buffer)))
+        return true
+      endIf
+      _add( TokenType.IDENTIFIER )
+      return false
+
+    method r_scan_tokens_id->Logical
+      if (not r_consume_whitespace) return false
+      if (not r_consume_comment) return false
+      if ((not _scanner.has_another))
+        halt = true
+        return false
+      endIf
+      line   = _scanner.line
+      column = _scanner.column
+      start_ip = ip_scan_token_name
+      if (_scanner.consume('\n'))
+        _add( TokenType.EOL )
+        return false
+      endIf
+      if (not r_scan_optional_plain_id) return false
+      _throw_syntax_error("Identifier expected.")
+      return false
+      return true
+
+    method r_scan_token_name->Logical
+      if (not r_consume_whitespace) return false
+      if (not r_consume_comment) return false
+      if ((not _scanner.has_another))
+        halt = true
+        return false
+      endIf
+      line   = _scanner.line
+      column = _scanner.column
+      start_ip = ip_scan_token_symbol
+      if (_scan_pattern_1.scan(_scanner,buffer))
+        _scan_table_1.reset
+        contingent
+          necessary (_scan_table_1.accept(forEach in buffer))
+          which (_scan_table_1.product)
+            case 1
+              start_ip = ip_scan_standard_token
+              _add( TokenType.KEYWORD_NATIVE_TYPES )
+              return false
+            case 2
+              start_ip = ip_scan_standard_token
+              _add( TokenType.KEYWORD_PARSER )
+              return false
+            case 3
+              start_ip = ip_scan_standard_token
+              _add( TokenType.KEYWORD_SCANNER )
+              return false
+            case 4
+              start_ip = ip_scan_tokens_id
+              _add( TokenType.KEYWORD_TOKENS )
+              return false
+            others
+              necessary (false)
+          endWhich
+        unsatisfied
+          _add( TokenType.IDENTIFIER )
+          return false
+        endContingent
+      endIf
+      start_ip = ip_scan_token_name
+      if (_scanner.consume('\n'))
+        _add( TokenType.EOL )
+        return false
+      endIf
+      _throw_syntax_error("Identifier expected.")
+      return false
+      return true
+
+    method r_scan_token_symbol->Logical
+      if (_scanner.consume('('))
+        while (((_scanner.has_another and (not _scanner.next_is(')'))) and (not _scanner.next_is('\n'))))
+          ch = _scanner.read
+          buffer.print(ch)
+        endWhile
+        _must_consume( ')' )
+      else
+        if (not r_consume_whitespace) return false
+        if (_scanner.next_is('\n'))
+          start_ip = ip_scan_token_attributes
+          return false
+        endIf
+        while (((_scanner.has_another and (not _scanner.next_is(' '))) and (not _scanner.next_is('\n'))))
+          ch = _scanner.read
+          buffer.print(ch)
+        endWhile
+      endIf
+      start_ip = ip_scan_token_attributes
+      _add( TokenType.SYMBOL )
+      return false
+
+    method r_scan_token_attributes->Logical
+      if (not r_consume_whitespace) return false
+      if (not r_consume_comment) return false
+      if ((not _scanner.has_another))
+        halt = true
+        return false
+      endIf
+      _scan_table_2.reset
+      contingent
+        block n=1
+          while (_scanner.has_another(n))
+            if (not _scan_table_2.accept(_scanner.peek(n-1)))
+              escapeWhile
+            endIf
+            ++n
+          endWhile
+          necessary (_scan_table_2.has_product)
+          loop (_scan_table_2.match_count) _scanner.read
+        endBlock
+        which (_scan_table_2.product)
+          case 0
+            start_ip = ip_scan_token_name
+            _add( TokenType.EOL )
+            return false
+          case 1
+            _add( TokenType.SYMBOL_OPEN_SQUARE )
+            return false
+          case 2
+            _add( TokenType.SYMBOL_CLOSE_SQUARE )
+            return false
+          case 3
+            _add( TokenType.SYMBOL_COMMA )
+            return false
+          others
+            necessary (false)
+        endWhich
+      endContingent
+      if (not r_must_scan_attribute_identifier) return false
+      return true
+
+    method r_scan_identifier->Logical
+      ch = _scanner.peek 
+      if (_scan_pattern_2.scan(_scanner,buffer))
+        _scan_table_3.reset
+        contingent
+          necessary (_scan_table_3.accept(forEach in buffer))
+          which (_scan_table_3.product)
+            case 1
+              start_ip = ip_scan_standard_token
+              _add( TokenType.KEYWORD_NATIVE_TYPES )
+              return false
+            case 2
+              start_ip = ip_scan_standard_token
+              _add( TokenType.KEYWORD_PARSER )
+              return false
+            case 3
+              start_ip = ip_scan_standard_token
+              _add( TokenType.KEYWORD_SCANNER )
+              return false
+            case 4
+              start_ip = ip_scan_tokens_id
+              _add( TokenType.KEYWORD_TOKENS )
+              return false
+            case 5
+              _add( TokenType.KEYWORD_ELSE_OTHERS )
+              return false
+            case 6
+              _add( TokenType.KEYWORD_AND )
+              return false
+            case 7
+              _add( TokenType.KEYWORD_CALL )
+              return false
+            case 8
+              _add( TokenType.KEYWORD_CONSUME )
+              return false
+            case 9
+              _add( TokenType.KEYWORD_CONSUME_ANY )
+              return false
+            case 10
+              _add( TokenType.KEYWORD_CREATE )
+              return false
+            case 11
+              _add( TokenType.KEYWORD_DISCARD_POSITION )
+              return false
+            case 12
+              _add( TokenType.KEYWORD_ELSE )
+              return false
+            case 13
+              _add( TokenType.KEYWORD_ELSE_IF )
+              return false
+            case 14
+              _add( TokenType.KEYWORD_END_IF )
+              return false
+            case 15
+              _add( TokenType.KEYWORD_END_WHILE )
+              return false
+            case 16
+              _add( TokenType.KEYWORD_FALSE )
+              return false
+            case 17
+              _add( TokenType.KEYWORD_HALT )
+              return false
+            case 18
+              _add( TokenType.KEYWORD_HAS_NEXT )
+              return false
+            case 19
+              _add( TokenType.KEYWORD_IF )
+              return false
+            case 20
+              _add( TokenType.KEYWORD_MARK_POSITION )
+              return false
+            case 21
+              _add( TokenType.KEYWORD_MODE )
+              return false
+            case 22
+              _add( TokenType.KEYWORD_MUST_CONSUME )
+              return false
+            case 23
+              _add( TokenType.KEYWORD_NEXT_IS )
+              return false
+            case 24
+              _add( TokenType.KEYWORD_NO_ACTION )
+              return false
+            case 25
+              _add( TokenType.KEYWORD_NOT )
+              return false
+            case 26
+              _add( TokenType.KEYWORD_OR )
+              return false
+            case 27
+              _add( TokenType.KEYWORD_OTHERS )
+              return false
+            case 28
+              _add( TokenType.KEYWORD_PRINT )
+              return false
+            case 29
+              _add( TokenType.KEYWORD_PRINTLN )
+              return false
+            case 30
+              _add( TokenType.KEYWORD_PRODUCE )
+              return false
+            case 31
+              _add( TokenType.KEYWORD_READ )
+              return false
+            case 32
+              _add( TokenType.KEYWORD_RESTORE_POSITION )
+              return false
+            case 33
+              _add( TokenType.KEYWORD_RETURN )
+              return false
+            case 34
+              _add( TokenType.KEYWORD_SAVE_POSITION )
+              return false
+            case 35
+              _add( TokenType.KEYWORD_SCAN )
+              return false
+            case 36
+              _add( TokenType.KEYWORD_SYNTAX_ERROR )
+              return false
+            case 37
+              _add( TokenType.KEYWORD_TRUE )
+              return false
+            case 38
+              _add( TokenType.KEYWORD_WHILE )
+              return false
+            case 39
+              _add( TokenType.KEYWORD_BEGIN_LIST )
+              return false
+            case 40
+              _add( TokenType.KEYWORD_CREATE_LIST )
+              return false
+            case 41
+              _add( TokenType.KEYWORD_CREATE_NULL )
+              return false
+            case 42
+              _add( TokenType.KEYWORD_CREATE_TOKEN_LIST )
+              return false
+            case 43
+              _add( TokenType.KEYWORD_DISCARD_LIST )
+              return false
+            case 44
+              _add( TokenType.KEYWORD_ELSE_ON )
+              return false
+            case 45
+              _add( TokenType.KEYWORD_ELSE_ON_PEEK )
+              return false
+            case 46
+              _add( TokenType.KEYWORD_ELSE_OTHERS )
+              return false
+            case 47
+              _add( TokenType.KEYWORD_END_ON )
+              return false
+            case 48
+              _add( TokenType.KEYWORD_NEXT_HAS_ATTRIBUTE )
+              return false
+            case 49
+              _add( TokenType.KEYWORD_ON )
+              return false
+            case 50
+              _add( TokenType.KEYWORD_ON_PEEK )
+              return false
+            case 51
+              _add( TokenType.KEYWORD_PRODUCE_LIST )
+              return false
+            case 52
+              _add( TokenType.KEYWORD_PRODUCE_NULL )
+              return false
+            case 53
+              _add( TokenType.KEYWORD_PRODUCE_TOKEN_LIST )
+              return false
+            case 54
+              _add( TokenType.KEYWORD_BUFFER )
+              return false
+            case 55
+              _add( TokenType.KEYWORD_CASE )
+              return false
+            case 56
+              _add( TokenType.KEYWORD_CHARACTER )
+              return false
+            case 57
+              _add( TokenType.KEYWORD_COLLECT )
+              return false
+            case 58
+              _add( TokenType.KEYWORD_END_MATCH )
+              return false
+            case 59
+              _add( TokenType.KEYWORD_INPUT )
+              return false
+            case 60
+              _add( TokenType.KEYWORD_INTEGER )
+              return false
+            case 61
+              _add( TokenType.KEYWORD_OUTPUT )
+              return false
+            case 62
+              _add( TokenType.KEYWORD_PEEK )
+              return false
+            case 63
+              _add( TokenType.KEYWORD_PRODUCE_ANY )
+              return false
+            case 64
+              _add( TokenType.KEYWORD_MATCH )
+              return false
+            case 65
+              _add( TokenType.KEYWORD_RESTART )
+              return false
+            others
+              necessary (false)
+          endWhich
+        unsatisfied
+          _add( TokenType.IDENTIFIER )
+          return false
+        endContingent
+      endIf
+      return true
+
+    method r_must_scan_attribute_identifier->Logical
+      if (_scan_pattern_2.scan(_scanner,buffer))
+        _add( TokenType.IDENTIFIER )
+        return false
+      endIf
+      _throw_syntax_error("Identifier expected.")
+      return false
+      return true
+
+    method r_scan_integer->Logical
+      while (_scan_pattern_3.is_next(_scanner))
+        ch = _scanner.read
+        if ((ch!='_'))
+          buffer.print(ch)
+        endIf
+        if ((not _scanner.has_another))
+          return true
+        endIf
+        ch = _scanner.peek 
+      endWhile
+      return true
+
+    method r_scan_single_quoted_string->Logical
+      if ((not _scanner.consume('\'')))
+        return true
+      endIf
+      while (_scanner.has_another)
+        if (_scanner.consume('\''))
+          _add( TokenType.STRING_OR_CHARACTER )
+          return false
+        endIf
+        if (_scanner.next_is('\n'))
+          _throw_syntax_error("Unterminated string.")
+          return false
+        endIf
+        if (not r_scan_literal_character) return false
+      endWhile
+      _throw_syntax_error("Unterminated string.")
+      return false
+      return true
+
+    method r_scan_double_quoted_string->Logical
+      if ((not _scanner.consume('"')))
+        return true
+      endIf
+      while (_scanner.has_another)
+        if (_scanner.consume('"'))
+          _add( TokenType.STRING )
+          return false
+        endIf
+        if (_scanner.next_is('\n'))
+          _throw_syntax_error("Unterminated string.")
+          return false
+        endIf
+        if (not r_scan_literal_character) return false
+      endWhile
+      _throw_syntax_error("Unterminated string.")
+      return false
+      return true
+
+    method r_scan_literal_character->Logical
+      ch = _scanner.read
+      if ((ch=='\\'))
+        ch = _scanner.read
+        if ((ch=='n'))
+          ch = '\n'
+        endIf
+        if ((ch=='r'))
+          ch = '\r'
+        endIf
+        if ((ch=='t'))
+          ch = '\t'
+        endIf
+      endIf
+      buffer.print(ch)
+      return true
 
 endClass

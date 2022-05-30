@@ -44,9 +44,10 @@ class Froley
     method init( args:String[] )
       command = parse_args( args )
 
-      if (command//options//project and not command//options//create)
-        throw CompileError( "--project option can only be specified in tandem with --create." )
+      if (command//options//project)
+        Program.project_name = command//options//project->String
       endIf
+
       if (command//options//create and not command//options//project)
         command//options//project = File.filename( File.abs(".") )
       endIf

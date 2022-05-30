@@ -26,7 +26,7 @@ class Program [singleton]
 
   METHODS
     method compile( command, nodes )
-      project_name  = File.filename( command//args.first ).before_last('.')
+      if (not project_name) project_name  = File.filename( command//args.first ).before_last('.')
       output_folder = File( command//args.last )
 
       local t = nodes.t

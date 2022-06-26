@@ -12,7 +12,6 @@ class RParserCore( generator, parser_def:ParserDef ) : RogueSourceWriter
          |$define PARSER_EXISTS true
          |
          |$include "Cmd.rogue"
-         |$include "FrameStack.rogue"
          |$include "Scanner.rogue"
          |$include "Visitor.rogue"
          |
@@ -29,7 +28,6 @@ class RParserCore( generator, parser_def:ParserDef ) : RogueSourceWriter
          |    _position        : Int32
          |    _limit           : Int32
          |    _cmd_stack       = Cmd[]
-         |    _token_stack     = FrameStack<<Token>>()
          |    _list_starts     = Int32[]
          |    _list_tokens     = Token[]
          |    _next_t          : Token
@@ -86,7 +84,6 @@ class RParserCore( generator, parser_def:ParserDef ) : RogueSourceWriter
          |      _position = 0
          |      _limit = _tokens.count
          |      _cmd_stack.clear
-         |      _token_stack.clear
          |      output.clear
 
       forEach (fn_name in Program.parser_user_calls)
@@ -102,7 +99,6 @@ class RParserCore( generator, parser_def:ParserDef ) : RogueSourceWriter
          |    method parse( ip=null:Int32? )->Cmd
          |      if (_position == _limit) return null
          |      if (ip) start_ip = ip.value
-         |      _token_stack.clear
          |      _list_starts.clear
          |      _list_tokens.clear
          |      _next_t = _peek
@@ -195,14 +191,6 @@ class RParserCore( generator, parser_def:ParserDef ) : RogueSourceWriter
          |      if (_position < _limit) return _tokens[ _position ]
          |      if (_tokens.count) return _tokens.last.cloned( TokenType.EOI )
          |      return Token( TokenType.EOI, null, null, 0, 0 )
-         |
-         |    method _pop_frame
-         |      _token_stack.pop_frame
-         |      _cur_t = _token_stack.pop
-         |
-         |    method _push_frame
-         |      _token_stack.push( _cur_t )
-         |      _token_stack.push_frame
          |
          |    method _push( cmd:Cmd, node_arg_count:Int32 )
          |      if (node_arg_count) _cmd_stack.discard_from( _cmd_stack.count - node_arg_count )

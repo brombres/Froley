@@ -4,7 +4,6 @@ module Simple
 $define PARSER_EXISTS true
 
 $include "Cmd.rogue"
-$include "FrameStack.rogue"
 $include "Scanner.rogue"
 $include "Visitor.rogue"
 
@@ -30,7 +29,6 @@ class ParserCore [abstract]
     _position        : Int32
     _limit           : Int32
     _cmd_stack       = Cmd[]
-    _token_stack     = FrameStack<<Token>>()
     _list_starts     = Int32[]
     _list_tokens     = Token[]
     _next_t          : Token
@@ -59,7 +57,6 @@ class ParserCore [abstract]
       _position = 0
       _limit = _tokens.count
       _cmd_stack.clear
-      _token_stack.clear
       output.clear
 
     method has_another->Logical
@@ -68,7 +65,6 @@ class ParserCore [abstract]
     method parse( ip=null:Int32? )->Cmd
       if (_position == _limit) return null
       if (ip) start_ip = ip.value
-      _token_stack.clear
       _list_starts.clear
       _list_tokens.clear
       _next_t = _peek
@@ -161,14 +157,6 @@ class ParserCore [abstract]
       if (_position < _limit) return _tokens[ _position ]
       if (_tokens.count) return _tokens.last.cloned( TokenType.EOI )
       return Token( TokenType.EOI, null, null, 0, 0 )
-
-    method _pop_frame
-      _token_stack.pop_frame
-      _cur_t = _token_stack.pop
-
-    method _push_frame
-      _token_stack.push( _cur_t )
-      _token_stack.push_frame
 
     method _push( cmd:Cmd, node_arg_count:Int32 )
       if (node_arg_count) _cmd_stack.discard_from( _cmd_stack.count - node_arg_count )
@@ -278,14 +266,14 @@ class ParserCore [abstract]
       endWhich
 
     method r_ast
-      _push_frame
+      local _previous_cur_t = _cur_t
       r_statements
       if (not disable_output) _push( AST(_cur_t,_node_arg(-1)), 1 )
-      _pop_frame
+      _cur_t = _previous_cur_t
       return
 
     method r_statements
-      _push_frame
+      local _previous_cur_t = _cur_t
       r_consume_eols
       _begin_list
       while (((_position < _limit) and (not (_next_t.type.attributes & TokenType.ATTRIBUTE_STRUCTURAL)?)))
@@ -294,16 +282,16 @@ class ParserCore [abstract]
       endWhile
       if (disable_output)     _discard_list
       else                    _push_list( Statements(_list_t) )
-      _pop_frame
+      _cur_t = _previous_cur_t
       return
 
     method r_statement
-      _push_frame
+      local _previous_cur_t = _cur_t
       if (_next_t.type == TokenType.KEYWORD_PRINT)
         temporarily _cur_t = _on_t
           r_arg_list
           if (not disable_output) _push( Print(_cur_t,_node_arg(-1)), 1 )
-          _pop_frame
+          _cur_t = _previous_cur_t
           return
         endTemporarily
       endIf
@@ -311,64 +299,64 @@ class ParserCore [abstract]
         temporarily _cur_t = _on_t
           r_arg_list
           if (not disable_output) _push( Println(_cur_t,_node_arg(-1)), 1 )
-          _pop_frame
+          _cur_t = _previous_cur_t
           return
         endTemporarily
       endIf
       r_expression
-      _pop_frame
+      _cur_t = _previous_cur_t
 
     method r_consume_eols
-      _push_frame
+      local _previous_cur_t = _cur_t
       while (_consume(TokenType.EOL))
       endWhile
-      _pop_frame
+      _cur_t = _previous_cur_t
 
     method r_arg_list
-      _push_frame
+      local _previous_cur_t = _cur_t
       _begin_list
       while ((((_position < _limit) and (not (_next_t.type == TokenType.EOL))) and (not (_next_t.type.attributes & TokenType.ATTRIBUTE_STRUCTURAL)?)))
         r_expression
       endWhile
       if (disable_output)     _discard_list
       else                    _push_list( Args(_list_t) )
-      _pop_frame
+      _cur_t = _previous_cur_t
       return
 
     method r_expression
-      _push_frame
+      local _previous_cur_t = _cur_t
       r_assign
-      _pop_frame
+      _cur_t = _previous_cur_t
 
     method r_assign
-      _push_frame
+      local _previous_cur_t = _cur_t
       r_add_subtract
       if (_next_t.type == TokenType.SYMBOL_EQUALS)
         temporarily _cur_t = _on_t
           _consume_eols
           r_assign
           if (not disable_output) _push( Assign(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
-          _pop_frame
+          _cur_t = _previous_cur_t
           return
         endTemporarily
       endIf
-      _pop_frame
+      _cur_t = _previous_cur_t
 
     method r_add_subtract
-      _push_frame
+      local _previous_cur_t = _cur_t
       r_multiply_divide
       r_add_subtract__inner
-      _pop_frame
+      _cur_t = _previous_cur_t
 
     method r_add_subtract__inner
-      _push_frame
+      local _previous_cur_t = _cur_t
       if (_next_t.type == TokenType.SYMBOL_PLUS)
         temporarily _cur_t = _on_t
           _consume_eols
           r_multiply_divide
           if (not disable_output) _push( Add(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
           r_add_subtract__inner
-          _pop_frame
+          _cur_t = _previous_cur_t
           return
         endTemporarily
       endIf
@@ -378,27 +366,27 @@ class ParserCore [abstract]
           r_multiply_divide
           if (not disable_output) _push( Subtract(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
           r_add_subtract__inner
-          _pop_frame
+          _cur_t = _previous_cur_t
           return
         endTemporarily
       endIf
-      _pop_frame
+      _cur_t = _previous_cur_t
 
     method r_multiply_divide
-      _push_frame
+      local _previous_cur_t = _cur_t
       r_negate
       r_multiply_divide__inner
-      _pop_frame
+      _cur_t = _previous_cur_t
 
     method r_multiply_divide__inner
-      _push_frame
+      local _previous_cur_t = _cur_t
       if (_next_t.type == TokenType.SYMBOL_STAR)
         temporarily _cur_t = _on_t
           _consume_eols
           r_negate
           if (not disable_output) _push( Multiply(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
           r_multiply_divide__inner
-          _pop_frame
+          _cur_t = _previous_cur_t
           return
         endTemporarily
       endIf
@@ -408,67 +396,67 @@ class ParserCore [abstract]
           r_negate
           if (not disable_output) _push( Divide(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
           r_multiply_divide__inner
-          _pop_frame
+          _cur_t = _previous_cur_t
           return
         endTemporarily
       endIf
-      _pop_frame
+      _cur_t = _previous_cur_t
 
     method r_negate
-      _push_frame
+      local _previous_cur_t = _cur_t
       if (_next_t.type == TokenType.SYMBOL_MINUS)
         temporarily _cur_t = _on_t
           _consume_eols
           r_negate
           if (not disable_output) _push( Negate(_cur_t,_node_arg(-1)), 1 )
-          _pop_frame
+          _cur_t = _previous_cur_t
           return
         endTemporarily
       endIf
       r_term
-      _pop_frame
+      _cur_t = _previous_cur_t
 
     method r_term
-      _push_frame
+      local _previous_cur_t = _cur_t
       if (_next_t.type == TokenType.SYMBOL_OPEN_PAREN)
         temporarily _cur_t = _on_t
           r_expression
           if (not _consume(TokenType.SYMBOL_CLOSE_PAREN)) _throw_syntax_error( &expected=TokenType.SYMBOL_CLOSE_PAREN )
-          _pop_frame
+          _cur_t = _previous_cur_t
           return
         endTemporarily
       endIf
       if (_next_t.type == TokenType.IDENTIFIER)
         temporarily _cur_t = _on_t
           if (not disable_output) _push( Access(_cur_t,_cur_t.content), 0 )
-          _pop_frame
+          _cur_t = _previous_cur_t
           return
         endTemporarily
       endIf
       if (_next_t.type == TokenType.NUMBER)
         temporarily _cur_t = _on_t
           if (not disable_output) _push( Number(_cur_t,_string_to_Real(_cur_t.content)), 0 )
-          _pop_frame
+          _cur_t = _previous_cur_t
           return
         endTemporarily
       endIf
       if (_next_t.type == TokenType.STRING)
         temporarily _cur_t = _on_t
           if (not disable_output) _push( LiteralString(_cur_t,_cur_t.content), 0 )
-          _pop_frame
+          _cur_t = _previous_cur_t
           return
         endTemporarily
       endIf
       _throw_syntax_error
-      _pop_frame
+      _cur_t = _previous_cur_t
       return
-      _pop_frame
+      _cur_t = _previous_cur_t
 
     method r_additional_nodes
-      _push_frame
+      local _previous_cur_t = _cur_t
       if (not disable_output) _push( WriteVar(_cur_t,_string_arg(-2),_node_arg(-1)), 2 )
       if (not disable_output) _push( ReadVar(_cur_t,_string_arg(-1)), 1 )
-      _pop_frame
+      _cur_t = _previous_cur_t
 
 endClass
 

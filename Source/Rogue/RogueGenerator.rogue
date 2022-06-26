@@ -1,7 +1,6 @@
 module Froley
 
 $include "RCmd.rogue"
-$include "RFrameStack.rogue"
 $include "RMain.rogue"
 $include "RInspectionVisitor.rogue"
 $include "RParser.rogue"
@@ -40,7 +39,6 @@ class RogueGenerator : Visitor
       RScanTable(this).create_missing
       RTokenType(this).overwrite
       RToken(this).create_missing
-      RFrameStack(this).create_missing
 
       # Main
       if (Program.main_filename)
@@ -466,14 +464,14 @@ class RogueGenerator : Visitor
     method on_visit( cmd:ProduceList )
       writeln "if (disable_output)     _discard_list"
       writeln "else                    _push_list( $(_list_t) )" (cmd.list_type)
-      writeln "_pop_frame"
+      writeln "_cur_t = _previous_cur_t"
       write   "return"
       visit_children( cmd )
 
     method on_visit( cmd:ProduceTokenList )
       writeln "if (disable_output) _discard_position"
       writeln "else                _create_token_list"
-      writeln "_pop_frame"
+      writeln "_cur_t = _previous_cur_t"
       write   "return"
 
     method on_visit( cmd:ScanCharacters )
@@ -488,7 +486,7 @@ class RogueGenerator : Visitor
     method on_visit( cmd:ParserProduce )
       visit_children( cmd )
       writeln
-      writeln "_pop_frame"
+      writeln "_cur_t = _previous_cur_t"
       write   "return"
 
     method on_visit( cmd:ParserRead )
@@ -541,7 +539,7 @@ class RogueGenerator : Visitor
       if (is_scanner)
         write   "return true"
       else
-        writeln "_pop_frame"
+        writeln "_cur_t = _previous_cur_t"
         write   "return"
       endIf
       visit_children( cmd )
@@ -563,12 +561,11 @@ class RogueGenerator : Visitor
         writeln "    method r_$"(cmd.name)
 
         indent += 6
-        writeln "_push_frame"
+        writeln "local _previous_cur_t = _cur_t"
         prior.on( cmd )
 
         if (not BranchAnalyzer.all_paths_return(cmd))
-          writeln "_pop_frame"
-          #writeln "return"
+          writeln "_cur_t = _previous_cur_t"
         endIf
 
         indent -= 6
@@ -664,7 +661,7 @@ class RogueGenerator : Visitor
       if (is_scanner)
         write "return false"
       else
-        writeln "_pop_frame"
+        writeln "_cur_t = _previous_cur_t"
         write "return"
       endIf
       return cmd

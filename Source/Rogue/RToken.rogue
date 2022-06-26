@@ -18,7 +18,7 @@ class RToken : RogueSourceWriter
          |      return CompileError( message, filepath, source, line, column )
          |
          |    method source_position->String
-         |      return ''[$:$]''(File.filename(filepath),line)
+         |      return ''$:$''(File.filename(filepath),line)
          |
          |    method to->String
          |      if (content) return content

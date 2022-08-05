@@ -30,7 +30,7 @@ class RCmd : RogueSourceWriter
 
       scan_node_types( content )
 
-      local builder = StringBuilder(content.count)
+      local builder = String(content.count)
       builder.print( content )
 
       if (not node_types.contains("Cmd"))
@@ -171,15 +171,14 @@ class RCmd : RogueSourceWriter
            |      return @list.last
            |
            |    method list_description->String
-           |      use builder = StringBuilder.pool
-           |        builder.print '['
-           |        forEach (element at index in @list)
-           |          if (index > 0) builder.print ','
-           |          builder.print( %element )
-           |        endForEach
-           |        builder.print ']'
-           |        return builder->String
-           |      endUse
+           |      local builder = String()
+           |      builder.print '['
+           |      forEach (element at index in @list)
+           |        if (index > 0) builder.print ','
+           |        builder.print( %element )
+           |      endForEach
+           |      builder.print ']'
+           |      return builder
            |
            |    method remove_first->Cmd
            |      return @list.remove_first
@@ -259,9 +258,9 @@ class RCmd : RogueSourceWriter
           node_types.add( node_type.name )
 
           builder.println
-          builder.print( "class " ).print( node_type.name )
+          builder.[ print("class "), print(node_type.name) ]
           if (node_type.base_type)
-            builder.print( " : " ).print( node_type.base_type.name )
+            builder.[ print(" : "), print(node_type.base_type.name) ]
           endIf
           builder.println
 
@@ -272,9 +271,9 @@ class RCmd : RogueSourceWriter
             w .= or_larger( (forEach in extended_properties).name.count )
 
             forEach (p in extended_properties)
-              builder.print( "    " ).print( p.name )
+              builder.[ print("    "), print(p.name) ]
               loop (w - p.name.count) builder.print ' '
-              builder.print( " : " ).println( rogue_name(p.type) )
+              builder.[ print( " : " ), println(rogue_name(p.type)) ]
             endForEach
             builder.println
           endIf
@@ -289,7 +288,7 @@ class RCmd : RogueSourceWriter
                 local args = constructor.args->(as Args)
                 forEach (arg in args)
                   block arg = arg->(as CreateCmdArg)
-                    builder.print( ", " ).print( arg.arg_name )
+                    builder.[ print(", "), print(arg.arg_name) ]
                   endBlock
                 endForEach
               endIf
@@ -379,7 +378,7 @@ class RCmd : RogueSourceWriter
 
     method is_node_defined( name:String )->Logical
       if (node_types.contains(name)) return true
-      if (File.exists(File.folder(filepath)/(name+".rogue"))) return true
+      if ((File(filepath).parent/(name+".rogue")).exists) return true
       return false
 
 endClass

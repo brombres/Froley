@@ -3,7 +3,7 @@ module Froley
 class BuildfileGenerator [singleton]
   METHODS
     method generate( project_name:String )
-      if (File.exists("Build.rogue"))
+      if (File("Build.rogue").exists)
         println "  Build.rogue already exists. Skipping."
         return
       endIf
@@ -11,12 +11,11 @@ class BuildfileGenerator [singleton]
       local content = file_template
       content .= replacing( "$PROJECT_NAME", project_name )
       content .= replacing( "$project_name", project_name.to_lowercase )
-      File.save( "Build.rogue", content )
+      File( "Build.rogue" ).save( content )
 
-      if (not File.exists(".gitignore"))
+      if (not File(".gitignore").exists)
         println "Creating default .gitignore"
-        File.save(
-          ".gitignore",
+        File( ".gitignore" ).save(
           @|.rogo
            |Local.settings
            |BuildLocal.rogue
@@ -485,7 +484,7 @@ class BuildfileGenerator [singleton]
         |      m( args )
         |
         |    method find_command( name:String )->MethodInfo
-        |      return <<Routine>>.find_global_method( rogo_prefix + name )
+        |      return <<FroleyRoutine>>.find_global_method( rogo_prefix + name )
         |
         |    method on_error
         |      local w = Console.width.or_smaller( 80 )
@@ -606,7 +605,7 @@ class BuildfileGenerator [singleton]
         |  println "USAGE"
         |  local entries = CommandInfo[]
         |  local max_len = 0
-        |  forEach (m in <<Routine>>.global_methods)
+        |  forEach (m in <<FroleyRoutine>>.global_methods)
         |    if (m.name.begins_with(Build.rogo_prefix))
         |      local name = m.name.after_first( Build.rogo_prefix )
         |      local entry = CommandInfo( name, get_syntax(name), get_description(name) )
@@ -645,7 +644,7 @@ class BuildfileGenerator [singleton]
         |  if (Build.rogo_syntax.contains(m_name))
         |    return "rogo " + Build.rogo_syntax[ m_name ]
         |  else
-        |    local m = <<Routine>>.find_global_method( Build.rogo_prefix + m_name )
+        |    local m = <<FroleyRoutine>>.find_global_method( Build.rogo_prefix + m_name )
         |    if (not m) return null
         |    local line = "rogo $" (m_name.replacing('_',' '))
         |    line += " <$>" ((forEach in m.parameters).name)

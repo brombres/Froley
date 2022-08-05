@@ -28,23 +28,23 @@ class RogueSourceWriter
       endIf
 
     method create_missing
-      if (File.exists(filepath)) return
+      if (File(filepath).exists) return
       overwrite( class_name )
 
     method filepath->String
       if (@filepath) return @filepath
 
-      require class_name
+      assert class_name
       local filename = class_name + ".rogue"
       filepath = generator.folder/filename
       return @filepath
 
     method overwrite
-      require class_name
+      assert class_name
       overwrite( class_name )
 
     method overwrite( class_name )
-      generator.writer = StringBuilder(2048)
+      generator.writer = String(2048)
 
       writeln "module $\n"(Program.project_name)
       write_content

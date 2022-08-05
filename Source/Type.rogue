@@ -10,7 +10,7 @@ class Type
     is_built_in  : Logical   # String etc.
     is_native    : Logical
     is_list      : Logical
-    constructors = StringTable<<CreateCmd>>()
+    constructors = [String:CreateCmd]
 
     properties          : NodeProperty[]
     extended_properties : NodeProperty[]
@@ -36,7 +36,7 @@ class Type
       if (not base_type)        return properties
       if (@extended_properties) return @extended_properties
 
-      local types = StringTable<<NodeProperty>>()
+      local types = [String:NodeProperty]
       forEach (p in properties) types[p.name] = p
       forEach (p in base_type.properties) types.remove(p.name)
       extended_properties = types.values.to_list
@@ -61,7 +61,7 @@ class Type
       if (@properties) return @properties
 
       # Sift through all node constructors to find a full set of unique properties
-      local types = StringTable<<NodeProperty>>()
+      local types = [String:NodeProperty]
       forEach (constructor in constructors)
         if (constructor.args)
           local args = constructor.args->(as Args)

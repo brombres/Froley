@@ -8,25 +8,25 @@ class Program [singleton]
     output_folder      : String
     main_filename      : String
 
-    types              = StringTable<<Type>>()
+    types              = [String:Type]
     type_Cmd           : Type
     type_CmdList       : Type
 
-    token_groups       = StringTable<<TokenGroup>>()
-    tokens_by_name     = StringTable<<TokenDef>>()
-    tokens_by_symbol   = StringTable<<TokenDef>>()
-    token_attributes   = StringTable<<Int32>>(){ "content":1 }
+    token_groups       = [String:TokenGroup]
+    tokens_by_name     = [String:TokenDef]
+    tokens_by_symbol   = [String:TokenDef]
+    token_attributes   = [String:Int32]{ "content":1 }
 
     scanner            : ScannerDef
     parser             : ParserDef
 
-    scan_patterns      = StringTable<<String>>()
+    scan_patterns      = [String:String]
     scanner_user_calls = Set<<String>>()
     parser_user_calls  = Set<<String>>()
 
   METHODS
     method compile( command, nodes )
-      if (not project_name) project_name  = File.filename( command//args.first ).before_last('.')
+      if (not project_name) project_name  = File( command//args.first ).filename.before_last('.')
       output_folder = File( command//args.last )
 
       local t = nodes.t
@@ -62,6 +62,7 @@ class Program [singleton]
         if (main.is_string) main_filename = main->String
         else                main_filename = project_name
       endIf
+
       generate_rogue( output_folder )
 
     method description->String

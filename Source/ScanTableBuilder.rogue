@@ -27,7 +27,7 @@ endClass
 
 class ScanTableNode
   PROPERTIES
-    links   = Table<<Character,ScanTableNode>>()
+    links   = [Character:ScanTableNode]
     index   : Int32
     product = -1
 
@@ -82,7 +82,8 @@ class ScanTableNode
       local result = @{}
       if (product != -1) result//product = product
       if (links.count)
-        local link_table = result.ensure_table("links")
+        if (not result//links) result//links = @{}
+        local link_table = result//links
         forEach (entry in links.entries)
           link_table[""+entry.key] = entry.value->Value
         endForEach

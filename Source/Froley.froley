@@ -438,7 +438,7 @@ parser
     on "-"
       routine_name_and_attributes
       scanner_multi_line_statements
-      create Routine(name:String,attributes:String,statements:Statements)
+      create FroleyRoutine(name:String,attributes:String,statements:Statements)
     endOn
     consume_eols
   endWhile
@@ -953,7 +953,7 @@ parser
     on "-"
       routine_name_and_attributes
       parser_multi_line_statements
-      create Routine(name:String,attributes:String,statements:Statements)
+      create FroleyRoutine(name:String,attributes:String,statements:Statements)
     endOn
     consume_eols
   endWhile

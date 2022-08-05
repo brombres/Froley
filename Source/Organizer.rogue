@@ -13,7 +13,7 @@ class Organizer : Visitor
           throw cmd.t.error( "Node '$' used with multiple conflicting base types ('$' and '$')." ...
           (cmd.name, base_type, node_type.base_type) )
         endIf
-        node_type.base_type = base_type
+        node_type.@base_type = base_type
       endIf
 
       if (not cmd.is_organized)
@@ -73,20 +73,19 @@ class Organizer : Visitor
           endBlock
         endForEach
 
-        use sig_builder = StringBuilder.pool
-          sig_builder.print( cmd.name )
-          sig_builder.print( "(" )
-          if (cmd.args)
-            forEach (arg at index in cmd.args->(as Args))
-              block arg = arg->(as CreateCmdArg)
-                if (index > 0) sig_builder.print ','
-                sig_builder.print(arg.arg_type)
-              endBlock
-            endForEach
-          endIf
-          sig_builder.print( ")" )
-          cmd.signature = sig_builder->String
-        endUse
+        local sig_builder = String()
+        sig_builder.print( cmd.name )
+        sig_builder.print( "(" )
+        if (cmd.args)
+          forEach (arg at index in cmd.args->(as Args))
+            block arg = arg->(as CreateCmdArg)
+              if (index > 0) sig_builder.print ','
+              sig_builder.print(arg.arg_type)
+            endBlock
+          endForEach
+        endIf
+        sig_builder.print( ")" )
+        cmd.signature = sig_builder
 
         node_type.add( cmd )
       endIf
@@ -116,7 +115,7 @@ class Organizer : Visitor
     method on_visit( cmd:On )
       if (not cmd.is_organized)
         cmd.is_organized = true
-        # See on(Routine) for more details
+        # See on(FroleyRoutine) for more details
         if (this_routine.is_binary)
           cmd.token_types.add( Identifier(cmd.t,"_consume_eols()") )
           cmd.token_types.add( Identifier(cmd.t,this_routine.next_routine.name) )
@@ -172,7 +171,7 @@ class Organizer : Visitor
       cmd.arg = visit( cmd.arg )->(as CreateCmd)
       if (this_routine.is_binary or this_routine.is_post_unary)
         # Change 'produce X' to 'create X'
-        # See on(Routine) for more details
+        # See on(FroleyRoutine) for more details
         return on( ParserCreate(cmd.t,cmd.arg) )
       endIf
       visit_children( cmd )
@@ -201,7 +200,7 @@ class Organizer : Visitor
       Program.type(cmd.t,cmd.list_type).is_list = true
       visit_children( cmd )
 
-    method on_visit( cmd:Routine )
+    method on_visit( cmd:FroleyRoutine )
       if (not cmd.is_organized)
         cmd.is_organized = true
         if (cmd.attributes)
@@ -248,7 +247,7 @@ class Organizer : Visitor
             #
             # ORGANIZED
             #   - assign [rightBinary]
-            #     parse_next                      # added in Routine
+            #     parse_next                      # added in FroleyRoutine
             #     on "=" assign ...               # added in On/ElseOn
             #       -> Assign(left,right):Binary  # added in CreateCmd
             cmd.statements.insert( Access(cmd.t,cmd.next_routine.name) )
@@ -264,7 +263,7 @@ class Organizer : Visitor
             #   - negate [preUnary]
             #     on "-" negate ...     # added in On/ElseOn
             #       -> Negate(operand)  # added in CreateCmd
-            #     parse_next            # added in Routine
+            #     parse_next            # added in FroleyRoutine
             cmd.statements.add( Access(cmd.t,cmd.next_routine.name) )
 
           endIf

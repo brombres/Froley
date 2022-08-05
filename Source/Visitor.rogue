@@ -4,7 +4,7 @@ module Froley
 class Visitor<<$ReturnType>>
   PROPERTIES
     this_element : Element
-    this_routine : Routine
+    this_routine : FroleyRoutine
     this_match   : Match
 
   METHODS
@@ -254,14 +254,14 @@ class Visitor<<$ReturnType>>
         visit( cmd.value )
       endIf
 
-    method on( cmd:Routine )->$ReturnType
+    method on( cmd:FroleyRoutine )->$ReturnType
       temporarily this_routine = cmd
         handle_visit( cmd )
       endTemporarily
       if ($ReturnType instanceOf Cmd) return cmd
       else                            return $ReturnType.meta.default_value
 
-    method on_visit_children( cmd:Routine )
+    method on_visit_children( cmd:FroleyRoutine )
       if ($ReturnType instanceOf Cmd)
         cmd.statements = visit(cmd.statements)->(as Statements)
       else

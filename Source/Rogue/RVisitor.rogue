@@ -85,7 +85,7 @@ class RVisitor : RogueSourceWriter
 
       scan_node_types( content )
 
-      local builder = StringBuilder(content.count*2)
+      local builder = String(content.count*2)
 
       local end_class_location = content.locate( "endClass", content.locate("class Visitor").value )
       local bottom = "endClass\n"
@@ -110,7 +110,7 @@ class RVisitor : RogueSourceWriter
 
           if (extended_properties.count)
             builder.println
-            builder.print(  "method on_visit_children( cmd:" ).print( node_type.name ).println( " )" )
+            builder.[ print("method on_visit_children( cmd:"), print(node_type.name), println(" )") ]
             if (node_type.is_list and node_type.name != "CmdList")
               builder.println "  on_visit_children( cmd->(as CmdList) )"
             endIf
@@ -136,6 +136,6 @@ class RVisitor : RogueSourceWriter
 
       builder.println
 
-      content = builder->String + bottom
+      content = builder + bottom
       return content
 endClass

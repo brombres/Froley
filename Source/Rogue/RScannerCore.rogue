@@ -24,13 +24,13 @@ class RScannerCore( generator, scanner_def:ScannerDef ) : RogueSourceWriter
         @|
          |  PROPERTIES
          |    _filepath     : String
-         |    _scanner      : ::Scanner
+         |    _scanner      : Rogue::Scanner
          |    line          = 1
          |    column        = 1
          |
          |    tokens        = Token[]
-         |    buffer        = StringBuilder()
-         |    output        = StringBuilder()
+         |    buffer        = String()
+         |    output        = String()
          |
          |    start_ip      = 0
          |    halt          = false
@@ -48,7 +48,7 @@ class RScannerCore( generator, scanner_def:ScannerDef ) : RogueSourceWriter
         max_w .= or_larger( (forEach in scanner_def.vars).name.count )
 
         forEach (v in scanner_def.vars)
-          write "$ : "(v.name.left_justified(max_w))
+          write "$ : "(v.name.justified(-max_w))
           which (v.type)
             case FType.LOGICAL
               writeln "Logical"
@@ -75,12 +75,12 @@ class RScannerCore( generator, scanner_def:ScannerDef ) : RogueSourceWriter
         @|
          |  METHODS
          |    method init( file:File )
-         |      init( file.filepath, ::Scanner(file) )
+         |      init( file.filepath, Rogue::Scanner(file) )
          |      line   = 1
          |      column = 1
          |
          |    method init( filepath:String, content:String, line=1, column=1 )
-         |      init( filepath, ::Scanner(content).[line=line, column=column] )
+         |      init( filepath, Rogue::Scanner(content).[line=line, column=column] )
          |
          |    method init( _filepath, _scanner )
          |      noAction
@@ -107,7 +107,7 @@ class RScannerCore( generator, scanner_def:ScannerDef ) : RogueSourceWriter
          |
          |    method _add( type:TokenType )
          |      if (type.attributes & TokenType.ATTRIBUTE_CONTENT)
-         |        tokens.add( _t(type,buffer) )
+         |        tokens.add( _t(type,buffer.cloned) )
          |      else
          |        tokens.add( _t(type) )
          |      endIf
@@ -164,7 +164,8 @@ class RScannerCore( generator, scanner_def:ScannerDef ) : RogueSourceWriter
          |
          |    method _on_output_line
          |      # Default behavior: print out 'output' and clear it. Can override this method.
-         |      print( output ).flush
+         |      print( output )
+         |      flush
          |      output.clear
          |
          |    method _restore_position
@@ -203,14 +204,14 @@ class RScannerCore( generator, scanner_def:ScannerDef ) : RogueSourceWriter
          |
          |    method _throw_syntax_error( message=null:String )
          |      if (not message)
-         |        local builder = StringBuilder()
+         |        local builder = String()
          |        builder.print "Syntax error - unexpected "
          |        if (not _scanner.has_another)
          |          builder.println "end of input."
          |        else
-         |          builder.print( _describe_character(_scanner.peek) ).print( '.' )
+         |          builder.[ print(_describe_character(_scanner.peek)), print('.') ]
          |        endIf
-         |        message = builder->String
+         |        message = builder
          |      endIf
          |      throw CompileError( message, _filepath, _scanner.source, _scanner.line, _scanner.column )
          |

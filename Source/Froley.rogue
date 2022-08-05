@@ -3,6 +3,8 @@ $define AUTHOR "May 27, 2022 by Abe Pralle"
 
 module Froley
 
+uses Codec/Base64
+
 $include "Macros.rogue"
 
 $include "BranchAnalyzer.rogue"
@@ -23,7 +25,7 @@ $include "Type.rogue"
 $include "Validator.rogue"
 $include "Var.rogue"
 uses Froley
-uses Utility/CommandLineParser
+uses Console/CommandLineParser
 
 try
   Froley( System.command_line_arguments )
@@ -49,7 +51,7 @@ class Froley
       endIf
 
       if (command//options//create and not command//options//project)
-        command//options//project = File.filename( File.abs(".") )
+        command//options//project = File(".").abs.filename
       endIf
 
       if (command//options//create)

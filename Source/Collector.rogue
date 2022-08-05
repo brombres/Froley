@@ -8,7 +8,7 @@ class Collector : Visitor
       cmd.routine_defs.clear
       cmd.routine_defs.add( forEach in this_element.routines )
 
-    method on( cmd:Routine )->Cmd
+    method on( cmd:FroleyRoutine )->Cmd
       if (cmd.is_binary or cmd.is_post_unary)
         # CONVERT THIS:
         #   - parse_op [binary/postUnary]
@@ -19,7 +19,7 @@ class Collector : Visitor
         #
         #   - parse_op__inner [binary/postUnary]
         #     on "op" ...
-        local primer = Routine( cmd.t, cmd.name, "[primer]", Statements(cmd.t) )
+        local primer = FroleyRoutine( cmd.t, cmd.name, "[primer]", Statements(cmd.t) )
         primer.ip = this_element.routines.count
         this_element.routines[primer.name] = primer
         temporarily this_routine = primer

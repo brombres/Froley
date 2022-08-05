@@ -5,7 +5,7 @@ class BranchAnalyzer : InspectionVisitor<<Logical>> [singleton]
     method all_paths_return( cmd:Cmd )->Logical
       return visit( cmd )
 
-    method on( cmd:Routine )->Logical
+    method on( cmd:FroleyRoutine )->Logical
       return visit( cmd.statements )
 
     method on( cmd:CmdList )->Logical

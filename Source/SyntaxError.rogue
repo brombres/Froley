@@ -12,7 +12,7 @@ class SyntaxError( message:String, filepath=null:String, source=null:String, lin
 
     method description->String
       local w = Console.width.or_smaller(80)
-      local builder = StringBuilder()
+      local builder = String()
       builder.println( "=" * w )
       builder.print( "ERROR" )
       if (filepath)
@@ -21,7 +21,7 @@ class SyntaxError( message:String, filepath=null:String, source=null:String, lin
           builder.print( " line $, column $" (line,column) )
         endIf
       endIf
-      builder.println.println
+      builder.[println,println]
       builder.println( message.word_wrapped(w) )
       builder.println
 
@@ -35,9 +35,9 @@ class SyntaxError( message:String, filepath=null:String, source=null:String, lin
             escapeForEach
           endIf
         endForEach
-        builder.print( " " * (column-(skip+1)) ).println( '^' )
+        builder.[ print(" " * (column-(skip+1))), println('^') ]
       endIf
 
       builder.println( "=" * w )
-      return builder->String
+      return builder
 endClass

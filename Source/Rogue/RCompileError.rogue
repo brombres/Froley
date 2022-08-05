@@ -20,7 +20,7 @@ class RCompileError : RogueSourceWriter
          |    method description->String
          |      local w = Console.width.or_smaller(80)
          |      if (w <= 0) w = 80
-         |      local builder = StringBuilder()
+         |      local builder = String()
          |      builder.println( "=" * w )
          |      builder.print( "ERROR" )
          |      if (filepath)
@@ -29,7 +29,7 @@ class RCompileError : RogueSourceWriter
          |          builder.print( " line $, column $" (line,column) )
          |        endIf
          |      endIf
-         |      builder.println.println
+         |      builder.[println,println]
          |      builder.println( message.word_wrapped(w) )
          |      builder.println
          |
@@ -43,10 +43,10 @@ class RCompileError : RogueSourceWriter
          |            escapeForEach
          |          endIf
          |        endForEach
-         |        builder.print( " " * (column-(skip+1)) ).println( '^' )
+         |        builder.[ print(" " * (column-(skip+1))), println('^') ]
          |      endIf
          |
          |      builder.println( "=" * w )
-         |      return builder->String
+         |      return builder
          |endClass
 endClass

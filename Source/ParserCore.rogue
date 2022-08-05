@@ -111,8 +111,8 @@ class ParserCore [abstract]
     _saved_positions = ParserPosition[]
     start_ip         = 0
     ip               = 0
-    buffer           = StringBuilder()
-    output           = StringBuilder()
+    buffer           = String()
+    output           = String()
 
     disable_output : Int32
 
@@ -219,7 +219,7 @@ class ParserCore [abstract]
 
     method _on_output_line
       # Default behavior: print out 'output' and clear it. Can override this method.
-      print( output ).flush
+      Global.[ print(output), flush ]
       output.clear
 
     method _on_t->Token
@@ -293,7 +293,7 @@ class ParserCore [abstract]
 
     method _string_to_Logical( st:String )->Logical
       if (st.equals("false",&ignore_case)) return false
-      return st->Logical
+      return true
 
     method _string_to_Character( st:String )->Character
       if (st.count == 0) return Character(0)
@@ -307,15 +307,14 @@ class ParserCore [abstract]
 
     method _throw_syntax_error( message=null:String, expected=null:TokenType? )
       if (message is null)
-        use builder = StringBuilder.pool
-          local next = _describe( _peek.type )
-          if (expected)
-            builder.print "Expected $, found $." (_describe(expected.value),next)
-          else
-            builder.print "Unexpected $." (next)
-          endIf
-          message = builder->String
-        endUse
+        local builder = String()
+        local next = _describe( _peek.type )
+        if (expected)
+          builder.print "Expected $, found $." (_describe(expected.value),next)
+        else
+          builder.print "Unexpected $." (next)
+        endIf
+        message = builder
       endIf
 
       throw _peek.error( message )
@@ -523,7 +522,7 @@ class ParserCore [abstract]
           temporarily _cur_t = _on_t
             r_routine_name_and_attributes
             r_scanner_multi_line_statements
-            if (not disable_output) _push( Routine(_cur_t,_string_arg(-3),_string_arg(-2),_node_arg(-1)->(as Statements)), 3 )
+            if (not disable_output) _push( FroleyRoutine(_cur_t,_string_arg(-3),_string_arg(-2),_node_arg(-1)->(as Statements)), 3 )
           endTemporarily
         endIf
         r_consume_eols
@@ -1727,7 +1726,7 @@ class ParserCore [abstract]
           temporarily _cur_t = _on_t
             r_routine_name_and_attributes
             r_parser_multi_line_statements
-            if (not disable_output) _push( Routine(_cur_t,_string_arg(-3),_string_arg(-2),_node_arg(-1)->(as Statements)), 3 )
+            if (not disable_output) _push( FroleyRoutine(_cur_t,_string_arg(-3),_string_arg(-2),_node_arg(-1)->(as Statements)), 3 )
           endTemporarily
         endIf
         r_consume_eols

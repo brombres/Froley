@@ -35,8 +35,8 @@ class RParserCore( generator, parser_def:ParserDef ) : RogueSourceWriter
          |    _saved_positions = ParserPosition[]
          |    start_ip         = 0
          |    ip               = 0
-         |    buffer           = StringBuilder()
-         |    output           = StringBuilder()
+         |    buffer           = String()
+         |    output           = String()
          |
 
       if (parser_def.vars.count)
@@ -46,7 +46,7 @@ class RParserCore( generator, parser_def:ParserDef ) : RogueSourceWriter
         max_w .= or_larger( (forEach in parser_def.vars).name.count )
 
         forEach (v in parser_def.vars)
-          write "$ : "(v.name.left_justified(max_w))
+          write "$ : "(v.name.justified(-max_w))
           which (v.type)
             case FType.LOGICAL
               writeln "Logical"
@@ -178,7 +178,8 @@ class RParserCore( generator, parser_def:ParserDef ) : RogueSourceWriter
          |
          |    method _on_output_line
          |      # Default behavior: print out 'output' and clear it. Can override this method.
-         |      print( output ).flush
+         |      print( output )
+         |      flush
          |      output.clear
          |
          |    method _on_t->Token
@@ -252,7 +253,7 @@ class RParserCore( generator, parser_def:ParserDef ) : RogueSourceWriter
          |
          |    method _string_to_Logical( st:String )->Logical
          |      if (st.equals("false",&ignore_case)) return false
-         |      return st->Logical
+         |      return true
          |
          |    method _string_to_Character( st:String )->Character
          |      if (st.count == 0) return Character(0)
@@ -266,15 +267,14 @@ class RParserCore( generator, parser_def:ParserDef ) : RogueSourceWriter
          |
          |    method _throw_syntax_error( message=null:String, expected=null:TokenType? )
          |      if (message is null)
-         |        use builder = StringBuilder.pool
-         |          local next = _describe( _peek.type )
-         |          if (expected)
-         |            builder.print "Expected $, found $." (_describe(expected.value),next)
-         |          else
-         |            builder.print "Unexpected $." (next)
-         |          endIf
-         |          message = builder->String
-         |        endUse
+         |        local builder = String()
+         |        local next = _describe( _peek.type )
+         |        if (expected)
+         |          builder.print "Expected $, found $." (_describe(expected.value),next)
+         |        else
+         |          builder.print "Unexpected $." (next)
+         |        endIf
+         |        message = builder
          |      endIf
          |
          |      throw _peek.error( message )

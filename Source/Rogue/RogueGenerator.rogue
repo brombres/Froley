@@ -1,19 +1,19 @@
 module Froley
 
-$include "RCmd.rogue"
-$include "RMain.rogue"
-$include "RInspectionVisitor.rogue"
-$include "RParser.rogue"
-$include "RParserCore.rogue"
-$include "RScanTable.rogue"
-$include "RScanner.rogue"
-$include "RScannerCore.rogue"
-$include "RCompileError.rogue"
-$include "RToken.rogue"
-$include "RTokenType.rogue"
-$include "RVisitor.rogue"
-$include "RogueSourceWriter.rogue"
-$include "ScanTableDeclarationWriter.rogue"
+$include "Rogue/RCmd.rogue"
+$include "Rogue/RMain.rogue"
+$include "Rogue/RInspectionVisitor.rogue"
+$include "Rogue/RParser.rogue"
+$include "Rogue/RParserCore.rogue"
+$include "Rogue/RScanTable.rogue"
+$include "Rogue/RScanner.rogue"
+$include "Rogue/RScannerCore.rogue"
+$include "Rogue/RCompileError.rogue"
+$include "Rogue/RToken.rogue"
+$include "Rogue/RTokenType.rogue"
+$include "Rogue/RVisitor.rogue"
+$include "Rogue/RogueSourceWriter.rogue"
+$include "Rogue/ScanTableDeclarationWriter.rogue"
 
 class RogueGenerator : Visitor
   GLOBAL METHODS
@@ -27,11 +27,11 @@ class RogueGenerator : Visitor
 
     indent     = 0
     at_newline = true
-    write_replacements = StringTable<<String>>()
+    write_replacements = [String:String]
 
   METHODS
     method init( folder )
-      File.create_folder( folder )
+      File( folder ).create_folder
 
       visit( Program.nodes )
 
@@ -544,7 +544,7 @@ class RogueGenerator : Visitor
       endIf
       visit_children( cmd )
 
-    method on( cmd:Routine )->Cmd
+    method on( cmd:FroleyRoutine )->Cmd
       if (is_scanner)
         writeln "    method r_$->Logical"(cmd.name)
 

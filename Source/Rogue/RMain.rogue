@@ -9,7 +9,7 @@ class RMain : RogueSourceWriter
         @|$include "Scanner.rogue"
          |$include "Parser.rogue" [optional]
          |uses $ProjectName
-         |uses Utility/CommandLineParser
+         |uses Console/CommandLineParser
          |
          |try
          |  $ClassName( System.command_line_arguments )
@@ -38,8 +38,8 @@ class RMain : RogueSourceWriter
          |        System.exit 0
          |      endIf
          |
-         |      $if (defined(PARSER_EXISTS)) parse_files
-         |      $else                        scan_files
+         |      if ($isDefined(PARSER_EXISTS)) parse_files
+         |      else                           scan_files
          |
          |    method scan_files
          |      forEach (arg in command//args)
@@ -49,15 +49,15 @@ class RMain : RogueSourceWriter
          |        println (forEach in tokens)
          |      endForEach
          |
-         |    $if (defined(PARSER_EXISTS))
          |    method parse_files
-         |      forEach (arg in command//args)
-         |        local filepath = arg->String
-         |        local parser = Parser( File(filepath) )
-         |        local ast = parser.parse
-         |        @trace ast
-         |      endForEach
-         |    $endIf
+         |      if ($isDefined(PARSER_EXISTS))
+         |        forEach (arg in command//args)
+         |          local filepath = arg->String
+         |          local parser = Parser( File(filepath) )
+         |          local ast = parser.parse
+         |          @trace ast
+         |        endForEach
+         |      endIf
          |
          |    method parse_args( args:String[] )->Value
          |      # This method is unrelated to the Froley Parser

@@ -68,10 +68,10 @@ class Resolver : Visitor
 
       # All characters and strings?
       if (all_strings)
-        use builder = StringBuilder.pool
+        use builder = StringPool
           builder.print( (forEach in cmd)->String )
           if (builder.count == 1) return LiteralCharacter( cmd.t, builder[0] )
-          else                    return LiteralString( cmd.t, builder->String )
+          else                    return LiteralString( cmd.t, builder.cloned )
         endUse
       endIf
 

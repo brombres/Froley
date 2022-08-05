@@ -8,26 +8,26 @@ class StarterFroleyGenerator [singleton]
 
     method generate_froley( project_name:String )
       local filepath = "Source/$.froley"(project_name)
-      if (File.exists(filepath))
+      if (File(filepath).exists)
         println "  $ already exists. Skipping." (filepath)
         return
       endIf
       local content = froley_file_template
       content .= replacing( "$PROJECT_NAME", project_name )
       content .= replacing( "$project_name", project_name.to_lowercase )
-      File.create_folder( "Source" )
-      File.save( filepath, content )
+      File( "Source" ).create_folder
+      File( filepath ).save( content )
 
     method generate_test( project_name:String )
       local filepath = "Test.$"(project_name.to_lowercase)
-      if (File.exists(filepath))
+      if (File(filepath).exists)
         println "  $ already exists. Skipping." (filepath)
         return
       endIf
       local content = test_file_template
       content .= replacing( "$PROJECT_NAME", project_name )
       content .= replacing( "$project_name", project_name.to_lowercase )
-      File.save( filepath, content )
+      File( filepath ).save( content )
 
     method froley_file_template->String
       return ...

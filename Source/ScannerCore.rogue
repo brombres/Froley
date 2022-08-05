@@ -27,13 +27,13 @@ class ScannerCore [abstract]
 
   PROPERTIES
     _filepath     : String
-    _scanner      : ::Scanner
+    _scanner      : Rogue::Scanner
     line          = 1
     column        = 1
 
     tokens        = Token[]
-    buffer        = StringBuilder()
-    output        = StringBuilder()
+    buffer        = String()
+    output        = String()
 
     start_ip      = 0
     halt          = false
@@ -57,12 +57,12 @@ class ScannerCore [abstract]
 
   METHODS
     method init( file:File )
-      init( file.filepath, ::Scanner(file) )
+      init( file.filepath, Rogue::Scanner(file) )
       line   = 1
       column = 1
 
     method init( filepath:String, content:String, line=1, column=1 )
-      init( filepath, ::Scanner(content).[line=line, column=column] )
+      init( filepath, Rogue::Scanner(content).[line=line, column=column] )
 
     method init( _filepath, _scanner )
       noAction
@@ -82,7 +82,7 @@ class ScannerCore [abstract]
 
     method _add( type:TokenType )
       if (type.attributes & TokenType.ATTRIBUTE_CONTENT)
-        tokens.add( _t(type,buffer) )
+        tokens.add( _t(type,buffer.cloned) )
       else
         tokens.add( _t(type) )
       endIf
@@ -139,7 +139,7 @@ class ScannerCore [abstract]
 
     method _on_output_line
       # Default behavior: print out 'output' and clear it. Can override this method.
-      print( output ).flush
+      Global.[ print(output), flush ]
       output.clear
 
     method _restore_position
@@ -178,12 +178,12 @@ class ScannerCore [abstract]
 
     method _throw_syntax_error( message=null:String )
       if (not message)
-        local builder = StringBuilder()
+        local builder = String()
         builder.print "Syntax error - unexpected "
         if (not _scanner.has_another)
           builder.println "end of input."
         else
-          builder.print( _describe_character(_scanner.peek) ).print( '.' )
+          builder.[ print(_describe_character(_scanner.peek)), print('.') ]
         endIf
         message = builder->String
       endIf
@@ -332,7 +332,7 @@ class ScannerCore [abstract]
             necessary (false)
         endWhich
       unsatisfied
-        ch = _scanner.peek 
+        ch = _scanner.peek
         if (_scan_pattern_0.is_next(_scanner))
           if (not r_scan_integer) return false
           _add( TokenType.INTEGER )
@@ -561,7 +561,7 @@ class ScannerCore [abstract]
       return true
 
     method r_scan_identifier->Logical
-      ch = _scanner.peek 
+      ch = _scanner.peek
       if (_scan_pattern_2.scan(_scanner,buffer))
         _scan_table_3.reset
         contingent
@@ -794,7 +794,7 @@ class ScannerCore [abstract]
         if ((not _scanner.has_another))
           return true
         endIf
-        ch = _scanner.peek 
+        ch = _scanner.peek
       endWhile
       return true
 

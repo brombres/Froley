@@ -36,8 +36,8 @@ class ParserCore [abstract]
     _saved_positions = ParserPosition[]
     start_ip         = 0
     ip               = 0
-    buffer           = StringBuilder()
-    output           = StringBuilder()
+    buffer           = String()
+    output           = String()
 
     disable_output : Int32
 
@@ -144,7 +144,8 @@ class ParserCore [abstract]
 
     method _on_output_line
       # Default behavior: print out 'output' and clear it. Can override this method.
-      print( output ).flush
+      print( output )
+      flush
       output.clear
 
     method _on_t->Token
@@ -218,7 +219,7 @@ class ParserCore [abstract]
 
     method _string_to_Logical( st:String )->Logical
       if (st.equals("false",&ignore_case)) return false
-      return st->Logical
+      return true
 
     method _string_to_Character( st:String )->Character
       if (st.count == 0) return Character(0)
@@ -232,15 +233,14 @@ class ParserCore [abstract]
 
     method _throw_syntax_error( message=null:String, expected=null:TokenType? )
       if (message is null)
-        use builder = StringBuilder.pool
-          local next = _describe( _peek.type )
-          if (expected)
-            builder.print "Expected $, found $." (_describe(expected.value),next)
-          else
-            builder.print "Unexpected $." (next)
-          endIf
-          message = builder->String
-        endUse
+        local builder = String()
+        local next = _describe( _peek.type )
+        if (expected)
+          builder.print "Expected $, found $." (_describe(expected.value),next)
+        else
+          builder.print "Unexpected $." (next)
+        endIf
+        message = builder
       endIf
 
       throw _peek.error( message )
@@ -271,6 +271,7 @@ class ParserCore [abstract]
       if (not disable_output) _push( AST(_cur_t,_node_arg(-1)), 1 )
       _cur_t = _previous_cur_t
       return
+      _cur_t = _previous_cur_t
 
     method r_statements
       local _previous_cur_t = _cur_t
@@ -284,6 +285,7 @@ class ParserCore [abstract]
       else                    _push_list( Statements(_list_t) )
       _cur_t = _previous_cur_t
       return
+      _cur_t = _previous_cur_t
 
     method r_statement
       local _previous_cur_t = _cur_t
@@ -322,6 +324,7 @@ class ParserCore [abstract]
       else                    _push_list( Args(_list_t) )
       _cur_t = _previous_cur_t
       return
+      _cur_t = _previous_cur_t
 
     method r_expression
       local _previous_cur_t = _cur_t

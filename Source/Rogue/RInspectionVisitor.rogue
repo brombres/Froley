@@ -65,7 +65,7 @@ class RInspectionVisitor : RogueSourceWriter
 
       scan_node_types( content )
 
-      local builder = StringBuilder(content.count*2)
+      local builder = String(content.count*2)
 
       local end_class_location = content.locate( "endClass", content.locate("class InspectionVisitor<<").value )
       local bottom = "endClass\n"
@@ -92,7 +92,7 @@ class RInspectionVisitor : RogueSourceWriter
             local check_return = false
 
             builder.println
-            builder.print(  "method on_visit_children( cmd:" ).print( node_type.name ).println( " )->$ReturnType" )
+            builder.[ print("method on_visit_children( cmd:"), print(node_type.name), println(" )->$ReturnType") ]
             if (node_type.is_list and node_type.name != "CmdList")
               builder.println "  local result = on_visit_children( cmd->(as CmdList) )"
               check_return = true
@@ -118,6 +118,6 @@ class RInspectionVisitor : RogueSourceWriter
 
       builder.println
 
-      content = builder->String + bottom
+      content = builder + bottom
       return content
 endClass

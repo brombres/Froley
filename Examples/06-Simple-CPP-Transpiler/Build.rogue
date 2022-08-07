@@ -54,19 +54,28 @@ routine rogo_clean
   File( ".rogo" ).delete
 
   local files = Files( "Source/*.rogue" )
-  files.remove( "Source/Simple.rogue" )
-  files.remove( "Source/Resolver.rogue" )
-  files.remove( "Source/CmdExecute.rogue" )
-  #files.delete
+  files.remove( "CPPWriter.rogue" )  # Preserve these files
+  files.remove( "CmdTypes.rogue" )
+  files.remove( "Parser.rogue" )
+  files.remove( "Program.rogue" )
+  files.remove( "Resolver.rogue" )
+  files.remove( "Scanner.rogue" )
+  files.remove( "Simple.froley" )
+  files.remove( "Simple.rogue" )
+  files.delete # Delete remaining files
+
 endRoutine
 
 routine rogo_build
   # Recompiles Rogue -> C -> Exe if needed. 'rogo rebuild' forces a build.
   localize exe_file
 
-  if (File("Source/$.froley"(Build.PROJECT)).is_newer_than(exe_file))
+  contingent
+    sufficient (File("Source/$.froley"(Build.PROJECT)).is_newer_than(exe_file))
+    necessary  (Files("Source/*.rogue").count < 13)
+  satisfied
     rogo_froley
-  endIf
+  endContingent
 
   local source_files = Files( "Source", "**/*.rogue" )
   if (source_files.any_newer_than(exe_file))

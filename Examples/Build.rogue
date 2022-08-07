@@ -14,12 +14,13 @@ routine rogo_clean
 endRoutine
 
 routine examples->String[]
-  return File.listing( ".", &folders, &ignore_hidden )
+  return File( "." ).listing( &folders, &ignore_hidden )
 endRoutine
 
 routine execute( commands:String, error_message=null:String, &suppress_error )->Logical
   forEach (cmd in LineReader(commands))
-    print( "> " ).println( cmd )
+    print( "> " )
+    println( cmd )
     if (0 != System.run(cmd))
       if (suppress_error)
         return false
@@ -55,19 +56,17 @@ endRoutine
 
 #   ROGUEC       = roguec       # Path to roguec to compile this file with
 #   ROGUEC_ARGS  = --whatever   # Additional options to pass to RogueC
-#   CPP          = g++ -Wall -std=gnu++11 -fno-strict-aliasing
-#                  -Wno-invalid-offsetof   # C++ compiler path and/or invocation
-#   CPP_ARGS     = -a -b -c          # Additional C++ args
-#   LINK         = true              # Links following LIBRARIES with this Build
-#                                    # file (otherwise just installs them)
-#   LINK         = -lalpha -lbeta    # Links following LIBRARIES and includes
-#                                    # these additional flags
-#   LINK         = false             # Linking turned off for following
-#                                    # LIBRARIES - info can still be obtained
-#                                    # from $LIBRARY_FLAGS()
+#   CC           = gcc -Wall
+#   CC_ARGS      = -a -b -c          # Additional C args
+#   LINK         = -lalpha -lbeta    # Link this build file with these options
 #   LINK(macOS)  = ...               # Options applying only to
 #                                    # System.os=="macOS" (use with any OS and
 #                                    # any comment directive)
+#   LINK_LIBS    = true              # Links following LIBRARIES with this Build
+#                                    # file (otherwise just installs them)
+#   LINK_LIBS    = false             # Linking turned off for following
+#                                    # LIBRARIES - info can still be obtained
+#                                    # from $LIBRARY_FLAGS or $LIBRARIES(libname,...)
 #   LIBRARIES    = libalpha
 #   LIBRARIES    = libbeta(library-name)
 #   LIBRARIES    = libfreetype6-dev(freetype2)
@@ -92,9 +91,9 @@ routine description( command:String, text:String )
   Build.rogo_descriptions[ command ] = text
 endRoutine
 
-routine help( command:String, description=null:String, syntax=null:String )
-  if (description) Global.description( command, description )
-  if (syntax)      Global.syntax( command, syntax )
+routine help( command:String, description_text=null:String, syntax_text=null:String )
+  if (description_text) description( command, description_text )
+  if (syntax_text)      syntax( command, syntax_text )
 endRoutine
 
 try
@@ -106,9 +105,9 @@ endTry
 
 class Build [singleton]
   PROPERTIES
-    rogo_syntax         = StringTable<<String>>()
-    rogo_descriptions   = StringTable<<String>>()
-    rogo_prefix         = ?:{ $moduleName.count:$moduleName "::" || "" } + "rogo_" : String
+    rogo_syntax         = [String:String]
+    rogo_descriptions   = [String:String]
+    rogo_prefix         = "rogo_"
     rogo_command        = "default"
     rogo_args           = @[]
     rogo_error          : Error
@@ -125,22 +124,21 @@ class Build [singleton]
 
     method dispatch_command
       local m = find_command( rogo_command )
-      require m || "no such routine rogo_$()" (rogo_command)
+      if (not m) throw Error( "No such routine rogo_$()" (rogo_command) )
 
       local args = @[]
       forEach (arg in rogo_args)
         which (arg)
           case "true":  args.add( true )
           case "false": args.add( false )
-          case "null":  args.add( NullValue )
+          case "null":  args.add( null )
           others:       args.add( arg )
         endWhich
       endForEach
-      if (m.parameter_count == 1 and args.count > 1) args = @[ args ] # Wrap args in a ValueList.
       m( args )
 
     method find_command( name:String )->MethodInfo
-      return <<Global>>.find_global_method( rogo_prefix + name )
+      return <<Routine>>.find_global_method( rogo_prefix + name )
 
     method on_error
       local w = Console.width.or_smaller( 80 )
@@ -177,7 +175,7 @@ class Build [singleton]
           rogo_args.clear
 
           while (parts.count)
-            local cmd = _join( parts )
+            local cmd = parts.join("_")
             if (find_command(cmd))
               rogo_command = cmd
               on_command_found
@@ -199,7 +197,7 @@ class Build [singleton]
     method read_defs( defs_filepath:String )
       # Attempt to read defs from Local.settings
       local overrides = String[]
-      if (File.exists(defs_filepath))
+      if (File(defs_filepath).exists)
         forEach (line in LineReader(File(defs_filepath)))
           if (line.contains("="))
             local name  = line.before_first('=').trimmed
@@ -210,7 +208,7 @@ class Build [singleton]
             local p = <<Build>>.find_property( name )
             if (p)
               overrides.add( "$ = $" (name,value) )
-              <<Build>>.set_property( this, p, Value(value) )
+              p.set_value( this, value )
             endIf
           endIf
         endForEach
@@ -241,7 +239,8 @@ routine rogo_help( command="":String )
       local max_w = Console.width - 2
       println "DESCRIPTION"
       forEach (line in LineReader(description.word_wrapped(max_w)))
-        print( "  " ).println( line )
+        print( "  " )
+        println( line )
       endForEach
       println
       success = true
@@ -258,24 +257,26 @@ routine rogo_help( command="":String )
   endIf
 
   println "USAGE"
-  local lines = String[]
+  local entries = CommandInfo[]
   local max_len = 0
-  forEach (m in <<Global>>.global_methods)
+  forEach (m in <<Routine>>.global_methods)
     if (m.name.begins_with(Build.rogo_prefix))
-      lines.add( "  " + get_syntax(m.name.after_first(Build.rogo_prefix)) )
-      max_len .= or_larger( lines.last.count )
+      local name = m.name.after_first( Build.rogo_prefix )
+      local entry = CommandInfo( name, get_syntax(name), get_description(name) )
+      max_len .= or_larger( entry.syntax.count )
+      entries.add entry
     endIf
   endForEach
 
+  entries.sort( $1.name < $2.name )
   max_len += 2
+
   local max_w = Console.width
-  lines.sort( (a,b)=>(a<b) )
-  forEach (line in lines)
-    print line
-    local cmd = line.after_first( "rogo " ).before_first(' ')
-    local description = get_description( cmd )
-    if (description)
-      loop (max_len - line.count) print ' '
+  forEach (entry in entries)
+    print "  " + entry.syntax
+    if (entry.@description)
+      local description = entry.@description
+      loop (max_len - entry.syntax.count) print ' '
       contingent
         sufficient (max_len + description.count <= max_w)
         if (description.contains(". "))
@@ -293,15 +294,14 @@ routine rogo_help( command="":String )
   println
 endRoutine
 
-
 routine get_syntax( m_name:String )->String
   if (Build.rogo_syntax.contains(m_name))
     return "rogo " + Build.rogo_syntax[ m_name ]
   else
-    local m = <<Global>>.find_global_method( Build.rogo_prefix + m_name )
+    local m = <<Routine>>.find_global_method( Build.rogo_prefix + m_name )
     if (not m) return null
     local line = "rogo $" (m_name.replacing('_',' '))
-    line += " <$>" (m.parameter_name(forEach in 0..<m.parameter_count))
+    line += " <$>" ((forEach in m.parameters).name)
     return line
   endIf
 endRoutine
@@ -314,3 +314,5 @@ routine get_description( m_name:String )->String
     return null
   endIf
 endRoutine
+
+class CommandInfo( name:String, syntax:String, description:String );

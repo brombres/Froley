@@ -503,9 +503,9 @@ class RogueGenerator : Visitor
       write " )"
 
     method on( cmd:ScannerPeek )->Cmd
-      write   "_scanner.peek "
+      write   "_scanner.peek"
       if (cmd.lookahead)
-        write "("
+        write " ("
         visit( cmd.lookahead )
         write ")"
       endIf

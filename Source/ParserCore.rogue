@@ -219,7 +219,8 @@ class ParserCore [abstract]
 
     method _on_output_line
       # Default behavior: print out 'output' and clear it. Can override this method.
-      Global.[ print(output), flush ]
+      print( output )
+      flush
       output.clear
 
     method _on_t->Token

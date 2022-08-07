@@ -139,7 +139,8 @@ class ScannerCore [abstract]
 
     method _on_output_line
       # Default behavior: print out 'output' and clear it. Can override this method.
-      Global.[ print(output), flush ]
+      print( output )
+      flush
       output.clear
 
     method _restore_position
@@ -185,7 +186,7 @@ class ScannerCore [abstract]
         else
           builder.[ print(_describe_character(_scanner.peek)), print('.') ]
         endIf
-        message = builder->String
+        message = builder
       endIf
       throw CompileError( message, _filepath, _scanner.source, _scanner.line, _scanner.column )
 

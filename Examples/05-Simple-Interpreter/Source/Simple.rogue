@@ -4,8 +4,9 @@ $include "CmdExecute.rogue"
 $include "Scanner.rogue"
 $include "Parser.rogue"
 $include "Resolver.rogue"
+
 uses Simple
-uses Utility/CommandLineParser
+uses Console/CommandLineParser
 
 try
   Simple( System.command_line_arguments )
@@ -35,12 +36,14 @@ class Simple
         local parser = Parser( File(arg) )
         local ast = parser.parse
         println "ORIGINAL TREE"
-        println ast
+        println %ast
+        println ast.type_name
+        println ast->(as Statements).count
         println
 
         println "RESOLVED"
         Resolver().visit( ast )
-        println ast
+        println %ast
         println
 
         println "INTERPRETED"

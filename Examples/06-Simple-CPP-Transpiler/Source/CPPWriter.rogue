@@ -2,7 +2,7 @@ module Simple
 
 class CPPWriter( filepath:String ) : Visitor
   PROPERTIES
-    builder = StringBuilder()
+    builder = String()
 
   METHODS
     method on_visit( cmd:AST )
@@ -14,7 +14,6 @@ class CPPWriter( filepath:String ) : Visitor
          |int main()
          |{
       builder.indent += 2
-      visit_children( cmd )
 
       # Declare variables
       local number_vars = Program.vars.values.to_list.keeping($.type == "Number")
@@ -37,13 +36,15 @@ class CPPWriter( filepath:String ) : Visitor
         builder.println ";"
       endIf
 
-    method on_leave( cmd:AST )
+      visit_children( cmd )
+
       builder.indent -= 2
       builder.println ...
         @|  return 0;
          |}
 
-      File.save( filepath, builder )
+      File( filepath ).save( builder )
+
 
     method on_visit( cmd:Statements )
       forEach (statement in cmd)
@@ -90,7 +91,7 @@ class CPPWriter( filepath:String ) : Visitor
       visit_children( cmd )
 
     method on_visit( cmd:WriteVar )
-      builder.print( cmd.name ).print( " = " )
+      builder.[ print(cmd.name), print(" = ") ]
       visit_children( cmd )
 
 endClass

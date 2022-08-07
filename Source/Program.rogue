@@ -65,7 +65,7 @@ class Program [singleton]
 
       generate_rogue( output_folder )
 
-    method description->String
+    method to->String
       return ""+nodes
 
     method generate_rogue( folder:String )

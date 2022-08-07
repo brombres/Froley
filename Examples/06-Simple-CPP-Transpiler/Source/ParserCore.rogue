@@ -271,7 +271,6 @@ class ParserCore [abstract]
       if (not disable_output) _push( AST(_cur_t,_node_arg(-1)), 1 )
       _cur_t = _previous_cur_t
       return
-      _cur_t = _previous_cur_t
 
     method r_statements
       local _previous_cur_t = _cur_t
@@ -285,7 +284,6 @@ class ParserCore [abstract]
       else                    _push_list( Statements(_list_t) )
       _cur_t = _previous_cur_t
       return
-      _cur_t = _previous_cur_t
 
     method r_statement
       local _previous_cur_t = _cur_t
@@ -324,7 +322,6 @@ class ParserCore [abstract]
       else                    _push_list( Args(_list_t) )
       _cur_t = _previous_cur_t
       return
-      _cur_t = _previous_cur_t
 
     method r_expression
       local _previous_cur_t = _cur_t

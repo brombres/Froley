@@ -442,22 +442,26 @@ class RogueGenerator : Visitor
       return cmd
 
     method on( cmd:Print )->Cmd
-      write "output"
-      forEach (arg in cmd.args)
-        write ".print("
+      write "output.[ "
+      forEach (arg at i in cmd.args)
+        if (i > 0) write ", "
+        write "print("
         visit( arg.require_value )
         write ")"
       endForEach
+      write " ]"
       return cmd
 
     method on( cmd:Println )->Cmd
-      write "output"
-      forEach (arg in cmd.args)
-        write ".print("
+      write "output.[ "
+      forEach (arg at i in cmd.args)
+        if (i > 0) write ", "
+        write "print("
         visit( arg.require_value )
         write ")"
       endForEach
-      writeln ".println"
+      if (cmd.args.count) write ", "
+      writeln "println ]"
       write "_on_output_line"
       return cmd
 
@@ -653,7 +657,7 @@ class RogueGenerator : Visitor
         write "("
         forEach (arg at i in cmd.args)
           if (i > 0) write "+"
-          visit( cmd.args )
+          visit( arg )
         endForEach
         write ")"
       endIf

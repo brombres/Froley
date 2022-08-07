@@ -40,6 +40,8 @@ class ScannerCore [abstract]
     _scan_pattern_2 = ScanPattern( "{[_a-zA-Z][_a-zA-Z0-9]*}" )
     _scan_pattern_3 = ScanPattern( "[0-9]" )
     _scan_pattern_4 = ScanPattern( "[0-9]*" )
+    _scan_table_0 = ScanTable("Hv8HKRA9Ei0UKBYrGC8aKhwAAAEAAgADAAQABQAGAA==")
+    _scan_table_1 = ScanTable("HgABcAT/AXII/wFpDP8BbhD/AXQUAQFsGP8BbhwCAA==")
 
   METHODS
     method init( file:File )
@@ -269,7 +271,6 @@ class ScannerCore [abstract]
         _add( TokenType.IDENTIFIER )
         return false
       endContingent
-      return true
 
     method r_scan_number->Logical
       if ((not _scanner.has_another))
@@ -289,7 +290,6 @@ class ScannerCore [abstract]
       else
         return true
       endIf
-      return true
 
     method r_scan_integer->Logical
       _scan_pattern_4.scan(_scanner,buffer)

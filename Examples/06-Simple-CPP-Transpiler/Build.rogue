@@ -9,7 +9,7 @@ augment Build
   # BUILD_MODE = release
   PROPERTIES
     #PROJECT          = "$PROJECT_NAME"
-    PROJECT          = "Simple"   # FIXME
+    PROJECT          = "Simple"
     LAUNCHER_NAME    = PROJECT.to_lowercase : String
 
     BUILD_MODE       = "debug"
@@ -30,7 +30,7 @@ routine rogo_run
   # Runs this project.
   execute "$ Test.$" (exe_file.esc,Build.LAUNCHER_NAME)
 
-  execute "cat Test.simple" #FIXME
+  execute "cat Test.simple"
   println
   execute "cat Test.cpp"
   println
@@ -52,6 +52,12 @@ routine rogo_clean
   # Deletes the Build/ and .rogo/ folders.
   File( "Build" ).delete
   File( ".rogo" ).delete
+
+  local files = Files( "Source/*.rogue" )
+  files.remove( "Source/Simple.rogue" )
+  files.remove( "Source/Resolver.rogue" )
+  files.remove( "Source/CmdExecute.rogue" )
+  #files.delete
 endRoutine
 
 routine rogo_build

@@ -10,7 +10,7 @@ class SyntaxError( message:String, filepath=null:String, source=null:String, lin
     method describe
       Console.error.println this->String
 
-    method description->String
+    method to->String
       local w = Console.width.or_smaller(80)
       local builder = String()
       builder.println( "=" * w )

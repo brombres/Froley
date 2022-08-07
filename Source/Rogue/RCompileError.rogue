@@ -17,7 +17,7 @@ class RCompileError : RogueSourceWriter
          |    method describe
          |      Console.error.println this->String
          |
-         |    method description->String
+         |    method to->String
          |      local w = Console.width.or_smaller(80)
          |      if (w <= 0) w = 80
          |      local builder = String()

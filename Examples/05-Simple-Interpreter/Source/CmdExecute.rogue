@@ -2,7 +2,7 @@ module Simple
 
 class Runtime [singleton]
   PROPERTIES
-    variables = StringTable<<Value>>()
+    variables = [String:Value]
 endClass
 
 augment

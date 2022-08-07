@@ -95,7 +95,15 @@ class CmdList : Cmd
 
     method init( existing:CmdList )
       prior.init( existing )
+
+      # Start with shallow clone
       list = existing.list.cloned
+
+      # Turn into deep clone
+      localize list
+      forEach (cmd at i in list)
+        if (cmd) list[i] = cmd.cloned
+      endForEach
 
     method add( cmd:Cmd )
       @list.add( cmd )
@@ -122,15 +130,14 @@ class CmdList : Cmd
       return @list.last
 
     method list_description->String
-      use builder = StringBuilder.pool
-        builder.print '['
-        forEach (element at index in @list)
-          if (index > 0) builder.print ','
-          builder.print( %element )
-        endForEach
-        builder.print ']'
-        return builder->String
-      endUse
+      local builder = String()
+      builder.print '['
+      forEach (element at index in @list)
+        if (index > 0) builder.print ','
+        builder.print( %element )
+      endForEach
+      builder.print ']'
+      return builder
 
     method remove_first->Cmd
       return @list.remove_first

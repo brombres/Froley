@@ -2,7 +2,7 @@ module Simple
 
 class Program [singleton]
   PROPERTIES
-    vars = StringTable<<Var>>()
+    vars = [String:Var]
 
   METHODS
     method set_var_type( t:Token, var_name:String, var_type:String )

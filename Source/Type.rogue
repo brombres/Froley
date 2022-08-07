@@ -29,9 +29,6 @@ class Type
       type.t = t
       properties.add( NodeProperty(t,name,type) )
 
-    method description->String
-      return name
-
     method extended_properties->NodeProperty[]
       if (not base_type)        return properties
       if (@extended_properties) return @extended_properties
@@ -106,6 +103,9 @@ class Type
         @base_type = Program.type_CmdList
       endIf
 
+    method to->String
+      return name
+
 endClass
 
 class NodeProperty( t:Token, name:String, type:Type ) [compound]
@@ -114,13 +114,14 @@ class NodeProperty( t:Token, name:String, type:Type ) [compound]
       return NodeProperty( t, name, Program.type(t,type_name) )
 
   METHODS
-    method description->String
-      return "$:$" (name,type)
-
     method hash_code->Int32
       return name.hash_code ~ type.hash_code
 
     method operator==( other:NodeProperty )->Logical
       return name == other.name and type is other.type
+
+    method to->String
+      return "$:$" (name,type)
+
 endClass
 

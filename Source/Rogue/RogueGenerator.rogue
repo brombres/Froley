@@ -77,9 +77,9 @@ class RogueGenerator : Visitor
       write "->String"
 
     method on( cmd:Collect )->Cmd
-      write "buffer"
-      forEach (arg in cmd.args)
-        write ".print("
+      forEach (arg at i in cmd.args)
+        if (i > 0) writeln
+        write "buffer.print("
         visit( arg )
         write ")"
       endForEach
@@ -677,14 +677,16 @@ class RogueGenerator : Visitor
     method on_visit( cmd:WriteBuffer )
       write "buffer.clear"
       if (not (cmd instanceOf LiteralString and cmd->String == ""))
-        write ".print "
+        writeln
+        write "buffer.print "
         visit_children( cmd )
       endIf
 
     method on_visit( cmd:WriteOutput )
       write "output.clear"
       if (not (cmd instanceOf LiteralString and cmd->String == ""))
-        write ".print "
+        writeln
+        write "output.print "
         visit_children( cmd )
       endIf
 

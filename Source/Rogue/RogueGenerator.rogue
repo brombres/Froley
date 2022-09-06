@@ -430,9 +430,7 @@ class RogueGenerator : Visitor
       write ".is_next(_scanner)"
 
     method on_visit( cmd:ParserCallUserMethod )
-      writeln "this.ip = ip"
       writeln cmd.fn_name
-      write   "ip = this.ip"
       visit_children( cmd )
 
     method on( cmd:NextIsTokenType )->Cmd

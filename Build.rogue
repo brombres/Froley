@@ -14,14 +14,14 @@ augment Build
     BUILD_MODE       = "release"
     LAUNCHER_FOLDER  = "/usr/local/bin"
     ROGUEC_FLAGS     = ""
-    CC_FLAGS_UNIX    = ""
+    CC_FLAGS_UNIX    = "-std=gnu++11 -Wno-invalid-offsetof"
     CC_FLAGS_WINDOWS = ""
 endAugment
 
 routine rogo_default
   # Builds and runs this project - equivalent to 'rogo build && rogo run'.
   rogo_build
-  #rogo_install  # Uncomment to automatically install a /usr/local/bin/simple launcher
+  rogo_install  # Uncomment to automatically install a /usr/local/bin/simple launcher
   rogo_run
 endRoutine
 
@@ -58,7 +58,7 @@ routine rogo_build
 
   local source_files = Files( "Source", "**/*.rogue" )
   if (source_files.any_newer_than(exe_file))
-    local c_filepath = "Build/$-$.c" (Build.PROJECT,System.os)
+    local c_filepath = "Build/$-$.cpp" (Build.PROJECT,System.os)
     if (source_files.any_newer_than(c_filepath))
       compile_rogue
     endIf
@@ -275,7 +275,7 @@ routine compile_rogue
   local c_filepath = "Build/$-$" (Build.PROJECT,System.os)
   local flags = Build.ROGUEC_FLAGS
   if (Build.BUILD_MODE == "debug") flags = flags.with_suffix(' ') + "--debug"
-  local cmd = "roguec $ $ --main --output=$ --target=Console,C,$"...
+  local cmd = "roguec1 $ $ --main --output=$ --target=Console,C++,$"...
               (File(src_filepath).esc,flags,File(c_filepath).esc,System.os)
   println "> " + cmd
   local status = Process.run( cmd, &env )
@@ -295,14 +295,14 @@ routine compile_c
     if (flags != "") flags += " "
     flags += which{ Build.BUILD_MODE=="release":"/Ob2ity /GF /Gy" || "/Od" }
     local obj_filepath = File( "Build/$-Windows.obj"(Build.PROJECT) ).esc
-    local cc = "cl $ /EHsc /nologo $.c /Fo$ /Fe$" (flags,c_filepath,obj_filepath,exe_filepath)
+    local cc = "cl $ /EHsc /nologo $.cpp /Fo$ /Fe$" (flags,c_filepath,obj_filepath,exe_filepath)
     cc .= appending( "$LIBRARY_FLAGS" )
     execute cc
   else
     local flags = Build.CC_FLAGS_UNIX
     if (flags != "") flags += " "
     flags += which{ Build.BUILD_MODE=="release":"-O3" || "-O0" }
-    local cc = "cc $ -Wall -fno-strict-aliasing $.c -o $" (flags,File(c_filepath).esc,exe_file.esc)
+    local cc = "g++ $ -Wall -fno-strict-aliasing $.cpp -o $" (flags,File(c_filepath).esc,exe_file.esc)
     cc .= appending( "$LIBRARY_FLAGS" )
     execute cc
   endIf

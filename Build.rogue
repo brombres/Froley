@@ -21,7 +21,7 @@ endAugment
 routine rogo_default
   # Builds and runs this project - equivalent to 'rogo build && rogo run'.
   rogo_build
-  rogo_install  # Uncomment to automatically install a /usr/local/bin/simple launcher
+  rogo_install  # Uncomment to automatically install a /usr/local/bin/froley launcher
   rogo_run
 endRoutine
 
@@ -159,7 +159,7 @@ routine rogo_update_version( version:String )
   # Updates the version number and date in the project source and README.md.
   if (version.count == 0) throw Error( "New version number expected, e.g. '1.0.2'." )
 
-  block file = File( "Source/Simple.rogue" )
+  block file = File( "Source/Froley.rogue" )
     if (file.exists)
       local og_content = String(file)
       local content = og_content

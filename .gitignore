@@ -6,6 +6,7 @@ Build
 *.swp
 .DS_Store
 Wiki
+/V3
 
 Demos/ASM/Source
 Demos/JSON/Source

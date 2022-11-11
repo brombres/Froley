@@ -26,6 +26,9 @@ class BuildfileGenerator [singleton]
            |*.o
            |.DS_Store
            |*~
+           |Source/ParserCore.rogue
+           |Source/ScannerCore.rogue
+           |Source/TokenType.rogue
         )
       endIf
 

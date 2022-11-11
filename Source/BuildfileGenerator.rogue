@@ -9,6 +9,7 @@ class BuildfileGenerator [singleton]
       endIf
 
       local content = file_template
+      content .= replacing( "$rogueVersion", $rogueVersion )
       content .= replacing( "$PROJECT_NAME", project_name )
       content .= replacing( "$project_name", project_name.to_lowercase )
       File( "Build.rogue" ).save( content )
@@ -34,7 +35,9 @@ class BuildfileGenerator [singleton]
         |# to this folder and type "rogo" at the command line, or "rogo help" for a list
         |# of supported commands.
         |
-        |$requireRogue "2.0"
+        |$requireRogue "$rogueVersion"
+        |
+        |uses Utility/VersionNumber
         |
         |augment Build
         |  # You can create a Local.settings file with overrides for these values, e.g.:
@@ -46,8 +49,10 @@ class BuildfileGenerator [singleton]
         |    BUILD_MODE       = "debug"
         |    LAUNCHER_FOLDER  = "/usr/local/bin"
         |    ROGUEC_FLAGS     = ""
-        |    CC_FLAGS_UNIX    = ""
-        |    CC_FLAGS_WINDOWS = ""
+        |    CC_ARGS_UNIX     = ""
+        |    CC_LINK_UNIX     = ""
+        |    CC_ARGS_WINDOWS  = ""
+        |    CC_LINK_WINDOWS  = ""
         |endAugment
         |
         |routine rogo_default
@@ -187,11 +192,39 @@ class BuildfileGenerator [singleton]
         |  if (not System.is_windows) verbose_delete( "$/$"(launcher_folder,Build.LAUNCHER_NAME) )
         |endRoutine
         |
+        |routine current_version->String
+        |  contingent
+        |    local file = File("Source/$.rogue"(Build.PROJECT))
+        |    necessary (file.exists)
+        |
+        |    local v = String(file).extract_string( ''*define VERSION "$"*'' )
+        |    necessary (v and v.count)
+        |    return v
+        |  endContingent
+        |
+        |  contingent
+        |    local file = File("README.md")
+        |    necessary (file.exists)
+        |
+        |    if local line = String(file).split('\n').find( $.contains_pattern("Version|$(I)") )
+        |      local v = line.after_first('|').trimmed
+        |      necessary (v.count)
+        |      return v
+        |    endIf
+        |  endContingent
+        |
+        |  return "(none)"
+        |endRoutine
+        |
         |routine rogo_update_version( version:String )
         |  # Updates the version number and date in the project source and README.md.
-        |  if (version.count == 0) throw Error( "New version number expected, e.g. '1.0.2'." )
+        |  localize current_version
+        |  if (version.count == 0) throw Error( "New version number expected, e.g. '1.0.2'. Current version: $"(current_version) )
+        |  if (current_version != "(none)" and VersionNumber(version) <= current_version)
+        |    error.println( "[WARNING] The new version number ($) is not higher than the current version number ($)."(version,current_version) )
+        |  endIf
         |
-        |  block file = File( "Source/Simple.rogue" )
+        |  block file = File( "Source/PROJECT_NAME.rogue" )
         |    if (file.exists)
         |      local og_content = String(file)
         |      local content = og_content
@@ -237,7 +270,7 @@ class BuildfileGenerator [singleton]
         |
         |routine rogo_commit( new_version:String )
         |  # Updates source and README version number and git-commits with a version number message.
-        |  if (not String.exists(new_version)) throw Error( "Expected version number after 'rogo commit'." )
+        |  if (not String.exists(new_version)) throw Error( "Expected version number after 'rogo commit'. Current version: $"(current_version) )
         |  rogo_update_version( new_version )
         |
         |  if (not System.find_executable("git")) throw Error( "Git must be installed." )
@@ -262,7 +295,7 @@ class BuildfileGenerator [singleton]
         |
         |routine rogo_publish( new_version:String )
         |  # Updates source and README version number, commits, and publishes a release to GitHub.
-        |  if (not String.exists(new_version)) throw Error( "Expected version number after 'rogo publish'." )
+        |  if (not String.exists(new_version)) throw Error( "Expected version number after 'rogo publish'. Current version: $"(current_version) )
         |  if (not System.find_executable("gh")) throw Error( "The GitHub command line tool 'gh' must be installed." )
         |  rogo_commit( new_version )
         |
@@ -287,9 +320,9 @@ class BuildfileGenerator [singleton]
         |    if (not main_branch) throw Error( "Unable to detect name of main (release) branch." )
         |  endIf
         |
+        |  execute "git push origin $"(cur_branch)
         |  if (cur_branch != main_branch)
-        |    if (not Console.input("$ will be merged into $. Continue? ").to_lowercase.begins_with('y')) return
-        |    execute "git push origin $"(cur_branch)
+        |    if (not Console.input("$ will be merged into $. Continue? "(cur_branch,main_branch)).to_lowercase.begins_with('y')) return
         |    execute "git checkout $"(main_branch)
         |    execute "git pull"
         |    execute "git merge $"(cur_branch)
@@ -299,7 +332,7 @@ class BuildfileGenerator [singleton]
         |
         |  if (not Console.input("Continue publishing release to GitHub? ").to_lowercase.begins_with('y')) return
         |
-        |  execute "gh release create v"+new_version
+        |  execute ''gh release create v$ --title "v$" --notes ""''(new_version,new_version)
         |endRoutine
         |
         |routine compile_rogue
@@ -323,19 +356,21 @@ class BuildfileGenerator [singleton]
         |  local c_filepath = File( "Build/$-$" (Build.PROJECT,System.os) ).esc
         |  local exe_filepath = exe_file.esc
         |  if (System.is_windows)
-        |    local flags = Build.CC_FLAGS_WINDOWS
+        |    local flags = Build.CC_ARGS_WINDOWS
         |    if (flags != "") flags += " "
-        |    flags += which{ Build.BUILD_MODE=="release":"/Ob2ity /GF /Gy" || "/Od" }
+        |    flags += which{ Build.BUILD_MODE=="release":"/O2" || "/Od" }
         |    local obj_filepath = File( "Build/$-Windows.obj"(Build.PROJECT) ).esc
-        |    local cc = "cl $ /EHsc /nologo $.c /Fo$ /Fe$" (flags,c_filepath,obj_filepath,exe_filepath)
+        |    local cc = "cl $ /nologo $.c /Fo$ /Fe$" (flags,c_filepath,obj_filepath,exe_filepath)
         |    cc .= appending( "$LIBRARY_FLAGS" )
+        |    cc .= appending( Build.CC_LINK_WINDOWS )
         |    execute cc
         |  else
-        |    local flags = Build.CC_FLAGS_UNIX
+        |    local flags = Build.CC_ARGS_UNIX
         |    if (flags != "") flags += " "
         |    flags += which{ Build.BUILD_MODE=="release":"-O3" || "-O0" }
-        |    local cc = "cc $ -Wall -fno-strict-aliasing $.c -o $" (flags,File(c_filepath).esc,exe_file.esc)
+        |    local cc = "cc $ -Wall -fno-strict-aliasing $.c -o $ -lm" (flags,File(c_filepath).esc,exe_file.esc)
         |    cc .= appending( "$LIBRARY_FLAGS" )
+        |    cc .= appending( Build.CC_LINK_UNIX )
         |    execute cc
         |  endIf
         |endRoutine
@@ -402,7 +437,7 @@ class BuildfileGenerator [singleton]
         |
         |#   ROGUEC       = roguec       # Path to roguec to compile this file with
         |#   ROGUEC_ARGS  = --whatever   # Additional options to pass to RogueC
-        |#   CC           = gcc -Wall
+        |#   CC           = gcc -Wall -fno-strict-aliasing
         |#   CC_ARGS      = -a -b -c          # Additional C args
         |#   LINK         = -lalpha -lbeta    # Link this build file with these options
         |#   LINK(macOS)  = ...               # Options applying only to
@@ -484,7 +519,7 @@ class BuildfileGenerator [singleton]
         |      m( args )
         |
         |    method find_command( name:String )->MethodInfo
-        |      return <<FroleyRoutine>>.find_global_method( rogo_prefix + name )
+        |      return <<Routine>>.find_global_method( rogo_prefix + name )
         |
         |    method on_error
         |      local w = Console.width.or_smaller( 80 )
@@ -605,7 +640,7 @@ class BuildfileGenerator [singleton]
         |  println "USAGE"
         |  local entries = CommandInfo[]
         |  local max_len = 0
-        |  forEach (m in <<FroleyRoutine>>.global_methods)
+        |  forEach (m in <<Routine>>.global_methods)
         |    if (m.name.begins_with(Build.rogo_prefix))
         |      local name = m.name.after_first( Build.rogo_prefix )
         |      local entry = CommandInfo( name, get_syntax(name), get_description(name) )
@@ -644,7 +679,7 @@ class BuildfileGenerator [singleton]
         |  if (Build.rogo_syntax.contains(m_name))
         |    return "rogo " + Build.rogo_syntax[ m_name ]
         |  else
-        |    local m = <<FroleyRoutine>>.find_global_method( Build.rogo_prefix + m_name )
+        |    local m = <<Routine>>.find_global_method( Build.rogo_prefix + m_name )
         |    if (not m) return null
         |    local line = "rogo $" (m_name.replacing('_',' '))
         |    line += " <$>" ((forEach in m.parameters).name)

@@ -8,7 +8,7 @@ Version        | 4.0.3
 Date           | November 11, 2022
 Platforms      | macOS, Linux, Windows
 Output Targets | Rogue
-Author         | Abe Pralle
+Author         | Brom Bresenham
 
 # Overview
 1. Froley is a "compiler compiler" that creates and maintains a compiler or interpreter framework.
@@ -23,13 +23,13 @@ Author         | Abe Pralle
 ## New Installation
 
 1. Install [morlock.sh](https://morlock.sh)
-2. `morlock install abepralle/froley`
+2. `morlock install brombres/froley`
 
 ## Updating Existing Installation
 `morlock update froley`
 
 # Documentation
-Refer to the [Wiki](https://github.com/AbePralle/Froley/wiki).
+Refer to the [Wiki](https://github.com/brombres/Froley/wiki).
 
 # Examples
 The [Examples](Examples) folder contains a number of examples of increasing scope. Run `rogo` in an example folder to compile and run the example.

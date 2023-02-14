@@ -1,5 +1,5 @@
 $define VERSION "4.0.3"
-$define AUTHOR "May 27, 2022 by Abe Pralle"
+$define DATE    "February 5, 2023"
 
 module Froley
 
@@ -107,8 +107,9 @@ class Froley
       return command
 
     method print_usage
+      print   "v"
       println VERSION
-      println AUTHOR
+      println "$ by Brom Bresenham" (DATE)
       println
       println @|USAGE
                |  froley [OPTIONS] language-definition.froley output-folder/

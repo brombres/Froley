@@ -1,5 +1,5 @@
-$define VERSION "4.0.3"
-$define DATE    "February 5, 2023"
+$define VERSION "4.0.4"
+$define DATE    "February 14, 2023"
 
 module Froley
 

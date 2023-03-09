@@ -197,13 +197,27 @@ class Resolver : Visitor
 
         cmd.statements = visit( cmd.statements )
 
-        this_match.table_builder.add(
-          (cmd.expression->(as LiteralString)).value,
-          this_match.statement_lists.count
-        )
+        local statements_ip = this_match.statement_lists.count
+        local st = cmd.expression->(as LiteralString)
+        if (st.ignore_case)
+          add_ignoring_case( st.value, statements_ip, 0 )
+        else
+          this_match.table_builder.add( st.value, statements_ip )
+        endIf
         this_match.statement_lists.add( cmd.statements )
       endIf
       return cmd
+
+    method add_ignoring_case( st:String, statements_ip:Int32, index:Int32 )
+      if (index >= st.count) return
+      local ch = st[index]
+      local ch2 = which{ ch.is_uppercase:ch.to_lowercase || ch.to_uppercase }
+      this_match.table_builder.add( st, statements_ip )
+      if (ch2 != ch)
+        st .= replacing_at( index, 1, ch2->String )
+        this_match.table_builder.add( st, statements_ip )
+      endIf
+      add_ignoring_case( st, statements_ip, index+1 )
 
     method on_visit( cmd:On )
       if (cmd.token_type not instanceOf LiteralContent)

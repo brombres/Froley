@@ -7,6 +7,7 @@ IDENTIFIER          identifier [content]
 INTEGER             integer    [content]
 STRING              string     [content]
 STRING_OR_CHARACTER string     [content]
+ANYCASE_STRING      string     [content]
 SYMBOL              symbol     [content]
 
 
@@ -139,6 +140,7 @@ scanner
   scan_identifier
   scan_single_quoted_string
   scan_double_quoted_string
+  scan_anycase_string
   scan_charset
 
   match (input)
@@ -361,6 +363,15 @@ scanner
   if (not consume('"')) return
   while (hasAnother)
     if (consume('"')) produce STRING
+    if (nextIs('\n')) syntaxError "Unterminated string."
+    scan_literal_character
+  endWhile
+  syntaxError "Unterminated string."
+
+- scan_anycase_string
+  if (not consume('~"')) return
+  while (hasAnother)
+    if (consume('"')) produce ANYCASE_STRING
     if (nextIs('\n')) syntaxError "Unterminated string."
     scan_literal_character
   endWhile
@@ -926,6 +937,10 @@ parser
   on INTEGER             -> LiteralInteger( value=content:Integer )
   on STRING
     create LiteralString( value=content )
+    repeat_count
+    return
+  elseOn ANYCASE_STRING
+    create LiteralString( value=content, ignore_case="true":Logical )
     repeat_count
     return
   elseOn STRING_OR_CHARACTER

@@ -23,7 +23,8 @@ class ScannerCore [abstract]
     ip_scan_integer = 11
     ip_scan_single_quoted_string = 12
     ip_scan_double_quoted_string = 13
-    ip_scan_literal_character = 14
+    ip_scan_anycase_string = 14
+    ip_scan_literal_character = 15
 
   PROPERTIES
     _filepath     : String
@@ -206,6 +207,7 @@ class ScannerCore [abstract]
         case ip_scan_integer: return r_scan_integer
         case ip_scan_single_quoted_string: return r_scan_single_quoted_string
         case ip_scan_double_quoted_string: return r_scan_double_quoted_string
+        case ip_scan_anycase_string: return r_scan_anycase_string
         case ip_scan_literal_character: return r_scan_literal_character
         others
           halt = true
@@ -228,6 +230,7 @@ class ScannerCore [abstract]
       if (not r_scan_identifier) return false
       if (not r_scan_single_quoted_string) return false
       if (not r_scan_double_quoted_string) return false
+      if (not r_scan_anycase_string) return false
       if (not r_scan_charset) return false
       _scan_table_0.reset
       contingent
@@ -825,6 +828,25 @@ class ScannerCore [abstract]
       while (_scanner.has_another)
         if (_scanner.consume('"'))
           _add( TokenType.STRING )
+          return false
+        endIf
+        if (_scanner.next_is('\n'))
+          _throw_syntax_error("Unterminated string.")
+          return false
+        endIf
+        if (not r_scan_literal_character) return false
+      endWhile
+      _throw_syntax_error("Unterminated string.")
+      return false
+      return true
+
+    method r_scan_anycase_string->Logical
+      if ((not _scanner.consume("~\"")))
+        return true
+      endIf
+      while (_scanner.has_another)
+        if (_scanner.consume('"'))
+          _add( TokenType.ANYCASE_STRING )
           return false
         endIf
         if (_scanner.next_is('\n'))

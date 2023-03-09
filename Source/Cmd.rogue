@@ -328,10 +328,11 @@ endClass
 
 class LiteralString : Cmd
   PROPERTIES
-    value : String
+    value       : String
+    ignore_case : Logical
 
   METHODS
-    method init( t, value )
+    method init( t, value, ignore_case=false )
 
     method cast_to( to_type:FType )->Cmd
       if (to_type == FType.STRING) return this

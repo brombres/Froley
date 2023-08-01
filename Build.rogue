@@ -266,6 +266,8 @@ routine rogo_publish( new_version:String )
     execute "git merge $"(cur_branch)
     execute "git push origin $"(main_branch)
     execute "git checkout $"(cur_branch)
+  else
+    execute "git push origin $"(cur_branch)
   endIf
 
   if (not Console.input("Continue publishing release to GitHub? ").to_lowercase.begins_with('y')) return

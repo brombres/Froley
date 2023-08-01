@@ -157,6 +157,7 @@ endRoutine
 
 routine rogo_update_version( version:String )
   # Updates the version number and date in the project source and README.md.
+  version .= after_any("v")
   if (version.count == 0) throw Error( "New version number expected, e.g. '1.0.2'." )
 
   block file = File( "Source/Froley.rogue" )
@@ -205,6 +206,7 @@ endRoutine
 
 routine rogo_commit( new_version:String )
   # Updates source and README version number and git-commits with a version number message.
+  new_version .= after_any("v")
   if (not String.exists(new_version)) throw Error( "Expected version number after 'rogo commit'." )
   rogo_update_version( new_version )
 
@@ -230,6 +232,7 @@ endRoutine
 
 routine rogo_publish( new_version:String )
   # Updates source and README version number, commits, and publishes a release to GitHub.
+  new_version .= after_any("v")
   if (not String.exists(new_version)) throw Error( "Expected version number after 'rogo publish'." )
   if (not System.find_executable("gh")) throw Error( "The GitHub command line tool 'gh' must be installed." )
   rogo_commit( new_version )

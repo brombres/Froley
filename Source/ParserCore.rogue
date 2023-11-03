@@ -97,7 +97,8 @@ class ParserCore [abstract]
     ip_parser_power__inner = 85
     ip_parser_pre_unary = 86
     ip_parser_term = 87
-    ip_additional_node_types = 88
+    ip_access = 88
+    ip_additional_node_types = 89
 
   PROPERTIES
     _tokens          : Token[]
@@ -235,6 +236,14 @@ class ParserCore [abstract]
       if (_position < _limit) return _tokens[ _position ]
       if (_tokens.count) return _tokens.last.cloned( TokenType.EOI )
       return Token( TokenType.EOI, null, null, 0, 0 )
+
+    method _pop->Cmd
+      if (disable_output)       return null
+      elseIf (_cmd_stack.count) return _cmd_stack.remove_last
+      throw _peek.error( "[INTERNAL] Attempt to pop command off empty command stack." )
+
+    method _push( cmd:Cmd )
+      if (not disable_output) _cmd_stack.add( cmd )
 
     method _push( cmd:Cmd, node_arg_count:Int32 )
       if (node_arg_count) _cmd_stack.discard_from( _cmd_stack.count - node_arg_count )
@@ -412,6 +421,7 @@ class ParserCore [abstract]
         case ip_parser_power__inner: r_parser_power__inner
         case ip_parser_pre_unary: r_parser_pre_unary
         case ip_parser_term: r_parser_term
+        case ip_access: r_access
         case ip_additional_node_types: r_additional_node_types
         others
           return
@@ -2197,6 +2207,14 @@ class ParserCore [abstract]
           return
         endTemporarily
       endIf
+      if (_next_t.type == TokenType.KEYWORD_POP)
+        temporarily _cur_t = _on_t
+          r_access
+          if (not disable_output) _push( ParserPop(_cur_t,_node_arg(-1)->(as Access)), 1 )
+          _cur_t = _previous_cur_t
+          return
+        endTemporarily
+      endIf
       if (_next_t.type == TokenType.KEYWORD_PRODUCE)
         temporarily _cur_t = _on_t
           r_parser_product
@@ -2233,6 +2251,14 @@ class ParserCore [abstract]
       if (_next_t.type == TokenType.KEYWORD_PRODUCE_TOKEN_LIST)
         temporarily _cur_t = _on_t
           if (not disable_output) _push( ProduceTokenList(_cur_t), 0 )
+          _cur_t = _previous_cur_t
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.KEYWORD_PUSH)
+        temporarily _cur_t = _on_t
+          r_access
+          if (not disable_output) _push( ParserPush(_cur_t,_node_arg(-1)->(as Access)), 1 )
           _cur_t = _previous_cur_t
           return
         endTemporarily
@@ -2839,6 +2865,20 @@ class ParserCore [abstract]
         endTemporarily
       endIf
       _throw_syntax_error
+      _cur_t = _previous_cur_t
+      return
+      _cur_t = _previous_cur_t
+
+    method r_access
+      local _previous_cur_t = _cur_t
+      if (_next_t.type == TokenType.IDENTIFIER)
+        temporarily _cur_t = _on_t
+          if (not disable_output) _push( Access(_cur_t,_cur_t.content), 0 )
+          _cur_t = _previous_cur_t
+          return
+        endTemporarily
+      endIf
+      _throw_syntax_error("Variable name expected.")
       _cur_t = _previous_cur_t
       return
       _cur_t = _previous_cur_t

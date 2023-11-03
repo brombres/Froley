@@ -1944,3 +1944,35 @@ class NativeLiteral : Cmd
     method to->String: return value
 
 endClass
+
+class ParserPop : Cmd
+  PROPERTIES
+    var : Access
+
+  METHODS
+    method init( t, var )
+
+    method init( existing:ParserPop )
+      prior.init( existing )
+      if (existing.var) var = existing.var.cloned
+
+    method description->String
+      return "ParserPop($)" (%var)
+
+endClass
+
+class ParserPush : Cmd
+  PROPERTIES
+    var : Access
+
+  METHODS
+    method init( t, var )
+
+    method init( existing:ParserPush )
+      prior.init( existing )
+      if (existing.var) var = existing.var.cloned
+
+    method description->String
+      return "ParserPush($)" (%var)
+
+endClass

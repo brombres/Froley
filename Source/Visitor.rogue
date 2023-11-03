@@ -490,6 +490,12 @@ class Visitor<<$ReturnType>>
         visit( cmd.new_value )
       endIf
 
+    method on_visit_children( cmd:ParserPop )
+      cmd.var = visit(cmd.var)->(as Access)
+
+    method on_visit_children( cmd:ParserPush )
+      cmd.var = visit(cmd.var)->(as Access)
+
 endClass
 
 class Visitor : Visitor<<Cmd>>

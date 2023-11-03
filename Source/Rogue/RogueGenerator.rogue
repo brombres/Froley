@@ -226,6 +226,12 @@ class RogueGenerator : Visitor
       write "(_position < _limit)"
       visit_children( cmd )
 
+    method on_visit( cmd:ParserPop )
+      writeln "$ = _pop"(cmd.var.name)
+
+    method on_visit( cmd:ParserPush )
+      writeln "_push( $ )"(cmd.var.name)
+
     method on_visit( cmd:Pattern )
       write cmd.reference_name
       visit_children( cmd )

@@ -279,4 +279,14 @@ class InspectionVisitor<<$ReturnType>>
       result = visit(cmd.pattern)
       return result
 
+    method on_visit_children( cmd:ParserPop )->$ReturnType
+      local result : $ReturnType
+      result = visit(cmd.var)
+      return result
+
+    method on_visit_children( cmd:ParserPush )->$ReturnType
+      local result : $ReturnType
+      result = visit(cmd.var)
+      return result
+
 endClass

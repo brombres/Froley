@@ -11,6 +11,7 @@ enum FType( display_name:String )
     STRING( "String" )
     PATTERN( "Pattern" )
     TOKEN( "Token" )
+    CMD( "Cmd" )
 
   METHODS
     method exists->Logical

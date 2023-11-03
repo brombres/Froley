@@ -58,6 +58,8 @@ class RParserCore( generator, parser_def:ParserDef ) : RogueSourceWriter
               writeln "Real64"
             case FType.STRING
               writeln "String"
+            case FType.CMD
+              writeln "Cmd"
             others
               throw v.t.error( "[INTERNAL] Unhandled type '$' (1)."(v.type) )
           endWhich
@@ -194,6 +196,14 @@ class RParserCore( generator, parser_def:ParserDef ) : RogueSourceWriter
          |      if (_position < _limit) return _tokens[ _position ]
          |      if (_tokens.count) return _tokens.last.cloned( TokenType.EOI )
          |      return Token( TokenType.EOI, null, null, 0, 0 )
+         |
+         |    method _pop->Cmd
+         |      if (disable_output)       return null
+         |      elseIf (_cmd_stack.count) return _cmd_stack.remove_last
+         |      throw _peek.error( "[INTERNAL] Attempt to pop command off empty command stack." )
+         |
+         |    method _push( cmd:Cmd )
+         |      if (not disable_output) _cmd_stack.add( cmd )
          |
          |    method _push( cmd:Cmd, node_arg_count:Int32 )
          |      if (node_arg_count) _cmd_stack.discard_from( _cmd_stack.count - node_arg_count )

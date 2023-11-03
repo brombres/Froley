@@ -156,6 +156,14 @@ class Resolver : Visitor
           throw cmd.t.error( "Expected character, string, or pattern; found type $."(seq.type.display_name) )
       endWhich
 
+    method on( cmd:ParserPush )->Cmd
+      this_element.define_var( cmd.t, cmd.var.name, FType.CMD )
+      return cmd
+
+    method on( cmd:ParserPop )->Cmd
+      this_element.define_var( cmd.t, cmd.var.name, FType.CMD )
+      return cmd
+
     method on( cmd:Pattern )->Cmd
       if (not cmd.reference_name)
         local pattern = cmd.scan_pattern->String

@@ -51,9 +51,11 @@ KEYWORD_END_ON              endOn        [structural]
 KEYWORD_NEXT_HAS_ATTRIBUTE  nextHasAttribute
 KEYWORD_ON                  on
 KEYWORD_ON_PEEK             onPeek
+KEYWORD_POP                 pop
 KEYWORD_PRODUCE_LIST        produceList
 KEYWORD_PRODUCE_NULL        produceNull
 KEYWORD_PRODUCE_TOKEN_LIST  produceTokenList
+KEYWORD_PUSH                push
 
 --------------------------------------------------------------------------------
 tokens CommonKeywords
@@ -1223,6 +1225,7 @@ parser
     produce Println(args:Args)
   endOn
 
+  on "pop"     access         -> ParserPop(var:Access)
   on "produce" parser_product -> ParserProduce(arg:CreateCmd)
   on "->"      parser_product -> ParserProduce(arg:CreateCmd)
   on "produceNull"
@@ -1232,6 +1235,7 @@ parser
   endOn
   on "produceList" list_type -> ProduceList(list_type:String)
   on "produceTokenList"      -> ProduceTokenList
+  on "push"    access        -> ParserPush(var:Access)
   on "restorePosition"       -> RestorePosition
   on "return"
     if (nextIs(EOL)) createNull
@@ -1404,6 +1408,10 @@ parser
   on STRING                             -> LiteralString( value=content )
   on STRING_OR_CHARACTER                -> LiteralStringOrCharacter( value=content )
   syntaxError
+
+- access
+  on IDENTIFIER -> Access( name=content )
+  syntaxError "Variable name expected."
 
 - additional_node_types
   create WriteBuffer(new_value)

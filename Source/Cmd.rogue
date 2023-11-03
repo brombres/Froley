@@ -1921,3 +1921,26 @@ class ProduceTokenList : Cmd
     method description->String
       return "ProduceTokenList"
 endClass
+
+class NativeLiteral : Cmd
+  PROPERTIES
+    value : String
+
+  METHODS
+    method init( t, value )
+
+    method init( existing:NativeLiteral )
+      prior.init( existing )
+      value = existing.value
+
+    method description->String
+      return "NativeLiteral($)" (%value)
+
+    method to->Character
+      return Cmd.to_character(value)
+
+    method to->Int32:  return value
+    method to->Logical: return value?
+    method to->String: return value
+
+endClass

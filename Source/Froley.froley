@@ -2,13 +2,14 @@
 tokens
 --------------------------------------------------------------------------------
 EOL                 EOL
-CHARSET             charset    [content]
-IDENTIFIER          identifier [content]
-INTEGER             integer    [content]
-STRING              string     [content]
-STRING_OR_CHARACTER string     [content]
-ANYCASE_STRING      string     [content]
-SYMBOL              symbol     [content]
+CHARSET             charset       [content]
+IDENTIFIER          identifier    [content]
+INTEGER             integer       [content]
+STRING              string        [content]
+STRING_OR_CHARACTER string        [content]
+ANYCASE_STRING      string        [content]
+NATIVE_LITERAL      nativeLiteral [content]
+SYMBOL              symbol        [content]
 
 
 --------------------------------------------------------------------------------
@@ -97,6 +98,7 @@ tokens Symbols
 SYMBOL_ARROW          ->  [structural]
 SYMBOL_ASSIGN         =
 SYMBOL_AT             @
+SYMBOL_BACKQUOTE      `
 SYMBOL_CARET          ^
 SYMBOL_CLOSE_CURLY    }   [structural]
 SYMBOL_CLOSE_PAREN    )   [structural]
@@ -138,6 +140,7 @@ scanner
   if (consume('\n')) produce EOL
 
   scan_identifier
+  scan_native_literal
   scan_single_quoted_string
   scan_double_quoted_string
   scan_anycase_string
@@ -347,6 +350,15 @@ scanner
     ch = peek
   endWhile
   return
+
+- scan_native_literal
+  if (not consume('`')) return
+  while (hasAnother)
+    if (consume('`')) produce NATIVE_LITERAL
+    if (nextIs('\n')) syntaxError "Unterminated native literal."
+    scan_literal_character
+  endWhile
+  syntaxError "Unterminated native literal."
 
 - scan_single_quoted_string
   if (not consume('\'')) return
@@ -772,6 +784,8 @@ parser
       create Identifier( value=content )
     elseOn STRING
       create LiteralString( value=content )
+    elseOn NATIVE_LITERAL
+      create NativeLiteral( value=content )
     elseOthers
       syntaxError "Content or \"quoted expression\" expected."
     endOn

@@ -53,7 +53,13 @@ class Organizer : Visitor
           block arg = arg->(as CreateCmdArg)
             arg.index = index
             if (arg.arg_value)
-              if (not arg.arg_type) arg.arg_type = "String"
+              if (not arg.arg_type)
+                if (arg.arg_value instanceOf NativeLiteral)
+                  arg.arg_type = "native"
+                else
+                  arg.arg_type = "String"
+                endIf
+              endIf
             else
               ++cmd.node_arg_count
               arg.is_node_arg = true

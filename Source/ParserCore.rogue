@@ -1143,6 +1143,10 @@ class ParserCore [abstract]
           temporarily _cur_t = _on_t
             if (not disable_output) _push( LiteralString(_cur_t,_cur_t.content), 0 )
           endTemporarily
+        elseIf (_next_t.type == TokenType.NATIVE_LITERAL)
+          temporarily _cur_t = _on_t
+            if (not disable_output) _push( NativeLiteral(_cur_t,_cur_t.content), 0 )
+          endTemporarily
         else
           _throw_syntax_error("Content or \"quoted expression\" expected.")
           _cur_t = _previous_cur_t

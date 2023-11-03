@@ -172,7 +172,9 @@ class RogueGenerator : Visitor
       write ","
       local arg_type = Program.type( cmd.t, cmd.arg_type )
       if (cmd.arg_value)
-        if (arg_type.is_built_in and arg_type.name != "String")
+        if (arg_type is Program.type_native)
+          write cmd.arg_value->String
+        elseIf (arg_type.is_built_in and arg_type is not Program.type_String)
           write "_string_to_$(" (arg_type.name)
           visit( cmd.arg_value )
           write ")"
@@ -376,6 +378,9 @@ class RogueGenerator : Visitor
 
       write   "endIf"
       return cmd
+
+    method on_visit( cmd:NativeLiteral )
+      writer.print( cmd.value )
 
     method on( cmd:ElseOn )->Cmd
       write   "elseIf (_next_t.type == "

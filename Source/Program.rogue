@@ -11,6 +11,8 @@ class Program [singleton]
     types              = [String:Type]
     type_Cmd           : Type
     type_CmdList       : Type
+    type_String        : Type
+    type_native        : Type
 
     token_groups       = [String:TokenGroup]
     tokens_by_name     = [String:TokenDef]
@@ -49,7 +51,9 @@ class Program [singleton]
       type(t,"Character").is_built_in = true
       type(t,"Integer").is_built_in = true
       type(t,"Real").is_built_in = true
-      type(t,"String").is_built_in = true
+      type_String = type( t, "String" ).[ is_built_in=true ]
+
+      type_native = type( t, "native" ).[ is_native=true ]
 
       Collector().visit( nodes )
       TokenOrganizer().visit( nodes )

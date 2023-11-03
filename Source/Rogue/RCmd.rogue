@@ -271,9 +271,11 @@ class RCmd : RogueSourceWriter
             w .= or_larger( (forEach in extended_properties).name.count )
 
             forEach (p in extended_properties)
-              builder.[ print("    "), print(p.name) ]
-              loop (w - p.name.count) builder.print ' '
-              builder.[ print( " : " ), println(rogue_name(p.type)) ]
+              if (p.type is not Program.type_native)
+                builder.[ print("    "), print(p.name) ]
+                loop (w - p.name.count) builder.print ' '
+                builder.[ print( " : " ), println(rogue_name(p.type)) ]
+              endIf
             endForEach
             builder.println
           endIf

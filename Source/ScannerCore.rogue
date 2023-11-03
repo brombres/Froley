@@ -21,10 +21,11 @@ class ScannerCore [abstract]
     ip_scan_identifier = 9
     ip_must_scan_attribute_identifier = 10
     ip_scan_integer = 11
-    ip_scan_single_quoted_string = 12
-    ip_scan_double_quoted_string = 13
-    ip_scan_anycase_string = 14
-    ip_scan_literal_character = 15
+    ip_scan_native_literal = 12
+    ip_scan_single_quoted_string = 13
+    ip_scan_double_quoted_string = 14
+    ip_scan_anycase_string = 15
+    ip_scan_literal_character = 16
 
   PROPERTIES
     _filepath     : String
@@ -51,7 +52,7 @@ class ScannerCore [abstract]
     _scan_pattern_1 = ScanPattern( "{[a-zA-Z_][a-zA-Z_0-9]*}" )
     _scan_pattern_2 = ScanPattern( "{[a-zA-Z_][a-zA-Z0-9_]*}" )
     _scan_pattern_3 = ScanPattern( "[0-9_]" )
-    _scan_table_0 = ScanTable("gQoAFi0uPThAPl5AfUIpRF1GOkgsSi5MW1I+WDxeIWR7aihsK24/dDt2J3gvgQYqgQgSAj40LTYBABMAAgE9PAwAAwAEAAUABgAHAAgACQD/AS5QCgAWAV1WCwAOAT1cDQAQAT1iDwD/AT1oEQAUABUAFwErchgAGQAaAP8BXHz/ASeBAP8BJ4EEGwAcAB0A")
+    _scan_table_0 = ScanTable("gQ4AFy0wPTpAQGBCXkR9RilIXUo6TCxOLlBbVj5cPGIhaHtuKHArcj94O3onfC+BCiqBDBMCPjYtOAEAFAACAT0+DQADAAQABQAGAAcACAAJAAoA/wEuVAsAFwFdWgwADwE9YA4AEQE9ZhAA/wE9bBIAFQAWABgBK3YZABoAGwD/AVyBAP8BJ4EE/wEngQgcAB0AHgA=")
     _scan_table_1 = ScanTable("egAEbgpwNHNKdGT/AWEO/wF0Ev8BaRb/AXYa/wFlHv8BVCL/AXkm/wFwKv8BZS7/AXMyAQD/AWE4/wFyPP8Bc0D/AWVE/wFySAIA/wFjTv8BYVL/AW5W/wFuWv8BZV7/AXJiAwD/AW9o/wFrbP8BZXD/AW50/wFzeAQA")
     _scan_table_2 = ScanTable("Ev8ECgpbDF0OLBAAAAEAAgADAA==")
     _scan_table_3 = ScanTable("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")
@@ -205,6 +206,7 @@ class ScannerCore [abstract]
         case ip_scan_identifier: return r_scan_identifier
         case ip_must_scan_attribute_identifier: return r_must_scan_attribute_identifier
         case ip_scan_integer: return r_scan_integer
+        case ip_scan_native_literal: return r_scan_native_literal
         case ip_scan_single_quoted_string: return r_scan_single_quoted_string
         case ip_scan_double_quoted_string: return r_scan_double_quoted_string
         case ip_scan_anycase_string: return r_scan_anycase_string
@@ -228,6 +230,7 @@ class ScannerCore [abstract]
         return false
       endIf
       if (not r_scan_identifier) return false
+      if (not r_scan_native_literal) return false
       if (not r_scan_single_quoted_string) return false
       if (not r_scan_double_quoted_string) return false
       if (not r_scan_anycase_string) return false
@@ -255,81 +258,84 @@ class ScannerCore [abstract]
             _add( TokenType.SYMBOL_AT )
             return false
           case 4
-            _add( TokenType.SYMBOL_CARET )
+            _add( TokenType.SYMBOL_BACKQUOTE )
             return false
           case 5
-            _add( TokenType.SYMBOL_CLOSE_CURLY )
+            _add( TokenType.SYMBOL_CARET )
             return false
           case 6
-            _add( TokenType.SYMBOL_CLOSE_PAREN )
+            _add( TokenType.SYMBOL_CLOSE_CURLY )
             return false
           case 7
-            _add( TokenType.SYMBOL_CLOSE_SQUARE )
+            _add( TokenType.SYMBOL_CLOSE_PAREN )
             return false
           case 8
-            _add( TokenType.SYMBOL_COLON )
+            _add( TokenType.SYMBOL_CLOSE_SQUARE )
             return false
           case 9
-            _add( TokenType.SYMBOL_COMMA )
+            _add( TokenType.SYMBOL_COLON )
             return false
           case 10
-            _add( TokenType.SYMBOL_DOT_DOT )
+            _add( TokenType.SYMBOL_COMMA )
             return false
           case 11
-            _add( TokenType.SYMBOL_EMPTY_BRACKETS )
+            _add( TokenType.SYMBOL_DOT_DOT )
             return false
           case 12
-            _add( TokenType.SYMBOL_EQ )
+            _add( TokenType.SYMBOL_EMPTY_BRACKETS )
             return false
           case 13
-            _add( TokenType.SYMBOL_GE )
+            _add( TokenType.SYMBOL_EQ )
             return false
           case 14
-            _add( TokenType.SYMBOL_GT )
+            _add( TokenType.SYMBOL_GE )
             return false
           case 15
-            _add( TokenType.SYMBOL_LE )
+            _add( TokenType.SYMBOL_GT )
             return false
           case 16
-            _add( TokenType.SYMBOL_LT )
+            _add( TokenType.SYMBOL_LE )
             return false
           case 17
-            _add( TokenType.SYMBOL_NE )
+            _add( TokenType.SYMBOL_LT )
             return false
           case 18
-            _add( TokenType.SYMBOL_MINUS )
+            _add( TokenType.SYMBOL_NE )
             return false
           case 19
-            _add( TokenType.SYMBOL_MINUS_MINUS )
+            _add( TokenType.SYMBOL_MINUS )
             return false
           case 20
-            _add( TokenType.SYMBOL_OPEN_CURLY )
+            _add( TokenType.SYMBOL_MINUS_MINUS )
             return false
           case 21
-            _add( TokenType.SYMBOL_OPEN_PAREN )
+            _add( TokenType.SYMBOL_OPEN_CURLY )
             return false
           case 22
-            _add( TokenType.SYMBOL_OPEN_SQUARE )
+            _add( TokenType.SYMBOL_OPEN_PAREN )
             return false
           case 23
-            _add( TokenType.SYMBOL_PLUS )
+            _add( TokenType.SYMBOL_OPEN_SQUARE )
             return false
           case 24
-            _add( TokenType.SYMBOL_PLUS_PLUS )
+            _add( TokenType.SYMBOL_PLUS )
             return false
           case 25
-            _add( TokenType.SYMBOL_QUESTION )
+            _add( TokenType.SYMBOL_PLUS_PLUS )
             return false
           case 26
-            _add( TokenType.SYMBOL_SEMICOLON )
+            _add( TokenType.SYMBOL_QUESTION )
             return false
           case 27
-            _add( TokenType.SYMBOL_SINGLE_QUOTE )
+            _add( TokenType.SYMBOL_SEMICOLON )
             return false
           case 28
-            _add( TokenType.SYMBOL_SLASH )
+            _add( TokenType.SYMBOL_SINGLE_QUOTE )
             return false
           case 29
+            _add( TokenType.SYMBOL_SLASH )
+            return false
+          case 30
             _add( TokenType.SYMBOL_STAR )
             return false
           others
@@ -800,6 +806,25 @@ class ScannerCore [abstract]
         endIf
         ch = _scanner.peek
       endWhile
+      return true
+
+    method r_scan_native_literal->Logical
+      if ((not _scanner.consume('`')))
+        return true
+      endIf
+      while (_scanner.has_another)
+        if (_scanner.consume('`'))
+          _add( TokenType.NATIVE_LITERAL )
+          return false
+        endIf
+        if (_scanner.next_is('\n'))
+          _throw_syntax_error("Unterminated native literal.")
+          return false
+        endIf
+        if (not r_scan_literal_character) return false
+      endWhile
+      _throw_syntax_error("Unterminated native literal.")
+      return false
       return true
 
     method r_scan_single_quoted_string->Logical

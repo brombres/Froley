@@ -281,7 +281,7 @@ routine compile_rogue
   local c_filepath = "Build/$-$" (Build.PROJECT,System.os)
   local flags = Build.ROGUEC_FLAGS
   if (Build.BUILD_MODE == "debug") flags = flags.with_suffix(' ') + "--debug"
-  local cmd = "r2 $ $ --main --output=$ --target=Console,C,$"...
+  local cmd = "roguec $ $ --main --output=$ --target=Console,C,$"...
               (File(src_filepath).esc,flags,File(c_filepath).esc,System.os)
   println "> " + cmd
   local status = Process.run( cmd, &env )

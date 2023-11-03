@@ -1,0 +1,34 @@
+module Simple
+
+class Resolver : Visitor
+  METHODS
+    method on( cmd:Access )->Cmd
+      return visit( ReadVar(cmd.t,cmd.name) )
+
+    method on_visit( cmd:Args )
+      visit_children( cmd )
+      (forEach in cmd).require_value
+
+    method on( cmd:Assign )->Cmd
+      return visit( cmd.left.assigned(cmd.right) )
+
+    method on_visit( cmd:Binary )
+      visit_children( cmd )
+      cmd.left.require_value
+      cmd.right.require_value
+
+    method on_visit( cmd:Unary )
+      visit_children( cmd )
+      cmd.operand.require_value
+
+    method on_visit( cmd:Print )
+      visit_children( cmd )
+      if (cmd.args.count == 0)
+        throw cmd.t.error( "One or more values expected." )
+      endIf
+
+    method on_visit( cmd:WriteVar )
+      visit_children( cmd )
+      Program.set_var_type( cmd.t, cmd.name, cmd.new_value.require_type )
+
+endClass

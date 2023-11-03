@@ -24,6 +24,7 @@ SYMBOL_STAR        *
 --------------------------------------------------------------------------------
 tokens Keywords
 --------------------------------------------------------------------------------
+KEYWORD_PI      pi
 KEYWORD_PRINT   print
 KEYWORD_PRINTLN println
 
@@ -144,6 +145,7 @@ parser
   on IDENTIFIER -> Access(name=content)
   on NUMBER     -> Number(value=content:Real)
   on STRING     -> LiteralString(value=content)
+  on "pi" -> Number( value=`(-1.0).acos`:Real )
   syntaxError
 
 - additional_nodes

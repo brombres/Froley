@@ -41,7 +41,7 @@ class ScannerCore [abstract]
     _scan_pattern_3 = ScanPattern( "[0-9]" )
     _scan_pattern_4 = ScanPattern( "[0-9]*" )
     _scan_table_0 = ScanTable("Hv8HKRA9Ei0UKBYrGC8aKhwAAAEAAgADAAQABQAGAA==")
-    _scan_table_1 = ScanTable("HgABcAT/AXII/wFpDP8BbhD/AXQUAQFsGP8BbhwCAA==")
+    _scan_table_1 = ScanTable("IgABcAT/AmkKcgwBAP8BaRD/AW4U/wF0GAIBbBz/AW4gAwA=")
 
   METHODS
     method init( file:File )
@@ -259,9 +259,12 @@ class ScannerCore [abstract]
         necessary (_scan_table_1.accept(forEach in buffer))
         which (_scan_table_1.product)
           case 1
-            _add( TokenType.KEYWORD_PRINT )
+            _add( TokenType.KEYWORD_PI )
             return false
           case 2
+            _add( TokenType.KEYWORD_PRINT )
+            return false
+          case 3
             _add( TokenType.KEYWORD_PRINTLN )
             return false
           others

@@ -1,0 +1,97 @@
+module Simple
+
+class CPPWriter( filepath:String ) : Visitor
+  PROPERTIES
+    builder = String()
+
+  METHODS
+    method on_visit( cmd:AST )
+      builder.println ...
+        @|#include <iostream>
+         |#include <string>
+         |using namespace std;
+         |
+         |int main()
+         |{
+      builder.indent += 2
+
+      # Declare variables
+      local number_vars = Program.vars.values.to_list.keeping($.type == "Number")
+      if (number_vars.count)
+        builder.print "double "
+        forEach (v at i in number_vars)
+          if (i > 0) builder.print ", "
+          builder.print v.name
+        endForEach
+        builder.println ";"
+      endIf
+
+      local string_vars = Program.vars.values.to_list.keeping($.type == "String ")
+      if (string_vars.count)
+        builder.print "string "
+        forEach (v at i in string_vars)
+          if (i > 0) builder.print ", "
+          builder.print v.name
+        endForEach
+        builder.println ";"
+      endIf
+
+      visit_children( cmd )
+
+      builder.indent -= 2
+      builder.println ...
+        @|  return 0;
+         |}
+
+      File( filepath ).save( builder )
+
+
+    method on_visit( cmd:Statements )
+      forEach (statement in cmd)
+        visit( statement )
+        builder.println ";"
+      endForEach
+
+    method on_visit( cmd:Binary )
+      builder.print '('
+      visit( cmd.left )
+      builder.print " $ "(cmd.t.type.symbol)
+      visit( cmd.right )
+      builder.print ')'
+
+    method on_visit( cmd:Negate )
+      builder.print '-'
+      visit_children( cmd )
+
+    method on_visit( cmd:Number )
+      builder.print cmd.value
+      visit_children( cmd )
+
+    method on_visit( cmd:LiteralString )
+      builder.print '"$"'(cmd.value.to_escaped_ascii('"'))
+      visit_children( cmd )
+
+    method on_visit( cmd:Print )
+      builder.print "cout"
+      forEach (arg in cmd.args)
+        builder.print( " << " )
+        visit( arg )
+      endForEach
+
+    method on_visit( cmd:Println )
+      if (cmd.args.count)
+        on_visit( cmd->(as Print) )
+        builder.print " << endl"
+      else
+        builder.print "cout << endl"
+      endIf
+
+    method on_visit( cmd:ReadVar )
+      builder.print cmd.name
+      visit_children( cmd )
+
+    method on_visit( cmd:WriteVar )
+      builder.[ print(cmd.name), print(" = ") ]
+      visit_children( cmd )
+
+endClass

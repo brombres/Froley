@@ -1,0 +1,70 @@
+module Simple
+
+augment Cmd
+  METHODS
+    method require_type->String
+      localize type
+      if (type) return type
+      throw t.error( "Value required." )
+
+    method require_value->this
+      require_type
+      return this
+
+    method assigned( new_value:Cmd )->Cmd
+      throw t.error( "Invalid assignment target." )
+
+    method type->String
+      return null
+endAugment
+
+augment Unary
+  METHODS
+    method type->String
+      return operand.type
+endAugment
+
+augment Binary
+  METHODS
+    method type->String
+      local left_type = left.type
+      local right_type = right.type
+      if (not left_type) return right_type
+      if (not right_type) return left_type
+      if (left_type == "String" or right_type == "String") return "String"
+      return "Number"
+endAugment
+
+augment LiteralString
+  METHODS
+    method type->String
+      return "String"
+endAugment
+
+augment Number
+  METHODS
+    method type->String
+      return "Number"
+endAugment
+
+augment ReadVar
+  METHODS
+    method type->String
+      local v = Program.vars[name]
+      if (not v) return null
+      return v.type
+endAugment
+
+augment WriteVar
+  METHODS
+    method type->String
+      local v = Program.vars[name]
+      if (not v) return null
+      return v.type
+endAugment
+
+augment Access
+  METHODS
+    method assigned( new_value:Cmd )->Cmd
+      return WriteVar( t, name, new_value )
+endAugment

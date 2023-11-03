@@ -54,14 +54,14 @@ routine rogo_clean
   File( ".rogo" ).delete
 
   local files = Files( "Source/*.rogue" )
-  files.remove( "CPPWriter.rogue" )  # Preserve these files
-  files.remove( "CmdTypes.rogue" )
-  files.remove( "Parser.rogue" )
-  files.remove( "Program.rogue" )
-  files.remove( "Resolver.rogue" )
-  files.remove( "Scanner.rogue" )
-  files.remove( "Simple.froley" )
-  files.remove( "Simple.rogue" )
+  files.remove( "Source/CPPWriter.rogue" )  # Preserve these files
+  files.remove( "Source/CmdTypes.rogue" )
+  files.remove( "Source/Parser.rogue" )
+  files.remove( "Source/Program.rogue" )
+  files.remove( "Source/Resolver.rogue" )
+  files.remove( "Source/Scanner.rogue" )
+  files.remove( "Source/Simple.froley" )
+  files.remove( "Source/Simple.rogue" )
   files.delete # Delete remaining files
 
 endRoutine

@@ -4,3 +4,6 @@ inches = 12
 cm = inches * 2.54
 println inches " inches = " cm " cm"
 
+deg = 45
+rad = (deg / 180) * pi
+println deg " degrees = " rad " radians"

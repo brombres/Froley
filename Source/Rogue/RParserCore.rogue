@@ -136,7 +136,9 @@ class RParserCore( generator, parser_def:ParserDef ) : RogueSourceWriter
          |      if (_saved_positions.is_empty)
          |        throw _peek.error( "[INTERNAL] createTokenList/produceTokenlist without prior savePosition." )
          |      endIf
-         |      local i1 = _saved_positions.remove_last.position
+         |      local pos = _saved_positions.remove_last
+         |      _cmd_stack.discard_from( pos.cmd_stack_count )
+         |      local i1 = pos.position
          |      local limit = _position
          |      local list = Token[]( limit - i1 )
          |      forEach (i in i1..<limit) list.add( _tokens[i] )

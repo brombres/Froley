@@ -1976,3 +1976,15 @@ class ParserPush : Cmd
       return "ParserPush($)" (%var)
 
 endClass
+
+class CreateTokenListPreservingStack : Cmd
+  METHODS
+    method description->String
+      return "CreateTokenListPreservingStack"
+endClass
+
+class ProduceTokenListPreservingStack : Cmd
+  METHODS
+    method description->String
+      return "ProduceTokenListPreservingStack"
+endClass

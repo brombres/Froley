@@ -174,12 +174,12 @@ class ParserCore [abstract]
         _next_t = _peek
       endWhile
 
-    method _create_token_list
+    method _create_token_list( &preserve_stack )
       if (_saved_positions.is_empty)
         throw _peek.error( "[INTERNAL] createTokenList/produceTokenlist without prior savePosition." )
       endIf
       local pos = _saved_positions.remove_last
-      _cmd_stack.discard_from( pos.cmd_stack_count )
+      if (not preserve_stack) _cmd_stack.discard_from( pos.cmd_stack_count )
       local i1 = pos.position
       local limit = _position
       local list = Token[]( limit - i1 )
@@ -2157,6 +2157,13 @@ class ParserCore [abstract]
           return
         endTemporarily
       endIf
+      if (_next_t.type == TokenType.KEYWORD_CREATE_TOKEN_LIST_PRESERVING_STACK)
+        temporarily _cur_t = _on_t
+          if (not disable_output) _push( CreateTokenListPreservingStack(_cur_t), 0 )
+          _cur_t = _previous_cur_t
+          return
+        endTemporarily
+      endIf
       if (_next_t.type == TokenType.KEYWORD_DISCARD_LIST)
         temporarily _cur_t = _on_t
           if (not disable_output) _push( DiscardList(_cur_t), 0 )
@@ -2251,6 +2258,13 @@ class ParserCore [abstract]
       if (_next_t.type == TokenType.KEYWORD_PRODUCE_TOKEN_LIST)
         temporarily _cur_t = _on_t
           if (not disable_output) _push( ProduceTokenList(_cur_t), 0 )
+          _cur_t = _previous_cur_t
+          return
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.KEYWORD_PRODUCE_TOKEN_LIST_PRESERVING_STACK)
+        temporarily _cur_t = _on_t
+          if (not disable_output) _push( ProduceTokenListPreservingStack(_cur_t), 0 )
           _cur_t = _previous_cur_t
           return
         endTemporarily

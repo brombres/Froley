@@ -204,6 +204,10 @@ class RogueGenerator : Visitor
       writeln "if (disable_output) _discard_position"
       write   "else                _create_token_list"
 
+    method on_visit( cmd:CreateTokenListPreservingStack )
+      writeln "if (disable_output) _discard_position"
+      write   "else                _create_token_list( &preserve_stack )"
+
     method on_visit( cmd:MustConsumeCharacters )
       write "_must_consume( "
       visit_children( cmd )
@@ -484,6 +488,12 @@ class RogueGenerator : Visitor
     method on_visit( cmd:ProduceTokenList )
       writeln "if (disable_output) _discard_position"
       writeln "else                _create_token_list"
+      writeln "_cur_t = _previous_cur_t"
+      write   "return"
+
+    method on_visit( cmd:ProduceTokenListPreservingStack )
+      writeln "if (disable_output) _discard_position"
+      writeln "else                _create_token_list( &preserve_stack )"
       writeln "_cur_t = _previous_cur_t"
       write   "return"
 

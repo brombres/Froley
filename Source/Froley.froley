@@ -43,6 +43,7 @@ KEYWORD_BEGIN_LIST          beginList
 KEYWORD_CREATE_LIST         createList
 KEYWORD_CREATE_NULL         createNull
 KEYWORD_CREATE_TOKEN_LIST   createTokenList
+KEYWORD_CREATE_TOKEN_LIST_PRESERVING_STACK createTokenListPreservingStack
 KEYWORD_DISCARD_LIST        discardList
 KEYWORD_ELSE_ON             elseOn       [structural]
 KEYWORD_ELSE_ON_PEEK        elseOnPeek   [structural]
@@ -55,6 +56,7 @@ KEYWORD_POP                 pop
 KEYWORD_PRODUCE_LIST        produceList
 KEYWORD_PRODUCE_NULL        produceNull
 KEYWORD_PRODUCE_TOKEN_LIST  produceTokenList
+KEYWORD_PRODUCE_TOKEN_LIST_PRESERVING_STACK produceTokenListPreservingStack
 KEYWORD_PUSH                push
 
 --------------------------------------------------------------------------------
@@ -1203,15 +1205,16 @@ parser
   endOn
 
 - parser_statement
-  on "beginList"                     -> BeginList
-  on "call"       identifier         -> ParserCallUserMethod(fn_name:String)
-  on "create"     parser_product     -> ParserCreate(arg:CreateCmd)
-  on "createList" list_type          -> CreateList(list_type:String)
-  on "createNull"                    -> CreateNull
-  on "createTokenList"               -> CreateTokenList
-  on "discardList"                   -> DiscardList
-  on "discardPosition"               -> DiscardPosition
-  on "mustConsume"  ttype_or_literal -> ParserMustConsume(token_type)
+  on "beginList"                      -> BeginList
+  on "call"       identifier          -> ParserCallUserMethod(fn_name:String)
+  on "create"     parser_product      -> ParserCreate(arg:CreateCmd)
+  on "createList" list_type           -> CreateList(list_type:String)
+  on "createNull"                     -> CreateNull
+  on "createTokenList"                -> CreateTokenList
+  on "createTokenListPreservingStack" -> CreateTokenListPreservingStack
+  on "discardList"                    -> DiscardList
+  on "discardPosition"                -> DiscardPosition
+  on "mustConsume"  ttype_or_literal  -> ParserMustConsume(token_type)
   on "noAction": return
 
   on "print" parser_args             -> Print(args:Args)
@@ -1235,6 +1238,7 @@ parser
   endOn
   on "produceList" list_type -> ProduceList(list_type:String)
   on "produceTokenList"      -> ProduceTokenList
+  on "produceTokenListPreservingStack" -> ProduceTokenListPreservingStack
   on "push"    access        -> ParserPush(var:Access)
   on "restorePosition"       -> RestorePosition
   on "return"

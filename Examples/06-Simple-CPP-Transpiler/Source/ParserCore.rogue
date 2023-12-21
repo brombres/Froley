@@ -26,20 +26,20 @@ class ParserCore [abstract]
 
   PROPERTIES
     _tokens          : Token[]
-    _position        : Int32
-    _limit           : Int32
+    _position        : Int
+    _limit           : Int
     _cmd_stack       = Cmd[]
-    _list_starts     = Int32[]
+    _list_starts     = Int[]
     _list_tokens     = Token[]
     _next_t          : Token
     _cur_t           : Token
     _saved_positions = ParserPosition[]
-    start_ip         = 0
-    ip               = 0
+    start_ip         = 0L
+    ip               = 0L
     buffer           = String()
     output           = String()
 
-    disable_output : Int32
+    disable_output : Int
 
   METHODS
     method init( file:File )
@@ -62,7 +62,7 @@ class ParserCore [abstract]
     method has_another->Logical
       return _position < _limit
 
-    method parse( ip=null:Int32? )->Cmd
+    method parse( ip=null:Int? )->Cmd
       if (_position == _limit) return null
       if (ip) start_ip = ip.value
       _list_starts.clear
@@ -98,11 +98,13 @@ class ParserCore [abstract]
         _next_t = _peek
       endWhile
 
-    method _create_token_list
+    method _create_token_list( &preserve_stack )
       if (_saved_positions.is_empty)
         throw _peek.error( "[INTERNAL] createTokenList/produceTokenlist without prior savePosition." )
       endIf
-      local i1 = _saved_positions.remove_last.position
+      local pos = _saved_positions.remove_last
+      if (not preserve_stack) _cmd_stack.discard_from( pos.cmd_stack_count )
+      local i1 = pos.position
       local limit = _position
       local list = Token[]( limit - i1 )
       forEach (i in i1..<limit) list.add( _tokens[i] )
@@ -159,7 +161,15 @@ class ParserCore [abstract]
       if (_tokens.count) return _tokens.last.cloned( TokenType.EOI )
       return Token( TokenType.EOI, null, null, 0, 0 )
 
-    method _push( cmd:Cmd, node_arg_count:Int32 )
+    method _pop->Cmd
+      if (disable_output)       return null
+      elseIf (_cmd_stack.count) return _cmd_stack.remove_last
+      throw _peek.error( "[INTERNAL] Attempt to pop command off empty command stack." )
+
+    method _push( cmd:Cmd )
+      if (not disable_output) _cmd_stack.add( cmd )
+
+    method _push( cmd:Cmd, node_arg_count:Int )
       if (node_arg_count) _cmd_stack.discard_from( _cmd_stack.count - node_arg_count )
       _cmd_stack.add( cmd )
 
@@ -187,32 +197,32 @@ class ParserCore [abstract]
     method _save_position
       _saved_positions.add( ParserPosition(_position,_cmd_stack.count,_cur_t) )
 
-    method _node_arg( relative:Int32 )->Cmd
+    method _node_arg( relative:Int )->Cmd
       local i = _cmd_stack.count + relative
       if (i < 0) throw _peek.error( "[INTERNAL] Not enough nodes on stack to create new Cmd." )
       return _cmd_stack[i]
 
-    method _logical_arg( relative:Int32 )->Logical
+    method _logical_arg( relative:Int )->Logical
       local node = _node_arg( relative )
       if (node is null) return false
       return node->Logical
 
-    method _character_arg( relative:Int32 )->Character
+    method _character_arg( relative:Int )->Character
       local node = _node_arg( relative )
       if (node is null) return 0
       return node->Character
 
-    method _integer_arg( relative:Int32 )->Int32
+    method _integer_arg( relative:Int )->Int
       local node = _node_arg( relative )
       if (node is null) return 0
-      return node->Int32
+      return node->Int
 
-    method _real_arg( relative:Int32 )->Real64
+    method _real_arg( relative:Int )->Real64
       local node = _node_arg( relative )
       if (node is null) return 0
       return node->Real64
 
-    method _string_arg( relative:Int32 )->String
+    method _string_arg( relative:Int )->String
       local node = _node_arg( relative )
       if (node is null) return null
       return node->String
@@ -225,8 +235,8 @@ class ParserCore [abstract]
       if (st.count == 0) return Character(0)
       return st[0]
 
-    method _string_to_Integer( st:String )->Int32
-      return st->Int32
+    method _string_to_Integer( st:String )->Int
+      return st->Int
 
     method _string_to_Real( st:String )->Real64
       return st->Real64
@@ -245,7 +255,7 @@ class ParserCore [abstract]
 
       throw _peek.error( message )
 
-    method _execute( ip:Int32 )
+    method _execute( ip:Int )
       which (ip)
         case ip_ast: r_ast
         case ip_statements: r_statements
@@ -467,4 +477,4 @@ class ParserCore [abstract]
 
 endClass
 
-class ParserPosition( position:Int32, cmd_stack_count:Int32, cur_t:Token ) [compound];
+class ParserPosition( position:Int, cmd_stack_count:Int, cur_t:Token ) [compound];

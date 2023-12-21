@@ -5,14 +5,14 @@ class ScanTableBuilder
     root = ScanTableNode()
 
   METHODS
-    method set_default( product:Int32 )
+    method set_default( product:Int )
       root.product = product
 
-    method add( symbol:String, product:Int32, &ignore_case )
+    method add( symbol:String, product:Int, &ignore_case )
       root.link( symbol, product, &=ignore_case )
 
     method to_encoded_scan_table->String
-      local table = Int32[]
+      local table = Int[]
       root.mark_indices( table )
       root.insert_links( table )
 
@@ -28,11 +28,11 @@ endClass
 class ScanTableNode
   PROPERTIES
     links   = [Character:ScanTableNode]
-    index   : Int32
-    product = -1
+    index   : Int
+    product = -1L
 
   METHODS
-    method insert_links( table:Int32[] )
+    method insert_links( table:Int[] )
       local i = index + 2
       forEach (entry in links.entries)
         table[i] = entry.key
@@ -51,7 +51,7 @@ class ScanTableNode
         return next_state
       endIf
 
-    method link( symbol:String, product:Int32, &ignore_case )
+    method link( symbol:String, product:Int, &ignore_case )
       if (symbol == "")
         this.product = product
 
@@ -71,7 +71,7 @@ class ScanTableNode
 
       endIf
 
-    method mark_indices( table:Int32[] )
+    method mark_indices( table:Int[] )
       index = table.count
       table.add( product )
       table.add( links.count )

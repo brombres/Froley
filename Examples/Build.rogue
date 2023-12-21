@@ -43,7 +43,7 @@ endRoutine
 # routine calls.
 
 # Example: to handle the command "rogo abc xyz 5", define
-# "routine rogo_abc_xyz( n:Int32 )".
+# "routine rogo_abc_xyz( n:Int )".
 
 # "rogo_default" will run in the absence of any other command line argument.
 

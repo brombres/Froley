@@ -38,8 +38,8 @@ augment
       return left.execute ^ right.execute
 
     method Factorial.execute->Value
-      local result = 1
-      result *= (forEach in 2..(operand.execute->Int32))
+      local result = 1L
+      result *= (forEach in 2..(operand.execute->Int))
       return result
 
     method Negate.execute->Value

@@ -17,7 +17,7 @@ class Program [singleton]
     token_groups       = [String:TokenGroup]
     tokens_by_name     = [String:TokenDef]
     tokens_by_symbol   = [String:TokenDef]
-    token_attributes   = [String:Int32]{ "content":1 }
+    token_attributes   = [String:Int]{ "content":1 }
 
     scanner            : ScannerDef
     parser             : ParserDef

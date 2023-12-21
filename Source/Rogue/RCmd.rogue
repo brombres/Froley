@@ -56,7 +56,7 @@ class RCmd : RogueSourceWriter
            |    method clear
            |      throw UnsupportedOperationError()
            |
-           |    method count->Int32
+           |    method count->Int
            |      return 0
            |
            |    method description->String
@@ -71,13 +71,13 @@ class RCmd : RogueSourceWriter
            |    method first->Cmd
            |      throw UnsupportedOperationError()
            |
-           |    method get( index:Int32 )->Cmd
+           |    method get( index:Int )->Cmd
            |      throw UnsupportedOperationError()
            |
-           |    method get<<$AsType>>( index:Int32 )->$AsType
+           |    method get<<$AsType>>( index:Int )->$AsType
            |      return get(index)->(as $AsType)
            |
-           |    method insert( element:Cmd, before_index=0:Int32 )
+           |    method insert( element:Cmd, before_index=0:Int )
            |      throw UnsupportedOperationError()
            |
            |    method last->Cmd
@@ -89,23 +89,23 @@ class RCmd : RogueSourceWriter
            |    method remove_last->Cmd
            |      throw UnsupportedOperationError()
            |
-           |    method set( index:Int32, value:Cmd )
+           |    method set( index:Int, value:Cmd )
            |      throw UnsupportedOperationError()
            |
            |    method to->Character
-           |      return Character(this->Int32)
+           |      return Character(this->Int)
            |
            |    method to->Cmd[]
            |      throw UnsupportedOperationError()
            |
-           |    method to->Int32
+           |    method to->Int
            |      return 0
            |
            |    method to->Logical
-           |      return (this->Int32)?
+           |      return (this->Int)?
            |
            |    method to->Real64
-           |      return this->Int32
+           |      return this->Int
            |
            |    method to->String
            |      return description
@@ -152,7 +152,7 @@ class RCmd : RogueSourceWriter
            |    method clear
            |      @list.clear
            |
-           |    method count->Int32
+           |    method count->Int
            |      return @list.count
            |
            |    method description->String
@@ -161,10 +161,10 @@ class RCmd : RogueSourceWriter
            |    method first->Cmd
            |      return @list.first
            |
-           |    method get( index:Int32 )->Cmd
+           |    method get( index:Int )->Cmd
            |      return @list[index]
            |
-           |    method insert( element:Cmd, before_index=0:Int32 )
+           |    method insert( element:Cmd, before_index=0:Int )
            |      list.insert( element, before_index )
            |
            |    method last->Cmd
@@ -186,7 +186,7 @@ class RCmd : RogueSourceWriter
            |    method remove_last->Cmd
            |      return @list.remove_last
            |
-           |    method set( index:Int32, value:Cmd )
+           |    method set( index:Int, value:Cmd )
            |      @list[index] = value
            |
            |    method to->Cmd[]
@@ -341,21 +341,21 @@ class RCmd : RogueSourceWriter
             local name = properties.first.name
             which (properties.first.type.name)
               case "Logical"
-                builder.println ''    method to->Int32:   return which{$:1 || 0}'' (name)
+                builder.println ''    method to->Int:   return which{$:1 || 0}'' (name)
                 builder.println ''    method to->Logical: return $'' (name)
                 builder.println ''    method to->String:  return which{$:"true" || "false"}'' (name)
                 builder.println
               case "Character"
                 builder.println ''    method to->Character: return $'' (name)
-                builder.println ''    method to->Int32:     return $'' (name)
+                builder.println ''    method to->Int:     return $'' (name)
                 builder.println ''    method to->String:    return $'' (name)
                 builder.println
               case "Integer"
-                builder.println ''    method to->Int32:     return $'' (name)
+                builder.println ''    method to->Int:     return $'' (name)
                 builder.println ''    method to->String:    return $'' (name)
                 builder.println
               case "Real"
-                builder.println ''    method to->Int32:  return $'' (name)
+                builder.println ''    method to->Int:  return $'' (name)
                 builder.println ''    method to->Real64: return $'' (name)
                 builder.println ''    method to->String: return $'' (name)
                 builder.println
@@ -363,7 +363,7 @@ class RCmd : RogueSourceWriter
                 builder.println ''    method to->Character''
                 builder.println ''      return Cmd.to_character($)'' (name)
                 builder.println
-                builder.println ''    method to->Int32:  return $'' (name)
+                builder.println ''    method to->Int:  return $'' (name)
                 builder.println ''    method to->Logical: return $?'' (name)
                 builder.println ''    method to->String: return $'' (name)
                 builder.println

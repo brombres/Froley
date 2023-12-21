@@ -25,7 +25,7 @@ class RogueGenerator : Visitor
     writer     : PrintWriter
     class_name = ""
 
-    indent     = 0
+    indent     = 0L
     at_newline = true
     write_replacements = [String:String]
 

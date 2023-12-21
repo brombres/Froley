@@ -30,24 +30,24 @@ class ScannerCore [abstract]
   PROPERTIES
     _filepath     : String
     _scanner      : Rogue::Scanner
-    line          = 1
-    column        = 1
+    line          = 1L
+    column        = 1L
 
     tokens        = Token[]
     buffer        = String()
     output        = String()
 
-    start_ip      = 0
+    start_ip      = 0L
     halt          = false
 
-    _position_stack  = Int32[]
-    _line_stack      = Int32[]
-    _column_stack    = Int32[]
-    _token_pos_stack = Int32[]
+    _position_stack  = Int[]
+    _line_stack      = Int[]
+    _column_stack    = Int[]
+    _token_pos_stack = Int[]
 
     # GENERATED PROPERTIES
     ch    : Character
-    count : Int32
+    count : Int
     _scan_pattern_0 = ScanPattern( "[0-9]" )
     _scan_pattern_1 = ScanPattern( "{[a-zA-Z_][a-zA-Z_0-9]*}" )
     _scan_pattern_2 = ScanPattern( "{[a-zA-Z_][a-zA-Z0-9_]*}" )
@@ -69,11 +69,11 @@ class ScannerCore [abstract]
     method init( _filepath, _scanner )
       noAction
 
-    method execute( ip:Int32 )
+    method execute( ip:Int )
       _clear_state
       _execute( ip )
 
-    method tokenize( ip=null:Int32? )->Token[]
+    method tokenize( ip=null:Int? )->Token[]
       if (ip) start_ip = ip.value
       _clear_state
       while (_execute(start_ip) or not halt)
@@ -192,7 +192,7 @@ class ScannerCore [abstract]
       endIf
       throw CompileError( message, _filepath, _scanner.source, _scanner.line, _scanner.column )
 
-    method _execute( ip:Int32 )->Logical
+    method _execute( ip:Int )->Logical
       which (ip)
         case ip_scan_standard_token: return r_scan_standard_token
         case ip_scan_charset: return r_scan_charset

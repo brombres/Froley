@@ -25,10 +25,10 @@ class RParserCore( generator, parser_def:ParserDef ) : RogueSourceWriter
         @|
          |  PROPERTIES
          |    _tokens          : Token[]
-         |    _position        : Int32
-         |    _limit           : Int32
+         |    _position        : Int
+         |    _limit           : Int
          |    _cmd_stack       = Cmd[]
-         |    _list_starts     = Int32[]
+         |    _list_starts     = Int[]
          |    _list_tokens     = Token[]
          |    _next_t          : Token
          |    _cur_t           : Token
@@ -53,7 +53,7 @@ class RParserCore( generator, parser_def:ParserDef ) : RogueSourceWriter
             case FType.CHARACTER
               writeln "Character"
             case FType.INTEGER
-              writeln "Int32"
+              writeln "Int"
             case FType.REAL
               writeln "Real64"
             case FType.STRING
@@ -98,7 +98,7 @@ class RParserCore( generator, parser_def:ParserDef ) : RogueSourceWriter
          |    method has_another->Logical
          |      return _position < _limit
          |
-         |    method parse( ip=null:Int32? )->Cmd
+         |    method parse( ip=null:Int? )->Cmd
          |      if (_position == _limit) return null
          |      if (ip) start_ip = ip.value
          |      _list_starts.clear
@@ -205,7 +205,7 @@ class RParserCore( generator, parser_def:ParserDef ) : RogueSourceWriter
          |    method _push( cmd:Cmd )
          |      if (not disable_output) _cmd_stack.add( cmd )
          |
-         |    method _push( cmd:Cmd, node_arg_count:Int32 )
+         |    method _push( cmd:Cmd, node_arg_count:Int )
          |      if (node_arg_count) _cmd_stack.discard_from( _cmd_stack.count - node_arg_count )
          |      _cmd_stack.add( cmd )
          |
@@ -233,32 +233,32 @@ class RParserCore( generator, parser_def:ParserDef ) : RogueSourceWriter
          |    method _save_position
          |      _saved_positions.add( ParserPosition(_position,_cmd_stack.count,_cur_t) )
          |
-         |    method _node_arg( relative:Int32 )->Cmd
+         |    method _node_arg( relative:Int )->Cmd
          |      local i = _cmd_stack.count + relative
          |      if (i < 0) throw _peek.error( "[INTERNAL] Not enough nodes on stack to create new Cmd." )
          |      return _cmd_stack[i]
          |
-         |    method _logical_arg( relative:Int32 )->Logical
+         |    method _logical_arg( relative:Int )->Logical
          |      local node = _node_arg( relative )
          |      if (node is null) return false
          |      return node->Logical
          |
-         |    method _character_arg( relative:Int32 )->Character
+         |    method _character_arg( relative:Int )->Character
          |      local node = _node_arg( relative )
          |      if (node is null) return 0
          |      return node->Character
          |
-         |    method _integer_arg( relative:Int32 )->Int32
+         |    method _integer_arg( relative:Int )->Int
          |      local node = _node_arg( relative )
          |      if (node is null) return 0
-         |      return node->Int32
+         |      return node->Int
          |
-         |    method _real_arg( relative:Int32 )->Real64
+         |    method _real_arg( relative:Int )->Real64
          |      local node = _node_arg( relative )
          |      if (node is null) return 0
          |      return node->Real64
          |
-         |    method _string_arg( relative:Int32 )->String
+         |    method _string_arg( relative:Int )->String
          |      local node = _node_arg( relative )
          |      if (node is null) return null
          |      return node->String
@@ -271,8 +271,8 @@ class RParserCore( generator, parser_def:ParserDef ) : RogueSourceWriter
          |      if (st.count == 0) return Character(0)
          |      return st[0]
          |
-         |    method _string_to_Integer( st:String )->Int32
-         |      return st->Int32
+         |    method _string_to_Integer( st:String )->Int
+         |      return st->Int
          |
          |    method _string_to_Real( st:String )->Real64
          |      return st->Real64
@@ -291,7 +291,7 @@ class RParserCore( generator, parser_def:ParserDef ) : RogueSourceWriter
          |
          |      throw _peek.error( message )
          |
-         |    method _execute( ip:Int32 )
+         |    method _execute( ip:Int )
          |      which (ip)
       forEach (r in parser_def.routines)
         writeln "        case ip_$: r_$" (r.name,r.name)
@@ -307,5 +307,5 @@ class RParserCore( generator, parser_def:ParserDef ) : RogueSourceWriter
       writeln ...
         @|endClass
          |
-         |class ParserPosition( position:Int32, cmd_stack_count:Int32, cur_t:Token ) [compound];
+         |class ParserPosition( position:Int, cmd_stack_count:Int, cur_t:Token ) [compound];
 endClass

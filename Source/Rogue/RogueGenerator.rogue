@@ -70,7 +70,7 @@ class RogueGenerator : Visitor
 
     method on_visit( cmd:CastToInteger )
       visit_children( cmd )
-      write "->Int32"
+      write "->Int"
 
     method on_visit( cmd:CastToString )
       visit_children( cmd )

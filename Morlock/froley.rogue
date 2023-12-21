@@ -7,6 +7,6 @@ class FroleyPackage : Package
   METHODS
     method init
       dependency "brombres/morlock@2.0"
-      dependency "brombres/rogue@2.12"
+      dependency "brombres/rogue@2.34"
       scan_repo_releases
 endClass

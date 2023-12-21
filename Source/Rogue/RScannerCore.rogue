@@ -25,8 +25,8 @@ class RScannerCore( generator, scanner_def:ScannerDef ) : RogueSourceWriter
          |  PROPERTIES
          |    _filepath     : String
          |    _scanner      : Rogue::Scanner
-         |    line          = 1
-         |    column        = 1
+         |    line          = 1L
+         |    column        = 1L
          |
          |    tokens        = Token[]
          |    buffer        = String()
@@ -35,10 +35,10 @@ class RScannerCore( generator, scanner_def:ScannerDef ) : RogueSourceWriter
          |    start_ip      = 0
          |    halt          = false
          |
-         |    _position_stack  = Int32[]
-         |    _line_stack      = Int32[]
-         |    _column_stack    = Int32[]
-         |    _token_pos_stack = Int32[]
+         |    _position_stack  = Int[]
+         |    _line_stack      = Int[]
+         |    _column_stack    = Int[]
+         |    _token_pos_stack = Int[]
          |
          |    # GENERATED PROPERTIES
 
@@ -55,7 +55,7 @@ class RScannerCore( generator, scanner_def:ScannerDef ) : RogueSourceWriter
             case FType.CHARACTER
               writeln "Character"
             case FType.INTEGER
-              writeln "Int32"
+              writeln "Int"
             case FType.STRING
               writeln "String"
             others
@@ -92,11 +92,11 @@ class RScannerCore( generator, scanner_def:ScannerDef ) : RogueSourceWriter
       endForEach
 
       writeln ...
-        @|    method execute( ip:Int32 )
+        @|    method execute( ip:Int )
          |      _clear_state
          |      _execute( ip )
          |
-         |    method tokenize( ip=null:Int32? )->Token[]
+         |    method tokenize( ip=null:Int? )->Token[]
          |      if (ip) start_ip = ip.value
          |      _clear_state
          |      while (_execute(start_ip) or not halt)
@@ -215,7 +215,7 @@ class RScannerCore( generator, scanner_def:ScannerDef ) : RogueSourceWriter
          |      endIf
          |      throw CompileError( message, _filepath, _scanner.source, _scanner.line, _scanner.column )
          |
-         |    method _execute( ip:Int32 )->Logical
+         |    method _execute( ip:Int )->Logical
          |      which (ip)
       forEach (r in scanner_def.routines)
         writeln "        case ip_$: return r_$" (r.name,r.name)

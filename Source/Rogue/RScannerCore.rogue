@@ -35,10 +35,10 @@ class RScannerCore( generator, scanner_def:ScannerDef ) : RogueSourceWriter
          |    start_ip      = 0L
          |    halt          = false
          |
-         |    _position_stack  = Int[]
-         |    _line_stack      = Int[]
-         |    _column_stack    = Int[]
-         |    _token_pos_stack = Int[]
+         |    _position_stack  = NewInt[]
+         |    _line_stack      = NewInt[]
+         |    _column_stack    = NewInt[]
+         |    _token_pos_stack = NewInt[]
          |
          |    # GENERATED PROPERTIES
 
@@ -55,7 +55,7 @@ class RScannerCore( generator, scanner_def:ScannerDef ) : RogueSourceWriter
             case FType.CHARACTER
               writeln "Character"
             case FType.INTEGER
-              writeln "Int"
+              writeln "NewInt"
             case FType.STRING
               writeln "String"
             others
@@ -92,11 +92,11 @@ class RScannerCore( generator, scanner_def:ScannerDef ) : RogueSourceWriter
       endForEach
 
       writeln ...
-        @|    method execute( ip:Int )
+        @|    method execute( ip:NewInt )
          |      _clear_state
          |      _execute( ip )
          |
-         |    method tokenize( ip=null:Int? )->Token[]
+         |    method tokenize( ip=null:NewInt? )->Token[]
          |      if (ip) start_ip = ip.value
          |      _clear_state
          |      while (_execute(start_ip) or not halt)
@@ -215,7 +215,7 @@ class RScannerCore( generator, scanner_def:ScannerDef ) : RogueSourceWriter
          |      endIf
          |      throw CompileError( message, _filepath, _scanner.source, _scanner.line, _scanner.column )
          |
-         |    method _execute( ip:Int )->Logical
+         |    method _execute( ip:NewInt )->Logical
          |      which (ip)
       forEach (r in scanner_def.routines)
         writeln "        case ip_$: return r_$" (r.name,r.name)

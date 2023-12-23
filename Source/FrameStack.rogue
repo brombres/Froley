@@ -6,8 +6,8 @@ class FrameStack<<$DataType>>
 
   PROPERTIES
     stack  = $DataType[]
-    frames = Int[]
-    fp     : Int
+    frames = NewInt[]
+    fp     : NewInt
 
   METHODS
     method clear
@@ -15,10 +15,10 @@ class FrameStack<<$DataType>>
       frames.clear
       fp = 0
 
-    method count->Int
+    method count->NewInt
       return stack.count - fp
 
-    method frame_count->Int
+    method frame_count->NewInt
       return frames.count
 
     method pop->$DataType

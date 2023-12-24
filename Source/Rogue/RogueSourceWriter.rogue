@@ -53,7 +53,7 @@ class RogueSourceWriter
     method rogue_name( type_name:String )->String
       which (type_name)
         case "Integer": return "NewInt"
-        case "Real":    return "Real64"
+        case "Real":    return "Real"
         others:         return type_name
       endWhich
 

@@ -55,7 +55,7 @@ class RParserCore( generator, parser_def:ParserDef ) : RogueSourceWriter
             case FType.INTEGER
               writeln "NewInt"
             case FType.REAL
-              writeln "Real64"
+              writeln "Real"
             case FType.STRING
               writeln "String"
             case FType.CMD
@@ -253,10 +253,10 @@ class RParserCore( generator, parser_def:ParserDef ) : RogueSourceWriter
          |      if (node is null) return 0
          |      return node->NewInt
          |
-         |    method _real_arg( relative:NewInt )->Real64
+         |    method _real_arg( relative:NewInt )->Real
          |      local node = _node_arg( relative )
          |      if (node is null) return 0
-         |      return node->Real64
+         |      return node->Real
          |
          |    method _string_arg( relative:NewInt )->String
          |      local node = _node_arg( relative )
@@ -274,8 +274,8 @@ class RParserCore( generator, parser_def:ParserDef ) : RogueSourceWriter
          |    method _string_to_Integer( st:String )->NewInt
          |      return st->NewInt
          |
-         |    method _string_to_Real( st:String )->Real64
-         |      return st->Real64
+         |    method _string_to_Real( st:String )->Real
+         |      return st->Real
          |
          |    method _throw_syntax_error( message=null:String, expected=null:TokenType? )
          |      if (message is null)

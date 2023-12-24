@@ -92,7 +92,7 @@ class Cmd( t:Token )
     method to->Logical
       return (this->NewInt)?
 
-    method to->Real64
+    method to->Real
       return this->NewInt
 
     method to->ScanPattern
@@ -341,7 +341,7 @@ class LiteralString : Cmd
         case FType.LOGICAL:    return LiteralLogical( t, value.equals("true",&ignore_case) )
         case FType.CHARACTER:  return LiteralCharacter( t, value[0] )
         case FType.INTEGER:    return LiteralInteger( t, value->NewInt )
-        case FType.REAL:       return LiteralReal( t, value->Real64 )
+        case FType.REAL:       return LiteralReal( t, value->Real )
         others
           return prior.cast_to( to_type )
       endWhich
@@ -440,7 +440,7 @@ class LiteralInteger : Cmd
       which (to_type)
         case FType.LOGICAL:    return LiteralLogical( t, value->Logical )
         case FType.CHARACTER:  return LiteralCharacter( t, value->Character )
-        case FType.REAL:       return LiteralReal( t, value->Real64 )
+        case FType.REAL:       return LiteralReal( t, value->Real )
         case FType.STRING:     return LiteralString( t, value->String )
         others
           return prior.cast_to( to_type )
@@ -469,7 +469,7 @@ class LiteralCharacter : Cmd
       which (to_type)
         case FType.LOGICAL:    return LiteralLogical( t, value->Logical )
         case FType.INTEGER:    return LiteralInteger( t, value->NewInt )
-        case FType.REAL:       return LiteralReal( t, value->Real64 )
+        case FType.REAL:       return LiteralReal( t, value->Real )
         case FType.STRING:     return LiteralString( t, value->String )
         others
           return prior.cast_to( to_type )
@@ -1588,7 +1588,7 @@ endClass
 
 class LiteralReal : Cmd
   PROPERTIES
-    value : Real64
+    value : Real
 
   METHODS
     method init( t, value )
@@ -1607,8 +1607,8 @@ class LiteralReal : Cmd
     method description->String
       return "LiteralReal($)" (%value)
 
-    method to->NewInt:  return value
-    method to->Real64: return value
+    method to->NewInt:    return value
+    method to->Real:   return value
     method to->String: return value
 
     method type->FType

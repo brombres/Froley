@@ -104,7 +104,7 @@ class RCmd : RogueSourceWriter
            |    method to->Logical
            |      return (this->NewInt)?
            |
-           |    method to->Real64
+           |    method to->Real
            |      return this->NewInt
            |
            |    method to->String
@@ -341,29 +341,29 @@ class RCmd : RogueSourceWriter
             local name = properties.first.name
             which (properties.first.type.name)
               case "Logical"
-                builder.println ''    method to->NewInt:   return which{$:1 || 0}'' (name)
+                builder.println ''    method to->NewInt:     return which{$:1 || 0}'' (name)
                 builder.println ''    method to->Logical: return $'' (name)
                 builder.println ''    method to->String:  return which{$:"true" || "false"}'' (name)
                 builder.println
               case "Character"
                 builder.println ''    method to->Character: return $'' (name)
-                builder.println ''    method to->NewInt:     return $'' (name)
+                builder.println ''    method to->NewInt:       return $'' (name)
                 builder.println ''    method to->String:    return $'' (name)
                 builder.println
               case "Integer"
-                builder.println ''    method to->NewInt:     return $'' (name)
+                builder.println ''    method to->NewInt:       return $'' (name)
                 builder.println ''    method to->String:    return $'' (name)
                 builder.println
               case "Real"
-                builder.println ''    method to->NewInt:  return $'' (name)
-                builder.println ''    method to->Real64: return $'' (name)
+                builder.println ''    method to->NewInt:    return $'' (name)
+                builder.println ''    method to->Real:   return $'' (name)
                 builder.println ''    method to->String: return $'' (name)
                 builder.println
               case "String"
                 builder.println ''    method to->Character''
                 builder.println ''      return Cmd.to_character($)'' (name)
                 builder.println
-                builder.println ''    method to->NewInt:  return $'' (name)
+                builder.println ''    method to->NewInt:     return $'' (name)
                 builder.println ''    method to->Logical: return $?'' (name)
                 builder.println ''    method to->String: return $'' (name)
                 builder.println

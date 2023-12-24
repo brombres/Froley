@@ -17,7 +17,5 @@ enum FType( display_name:String )
     method exists->Logical
       return this != NONE
 
-    method to->Int
-      return this->Int32->Int
 endEnum
 

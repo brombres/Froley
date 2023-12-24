@@ -27,9 +27,9 @@ class Cmd( t:Token )
     method common_type( other:Cmd )->FType
       local a = require_type
       local b = other.require_type
-      return FType( a->NewInt.or_larger(b->NewInt) )
+      return FType( a->Int.or_larger(b->Int) )
 
-    method count->NewInt
+    method count->Int
       return 0
 
     method description->String
@@ -44,13 +44,13 @@ class Cmd( t:Token )
     method first->Cmd
       throw UnsupportedOperationError()
 
-    method get( index:NewInt )->Cmd
+    method get( index:Int )->Cmd
       throw UnsupportedOperationError()
 
-    method get<<$AsType>>( index:NewInt )->$AsType
+    method get<<$AsType>>( index:Int )->$AsType
       return get(index)->(as $AsType)
 
-    method insert( element:Cmd, before_index=0:NewInt )
+    method insert( element:Cmd, before_index=0:Int )
       throw UnsupportedOperationError()
 
     method last->Cmd
@@ -77,23 +77,23 @@ class Cmd( t:Token )
     method resolve_assignment( cmd:Assign, resolver:Resolver )->Cmd
       throw t.error( "Illegal assignment." )
 
-    method set( index:NewInt, value:Cmd )
+    method set( index:Int, value:Cmd )
       throw UnsupportedOperationError()
 
     method to->Character
-      return Character(this->NewInt)
+      return Character(this->Int)
 
     method to->Cmd[]
       throw UnsupportedOperationError()
 
-    method to->NewInt
+    method to->Int
       return 0
 
     method to->Logical
-      return (this->NewInt)?
+      return (this->Int)?
 
     method to->Real
-      return this->NewInt
+      return this->Int
 
     method to->ScanPattern
       throw t.error( ''Pattern expected.'' )
@@ -126,7 +126,7 @@ class CmdList : Cmd
     method clear
       @list.clear
 
-    method count->NewInt
+    method count->Int
       return @list.count
 
     method description->String
@@ -135,13 +135,13 @@ class CmdList : Cmd
     method first->Cmd
       return @list.first
 
-    method get( index:NewInt )->Cmd
+    method get( index:Int )->Cmd
       return @list[index]
 
-    method get<<$AsType>>( index:NewInt )->$AsType
+    method get<<$AsType>>( index:Int )->$AsType
       return @list[index]->(as $AsType)
 
-    method insert( element:Cmd, before_index=0:NewInt )
+    method insert( element:Cmd, before_index=0:Int )
       list.insert( element, before_index )
 
     method last->Cmd
@@ -163,7 +163,7 @@ class CmdList : Cmd
     method remove_last->Cmd
       return @list.remove_last
 
-    method set( index:NewInt, value:Cmd )
+    method set( index:Int, value:Cmd )
       @list[index] = value
 
     method to->Cmd[]
@@ -186,7 +186,7 @@ class Binary( t, left:Cmd, right:Cmd ) : Cmd
       return "Binary($,$)"(%left,%right)
 
     method type->FType
-      return FType( left.type->NewInt.or_larger(right.type->NewInt) )
+      return FType( left.type->Int.or_larger(right.type->Int) )
 endClass
 
 class ProgramDef : Cmd
@@ -281,7 +281,7 @@ class Identifier : Cmd
       if (name is null or name.count == 0) return Character(0)
       return name[0]
 
-    method to->NewInt:  return name
+    method to->Int:  return name
     method to->Logical: return name?
     method to->String: return name
 
@@ -293,7 +293,7 @@ class FroleyRoutine : Cmd
     attributes       : String
     statements       : Statements
 
-    ip               : NewInt
+    ip               : Int
     is_primer        : Logical
     is_binary        : Logical
     is_right_binary  : Logical
@@ -340,7 +340,7 @@ class LiteralString : Cmd
       which (to_type)
         case FType.LOGICAL:    return LiteralLogical( t, value.equals("true",&ignore_case) )
         case FType.CHARACTER:  return LiteralCharacter( t, value[0] )
-        case FType.INTEGER:    return LiteralInteger( t, value->NewInt )
+        case FType.INTEGER:    return LiteralInteger( t, value->Int )
         case FType.REAL:       return LiteralReal( t, value->Real )
         others
           return prior.cast_to( to_type )
@@ -353,7 +353,7 @@ class LiteralString : Cmd
       if (value is null or value.count == 0) return Character(0)
       return value[0]
 
-    method to->NewInt:  return value
+    method to->Int:  return value
     method to->Logical: return value?
     method to->String: return value
 
@@ -389,7 +389,7 @@ class LiteralStringOrCharacter : Cmd
       if (value is null or value.count == 0) return Character(0)
       return value[0]
 
-    method to->NewInt:  return value
+    method to->Int:  return value
     method to->Logical: return value?
     method to->String: return value
 
@@ -420,7 +420,7 @@ class LiteralLogical : Cmd
     method description->String
       return "LiteralLogical($)" (%value)
 
-    method to->NewInt:   return which{value:1 || 0}
+    method to->Int:   return which{value:1 || 0}
     method to->Logical: return value
     method to->String:  return which{value:"true" || "false"}
 
@@ -430,7 +430,7 @@ endClass
 
 class LiteralInteger : Cmd
   PROPERTIES
-    value : NewInt
+    value : Int
 
   METHODS
     method init( t, value )
@@ -449,7 +449,7 @@ class LiteralInteger : Cmd
     method description->String
       return "LiteralInteger($)" (%value)
 
-    method to->NewInt:     return value
+    method to->Int:     return value
     method to->String:    return value
 
     method type->FType
@@ -468,7 +468,7 @@ class LiteralCharacter : Cmd
 
       which (to_type)
         case FType.LOGICAL:    return LiteralLogical( t, value->Logical )
-        case FType.INTEGER:    return LiteralInteger( t, value->NewInt )
+        case FType.INTEGER:    return LiteralInteger( t, value->Int )
         case FType.REAL:       return LiteralReal( t, value->Real )
         case FType.STRING:     return LiteralString( t, value->String )
         others
@@ -479,7 +479,7 @@ class LiteralCharacter : Cmd
       return "LiteralCharacter($)" (%value)
 
     method to->Character: return value
-    method to->NewInt:     return value
+    method to->Int:     return value
     method to->String:    return value
 
     method to->ScanPattern
@@ -527,7 +527,7 @@ class Symbol : Cmd
       if (name is null or name.count == 0) return Character(0)
       return name[0]
 
-    method to->NewInt:  return name
+    method to->Int:  return name
     method to->Logical: return name?
     method to->String: return name
 
@@ -610,7 +610,7 @@ class Restart : Cmd
       if (start_ip is null or start_ip.count == 0) return Character(0)
       return start_ip[0]
 
-    method to->NewInt:  return start_ip
+    method to->Int:  return start_ip
     method to->Logical: return start_ip?
     method to->String: return start_ip
 
@@ -644,7 +644,7 @@ class ProduceAny : Cmd
       if (token_group_name is null or token_group_name.count == 0) return Character(0)
       return token_group_name[0]
 
-    method to->NewInt:  return token_group_name
+    method to->Int:  return token_group_name
     method to->Logical: return token_group_name?
     method to->String: return token_group_name
 
@@ -707,7 +707,7 @@ class Mode : Cmd
       if (routine_name is null or routine_name.count == 0) return Character(0)
       return routine_name[0]
 
-    method to->NewInt:  return routine_name
+    method to->Int:  return routine_name
     method to->Logical: return routine_name?
     method to->String: return routine_name
 
@@ -848,7 +848,7 @@ class Access : Cmd
       if (name is null or name.count == 0) return Character(0)
       return name[0]
 
-    method to->NewInt:  return name
+    method to->Int:  return name
     method to->Logical: return name?
     method to->String: return name
 
@@ -880,8 +880,8 @@ class CreateCmdArg : Cmd
     arg_type  : String
 
     is_node_arg  = false   # versus 'content'
-    index        : NewInt   # arg index 0, 1, ...
-    stack_offset : NewInt   # back into cmd stack; most recent = -1, one back = -2, ...
+    index        : Int   # arg index 0, 1, ...
+    stack_offset : Int   # back into cmd stack; most recent = -1, one back = -2, ...
 
   METHODS
     method init( t, arg_name, arg_value, arg_type )
@@ -976,7 +976,7 @@ class CharSet : Cmd
       if (characters is null or characters.count == 0) return Character(0)
       return characters[0]
 
-    method to->NewInt:  return characters
+    method to->Int:  return characters
     method to->Logical: return characters?
     method to->String: return characters
 
@@ -1129,7 +1129,7 @@ class ScannerCallUserMethod : Cmd
       if (fn_name is null or fn_name.count == 0) return Character(0)
       return fn_name[0]
 
-    method to->NewInt:  return fn_name
+    method to->Int:  return fn_name
     method to->Logical: return fn_name?
     method to->String: return fn_name
 
@@ -1277,7 +1277,7 @@ class CreateList : Cmd
       if (list_type is null or list_type.count == 0) return Character(0)
       return list_type[0]
 
-    method to->NewInt:  return list_type
+    method to->Int:  return list_type
     method to->Logical: return list_type?
     method to->String: return list_type
 
@@ -1327,7 +1327,7 @@ class ProduceList : Cmd
       if (list_type is null or list_type.count == 0) return Character(0)
       return list_type[0]
 
-    method to->NewInt:  return list_type
+    method to->Int:  return list_type
     method to->Logical: return list_type?
     method to->String: return list_type
 
@@ -1347,7 +1347,7 @@ class LiteralContent : Cmd
       if (value is null or value.count == 0) return Character(0)
       return value[0]
 
-    method to->NewInt:  return value
+    method to->Int:  return value
     method to->Logical: return value?
     method to->String: return value
 
@@ -1367,7 +1367,7 @@ class ParserCallUserMethod : Cmd
       if (fn_name is null or fn_name.count == 0) return Character(0)
       return fn_name[0]
 
-    method to->NewInt:  return fn_name
+    method to->Int:  return fn_name
     method to->Logical: return fn_name?
     method to->String: return fn_name
 
@@ -1410,7 +1410,7 @@ class NextHasAttribute : Cmd
       if (name is null or name.count == 0) return Character(0)
       return name[0]
 
-    method to->NewInt:  return name
+    method to->Int:  return name
     method to->Logical: return name?
     method to->String: return name
 
@@ -1598,7 +1598,7 @@ class LiteralReal : Cmd
       which (to_type)
         case FType.LOGICAL:    return LiteralLogical( t, value->Logical )
         case FType.CHARACTER:  return LiteralCharacter( t, value->Character )
-        case FType.INTEGER:    return LiteralInteger( t, value->NewInt )
+        case FType.INTEGER:    return LiteralInteger( t, value->Int )
         case FType.STRING:     return LiteralString( t, value->String )
         others
           return prior.cast_to( to_type )
@@ -1607,7 +1607,7 @@ class LiteralReal : Cmd
     method description->String
       return "LiteralReal($)" (%value)
 
-    method to->NewInt:    return value
+    method to->Int:    return value
     method to->Real:   return value
     method to->String: return value
 
@@ -1630,7 +1630,7 @@ class ConsumeContent : Cmd
       if (content is null or content.count == 0) return Character(0)
       return content[0]
 
-    method to->NewInt:  return content
+    method to->Int:  return content
     method to->Logical: return content?
     method to->String: return content
 
@@ -1666,7 +1666,7 @@ class MustConsumeContent : Cmd
       if (content is null or content.count == 0) return Character(0)
       return content[0]
 
-    method to->NewInt:  return content
+    method to->Int:  return content
     method to->Logical: return content?
     method to->String: return content
 
@@ -1698,7 +1698,7 @@ class NextIsContent : Cmd
       if (content is null or content.count == 0) return Character(0)
       return content[0]
 
-    method to->NewInt:  return content
+    method to->Int:  return content
     method to->Logical: return content?
     method to->String: return content
 
@@ -1939,7 +1939,7 @@ class NativeLiteral : Cmd
     method to->Character
       return Cmd.to_character(value)
 
-    method to->NewInt:  return value
+    method to->Int:  return value
     method to->Logical: return value?
     method to->String: return value
 

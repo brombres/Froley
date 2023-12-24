@@ -102,10 +102,10 @@ class ParserCore [abstract]
 
   PROPERTIES
     _tokens          : Token[]
-    _position        : NewInt
-    _limit           : NewInt
+    _position        : Int
+    _limit           : Int
     _cmd_stack       = Cmd[]
-    _list_starts     = NewInt[]
+    _list_starts     = Int[]
     _list_tokens     = Token[]
     _next_t          : Token
     _cur_t           : Token
@@ -115,7 +115,7 @@ class ParserCore [abstract]
     buffer           = String()
     output           = String()
 
-    disable_output : NewInt
+    disable_output : Int
 
   METHODS
     method init( file:File )
@@ -138,7 +138,7 @@ class ParserCore [abstract]
     method has_another->Logical
       return _position < _limit
 
-    method parse( ip=null:NewInt? )->Cmd
+    method parse( ip=null:Int? )->Cmd
       if (_position == _limit) return null
       if (ip) start_ip = ip.value
       _list_starts.clear
@@ -245,7 +245,7 @@ class ParserCore [abstract]
     method _push( cmd:Cmd )
       if (not disable_output) _cmd_stack.add( cmd )
 
-    method _push( cmd:Cmd, node_arg_count:NewInt )
+    method _push( cmd:Cmd, node_arg_count:Int )
       if (node_arg_count) _cmd_stack.discard_from( _cmd_stack.count - node_arg_count )
       _cmd_stack.add( cmd )
 
@@ -273,32 +273,32 @@ class ParserCore [abstract]
     method _save_position
       _saved_positions.add( ParserPosition(_position,_cmd_stack.count,_cur_t) )
 
-    method _node_arg( relative:NewInt )->Cmd
+    method _node_arg( relative:Int )->Cmd
       local i = _cmd_stack.count + relative
       if (i < 0) throw _peek.error( "[INTERNAL] Not enough nodes on stack to create new Cmd." )
       return _cmd_stack[i]
 
-    method _logical_arg( relative:NewInt )->Logical
+    method _logical_arg( relative:Int )->Logical
       local node = _node_arg( relative )
       if (node is null) return false
       return node->Logical
 
-    method _character_arg( relative:NewInt )->Character
+    method _character_arg( relative:Int )->Character
       local node = _node_arg( relative )
       if (node is null) return 0
       return node->Character
 
-    method _integer_arg( relative:NewInt )->NewInt
+    method _integer_arg( relative:Int )->Int
       local node = _node_arg( relative )
       if (node is null) return 0
-      return node->NewInt
+      return node->Int
 
-    method _real_arg( relative:NewInt )->Real
+    method _real_arg( relative:Int )->Real
       local node = _node_arg( relative )
       if (node is null) return 0
       return node->Real
 
-    method _string_arg( relative:NewInt )->String
+    method _string_arg( relative:Int )->String
       local node = _node_arg( relative )
       if (node is null) return null
       return node->String
@@ -311,8 +311,8 @@ class ParserCore [abstract]
       if (st.count == 0) return Character(0)
       return st[0]
 
-    method _string_to_Integer( st:String )->NewInt
-      return st->NewInt
+    method _string_to_Integer( st:String )->Int
+      return st->Int
 
     method _string_to_Real( st:String )->Real
       return st->Real
@@ -331,7 +331,7 @@ class ParserCore [abstract]
 
       throw _peek.error( message )
 
-    method _execute( ip:NewInt )
+    method _execute( ip:Int )
       which (ip)
         case ip_program: r_program
         case ip_section: r_section
@@ -2905,4 +2905,4 @@ class ParserCore [abstract]
 
 endClass
 
-class ParserPosition( position:NewInt, cmd_stack_count:NewInt, cur_t:Token ) [compound];
+class ParserPosition( position:Int, cmd_stack_count:Int, cur_t:Token ) [compound];

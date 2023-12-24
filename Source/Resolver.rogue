@@ -216,7 +216,7 @@ class Resolver : Visitor
       endIf
       return cmd
 
-    method add_ignoring_case( st:String, statements_ip:NewInt, index:NewInt )
+    method add_ignoring_case( st:String, statements_ip:Int, index:Int )
       if (index >= st.count) return
       local ch = st[index]
       local ch2 = which{ ch.is_uppercase:ch.to_lowercase || ch.to_uppercase }

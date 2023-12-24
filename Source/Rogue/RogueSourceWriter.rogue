@@ -9,7 +9,7 @@ class RogueSourceWriter
   METHODS
     method init( generator )
 
-    method indent->NewInt
+    method indent->Int
       return generator.indent
 
     method close
@@ -52,12 +52,12 @@ class RogueSourceWriter
 
     method rogue_name( type_name:String )->String
       which (type_name)
-        case "Integer": return "NewInt"
+        case "Integer": return "Int"
         case "Real":    return "Real"
         others:         return type_name
       endWhich
 
-    method set_indent( new_indent:NewInt )
+    method set_indent( new_indent:Int )
       generator.indent = new_indent
 
     method update

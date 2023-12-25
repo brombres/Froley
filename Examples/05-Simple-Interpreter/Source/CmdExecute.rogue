@@ -2,59 +2,59 @@ module Simple
 
 class Runtime [singleton]
   PROPERTIES
-    variables = [String:Value]
+    variables = [String:Variant]
 endClass
 
 augment
   METHODS
-    method Cmd.execute->Value
+    method Cmd.execute->Variant
       throw t.error( "[INTERNAL] $.execute() is undefined"(type_name) )
 
-    method Statements.execute->Value
-      local result : Value
+    method Statements.execute->Variant
+      local result : Variant
       result = (forEach in this).execute
       return result
       throw t.error( "[INTERNAL] $.execute() is undefined"(type_name) )
 
-    method Number.execute->Value
+    method Number.execute->Variant
       return value
 
-    method LiteralString.execute->Value
+    method LiteralString.execute->Variant
       return value
 
-    method Add.execute->Value
+    method Add.execute->Variant
       return left.execute + right.execute
 
-    method Subtract.execute->Value
+    method Subtract.execute->Variant
       return left.execute - right.execute
 
-    method Multiply.execute->Value
+    method Multiply.execute->Variant
       return left.execute * right.execute
 
-    method Divide.execute->Value
+    method Divide.execute->Variant
       return left.execute / right.execute
 
-    method Power.execute->Value
+    method Power.execute->Variant
       return left.execute ^ right.execute
 
-    method Factorial.execute->Value
+    method Factorial.execute->Variant
       local result = 1L
       result *= (forEach in 2..(operand.execute->Int))
       return result
 
-    method Negate.execute->Value
+    method Negate.execute->Variant
       return -operand.execute
 
-    method ReadVar.execute->Value
+    method ReadVar.execute->Variant
       local entry = Runtime.variables.find( name )
       if (entry) return entry.value
       throw t.error( "'$' is undefined."(name) )
 
-    method WriteVar.execute->Value
+    method WriteVar.execute->Variant
       Runtime.variables[name] = new_value.execute
       return null
 
-    method Println.execute->Value
+    method Println.execute->Variant
       print ((forEach in args).execute)
       println
       return null

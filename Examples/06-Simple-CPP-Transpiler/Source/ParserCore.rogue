@@ -217,10 +217,10 @@ class ParserCore [abstract]
       if (node is null) return 0
       return node->Int
 
-    method _real_arg( relative:Int )->Real64
+    method _real_arg( relative:Int )->Real
       local node = _node_arg( relative )
       if (node is null) return 0
-      return node->Real64
+      return node->Real
 
     method _string_arg( relative:Int )->String
       local node = _node_arg( relative )
@@ -238,8 +238,8 @@ class ParserCore [abstract]
     method _string_to_Integer( st:String )->Int
       return st->Int
 
-    method _string_to_Real( st:String )->Real64
-      return st->Real64
+    method _string_to_Real( st:String )->Real
+      return st->Real
 
     method _throw_syntax_error( message=null:String, expected=null:TokenType? )
       if (message is null)

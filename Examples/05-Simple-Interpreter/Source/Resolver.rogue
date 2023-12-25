@@ -4,7 +4,7 @@ class Resolver : Visitor
   METHODS
     method require_value( t:Token, cmd:Cmd )->Cmd
       if (cmd) return cmd.require_value
-      throw t.error( "Value expected." )
+      throw t.error( "Variant expected." )
 
     method on( cmd:Assign )->Cmd
       return visit( cmd.left.resolve_assignment(this,cmd.right) )
@@ -28,7 +28,7 @@ class Resolver : Visitor
     method on( cmd:Add )->Cmd
       visit_children( cmd )
       if (cmd.left instanceOf Number and cmd.right instanceOf Number)
-        return visit( Number(cmd.t, cmd.left->Real64 + cmd.right->Real64) )
+        return visit( Number(cmd.t, cmd.left->Real + cmd.right->Real) )
       else
         return cmd
       endIf
@@ -36,7 +36,7 @@ class Resolver : Visitor
     method on( cmd:Subtract )->Cmd
       visit_children( cmd )
       if (cmd.left instanceOf Number and cmd.right instanceOf Number)
-        return visit( Number(cmd.t, cmd.left->Real64 - cmd.right->Real64) )
+        return visit( Number(cmd.t, cmd.left->Real - cmd.right->Real) )
       else
         return cmd
       endIf
@@ -44,7 +44,7 @@ class Resolver : Visitor
     method on( cmd:Multiply )->Cmd
       visit_children( cmd )
       if (cmd.left instanceOf Number and cmd.right instanceOf Number)
-        return visit( Number(cmd.t, cmd.left->Real64 * cmd.right->Real64) )
+        return visit( Number(cmd.t, cmd.left->Real * cmd.right->Real) )
       else
         return cmd
       endIf
@@ -52,7 +52,7 @@ class Resolver : Visitor
     method on( cmd:Divide )->Cmd
       visit_children( cmd )
       if (cmd.left instanceOf Number and cmd.right instanceOf Number)
-        return visit( Number(cmd.t, cmd.left->Real64 / cmd.right->Real64) )
+        return visit( Number(cmd.t, cmd.left->Real / cmd.right->Real) )
       else
         return cmd
       endIf
@@ -60,7 +60,7 @@ class Resolver : Visitor
     method on( cmd:Power )->Cmd
       visit_children( cmd )
       if (cmd.left instanceOf Number and cmd.right instanceOf Number)
-        return visit( Number(cmd.t, cmd.left->Real64 ^ cmd.right->Real64) )
+        return visit( Number(cmd.t, cmd.left->Real ^ cmd.right->Real) )
       else
         return cmd
       endIf
@@ -69,7 +69,7 @@ endClass
 augment
   METHODS
     method Cmd.require_value->Cmd
-      throw t.error( "Value expected." )
+      throw t.error( "Variant expected." )
 
     method Cmd.resolve_assignment( resolver:Resolver, new_value:Cmd )->Cmd
       throw t.error( "Illegal assignment target." )

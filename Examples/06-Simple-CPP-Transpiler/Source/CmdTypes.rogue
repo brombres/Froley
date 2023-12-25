@@ -5,7 +5,7 @@ augment Cmd
     method require_type->String
       localize type
       if (type) return type
-      throw t.error( "Value required." )
+      throw t.error( "Variant required." )
 
     method require_value->this
       require_type

@@ -68,7 +68,7 @@ class Cmd( t:Token )
     method to->Logical
       return (this->Int)?
 
-    method to->Real64
+    method to->Real
       return this->Int
 
     method to->String
@@ -227,7 +227,7 @@ class Access : Cmd
     method to->Character
       return Cmd.to_character(name)
 
-    method to->Int:  return name
+    method to->Int:     return name
     method to->Logical: return name?
     method to->String: return name
 
@@ -277,7 +277,7 @@ class LiteralString : Cmd
     method to->Character
       return Cmd.to_character(value)
 
-    method to->Int:  return value
+    method to->Int:     return value
     method to->Logical: return value?
     method to->String: return value
 
@@ -299,7 +299,7 @@ endClass
 
 class Number : Cmd
   PROPERTIES
-    value : Real64
+    value : Real
 
   METHODS
     method init( t, value )
@@ -311,8 +311,8 @@ class Number : Cmd
     method description->String
       return "Number($)" (%value)
 
-    method to->Int:  return value
-    method to->Real64: return value
+    method to->Int:    return value
+    method to->Real:   return value
     method to->String: return value
 
 endClass
@@ -357,7 +357,7 @@ class ReadVar : Cmd
     method to->Character
       return Cmd.to_character(name)
 
-    method to->Int:  return name
+    method to->Int:     return name
     method to->Logical: return name?
     method to->String: return name
 

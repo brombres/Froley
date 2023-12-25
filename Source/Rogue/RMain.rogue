@@ -24,7 +24,7 @@ class RMain : RogueSourceWriter
          |
          |class $ClassName
          |  PROPERTIES
-         |    command : Value
+         |    command : Variant
          |
          |  METHODS
          |    method init( args:String[] )
@@ -59,7 +59,7 @@ class RMain : RogueSourceWriter
          |        endForEach
          |      endIf
          |
-         |    method parse_args( args:String[] )->Value
+         |    method parse_args( args:String[] )->Variant
          |      # This method is unrelated to the Froley Parser
          |      local command = CommandLineParser().
          |      [

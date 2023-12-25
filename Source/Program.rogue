@@ -2,7 +2,7 @@ module Froley
 
 class Program [singleton]
   PROPERTIES
-    command            : Value
+    command            : Variant
     nodes              : ProgramDef
     project_name       : String
     output_folder      : String

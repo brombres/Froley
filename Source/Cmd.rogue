@@ -65,8 +65,8 @@ class Cmd( t:Token )
     method require_type->FType
       localize type
       if (not type.exists)
-        throw t.error( "Value expected." )
-        #throw t.error( "Value expected.($,$)"(type_name,type) )
+        throw t.error( "Variant expected." )
+        #throw t.error( "Variant expected.($,$)"(type_name,type) )
       endIf
       return type
 

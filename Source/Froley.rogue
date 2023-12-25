@@ -40,7 +40,7 @@ endTry
 
 class Froley
   PROPERTIES
-    command : Value
+    command : Variant
 
   METHODS
     method init( args:String[] )
@@ -95,7 +95,7 @@ class Froley
 
       Program.compile( command, ast )
 
-    method parse_args( args:String[] )->Value
+    method parse_args( args:String[] )->Variant
       # This method is unrelated to the Froley Parser
       local command = CommandLineParser().
       [

@@ -22,7 +22,7 @@ class ScanTableBuilder
       return writer.output_bytes.to_base64
 
     method to->String
-      return root->Value.to_json #(&formatted)
+      return root->Variant.to_json #(&formatted)
 endClass
 
 class ScanTableNode
@@ -78,14 +78,14 @@ class ScanTableNode
       loop (links.count) table.[add(0),add(0)]
       (forEach in links).mark_indices( table )
 
-    method to->Value
+    method to->Variant
       local result = @{}
       if (product != -1) result//product = product
       if (links.count)
         if (not result//links) result//links = @{}
         local link_table = result//links
         forEach (entry in links.entries)
-          link_table[""+entry.key] = entry.value->Value
+          link_table[""+entry.key] = entry.value->Variant
         endForEach
       endIf
       return result

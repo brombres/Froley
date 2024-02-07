@@ -1,13 +1,13 @@
 module Froley
 
-class ScanTableDeclarationWriter : Visitor
+class ScanTableDeclarationWriter : RebuildVisitor
   PROPERTIES
     generator : RogueGenerator
 
   METHODS
     method init( generator )
 
-    method on_visit( cmd:Match )
+    method on_visit_node( cmd:Match )
       generator.writeln ''$ = ScanTable("$")'' (cmd.id,cmd.table_builder.to_encoded_scan_table)
       visit_children( cmd )
 endClass

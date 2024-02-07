@@ -1,6 +1,6 @@
 module Froley
 
-class Resolver : Visitor
+class Resolver : RebuildVisitor
   PROPERTIES
     next_scan_table_id = 0
 
@@ -77,7 +77,7 @@ class Resolver : Visitor
 
       throw cmd[1].t.error( "Too many arguments." )
 
-    method on( cmd:Access )->Cmd
+    method on_visit( cmd:Access )->Cmd
       local r = this_element.routines[ cmd.name ]
       if (r)
         return visit( Call(cmd.t,r) )
@@ -90,7 +90,7 @@ class Resolver : Visitor
         endIf
       endIf
 
-    method on( cmd:Add )->Cmd
+    method on_visit( cmd:Add )->Cmd
       cmd.left  = visit( cmd.left )
       cmd.right = visit( cmd.right )
       local common_type = cmd.left.common_type( cmd.right )
@@ -124,17 +124,17 @@ class Resolver : Visitor
       endIf
       return cmd
 
-    method on_visit( cmd:SequenceArgs )
+    method on_visit_node( cmd:SequenceArgs )
       visit_children( cmd )
       (forEach in cmd.list).require_value
 
-    method on( cmd:Assign )->Cmd
+    method on_visit( cmd:Assign )->Cmd
       return cmd.target.resolve_assignment( cmd, this )
 
-    method on( cmd:CastToPattern )->Cmd
+    method on_visit( cmd:CastToPattern )->Cmd
       return visit( Pattern( cmd.t, cmd.operand->ScanPattern ) )
 
-    method on( cmd:ScannerConsume )->Cmd
+    method on_visit( cmd:ScannerConsume )->Cmd
       local seq = resolve_sequence( cmd.args )
       which (seq.require_type)
         case FType.CHARACTER, FType.STRING
@@ -145,7 +145,7 @@ class Resolver : Visitor
           throw cmd.t.error( "Expected character, string, or pattern; found type $."(seq.type.display_name) )
       endWhich
 
-    method on( cmd:ScannerMustConsume )->Cmd
+    method on_visit( cmd:ScannerMustConsume )->Cmd
       local seq = resolve_sequence( cmd.args )
       which (seq.require_type)
         case FType.CHARACTER, FType.STRING
@@ -156,15 +156,15 @@ class Resolver : Visitor
           throw cmd.t.error( "Expected character, string, or pattern; found type $."(seq.type.display_name) )
       endWhich
 
-    method on( cmd:ParserPush )->Cmd
+    method on_visit( cmd:ParserPush )->Cmd
       this_element.define_var( cmd.t, cmd.var.name, FType.CMD )
       return cmd
 
-    method on( cmd:ParserPop )->Cmd
+    method on_visit( cmd:ParserPop )->Cmd
       this_element.define_var( cmd.t, cmd.var.name, FType.CMD )
       return cmd
 
-    method on( cmd:Pattern )->Cmd
+    method on_visit( cmd:Pattern )->Cmd
       if (not cmd.reference_name)
         local pattern = cmd.scan_pattern->String
         if (not Program.scan_patterns.contains(pattern))
@@ -174,11 +174,11 @@ class Resolver : Visitor
       endIf
       return cmd
 
-    method on( cmd:ScannerCreate )->Cmd
+    method on_visit( cmd:ScannerCreate )->Cmd
       cmd.arg = cast_to( cmd.arg, FType.TOKEN_TYPE )
       return cmd
 
-    method on_visit( cmd:Match )
+    method on_visit_node( cmd:Match )
       if (not cmd.id)
         cmd.id = "_scan_table_" + next_scan_table_id
         ++next_scan_table_id
@@ -192,7 +192,7 @@ class Resolver : Visitor
       endIf
       visit_children( cmd )
 
-    method on( cmd:MatchCase )->Cmd
+    method on_visit( cmd:MatchCase )->Cmd
       if (not cmd.is_resolved)
         cmd.is_resolved = true
 
@@ -227,7 +227,7 @@ class Resolver : Visitor
       endIf
       add_ignoring_case( st, statements_ip, index+1 )
 
-    method on_visit( cmd:On )
+    method on_visit_node( cmd:On )
       if (cmd.token_type not instanceOf LiteralContent)
         cmd.token_type = LiteralTokenType( cmd.token_type.t, resolve_token_type(cmd.token_type) )
       endIf
@@ -247,7 +247,7 @@ class Resolver : Visitor
       endWhile
       visit_children( cmd )
 
-    method on_visit( cmd:ElseOn )
+    method on_visit_node( cmd:ElseOn )
       if (cmd.token_type not instanceOf LiteralContent)
         cmd.token_type = LiteralTokenType( cmd.token_type.t, resolve_token_type(cmd.token_type) )
       endIf
@@ -262,31 +262,31 @@ class Resolver : Visitor
       endWhile
       visit_children( cmd )
 
-    method on_visit( cmd:NextHasAttribute )
+    method on_visit_node( cmd:NextHasAttribute )
       if (not Program.token_attributes.contains(cmd.name))
         throw cmd.t.error( "No token has the attribute '$'."(cmd.name) )
       endIf
       visit_children( cmd )
 
-    method on( cmd:ParserConsume )->Cmd
+    method on_visit( cmd:ParserConsume )->Cmd
       local t = cmd.t
       local literal_content = cmd.token_type->(as LiteralContent)
       if (literal_content) return visit( ConsumeContent( t, literal_content.value ) )
       return visit( ConsumeToken( t, resolve_token_type(cmd.token_type) ) )
 
-    method on( cmd:ParserMustConsume )->Cmd
+    method on_visit( cmd:ParserMustConsume )->Cmd
       local t = cmd.t
       local literal_content = cmd.token_type->(as LiteralContent)
       if (literal_content) return visit( MustConsumeContent( t, literal_content.value ) )
       return visit( MustConsumeToken( t, resolve_token_type(cmd.token_type) ) )
 
-    method on( cmd:ParserNextIs )->Cmd
+    method on_visit( cmd:ParserNextIs )->Cmd
       local t = cmd.t
       local literal_content = cmd.token_type->(as LiteralContent)
       if (literal_content) return visit( NextIsContent( t, literal_content.value ) )
       return visit( NextIsTokenType( t, resolve_token_type(cmd.token_type) ) )
 
-    method on( cmd:ScannerNextIs )->Cmd
+    method on_visit( cmd:ScannerNextIs )->Cmd
       local seq = resolve_sequence( cmd.args )
       which (seq.require_type)
         case FType.CHARACTER, FType.STRING
@@ -297,7 +297,7 @@ class Resolver : Visitor
           throw cmd.t.error( "Expected character, string, or pattern; found type $."(seq.type.display_name) )
       endWhich
 
-    method on( cmd:Scan )->Cmd
+    method on_visit( cmd:Scan )->Cmd
       local seq = resolve_sequence( cmd.args )
       which (seq.require_type)
         case FType.CHARACTER, FType.STRING
@@ -308,7 +308,7 @@ class Resolver : Visitor
           throw cmd.t.error( "Expected character, string, or pattern; found type $."(seq.type.display_name) )
       endWhich
 
-    method on( cmd:ThrowSyntaxError )->Cmd
+    method on_visit( cmd:ThrowSyntaxError )->Cmd
       if (cmd.args)
         forEach (arg at i in cmd.args)
           cmd.args[i] = visit( arg.cast_to( FType.STRING ) )
@@ -316,11 +316,11 @@ class Resolver : Visitor
       endIf
       return cmd
 
-    method on_visit( cmd:WriteBuffer )
+    method on_visit_node( cmd:WriteBuffer )
       visit_children( cmd )
       cmd.new_value.require_value
 
-    method on_visit( cmd:WriteVar )
+    method on_visit_node( cmd:WriteVar )
       visit_children( cmd )
       cmd.new_value.require_value
 

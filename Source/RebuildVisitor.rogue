@@ -1,7 +1,7 @@
 # Generated and updated by Froley. Custom changes will not be overwritten; customize as desired.
 module Froley
 
-class Visitor<<$ReturnType>>
+class RebuildVisitor<<$ReturnType>>
   PROPERTIES
     this_element : Element
     this_routine : FroleyRoutine
@@ -14,7 +14,7 @@ class Visitor<<$ReturnType>>
     method is_scanner->Logical
       return this_element instanceOf ScannerDef
 
-    method on_visit( cmd:Cmd )
+    method on_visit_node( cmd:Cmd )
       visit_children( cmd )
 
     method on_visit_children( cmd:Cmd )
@@ -26,13 +26,13 @@ class Visitor<<$ReturnType>>
       else
         if (cmd is null) return $ReturnType.meta.default_value
       endIf
-      return cmd.dispatch<<on,ThisType,$ReturnType>>( this )
+      return cmd.dispatch<<on_visit,ThisType,$ReturnType>>( this )
 
     method visit_children( cmd:Cmd ) [propagated]
       cmd.dispatch<<on_visit_children,ThisType>>( this )
 
     method handle_visit( cmd:Cmd ) [propagated]
-      cmd.dispatch<<on_visit,ThisType>>( this )
+      cmd.dispatch<<on_visit_node,ThisType>>( this )
 
     method on_visit_children( cmd:CmdList )
       if ($ReturnType instanceOf Cmd)
@@ -44,7 +44,7 @@ class Visitor<<$ReturnType>>
         visit( forEach in cmd.list )
       endIf
 
-    method on( cmd:Cmd )->$ReturnType
+    method on_visit( cmd:Cmd )->$ReturnType
       handle_visit( cmd )
       if ($ReturnType instanceOf Cmd) return cmd
       else                            return $ReturnType.meta.default_value
@@ -135,7 +135,7 @@ class Visitor<<$ReturnType>>
         visit( cmd.target )
       endIf
 
-    method on( cmd:Match )->$ReturnType
+    method on_visit( cmd:Match )->$ReturnType
       temporarily this_match = cmd
         handle_visit( cmd )
       endTemporarily
@@ -205,7 +205,7 @@ class Visitor<<$ReturnType>>
         visit( cmd.arg )
       endIf
 
-    method on( cmd:ParserDef )->$ReturnType
+    method on_visit( cmd:ParserDef )->$ReturnType
       temporarily this_element = cmd
         handle_visit( cmd )
       endTemporarily
@@ -254,7 +254,7 @@ class Visitor<<$ReturnType>>
         visit( cmd.value )
       endIf
 
-    method on( cmd:FroleyRoutine )->$ReturnType
+    method on_visit( cmd:FroleyRoutine )->$ReturnType
       temporarily this_routine = cmd
         handle_visit( cmd )
       endTemporarily
@@ -289,7 +289,7 @@ class Visitor<<$ReturnType>>
         visit( cmd.arg )
       endIf
 
-    method on( cmd:ScannerDef )->$ReturnType
+    method on_visit( cmd:ScannerDef )->$ReturnType
       temporarily this_element = cmd
         handle_visit( cmd )
       endTemporarily
@@ -498,7 +498,7 @@ class Visitor<<$ReturnType>>
 
 endClass
 
-class Visitor : Visitor<<Cmd>>
+class RebuildVisitor : RebuildVisitor<<Cmd>>
   # Standard tree-rebuilding visitor.
 endClass
 

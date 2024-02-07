@@ -5,16 +5,16 @@ class BranchAnalyzer : InspectionVisitor<<Logical>> [singleton]
     method all_paths_return( cmd:Cmd )->Logical
       return visit( cmd )
 
-    method on( cmd:FroleyRoutine )->Logical
+    method on_visit( cmd:FroleyRoutine )->Logical
       return visit( cmd.statements )
 
-    method on( cmd:CmdList )->Logical
+    method on_visit( cmd:CmdList )->Logical
       forEach (element in cmd)
         if (visit(element)) return true
       endForEach
       return false
 
-    method on( cmd:If )->Logical
+    method on_visit( cmd:If )->Logical
       if (not cmd._else) return false
 
       if (not visit(cmd.statements)) return false
@@ -27,14 +27,14 @@ class BranchAnalyzer : InspectionVisitor<<Logical>> [singleton]
 
       return visit( cmd._else )
 
-    method on( cmd:Match )->Logical
+    method on_visit( cmd:Match )->Logical
       if (not cmd._others) return false
       forEach (cmd_case in cmd.cases)
         if (not visit(cmd_case)) return false
       endForEach
       return true
 
-    method on( cmd:On )->Logical
+    method on_visit( cmd:On )->Logical
       if (not cmd._else_on_others) return false
 
       if (not visit(cmd.statements)) return false
@@ -47,22 +47,22 @@ class BranchAnalyzer : InspectionVisitor<<Logical>> [singleton]
 
       return visit( cmd._else_on_others )
 
-    method on( cmd:ParserProduce )->Logical
+    method on_visit( cmd:ParserProduce )->Logical
       return true
 
-    method on( cmd:ProduceList )->Logical
+    method on_visit( cmd:ProduceList )->Logical
       return true
 
-    method on( cmd:ProduceTokenList )->Logical
+    method on_visit( cmd:ProduceTokenList )->Logical
       return true
 
-    method on( cmd:Restart )->Logical
+    method on_visit( cmd:Restart )->Logical
       return true
 
-    method on( cmd:Return )->Logical
+    method on_visit( cmd:Return )->Logical
       return true
 
-    method on( cmd:Statements )->Logical
+    method on_visit( cmd:Statements )->Logical
       forEach (element in cmd)
         if (element)
           if (visit(element)) return true

@@ -5,7 +5,7 @@ $define PARSER_EXISTS true
 
 $include "Cmd.rogue"
 $include "Scanner.rogue"
-$include "Visitor.rogue"
+$include "RebuildVisitor.rogue"
 
 class ParserCore [abstract]
   DEFINITIONS

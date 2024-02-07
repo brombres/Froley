@@ -1,14 +1,14 @@
 module Froley
 
-class Collector : Visitor
+class Collector : RebuildVisitor
   METHODS
-    method on_visit( cmd:ParserDef )
+    method on_visit_node( cmd:ParserDef )
       # this_element.routines may now have additional routines; re-add them to this node
       visit_children( cmd )
       cmd.routine_defs.clear
       cmd.routine_defs.add( forEach in this_element.routines )
 
-    method on( cmd:FroleyRoutine )->Cmd
+    method on_visit( cmd:FroleyRoutine )->Cmd
       if (cmd.is_binary or cmd.is_post_unary)
         # CONVERT THIS:
         #   - parse_op [binary/postUnary]
@@ -23,7 +23,7 @@ class Collector : Visitor
         primer.ip = this_element.routines.count
         this_element.routines[primer.name] = primer
         temporarily this_routine = primer
-          prior.on( primer )
+          prior.on_visit( primer )
         endTemporarily
 
         cmd.name += "__inner"
@@ -31,6 +31,6 @@ class Collector : Visitor
 
       cmd.ip = this_element.routines.count
       this_element.routines[cmd.name] = cmd
-      return prior.on( cmd )
+      return prior.on_visit( cmd )
 endClass
 

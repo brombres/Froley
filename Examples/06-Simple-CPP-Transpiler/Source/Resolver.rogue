@@ -1,33 +1,33 @@
 module Simple
 
-class Resolver : Visitor
+class Resolver : RebuildVisitor
   METHODS
-    method on( cmd:Access )->Cmd
+    method on_visit( cmd:Access )->Cmd
       return visit( ReadVar(cmd.t,cmd.name) )
 
-    method on_visit( cmd:Args )
+    method on_visit_node( cmd:Args )
       visit_children( cmd )
       (forEach in cmd).require_value
 
-    method on( cmd:Assign )->Cmd
+    method on_visit( cmd:Assign )->Cmd
       return visit( cmd.left.assigned(cmd.right) )
 
-    method on_visit( cmd:Binary )
+    method on_visit_node( cmd:Binary )
       visit_children( cmd )
       cmd.left.require_value
       cmd.right.require_value
 
-    method on_visit( cmd:Unary )
+    method on_visit_node( cmd:Unary )
       visit_children( cmd )
       cmd.operand.require_value
 
-    method on_visit( cmd:Print )
+    method on_visit_node( cmd:Print )
       visit_children( cmd )
       if (cmd.args.count == 0)
         throw cmd.t.error( "One or more values expected." )
       endIf
 
-    method on_visit( cmd:WriteVar )
+    method on_visit_node( cmd:WriteVar )
       visit_children( cmd )
       Program.set_var_type( cmd.t, cmd.name, cmd.new_value.require_type )
 

@@ -1,31 +1,31 @@
 module Simple
 
-class Resolver : Visitor
+class Resolver : RebuildVisitor
   METHODS
     method require_value( t:Token, cmd:Cmd )->Cmd
       if (cmd) return cmd.require_value
       throw t.error( "Variant expected." )
 
-    method on( cmd:Assign )->Cmd
+    method on_visit( cmd:Assign )->Cmd
       return visit( cmd.left.resolve_assignment(this,cmd.right) )
 
-    method on( cmd:Access )->Cmd
+    method on_visit( cmd:Access )->Cmd
       return visit( ReadVar(cmd.t,cmd.name) )
 
-    method on_visit( cmd:Binary )
+    method on_visit_node( cmd:Binary )
       visit_children( cmd )
       require_value( cmd.t, cmd.left )
       require_value( cmd.t, cmd.right )
 
-    method on_visit( cmd:Unary )
+    method on_visit_node( cmd:Unary )
       visit_children( cmd )
       require_value( cmd.t, cmd.operand )
 
-    method on_visit( cmd:Args )
+    method on_visit_node( cmd:Args )
       visit_children( cmd )
       forEach (arg in cmd) require_value(cmd.t,arg)
 
-    method on( cmd:Add )->Cmd
+    method on_visit( cmd:Add )->Cmd
       visit_children( cmd )
       if (cmd.left instanceOf Number and cmd.right instanceOf Number)
         return visit( Number(cmd.t, cmd.left->Real + cmd.right->Real) )
@@ -33,7 +33,7 @@ class Resolver : Visitor
         return cmd
       endIf
 
-    method on( cmd:Subtract )->Cmd
+    method on_visit( cmd:Subtract )->Cmd
       visit_children( cmd )
       if (cmd.left instanceOf Number and cmd.right instanceOf Number)
         return visit( Number(cmd.t, cmd.left->Real - cmd.right->Real) )
@@ -41,7 +41,7 @@ class Resolver : Visitor
         return cmd
       endIf
 
-    method on( cmd:Multiply )->Cmd
+    method on_visit( cmd:Multiply )->Cmd
       visit_children( cmd )
       if (cmd.left instanceOf Number and cmd.right instanceOf Number)
         return visit( Number(cmd.t, cmd.left->Real * cmd.right->Real) )
@@ -49,7 +49,7 @@ class Resolver : Visitor
         return cmd
       endIf
 
-    method on( cmd:Divide )->Cmd
+    method on_visit( cmd:Divide )->Cmd
       visit_children( cmd )
       if (cmd.left instanceOf Number and cmd.right instanceOf Number)
         return visit( Number(cmd.t, cmd.left->Real / cmd.right->Real) )
@@ -57,7 +57,7 @@ class Resolver : Visitor
         return cmd
       endIf
 
-    method on( cmd:Power )->Cmd
+    method on_visit( cmd:Power )->Cmd
       visit_children( cmd )
       if (cmd.left instanceOf Number and cmd.right instanceOf Number)
         return visit( Number(cmd.t, cmd.left->Real ^ cmd.right->Real) )

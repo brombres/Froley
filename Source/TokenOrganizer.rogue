@@ -1,8 +1,8 @@
 module Froley
 
-class TokenOrganizer : Visitor
+class TokenOrganizer : RebuildVisitor
   METHODS
-    method on( cmd:TokenGroup )->Cmd
+    method on_visit( cmd:TokenGroup )->Cmd
       if (not String.exists(cmd.name)) cmd.name = "Tokens"
 
       visit_children( cmd )
@@ -20,7 +20,7 @@ class TokenOrganizer : Visitor
 
       return cmd
 
-    method on_visit( cmd:TokenDef )
+    method on_visit_node( cmd:TokenDef )
       if (not cmd.symbol) cmd.symbol = cmd.name
       Program.tokens_by_name[cmd.name] = cmd
       Program.tokens_by_symbol[cmd.symbol] = cmd

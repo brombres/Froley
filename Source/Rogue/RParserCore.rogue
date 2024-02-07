@@ -13,7 +13,7 @@ class RParserCore( generator, parser_def:ParserDef ) : RogueSourceWriter
          |
          |$include "Cmd.rogue"
          |$include "Scanner.rogue"
-         |$include "Visitor.rogue"
+         |$include "RebuildVisitor.rogue"
          |
          |class ParserCore [abstract]
          |  DEFINITIONS

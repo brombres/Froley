@@ -5,6 +5,13 @@ class InspectionVisitor : InspectionVisitor<<Logical>>
 endClass
 
 class InspectionVisitor<<$ReturnType>>
+  # Default per-node InspectionVisitor call sequence.
+  #
+  #   CALL                                   OVERLOADABLE METHOD
+  #   --------------------                   ------------------------
+  #   visit(cmd)->$ReturnType            ->  on_visit(cmd:CmdType)->$ReturnType
+  #     visit_node(cmd)                  ->    on_visit_node(cmd:CmdType)
+  #     visit_children(cmd)->$ReturnType ->    on_visit_children(cmd:CmdType)
   METHODS
     method visit( cmd:Cmd )->$ReturnType [propagated]
       if (cmd is null) return $ReturnType.meta.default_value
@@ -18,13 +25,6 @@ class InspectionVisitor<<$ReturnType>>
       return cmd.dispatch<<on_visit_children,ThisType,$ReturnType>>( this )
 
     method on_visit( cmd:Cmd )->$ReturnType
-      # Default per-node InspectionVisitor call sequence.
-      #
-      #   CALL                                   OVERLOADABLE METHOD
-      #   --------------------                   ------------------------
-      #   visit(cmd)->$ReturnType            ->  on_visit(cmd:CmdType)->$ReturnType
-      #     visit_node(cmd)               ->    on_visit_node(cmd:CmdType)
-      #     visit_children(cmd)->$ReturnType ->    on_visit_children(cmd:CmdType)
       visit_node( cmd )
       return visit_children( cmd )
 

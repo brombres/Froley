@@ -15,7 +15,7 @@ $include "Rogue/RVisitor.rogue"
 $include "Rogue/RogueSourceWriter.rogue"
 $include "Rogue/ScanTableDeclarationWriter.rogue"
 
-class RogueGenerator : RebuildVisitor
+class RogueGenerator : Visitor
   GLOBAL METHODS
     method to_escaped_ascii( st:String, additional_escapes:String )->String
       return st.to_escaped_ascii( additional_escapes )

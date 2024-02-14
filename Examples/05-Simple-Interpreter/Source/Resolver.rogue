@@ -1,6 +1,6 @@
 module Simple
 
-class Resolver : RebuildVisitor
+class Resolver : Visitor
   METHODS
     method require_value( t:Token, cmd:Cmd )->Cmd
       if (cmd) return cmd.require_value

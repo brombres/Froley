@@ -1,6 +1,6 @@
 module Froley
 
-class Collector : RebuildVisitor
+class Collector : Visitor
   METHODS
     method on_visit_node( cmd:ParserDef )
       # this_element.routines may now have additional routines; re-add them to this node

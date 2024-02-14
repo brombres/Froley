@@ -6,7 +6,7 @@ class RRebuildVisitor : RogueSourceWriter
 
   METHODS
     method init_object
-      class_name = "RebuildVisitor"
+      class_name = "Visitor"
 
     method scan_node_types( content:String )
       forEach (line in LineReader(content))
@@ -17,12 +17,12 @@ class RRebuildVisitor : RogueSourceWriter
       endForEach
 
     method update_content( content:String )->String
-      if (not String.exists(content) or not content.contains("class RebuildVisitor"))
+      if (not String.exists(content) or not content.contains("class Visitor"))
         if (content is null) content = ""
         content +=  "# Generated and updated by Froley. Custom changes will not be overwritten; customize as desired.\n"
         content += "module $\n\n"(Program.project_name)
-        content += @|class RebuildVisitor
-                    |  # Default per-node RebuildVisitor call sequence.
+        content += @|class Visitor
+                    |  # Default per-node Visitor call sequence.
                     |  #
                     |  #   CALL                       OVERLOADABLE METHOD
                     |  #   --------------------       -----------------------------------------
@@ -87,7 +87,7 @@ class RRebuildVisitor : RogueSourceWriter
 
       local builder = String(content.count*2)
 
-      local end_class_location = content.locate( "endClass", content.locate("class RebuildVisitor").value )
+      local end_class_location = content.locate( "endClass", content.locate("class Visitor").value )
       local bottom = "endClass\n"
       if (end_class_location)
         bottom = content.from( end_class_location.value )

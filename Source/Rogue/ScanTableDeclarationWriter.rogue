@@ -1,6 +1,6 @@
 module Froley
 
-class ScanTableDeclarationWriter : RebuildVisitor
+class ScanTableDeclarationWriter : Visitor
   PROPERTIES
     generator : RogueGenerator
 

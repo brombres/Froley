@@ -1,7 +1,7 @@
 # Generated and updated by Froley. Custom changes will not be overwritten; customize as desired.
 module Simple
 
-class RebuildVisitor
+class Visitor
   METHODS
     method visit( cmd:Cmd )->Cmd [propagated]
       # Call to invoke the appropriate on_visit/on_visit_node() for the given Cmd type.
@@ -27,7 +27,7 @@ class RebuildVisitor
       return cmd.dispatch<<on_validate,ThisType,Cmd>>( this )
 
     method on_visit( cmd:Cmd )->Cmd
-      # Default per-node RebuildVisitor call sequence.
+      # Default per-node Visitor call sequence.
       #
       #   CALL                       OVERLOADABLE METHOD
       #   --------------------       -----------------------------------------

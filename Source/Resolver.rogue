@@ -1,6 +1,6 @@
 module Froley
 
-class Resolver : RebuildVisitor
+class Resolver : Visitor
   PROPERTIES
     next_scan_table_id = 0
 

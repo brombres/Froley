@@ -1,6 +1,6 @@
 module Froley
 
-class TokenOrganizer : RebuildVisitor
+class TokenOrganizer : Visitor
   METHODS
     method on_visit( cmd:TokenGroup )->Cmd
       if (not String.exists(cmd.name)) cmd.name = "Tokens"

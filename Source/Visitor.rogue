@@ -1,7 +1,7 @@
 # Generated and updated by Froley. Custom changes will not be overwritten; customize as desired.
 module Froley
 
-class RebuildVisitor<<$ReturnType>>
+class Visitor<<$ReturnType>>
   PROPERTIES
     this_element : Element
     this_routine : FroleyRoutine
@@ -498,7 +498,7 @@ class RebuildVisitor<<$ReturnType>>
 
 endClass
 
-class RebuildVisitor : RebuildVisitor<<Cmd>>
+class Visitor : Visitor<<Cmd>>
   # Standard tree-rebuilding visitor.
 endClass
 

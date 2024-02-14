@@ -1,6 +1,6 @@
 module Froley
 
-class Organizer : RebuildVisitor
+class Organizer : Visitor
   PROPERTIES
     this_match      : Match
 

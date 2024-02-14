@@ -1,6 +1,6 @@
 module Simple
 
-class CPPWriter( filepath:String ) : RebuildVisitor
+class CPPWriter( filepath:String ) : Visitor
   PROPERTIES
     builder = String()
 

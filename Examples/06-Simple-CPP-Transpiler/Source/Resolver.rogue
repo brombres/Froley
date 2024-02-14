@@ -1,6 +1,6 @@
 module Simple
 
-class Resolver : RebuildVisitor
+class Resolver : Visitor
   METHODS
     method on_visit( cmd:Access )->Cmd
       return visit( ReadVar(cmd.t,cmd.name) )

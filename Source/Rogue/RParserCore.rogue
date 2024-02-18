@@ -248,7 +248,7 @@ class RParserCore( generator, parser_def:ParserDef ) : RogueSourceWriter
          |      if (node is null) return 0
          |      return node->Character
          |
-         |    method _integer_arg( relative:Int )->Int
+         |    method _int_arg( relative:Int )->Int
          |      local node = _node_arg( relative )
          |      if (node is null) return 0
          |      return node->Int

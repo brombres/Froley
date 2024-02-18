@@ -49,7 +49,7 @@ class Program [singleton]
 
       type(t,"Logical").is_built_in = true
       type(t,"Character").is_built_in = true
-      type(t,"Integer").is_built_in = true
+      types//Integer = type(t,"Int").[ is_built_in=true ]
       type(t,"Real").is_built_in = true
       type_String = type( t, "String" ).[ is_built_in=true ]
 

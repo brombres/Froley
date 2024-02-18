@@ -29,6 +29,7 @@ KEYWORD_CHARACTER        Character
 KEYWORD_COLLECT          collect
 KEYWORD_END_MATCH        endMatch    [structural]
 KEYWORD_INPUT            input
+KEYWORD_INT              Int
 KEYWORD_INTEGER          Integer
 KEYWORD_OUTPUT           output
 KEYWORD_PEEK             peek
@@ -450,7 +451,8 @@ parser
 
 - type_name
   on KEYWORD_CHARACTER -> Identifier(name="Character":String)
-  on KEYWORD_INTEGER   -> Identifier(name="Integer":String)
+  on KEYWORD_INT       -> Identifier(name="Int":String)
+  on KEYWORD_INTEGER   -> Identifier(name="Int":String)
   identifier
 
 - identifier
@@ -932,7 +934,8 @@ parser
   on '{' pattern_sequence '}':   return
   on "buffer"                       -> ReadBuffer
   on "Character" '(' scanner_expression ')' -> CastToCharacter(operand):Unary
-  on "Integer"   '(' scanner_expression ')' -> CastToInteger(operand):Unary
+  on "Int"       '(' scanner_expression ')' -> CastToInt(operand):Unary
+  on "Integer"   '(' scanner_expression ')' -> CastToInt(operand):Unary
   on "consume", sequence_args       -> ScannerConsume(args:SequenceArgs)
   on "false"                        -> LiteralLogical(value="false":Logical)
   on "hasAnother"                   -> ScannerHasAnother
@@ -952,7 +955,7 @@ parser
     return
   endOn
   on IDENTIFIER          -> Access( name=content )
-  on INTEGER             -> LiteralInteger( value=content:Integer )
+  on INTEGER             -> LiteralInteger( value=content:Int )
   on STRING
     create LiteralString( value=content )
     repeat_count
@@ -1408,7 +1411,7 @@ parser
   on "read"                             -> ParserRead
   on "true"                             -> LiteralLogical(value="true":Logical)
   on IDENTIFIER                         -> Access( name=content )
-  on INTEGER                            -> LiteralInteger( value=content:Integer )
+  on INTEGER                            -> LiteralInteger( value=content:Int )
   on STRING                             -> LiteralString( value=content )
   on STRING_OR_CHARACTER                -> LiteralStringOrCharacter( value=content )
   syntaxError

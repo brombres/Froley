@@ -54,7 +54,7 @@ class RScannerCore( generator, scanner_def:ScannerDef ) : RogueSourceWriter
               writeln "Logical"
             case FType.CHARACTER
               writeln "Character"
-            case FType.INTEGER
+            case FType.INT
               writeln "Int"
             case FType.STRING
               writeln "String"

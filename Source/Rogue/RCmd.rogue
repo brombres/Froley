@@ -350,7 +350,7 @@ class RCmd : RogueSourceWriter
                 builder.println ''    method to->Int:       return $'' (name)
                 builder.println ''    method to->String:    return $'' (name)
                 builder.println
-              case "Integer"
+              case "Int"
                 builder.println ''    method to->Int:       return $'' (name)
                 builder.println ''    method to->String:    return $'' (name)
                 builder.println

@@ -12,7 +12,7 @@ class Cmd( t:Token )
       which (to_type)
         case FType.LOGICAL:    return CastToLogical( t, this )
         case FType.CHARACTER:  return CastToCharacter( t, this )
-        case FType.INTEGER:    return CastToInteger( t, this )
+        case FType.INT:    return CastToInt( t, this )
         case FType.REAL:       return CastToReal( t, this )
         case FType.TOKEN_TYPE: return CastToTokenType( t, this )
         case FType.STRING:     return CastToString( t, this )
@@ -247,7 +247,7 @@ class ParserDef : Element
   METHODS
     method init( t, name, routine_defs )
       prior.init( t, name, routine_defs )
-      define_var( t, "disable_output", FType.INTEGER )
+      define_var( t, "disable_output", FType.INT )
 
     method description->String
       return "ParserDef($,$)" (%name,%routine_defs)
@@ -340,7 +340,7 @@ class LiteralString : Cmd
       which (to_type)
         case FType.LOGICAL:    return LiteralLogical( t, value.equals("true",&ignore_case) )
         case FType.CHARACTER:  return LiteralCharacter( t, value[0] )
-        case FType.INTEGER:    return LiteralInteger( t, value->Int )
+        case FType.INT:    return LiteralInteger( t, value->Int )
         case FType.REAL:       return LiteralReal( t, value->Real )
         others
           return prior.cast_to( to_type )
@@ -410,7 +410,7 @@ class LiteralLogical : Cmd
 
       which (to_type)
         case FType.CHARACTER:  return LiteralCharacter( t, which{value:'1'||'0'} )
-        case FType.INTEGER:    return LiteralInteger( t, which{value:1||0} )
+        case FType.INT:    return LiteralInteger( t, which{value:1||0} )
         case FType.REAL:       return LiteralReal( t, which{value:1||0} )
         case FType.STRING:     return LiteralString( t, which{value:"true"||"false"} )
         others
@@ -436,7 +436,7 @@ class LiteralInteger : Cmd
     method init( t, value )
 
     method cast_to( to_type:FType )->Cmd
-      if (to_type == FType.INTEGER) return this
+      if (to_type == FType.INT) return this
       which (to_type)
         case FType.LOGICAL:    return LiteralLogical( t, value->Logical )
         case FType.CHARACTER:  return LiteralCharacter( t, value->Character )
@@ -453,7 +453,7 @@ class LiteralInteger : Cmd
     method to->String:    return value
 
     method type->FType
-      return FType.INTEGER
+      return FType.INT
 endClass
 
 class LiteralCharacter : Cmd
@@ -468,7 +468,7 @@ class LiteralCharacter : Cmd
 
       which (to_type)
         case FType.LOGICAL:    return LiteralLogical( t, value->Logical )
-        case FType.INTEGER:    return LiteralInteger( t, value->Int )
+        case FType.INT:    return LiteralInteger( t, value->Int )
         case FType.REAL:       return LiteralReal( t, value->Real )
         case FType.STRING:     return LiteralString( t, value->String )
         others
@@ -1535,13 +1535,13 @@ class CastToCharacter : Unary
 
 endClass
 
-class CastToInteger : Unary
+class CastToInt : Unary
   METHODS
     method description->String
-      return "CastToInteger($)" (%operand)
+      return "CastToInt($)" (%operand)
 
     method type->FType
-      return FType.INTEGER
+      return FType.INT
 
 endClass
 
@@ -1598,7 +1598,7 @@ class LiteralReal : Cmd
       which (to_type)
         case FType.LOGICAL:    return LiteralLogical( t, value->Logical )
         case FType.CHARACTER:  return LiteralCharacter( t, value->Character )
-        case FType.INTEGER:    return LiteralInteger( t, value->Int )
+        case FType.INT:    return LiteralInteger( t, value->Int )
         case FType.STRING:     return LiteralString( t, value->String )
         others
           return prior.cast_to( to_type )

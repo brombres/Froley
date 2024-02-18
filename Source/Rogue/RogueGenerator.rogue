@@ -68,7 +68,7 @@ class RogueGenerator : Visitor
       visit_children( cmd )
       write "->Character"
 
-    method on_visit_node( cmd:CastToInteger )
+    method on_visit_node( cmd:CastToInt )
       visit_children( cmd )
       write "->Int"
 

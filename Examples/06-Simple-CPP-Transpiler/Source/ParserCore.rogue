@@ -235,7 +235,7 @@ class ParserCore [abstract]
       if (st.count == 0) return Character(0)
       return st[0]
 
-    method _string_to_Integer( st:String )->Int
+    method _string_to_Int( st:String )->Int
       return st->Int
 
     method _string_to_Real( st:String )->Real

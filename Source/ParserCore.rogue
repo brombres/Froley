@@ -311,7 +311,7 @@ class ParserCore [abstract]
       if (st.count == 0) return Character(0)
       return st[0]
 
-    method _string_to_Integer( st:String )->Int
+    method _string_to_Int( st:String )->Int
       return st->Int
 
     method _string_to_Real( st:String )->Real
@@ -502,9 +502,16 @@ class ParserCore [abstract]
           return
         endTemporarily
       endIf
+      if (_next_t.type == TokenType.KEYWORD_INT)
+        temporarily _cur_t = _on_t
+          if (not disable_output) _push( Identifier(_cur_t,"Int"), 0 )
+          _cur_t = _previous_cur_t
+          return
+        endTemporarily
+      endIf
       if (_next_t.type == TokenType.KEYWORD_INTEGER)
         temporarily _cur_t = _on_t
-          if (not disable_output) _push( Identifier(_cur_t,"Integer"), 0 )
+          if (not disable_output) _push( Identifier(_cur_t,"Int"), 0 )
           _cur_t = _previous_cur_t
           return
         endTemporarily
@@ -1587,12 +1594,22 @@ class ParserCore [abstract]
           return
         endTemporarily
       endIf
+      if (_next_t.type == TokenType.KEYWORD_INT)
+        temporarily _cur_t = _on_t
+          if (not _consume(TokenType.SYMBOL_OPEN_PAREN)) _throw_syntax_error( &expected=TokenType.SYMBOL_OPEN_PAREN )
+          r_scanner_expression
+          if (not _consume(TokenType.SYMBOL_CLOSE_PAREN)) _throw_syntax_error( &expected=TokenType.SYMBOL_CLOSE_PAREN )
+          if (not disable_output) _push( CastToInt(_cur_t,_node_arg(-1)), 1 )
+          _cur_t = _previous_cur_t
+          return
+        endTemporarily
+      endIf
       if (_next_t.type == TokenType.KEYWORD_INTEGER)
         temporarily _cur_t = _on_t
           if (not _consume(TokenType.SYMBOL_OPEN_PAREN)) _throw_syntax_error( &expected=TokenType.SYMBOL_OPEN_PAREN )
           r_scanner_expression
           if (not _consume(TokenType.SYMBOL_CLOSE_PAREN)) _throw_syntax_error( &expected=TokenType.SYMBOL_CLOSE_PAREN )
-          if (not disable_output) _push( CastToInteger(_cur_t,_node_arg(-1)), 1 )
+          if (not disable_output) _push( CastToInt(_cur_t,_node_arg(-1)), 1 )
           _cur_t = _previous_cur_t
           return
         endTemporarily
@@ -1686,7 +1703,7 @@ class ParserCore [abstract]
       endIf
       if (_next_t.type == TokenType.INTEGER)
         temporarily _cur_t = _on_t
-          if (not disable_output) _push( LiteralInteger(_cur_t,_string_to_Integer(_cur_t.content)), 0 )
+          if (not disable_output) _push( LiteralInteger(_cur_t,_string_to_Int(_cur_t.content)), 0 )
           _cur_t = _previous_cur_t
           return
         endTemporarily
@@ -2859,7 +2876,7 @@ class ParserCore [abstract]
       endIf
       if (_next_t.type == TokenType.INTEGER)
         temporarily _cur_t = _on_t
-          if (not disable_output) _push( LiteralInteger(_cur_t,_string_to_Integer(_cur_t.content)), 0 )
+          if (not disable_output) _push( LiteralInteger(_cur_t,_string_to_Int(_cur_t.content)), 0 )
           _cur_t = _previous_cur_t
           return
         endTemporarily

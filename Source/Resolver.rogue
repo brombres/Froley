@@ -110,7 +110,7 @@ class Resolver : Visitor
             local left  = (cmd.left->(as LiteralCharacter)).value
             local right = (cmd.right->(as LiteralCharacter)).value
             return visit( LiteralCharacter( cmd.t, left+right ) )
-          case FType.INTEGER
+          case FType.INT
             local left  = (cmd.left->(as LiteralInteger)).value
             local right = (cmd.right->(as LiteralInteger)).value
             return visit( LiteralInteger( cmd.t, left + right ) )
@@ -197,7 +197,7 @@ class Resolver : Visitor
         cmd.is_resolved = true
 
         cmd.expression = visit( cmd.expression )
-        if (cmd.expression.type == FType.INTEGER) cmd.expression .= cast_to( FType.CHARACTER )
+        if (cmd.expression.type == FType.INT) cmd.expression .= cast_to( FType.CHARACTER )
         cmd.expression = visit( cmd.expression.cast_to(FType.STRING) )
         if (cmd.expression not instanceOf LiteralString)
           throw cmd.t.error( "Literal string, character, or character code expected." )

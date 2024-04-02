@@ -63,7 +63,7 @@ class BuildfileGenerator [singleton]
         |routine rogo_default
         |  # Builds and runs this project - equivalent to 'rogo build && rogo run'.
         |  rogo_build
-        |  #rogo_install  # Uncomment to automatically install a /usr/local/bin/simple launcher
+        |  #rogo_install  # Uncomment to automatically install a /usr/local/bin/$project_name launcher
         |  rogo_run
         |endRoutine
         |

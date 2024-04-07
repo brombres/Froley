@@ -4,8 +4,8 @@
 
 About          | Current Release
 ---------------|-----------------------
-Version        | 4.6
-Date           | November 6, 2023
+Version        | 5.0
+Date           | April 7, 2024
 Platforms      | macOS, Linux, Windows
 Output Targets | Rogue
 Author         | Brom Bresenham

@@ -39,8 +39,8 @@ class Type
       extended_properties = types.values.to_list
       return @extended_properties
 
-    method hash_code->Int
-      return name.hash_code
+    method hashcode->Int
+      return name.hashcode
 
     method is_defined->Logical
       return is_node or is_built_in or is_list or is_native
@@ -114,8 +114,8 @@ class NodeProperty( t:Token, name:String, type:Type ) [compound]
       return NodeProperty( t, name, Program.type(t,type_name) )
 
   METHODS
-    method hash_code->Int
-      return name.hash_code ~ type.hash_code
+    method hashcode->Int
+      return name.hashcode ~ type.hashcode
 
     method operator==( other:NodeProperty )->Logical
       return name == other.name and type is other.type

@@ -48,6 +48,7 @@ class BuildfileGenerator [singleton]
         |  PROPERTIES
         |    PROJECT          = "$PROJECT_NAME"
         |    LAUNCHER_NAME    = PROJECT.to_lowercase : String
+        |    SOURCE_EXTENSION = LAUNCHER_NAME : String
         |
         |    BUILD_MODE       = "debug"  # set to "debug" or "release"
         |    LAUNCHER_FOLDER  = "/usr/local/bin"
@@ -69,7 +70,7 @@ class BuildfileGenerator [singleton]
         |
         |routine rogo_run
         |  # Runs this project.
-        |  execute "$ Test.$" (exe_file.esc,Build.LAUNCHER_NAME)
+        |  execute "$ Test.$" (exe_file.esc,Build.SOURCE_EXTENSION)
         |endRoutine
         |
         |routine rogo_debug

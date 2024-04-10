@@ -341,6 +341,7 @@ class BuildfileGenerator [singleton]
         |  if (not Console.input("Continue publishing release to GitHub? ").to_lowercase.begins_with('y')) return
         |
         |  execute ''gh release create v$ --title "v$" --notes ""''(new_version,new_version)
+        |  execute "git pull"  # pull new tag
         |endRoutine
         |
         |routine compile_rogue

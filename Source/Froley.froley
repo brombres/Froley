@@ -707,7 +707,6 @@ parser
   endOn
 
 - scanner_statement
-  on "call"    identifier         -> ScannerCallUserMethod(fn_name:String)
   on "collect" scanner_args       -> Collect(args:Args)
   on "create"  scanner_product    -> ScannerCreate(arg)
   on "discardPosition"            -> DiscardPosition
@@ -933,6 +932,7 @@ parser
   on '(' scanner_expression ')': return
   on '{' pattern_sequence '}':   return
   on "buffer"                       -> ReadBuffer
+  on "call"    identifier           -> ScannerCallUserMethod(fn_name:String)
   on "Character" '(' scanner_expression ')' -> CastToCharacter(operand):Unary
   on "Int"       '(' scanner_expression ')' -> CastToInt(operand):Unary
   on "Integer"   '(' scanner_expression ')' -> CastToInt(operand):Unary
@@ -1209,7 +1209,6 @@ parser
 
 - parser_statement
   on "beginList"                      -> BeginList
-  on "call"       identifier          -> ParserCallUserMethod(fn_name:String)
   on "create"     parser_product      -> ParserCreate(arg:CreateCmd)
   on "createList" list_type           -> CreateList(list_type:String)
   on "createNull"                     -> CreateNull
@@ -1246,7 +1245,7 @@ parser
   on "restorePosition"       -> RestorePosition
   on "return"
     if (nextIs(EOL)) createNull
-    else             syntaxError
+    else             parser_expression
     produce          Return(value)
   endOn
   on "savePosition"    -> SavePosition
@@ -1402,6 +1401,7 @@ parser
 - parser_term
   on '(' parser_expression ')':           return
   on "buffer"                           -> ReadBuffer
+  on "call"       identifier            -> ParserCallUserMethod(fn_name:String)
   on "consume", ttype_or_literal        -> ParserConsume(token_type)
   on "false"                            -> LiteralLogical(value="false":Logical)
   on "hasAnother"                       -> ParserHasAnother

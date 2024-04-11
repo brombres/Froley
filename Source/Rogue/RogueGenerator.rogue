@@ -55,8 +55,8 @@ class RogueGenerator : Visitor
         write cmd.routine_def.name
         write ") return false"
       else
-        write   "r_"
-        write   cmd.routine_def.name
+        write "r_"
+        write cmd.routine_def.name
       endIf
       visit_children( cmd )
 
@@ -482,20 +482,20 @@ class RogueGenerator : Visitor
       writeln "if (disable_output)     _discard_list"
       writeln "else                    _push_list( $(_list_t) )" (cmd.list_type)
       writeln "_cur_t = _previous_cur_t"
-      write   "return"
+      write   "return 0"
       visit_children( cmd )
 
     method on_visit_node( cmd:ProduceTokenList )
       writeln "if (disable_output) _discard_position"
       writeln "else                _create_token_list"
       writeln "_cur_t = _previous_cur_t"
-      write   "return"
+      write   "return 0"
 
     method on_visit_node( cmd:ProduceTokenListPreservingStack )
       writeln "if (disable_output) _discard_position"
       writeln "else                _create_token_list( &preserve_stack )"
       writeln "_cur_t = _previous_cur_t"
-      write   "return"
+      write   "return 0"
 
     method on_visit_node( cmd:ScanCharacters )
       write "_scan("
@@ -510,7 +510,7 @@ class RogueGenerator : Visitor
       visit_children( cmd )
       writeln
       writeln "_cur_t = _previous_cur_t"
-      write   "return"
+      write   "return 0"
 
     method on_visit_node( cmd:ParserRead )
       write "_read"
@@ -563,9 +563,10 @@ class RogueGenerator : Visitor
         write   "return true"
       else
         writeln "_cur_t = _previous_cur_t"
-        write   "return"
+        write   "return "
+        if (cmd.value) visit( cmd.value )
+        else           write "0"
       endIf
-      visit_children( cmd )
 
     method on_visit( cmd:FroleyRoutine )->Cmd
       if (is_scanner)
@@ -581,7 +582,7 @@ class RogueGenerator : Visitor
         indent -= 6
         writeln
       else
-        writeln "    method r_$"(cmd.name)
+        writeln "    method r_$->Int"(cmd.name)
 
         indent += 6
         writeln "local _previous_cur_t = _cur_t"
@@ -589,6 +590,7 @@ class RogueGenerator : Visitor
 
         if (not BranchAnalyzer.all_paths_return(cmd))
           writeln "_cur_t = _previous_cur_t"
+          writeln "return 0"
         endIf
 
         indent -= 6
@@ -685,7 +687,7 @@ class RogueGenerator : Visitor
         write "return false"
       else
         writeln "_cur_t = _previous_cur_t"
-        write "return"
+        write "return 0"
       endIf
       return cmd
 

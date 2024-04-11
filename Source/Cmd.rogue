@@ -1133,6 +1133,9 @@ class ScannerCallUserMethod : Cmd
     method to->Logical: return fn_name?
     method to->String: return fn_name
 
+    method type->FType
+      return FType.INT
+
 endClass
 
 class ScannerConsume : Cmd
@@ -1371,6 +1374,9 @@ class ParserCallUserMethod : Cmd
     method to->Logical: return fn_name?
     method to->String: return fn_name
 
+    method type->FType
+      return FType.INT
+
 endClass
 
 class ParserConsume : Cmd
@@ -1484,6 +1490,9 @@ class Call : Cmd
 
     method description->String
       return "Call($)" (routine_def.name)
+
+    method type->FType
+      return FType.INT
 
 endClass
 

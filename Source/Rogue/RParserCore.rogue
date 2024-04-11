@@ -90,7 +90,7 @@ class RParserCore( generator, parser_def:ParserDef ) : RogueSourceWriter
 
       forEach (fn_name in Program.parser_user_calls)
         writeln
-        writeln  "    method $ [abstract]" (fn_name)
+        writeln  "    method $->Int [abstract]" (fn_name)
       endForEach
 
       writeln ...

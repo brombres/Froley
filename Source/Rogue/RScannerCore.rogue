@@ -87,7 +87,7 @@ class RScannerCore( generator, scanner_def:ScannerDef ) : RogueSourceWriter
          |
 
       forEach (fn_name in Program.scanner_user_calls)
-        writeln  "    method $ [abstract]" (fn_name)
+        writeln  "    method $->Int [abstract]" (fn_name)
         writeln
       endForEach
 

@@ -427,7 +427,7 @@ class ParserCore [abstract]
           return
       endWhich
 
-    method r_program
+    method r_program->Int
       local _previous_cur_t = _cur_t
       _begin_list
       r_consume_eols
@@ -439,9 +439,9 @@ class ParserCore [abstract]
       else                    _push_list( CmdList(_list_t) )
       if (not disable_output) _push( ProgramDef(_cur_t,_node_arg(-1)), 1 )
       _cur_t = _previous_cur_t
-      return
+      return 0
 
-    method r_section
+    method r_section->Int
       local _previous_cur_t = _cur_t
       if (_next_t.type == TokenType.KEYWORD_SCANNER)
         temporarily _cur_t = _on_t
@@ -450,7 +450,7 @@ class ParserCore [abstract]
           r_scanner_routines
           if (not disable_output) _push( ScannerDef(_cur_t,_string_arg(-2),_node_arg(-1)), 2 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       elseIf (_next_t.type == TokenType.KEYWORD_NATIVE_TYPES)
         temporarily _cur_t = _on_t
@@ -464,7 +464,7 @@ class ParserCore [abstract]
           if (disable_output)     _discard_list
           else                    _push_list( NativeTypes(_list_t) )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       elseIf (_next_t.type == TokenType.KEYWORD_PARSER)
         temporarily _cur_t = _on_t
@@ -473,7 +473,7 @@ class ParserCore [abstract]
           r_parser_routines
           if (not disable_output) _push( ParserDef(_cur_t,_string_arg(-2),_node_arg(-1)), 2 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       elseIf (_next_t.type == TokenType.KEYWORD_TOKENS)
         temporarily _cur_t = _on_t
@@ -485,55 +485,58 @@ class ParserCore [abstract]
           r_token_definitions
           if (not disable_output) _push( TokenGroup(_cur_t,_string_arg(-2),_node_arg(-1)), 2 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       _throw_syntax_error
       _cur_t = _previous_cur_t
-      return
+      return 0
       _cur_t = _previous_cur_t
+      return 0
 
-    method r_type_name
+    method r_type_name->Int
       local _previous_cur_t = _cur_t
       if (_next_t.type == TokenType.KEYWORD_CHARACTER)
         temporarily _cur_t = _on_t
           if (not disable_output) _push( Identifier(_cur_t,"Character"), 0 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.KEYWORD_INT)
         temporarily _cur_t = _on_t
           if (not disable_output) _push( Identifier(_cur_t,"Int"), 0 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.KEYWORD_INTEGER)
         temporarily _cur_t = _on_t
           if (not disable_output) _push( Identifier(_cur_t,"Int"), 0 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       r_identifier
       _cur_t = _previous_cur_t
+      return 0
 
-    method r_identifier
+    method r_identifier->Int
       local _previous_cur_t = _cur_t
       if (_next_t.type == TokenType.IDENTIFIER)
         temporarily _cur_t = _on_t
           if (not disable_output) _push( Identifier(_cur_t,_cur_t.content), 0 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       _throw_syntax_error("Identifier expected.")
       _cur_t = _previous_cur_t
-      return
+      return 0
       _cur_t = _previous_cur_t
+      return 0
 
-    method r_scanner_routines
+    method r_scanner_routines->Int
       local _previous_cur_t = _cur_t
       _begin_list
       r_consume_eols
@@ -550,9 +553,9 @@ class ParserCore [abstract]
       if (disable_output)     _discard_list
       else                    _push_list( CmdList(_list_t) )
       _cur_t = _previous_cur_t
-      return
+      return 0
 
-    method r_routine_name_and_attributes
+    method r_routine_name_and_attributes->Int
       local _previous_cur_t = _cur_t
       r_identifier
       if (_next_t.type == TokenType.CHARSET)
@@ -564,8 +567,9 @@ class ParserCore [abstract]
       endIf
       r_must_consume_eols
       _cur_t = _previous_cur_t
+      return 0
 
-    method r_token_definitions
+    method r_token_definitions->Int
       local _previous_cur_t = _cur_t
       _begin_list
       r_consume_eols
@@ -583,19 +587,19 @@ class ParserCore [abstract]
       if (disable_output)     _discard_list
       else                    _push_list( CmdList(_list_t) )
       _cur_t = _previous_cur_t
-      return
+      return 0
 
-    method r_attributes
+    method r_attributes->Int
       local _previous_cur_t = _cur_t
       if ((not _consume(TokenType.SYMBOL_OPEN_SQUARE)))
         if (not disable_output) _push( null, 0 )
         _cur_t = _previous_cur_t
-        return
+        return 0
       endIf
       if (_consume(TokenType.SYMBOL_CLOSE_SQUARE))
         if (not disable_output) _push( null, 0 )
         _cur_t = _previous_cur_t
-        return
+        return 0
       endIf
       _begin_list
       r_identifier
@@ -603,7 +607,7 @@ class ParserCore [abstract]
         if (((not (_position < _limit)) or (_next_t.type == TokenType.EOL)))
           _throw_syntax_error("Closing ']' expected.")
           _cur_t = _previous_cur_t
-          return
+          return 0
         endIf
         r_identifier
       endWhile
@@ -611,48 +615,52 @@ class ParserCore [abstract]
       if (disable_output)     _discard_list
       else                    _push_list( CmdList(_list_t) )
       _cur_t = _previous_cur_t
-      return
+      return 0
 
-    method r_symbol
+    method r_symbol->Int
       local _previous_cur_t = _cur_t
       if (_next_t.type == TokenType.SYMBOL)
         temporarily _cur_t = _on_t
           if (not disable_output) _push( Symbol(_cur_t,_cur_t.content), 0 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       _throw_syntax_error("Symbol expected.")
       _cur_t = _previous_cur_t
-      return
+      return 0
       _cur_t = _previous_cur_t
+      return 0
 
-    method r_consume_eols
+    method r_consume_eols->Int
       local _previous_cur_t = _cur_t
       while (_consume(TokenType.EOL))
       endWhile
       _cur_t = _previous_cur_t
+      return 0
 
-    method r_consume_eols_and_semicolons
+    method r_consume_eols_and_semicolons->Int
       local _previous_cur_t = _cur_t
       while ((_consume(TokenType.EOL) or _consume(TokenType.SYMBOL_SEMICOLON)))
       endWhile
       _cur_t = _previous_cur_t
+      return 0
 
-    method r_must_consume_eols
+    method r_must_consume_eols->Int
       local _previous_cur_t = _cur_t
       if (not _consume(TokenType.EOL)) _throw_syntax_error( &expected=TokenType.EOL )
       while (_consume(TokenType.EOL))
       endWhile
       _cur_t = _previous_cur_t
+      return 0
 
-    method r_scanner_multi_line_statements
+    method r_scanner_multi_line_statements->Int
       local _previous_cur_t = _cur_t
       r_consume_eols_and_semicolons
       if ((not (_position < _limit)))
         _throw_syntax_error
         _cur_t = _previous_cur_t
-        return
+        return 0
       endIf
       _begin_list
       while (((_position < _limit) and (not ((_next_t.type == TokenType.SYMBOL_MINUS) or (_next_t.type.attributes & TokenType.ATTRIBUTE_STRUCTURAL)?))))
@@ -662,16 +670,16 @@ class ParserCore [abstract]
       if (disable_output)     _discard_list
       else                    _push_list( Statements(_list_t) )
       _cur_t = _previous_cur_t
-      return
+      return 0
 
-    method r_scanner_single_line_statements
+    method r_scanner_single_line_statements->Int
       local _previous_cur_t = _cur_t
       _begin_list
       if (_consume(TokenType.EOL))
         if (disable_output)     _discard_list
         else                    _push_list( Statements(_list_t) )
         _cur_t = _previous_cur_t
-        return
+        return 0
       endIf
       r_scanner_statement
       while (_consume(TokenType.SYMBOL_SEMICOLON))
@@ -681,9 +689,9 @@ class ParserCore [abstract]
       if (disable_output)     _discard_list
       else                    _push_list( Statements(_list_t) )
       _cur_t = _previous_cur_t
-      return
+      return 0
 
-    method r_scanner_control_structure
+    method r_scanner_control_structure->Int
       local _previous_cur_t = _cur_t
       if (_next_t.type == TokenType.KEYWORD_IF)
         temporarily _cur_t = _on_t
@@ -705,7 +713,7 @@ class ParserCore [abstract]
           endIf
           if (not disable_output) _push( If(_cur_t,_node_arg(-4),_node_arg(-3)->(as Statements),_node_arg(-2),_node_arg(-1)->(as Statements)), 4 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.KEYWORD_MATCH)
@@ -727,7 +735,7 @@ class ParserCore [abstract]
           if (not _consume(TokenType.KEYWORD_END_MATCH)) _throw_syntax_error( &expected=TokenType.KEYWORD_END_MATCH )
           if (not disable_output) _push( Match(_cur_t,_node_arg(-3),_node_arg(-2),_node_arg(-1)), 3 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.KEYWORD_WHILE)
@@ -746,13 +754,14 @@ class ParserCore [abstract]
           endIf
           if (not disable_output) _push( While(_cur_t,_node_arg(-2),_node_arg(-1)->(as Statements)), 2 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       r_scanner_statement
       _cur_t = _previous_cur_t
+      return 0
 
-    method r_cases
+    method r_cases->Int
       local _previous_cur_t = _cur_t
       _begin_list
       r_consume_eols
@@ -786,15 +795,15 @@ class ParserCore [abstract]
           if (disable_output)     _discard_list
           else                    _push_list( CmdList(_list_t) )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endIf
       endWhile
       if (disable_output)     _discard_list
       else                    _push_list( CmdList(_list_t) )
       _cur_t = _previous_cur_t
-      return
+      return 0
 
-    method r__others
+    method r__others->Int
       local _previous_cur_t = _cur_t
       if (_next_t.type == TokenType.KEYWORD_OTHERS)
         temporarily _cur_t = _on_t
@@ -806,8 +815,9 @@ class ParserCore [abstract]
         if (not disable_output) _push( null, 0 )
       endIf
       _cur_t = _previous_cur_t
+      return 0
 
-    method r_scanner_multi_line_else_ifs
+    method r_scanner_multi_line_else_ifs->Int
       local _previous_cur_t = _cur_t
       _begin_list
       while ((_next_t.type == TokenType.KEYWORD_ELSE_IF))
@@ -827,7 +837,7 @@ class ParserCore [abstract]
               if (disable_output)     _discard_list
               else                    _push_list( CmdList(_list_t) )
               _cur_t = _previous_cur_t
-              return
+              return 0
             endIf
             r_scanner_multi_line_statements
             if (not disable_output) _push( ElseIf(_cur_t,_node_arg(-2),_node_arg(-1)->(as Statements)), 2 )
@@ -837,14 +847,14 @@ class ParserCore [abstract]
       if (disable_output)     _discard_list
       else                    _push_list( CmdList(_list_t) )
       _cur_t = _previous_cur_t
-      return
+      return 0
 
-    method r_scanner_multi_line_else
+    method r_scanner_multi_line_else->Int
       local _previous_cur_t = _cur_t
       if ((not (_next_t.type == TokenType.KEYWORD_ELSE)))
         if (not disable_output) _push( null, 0 )
         _cur_t = _previous_cur_t
-        return
+        return 0
       endIf
       _save_position
       if (_next_t.type == TokenType.KEYWORD_ELSE)
@@ -853,17 +863,18 @@ class ParserCore [abstract]
             _restore_position
             if (not disable_output) _push( null, 0 )
             _cur_t = _previous_cur_t
-            return
+            return 0
           endIf
           r_scanner_multi_line_statements
           _discard_position
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       _cur_t = _previous_cur_t
+      return 0
 
-    method r_scanner_single_line_else_ifs
+    method r_scanner_single_line_else_ifs->Int
       local _previous_cur_t = _cur_t
       _begin_list
       while ((_next_t.type == TokenType.KEYWORD_ELSE_IF))
@@ -881,7 +892,7 @@ class ParserCore [abstract]
               if (disable_output)     _discard_list
               else                    _push_list( CmdList(_list_t) )
               _cur_t = _previous_cur_t
-              return
+              return 0
             else
               _discard_position
             endIf
@@ -893,14 +904,14 @@ class ParserCore [abstract]
       if (disable_output)     _discard_list
       else                    _push_list( CmdList(_list_t) )
       _cur_t = _previous_cur_t
-      return
+      return 0
 
-    method r_scanner_single_line_else
+    method r_scanner_single_line_else->Int
       local _previous_cur_t = _cur_t
       if ((not (_next_t.type == TokenType.KEYWORD_ELSE)))
         if (not disable_output) _push( null, 0 )
         _cur_t = _previous_cur_t
-        return
+        return 0
       endIf
       _save_position
       if (_next_t.type == TokenType.KEYWORD_ELSE)
@@ -909,32 +920,25 @@ class ParserCore [abstract]
             _restore_position
             if (not disable_output) _push( null, 0 )
             _cur_t = _previous_cur_t
-            return
+            return 0
           endIf
           r_scanner_single_line_statements
           _discard_position
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       _cur_t = _previous_cur_t
+      return 0
 
-    method r_scanner_statement
+    method r_scanner_statement->Int
       local _previous_cur_t = _cur_t
-      if (_next_t.type == TokenType.KEYWORD_CALL)
-        temporarily _cur_t = _on_t
-          r_identifier
-          if (not disable_output) _push( ScannerCallUserMethod(_cur_t,_string_arg(-1)), 1 )
-          _cur_t = _previous_cur_t
-          return
-        endTemporarily
-      endIf
       if (_next_t.type == TokenType.KEYWORD_COLLECT)
         temporarily _cur_t = _on_t
           r_scanner_args
           if (not disable_output) _push( Collect(_cur_t,_node_arg(-1)->(as Args)), 1 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.KEYWORD_CREATE)
@@ -942,28 +946,28 @@ class ParserCore [abstract]
           r_scanner_product
           if (not disable_output) _push( ScannerCreate(_cur_t,_node_arg(-1)), 1 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.KEYWORD_DISCARD_POSITION)
         temporarily _cur_t = _on_t
           if (not disable_output) _push( DiscardPosition(_cur_t), 0 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.KEYWORD_HALT)
         temporarily _cur_t = _on_t
           if (not disable_output) _push( Halt(_cur_t), 0 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.KEYWORD_MARK_POSITION)
         temporarily _cur_t = _on_t
           if (not disable_output) _push( MarkPosition(_cur_t), 0 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.KEYWORD_MODE)
@@ -971,7 +975,7 @@ class ParserCore [abstract]
           r_identifier
           if (not disable_output) _push( Mode(_cur_t,_string_arg(-1)), 1 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.KEYWORD_MUST_CONSUME)
@@ -979,13 +983,13 @@ class ParserCore [abstract]
           r_sequence_args
           if (not disable_output) _push( ScannerMustConsume(_cur_t,_node_arg(-1)->(as SequenceArgs)), 1 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.KEYWORD_NO_ACTION)
         temporarily _cur_t = _on_t
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.KEYWORD_PRINT)
@@ -993,7 +997,7 @@ class ParserCore [abstract]
           r_scanner_args
           if (not disable_output) _push( Print(_cur_t,_node_arg(-1)->(as Args)), 1 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.KEYWORD_PRINTLN)
@@ -1007,7 +1011,7 @@ class ParserCore [abstract]
           endIf
           if (not disable_output) _push( Println(_cur_t,_node_arg(-1)->(as Args)), 1 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.KEYWORD_PRODUCE)
@@ -1017,7 +1021,7 @@ class ParserCore [abstract]
           if (not disable_output) _push( null, 0 )
           if (not disable_output) _push( Restart(_cur_t,_string_arg(-1)), 1 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       elseIf (_next_t.type == TokenType.SYMBOL_ARROW)
         temporarily _cur_t = _on_t
@@ -1026,7 +1030,7 @@ class ParserCore [abstract]
           if (not disable_output) _push( null, 0 )
           if (not disable_output) _push( Restart(_cur_t,_string_arg(-1)), 1 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.KEYWORD_RESTART)
@@ -1038,14 +1042,14 @@ class ParserCore [abstract]
           endIf
           if (not disable_output) _push( Restart(_cur_t,_string_arg(-1)), 1 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.KEYWORD_RESTORE_POSITION)
         temporarily _cur_t = _on_t
           if (not disable_output) _push( RestorePosition(_cur_t), 0 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.KEYWORD_RETURN)
@@ -1055,18 +1059,18 @@ class ParserCore [abstract]
           else
             _throw_syntax_error
             _cur_t = _previous_cur_t
-            return
+            return 0
           endIf
           if (not disable_output) _push( Return(_cur_t,_node_arg(-1)), 1 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.KEYWORD_SAVE_POSITION)
         temporarily _cur_t = _on_t
           if (not disable_output) _push( SavePosition(_cur_t), 0 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.KEYWORD_SYNTAX_ERROR)
@@ -1078,7 +1082,7 @@ class ParserCore [abstract]
           endIf
           if (not disable_output) _push( ThrowSyntaxError(_cur_t,_node_arg(-1)->(as Args)), 1 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.SYMBOL_PLUS_PLUS)
@@ -1086,7 +1090,7 @@ class ParserCore [abstract]
           r_scanner_expression
           if (not disable_output) _push( Increment(_cur_t,_node_arg(-1)), 1 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.SYMBOL_MINUS_MINUS)
@@ -1094,7 +1098,7 @@ class ParserCore [abstract]
           r_scanner_expression
           if (not disable_output) _push( Decrement(_cur_t,_node_arg(-1)), 1 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       r_scanner_expression
@@ -1103,33 +1107,34 @@ class ParserCore [abstract]
           r_scanner_expression
           if (not disable_output) _push( Assign(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.SYMBOL_PLUS_PLUS)
         temporarily _cur_t = _on_t
           if (not disable_output) _push( Increment(_cur_t,_node_arg(-1)), 1 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.SYMBOL_MINUS_MINUS)
         temporarily _cur_t = _on_t
           if (not disable_output) _push( Decrement(_cur_t,_node_arg(-1)), 1 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       _cur_t = _previous_cur_t
+      return 0
 
-    method r_scanner_product
+    method r_scanner_product->Int
       local _previous_cur_t = _cur_t
       r_identifier
       if (not disable_output) _push( Access(_cur_t,_string_arg(-1)), 1 )
       _cur_t = _previous_cur_t
-      return
+      return 0
 
-    method r_cmd_args
+    method r_cmd_args->Int
       local _previous_cur_t = _cur_t
       _begin_list
       r_consume_eols
@@ -1137,7 +1142,7 @@ class ParserCore [abstract]
         if (disable_output)     _discard_list
         else                    _push_list( Args(_list_t) )
         _cur_t = _previous_cur_t
-        return
+        return 0
       endIf
       r_cmd_arg
       while (_consume(TokenType.SYMBOL_COMMA))
@@ -1148,9 +1153,9 @@ class ParserCore [abstract]
       if (disable_output)     _discard_list
       else                    _push_list( Args(_list_t) )
       _cur_t = _previous_cur_t
-      return
+      return 0
 
-    method r_cmd_arg
+    method r_cmd_arg->Int
       local _previous_cur_t = _cur_t
       r_identifier
       if (_consume(TokenType.SYMBOL_ASSIGN))
@@ -1169,7 +1174,7 @@ class ParserCore [abstract]
         else
           _throw_syntax_error("Content or \"quoted expression\" expected.")
           _cur_t = _previous_cur_t
-          return
+          return 0
         endIf
       else
         if (not disable_output) _push( null, 0 )
@@ -1181,9 +1186,9 @@ class ParserCore [abstract]
       endIf
       if (not disable_output) _push( CreateCmdArg(_cur_t,_string_arg(-3),_node_arg(-2),_string_arg(-1)), 3 )
       _cur_t = _previous_cur_t
-      return
+      return 0
 
-    method r_scanner_args
+    method r_scanner_args->Int
       local _previous_cur_t = _cur_t
       if (_consume(TokenType.SYMBOL_OPEN_PAREN))
         r_consume_eols
@@ -1194,15 +1199,16 @@ class ParserCore [abstract]
         r_scanner_arg_list
       endIf
       _cur_t = _previous_cur_t
+      return 0
 
-    method r_scanner_arg_list
+    method r_scanner_arg_list->Int
       local _previous_cur_t = _cur_t
       _begin_list
       if ((_next_t.type.attributes & TokenType.ATTRIBUTE_STRUCTURAL)?)
         if (disable_output)     _discard_list
         else                    _push_list( Args(_list_t) )
         _cur_t = _previous_cur_t
-        return
+        return 0
       endIf
       r_scanner_expression
       while ((_position < _limit))
@@ -1213,7 +1219,7 @@ class ParserCore [abstract]
           if (disable_output)     _discard_list
           else                    _push_list( Args(_list_t) )
           _cur_t = _previous_cur_t
-          return
+          return 0
         else
           r_scanner_expression
         endIf
@@ -1221,9 +1227,9 @@ class ParserCore [abstract]
       if (disable_output)     _discard_list
       else                    _push_list( Args(_list_t) )
       _cur_t = _previous_cur_t
-      return
+      return 0
 
-    method r_sequence_args
+    method r_sequence_args->Int
       local _previous_cur_t = _cur_t
       if (_consume(TokenType.SYMBOL_OPEN_PAREN))
         r_consume_eols
@@ -1234,15 +1240,16 @@ class ParserCore [abstract]
         r_sequence_arg_list
       endIf
       _cur_t = _previous_cur_t
+      return 0
 
-    method r_sequence_arg_list
+    method r_sequence_arg_list->Int
       local _previous_cur_t = _cur_t
       _begin_list
       if ((_next_t.type.attributes & TokenType.ATTRIBUTE_STRUCTURAL)?)
         if (disable_output)     _discard_list
         else                    _push_list( SequenceArgs(_list_t) )
         _cur_t = _previous_cur_t
-        return
+        return 0
       endIf
       r_scanner_expression
       while ((_position < _limit))
@@ -1253,7 +1260,7 @@ class ParserCore [abstract]
           if (disable_output)     _discard_list
           else                    _push_list( SequenceArgs(_list_t) )
           _cur_t = _previous_cur_t
-          return
+          return 0
         else
           r_scanner_expression
         endIf
@@ -1261,16 +1268,16 @@ class ParserCore [abstract]
       if (disable_output)     _discard_list
       else                    _push_list( SequenceArgs(_list_t) )
       _cur_t = _previous_cur_t
-      return
+      return 0
 
-    method r_pattern_sequence
+    method r_pattern_sequence->Int
       local _previous_cur_t = _cur_t
       _begin_list
       if ((_next_t.type.attributes & TokenType.ATTRIBUTE_STRUCTURAL)?)
         if (disable_output)     _discard_list
         else                    _push_list( PatternSequence(_list_t) )
         _cur_t = _previous_cur_t
-        return
+        return 0
       endIf
       r_sequence_item
       while ((_position < _limit))
@@ -1287,7 +1294,7 @@ class ParserCore [abstract]
           if (disable_output)     _discard_list
           else                    _push_list( PatternSequence(_list_t) )
           _cur_t = _previous_cur_t
-          return
+          return 0
         else
           r_sequence_item
         endIf
@@ -1295,16 +1302,16 @@ class ParserCore [abstract]
       if (disable_output)     _discard_list
       else                    _push_list( PatternSequence(_list_t) )
       _cur_t = _previous_cur_t
-      return
+      return 0
 
-    method r_sequence_item
+    method r_sequence_item->Int
       local _previous_cur_t = _cur_t
       if (_next_t.type == TokenType.SYMBOL_OPEN_CURLY)
         temporarily _cur_t = _on_t
           r_pattern_sequence
           if (not _consume(TokenType.SYMBOL_CLOSE_CURLY)) _throw_syntax_error( &expected=TokenType.SYMBOL_CLOSE_CURLY )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.CHARSET)
@@ -1312,47 +1319,51 @@ class ParserCore [abstract]
           if (not disable_output) _push( CharSet(_cur_t,_cur_t.content), 0 )
           r_repeat_count
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.STRING)
         temporarily _cur_t = _on_t
           if (not disable_output) _push( LiteralString(_cur_t,_cur_t.content), 0 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.STRING_OR_CHARACTER)
         temporarily _cur_t = _on_t
           if (not disable_output) _push( LiteralStringOrCharacter(_cur_t,_cur_t.content), 0 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       _throw_syntax_error
       _cur_t = _previous_cur_t
-      return
+      return 0
       _cur_t = _previous_cur_t
+      return 0
 
-    method r_empty_statements
+    method r_empty_statements->Int
       local _previous_cur_t = _cur_t
       _begin_list
       if (disable_output)     _discard_list
       else                    _push_list( Statements(_list_t) )
       _cur_t = _previous_cur_t
+      return 0
 
-    method r_scanner_expression
+    method r_scanner_expression->Int
       local _previous_cur_t = _cur_t
       r_scanner_logical_or
       _cur_t = _previous_cur_t
+      return 0
 
-    method r_scanner_logical_or
+    method r_scanner_logical_or->Int
       local _previous_cur_t = _cur_t
       r_scanner_logical_and
       r_scanner_logical_or__inner
       _cur_t = _previous_cur_t
+      return 0
 
-    method r_scanner_logical_or__inner
+    method r_scanner_logical_or__inner->Int
       local _previous_cur_t = _cur_t
       if (_next_t.type == TokenType.KEYWORD_OR)
         temporarily _cur_t = _on_t
@@ -1361,18 +1372,20 @@ class ParserCore [abstract]
           if (not disable_output) _push( LogicalOr(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
           r_scanner_logical_or__inner
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       _cur_t = _previous_cur_t
+      return 0
 
-    method r_scanner_logical_and
+    method r_scanner_logical_and->Int
       local _previous_cur_t = _cur_t
       r_scanner_comparison
       r_scanner_logical_and__inner
       _cur_t = _previous_cur_t
+      return 0
 
-    method r_scanner_logical_and__inner
+    method r_scanner_logical_and__inner->Int
       local _previous_cur_t = _cur_t
       if (_next_t.type == TokenType.KEYWORD_AND)
         temporarily _cur_t = _on_t
@@ -1381,18 +1394,20 @@ class ParserCore [abstract]
           if (not disable_output) _push( LogicalAnd(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
           r_scanner_logical_and__inner
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       _cur_t = _previous_cur_t
+      return 0
 
-    method r_scanner_comparison
+    method r_scanner_comparison->Int
       local _previous_cur_t = _cur_t
       r_scanner_add_subtract
       r_scanner_comparison__inner
       _cur_t = _previous_cur_t
+      return 0
 
-    method r_scanner_comparison__inner
+    method r_scanner_comparison__inner->Int
       local _previous_cur_t = _cur_t
       if (_next_t.type == TokenType.SYMBOL_EQ)
         temporarily _cur_t = _on_t
@@ -1401,7 +1416,7 @@ class ParserCore [abstract]
           if (not disable_output) _push( CompareEQ(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
           r_scanner_comparison__inner
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.SYMBOL_NE)
@@ -1411,7 +1426,7 @@ class ParserCore [abstract]
           if (not disable_output) _push( CompareNE(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
           r_scanner_comparison__inner
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.SYMBOL_LT)
@@ -1421,7 +1436,7 @@ class ParserCore [abstract]
           if (not disable_output) _push( CompareLT(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
           r_scanner_comparison__inner
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.SYMBOL_GT)
@@ -1431,7 +1446,7 @@ class ParserCore [abstract]
           if (not disable_output) _push( CompareGT(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
           r_scanner_comparison__inner
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.SYMBOL_LE)
@@ -1441,7 +1456,7 @@ class ParserCore [abstract]
           if (not disable_output) _push( CompareLE(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
           r_scanner_comparison__inner
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.SYMBOL_GE)
@@ -1451,18 +1466,20 @@ class ParserCore [abstract]
           if (not disable_output) _push( CompareGE(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
           r_scanner_comparison__inner
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       _cur_t = _previous_cur_t
+      return 0
 
-    method r_scanner_add_subtract
+    method r_scanner_add_subtract->Int
       local _previous_cur_t = _cur_t
       r_scanner_multiply_divide
       r_scanner_add_subtract__inner
       _cur_t = _previous_cur_t
+      return 0
 
-    method r_scanner_add_subtract__inner
+    method r_scanner_add_subtract__inner->Int
       local _previous_cur_t = _cur_t
       if (_next_t.type == TokenType.SYMBOL_PLUS)
         temporarily _cur_t = _on_t
@@ -1471,7 +1488,7 @@ class ParserCore [abstract]
           if (not disable_output) _push( Add(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
           r_scanner_add_subtract__inner
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.SYMBOL_MINUS)
@@ -1481,18 +1498,20 @@ class ParserCore [abstract]
           if (not disable_output) _push( Subtract(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
           r_scanner_add_subtract__inner
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       _cur_t = _previous_cur_t
+      return 0
 
-    method r_scanner_multiply_divide
+    method r_scanner_multiply_divide->Int
       local _previous_cur_t = _cur_t
       r_scanner_power
       r_scanner_multiply_divide__inner
       _cur_t = _previous_cur_t
+      return 0
 
-    method r_scanner_multiply_divide__inner
+    method r_scanner_multiply_divide__inner->Int
       local _previous_cur_t = _cur_t
       if (_next_t.type == TokenType.SYMBOL_STAR)
         temporarily _cur_t = _on_t
@@ -1501,7 +1520,7 @@ class ParserCore [abstract]
           if (not disable_output) _push( Multiply(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
           r_scanner_multiply_divide__inner
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.SYMBOL_SLASH)
@@ -1511,18 +1530,20 @@ class ParserCore [abstract]
           if (not disable_output) _push( Divide(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
           r_scanner_multiply_divide__inner
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       _cur_t = _previous_cur_t
+      return 0
 
-    method r_scanner_power
+    method r_scanner_power->Int
       local _previous_cur_t = _cur_t
       r_scanner_pre_unary
       r_scanner_power__inner
       _cur_t = _previous_cur_t
+      return 0
 
-    method r_scanner_power__inner
+    method r_scanner_power__inner->Int
       local _previous_cur_t = _cur_t
       if (_next_t.type == TokenType.SYMBOL_CARET)
         temporarily _cur_t = _on_t
@@ -1531,12 +1552,13 @@ class ParserCore [abstract]
           if (not disable_output) _push( Power(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
           r_scanner_power__inner
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       _cur_t = _previous_cur_t
+      return 0
 
-    method r_scanner_pre_unary
+    method r_scanner_pre_unary->Int
       local _previous_cur_t = _cur_t
       if (_next_t.type == TokenType.SYMBOL_MINUS)
         temporarily _cur_t = _on_t
@@ -1544,7 +1566,7 @@ class ParserCore [abstract]
           r_scanner_pre_unary
           if (not disable_output) _push( Negate(_cur_t,_node_arg(-1)), 1 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.KEYWORD_NOT)
@@ -1553,20 +1575,21 @@ class ParserCore [abstract]
           r_scanner_pre_unary
           if (not disable_output) _push( LogicalNot(_cur_t,_node_arg(-1)), 1 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       r_scanner_term
       _cur_t = _previous_cur_t
+      return 0
 
-    method r_scanner_term
+    method r_scanner_term->Int
       local _previous_cur_t = _cur_t
       if (_next_t.type == TokenType.SYMBOL_OPEN_PAREN)
         temporarily _cur_t = _on_t
           r_scanner_expression
           if (not _consume(TokenType.SYMBOL_CLOSE_PAREN)) _throw_syntax_error( &expected=TokenType.SYMBOL_CLOSE_PAREN )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.SYMBOL_OPEN_CURLY)
@@ -1574,14 +1597,22 @@ class ParserCore [abstract]
           r_pattern_sequence
           if (not _consume(TokenType.SYMBOL_CLOSE_CURLY)) _throw_syntax_error( &expected=TokenType.SYMBOL_CLOSE_CURLY )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.KEYWORD_BUFFER)
         temporarily _cur_t = _on_t
           if (not disable_output) _push( ReadBuffer(_cur_t), 0 )
           _cur_t = _previous_cur_t
-          return
+          return 0
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.KEYWORD_CALL)
+        temporarily _cur_t = _on_t
+          r_identifier
+          if (not disable_output) _push( ScannerCallUserMethod(_cur_t,_string_arg(-1)), 1 )
+          _cur_t = _previous_cur_t
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.KEYWORD_CHARACTER)
@@ -1591,7 +1622,7 @@ class ParserCore [abstract]
           if (not _consume(TokenType.SYMBOL_CLOSE_PAREN)) _throw_syntax_error( &expected=TokenType.SYMBOL_CLOSE_PAREN )
           if (not disable_output) _push( CastToCharacter(_cur_t,_node_arg(-1)), 1 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.KEYWORD_INT)
@@ -1601,7 +1632,7 @@ class ParserCore [abstract]
           if (not _consume(TokenType.SYMBOL_CLOSE_PAREN)) _throw_syntax_error( &expected=TokenType.SYMBOL_CLOSE_PAREN )
           if (not disable_output) _push( CastToInt(_cur_t,_node_arg(-1)), 1 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.KEYWORD_INTEGER)
@@ -1611,7 +1642,7 @@ class ParserCore [abstract]
           if (not _consume(TokenType.SYMBOL_CLOSE_PAREN)) _throw_syntax_error( &expected=TokenType.SYMBOL_CLOSE_PAREN )
           if (not disable_output) _push( CastToInt(_cur_t,_node_arg(-1)), 1 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.KEYWORD_CONSUME)
@@ -1619,21 +1650,21 @@ class ParserCore [abstract]
           r_sequence_args
           if (not disable_output) _push( ScannerConsume(_cur_t,_node_arg(-1)->(as SequenceArgs)), 1 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.KEYWORD_FALSE)
         temporarily _cur_t = _on_t
           if (not disable_output) _push( LiteralLogical(_cur_t,_string_to_Logical("false")), 0 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.KEYWORD_HAS_NEXT)
         temporarily _cur_t = _on_t
           if (not disable_output) _push( ScannerHasAnother(_cur_t), 0 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.KEYWORD_NEXT_IS)
@@ -1641,14 +1672,14 @@ class ParserCore [abstract]
           r_sequence_args
           if (not disable_output) _push( ScannerNextIs(_cur_t,_node_arg(-1)->(as SequenceArgs)), 1 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.KEYWORD_OUTPUT)
         temporarily _cur_t = _on_t
           if (not disable_output) _push( ReadOutput(_cur_t), 0 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.KEYWORD_PEEK)
@@ -1661,14 +1692,14 @@ class ParserCore [abstract]
           endIf
           if (not disable_output) _push( ScannerPeek(_cur_t,_node_arg(-1)), 1 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.KEYWORD_READ)
         temporarily _cur_t = _on_t
           if (not disable_output) _push( ScannerRead(_cur_t), 0 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.KEYWORD_SCAN)
@@ -1676,14 +1707,14 @@ class ParserCore [abstract]
           r_sequence_args
           if (not disable_output) _push( Scan(_cur_t,_node_arg(-1)->(as SequenceArgs)), 1 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.KEYWORD_TRUE)
         temporarily _cur_t = _on_t
           if (not disable_output) _push( LiteralLogical(_cur_t,_string_to_Logical("true")), 0 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.CHARSET)
@@ -1691,21 +1722,21 @@ class ParserCore [abstract]
           if (not disable_output) _push( CharSet(_cur_t,_cur_t.content), 0 )
           r_repeat_count
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.IDENTIFIER)
         temporarily _cur_t = _on_t
           if (not disable_output) _push( Access(_cur_t,_cur_t.content), 0 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.INTEGER)
         temporarily _cur_t = _on_t
           if (not disable_output) _push( LiteralInteger(_cur_t,_string_to_Int(_cur_t.content)), 0 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.STRING)
@@ -1713,52 +1744,54 @@ class ParserCore [abstract]
           if (not disable_output) _push( LiteralString(_cur_t,_cur_t.content), 0 )
           r_repeat_count
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       elseIf (_next_t.type == TokenType.ANYCASE_STRING)
         temporarily _cur_t = _on_t
           if (not disable_output) _push( LiteralString(_cur_t,_cur_t.content,_string_to_Logical("true")), 0 )
           r_repeat_count
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       elseIf (_next_t.type == TokenType.STRING_OR_CHARACTER)
         temporarily _cur_t = _on_t
           if (not disable_output) _push( LiteralStringOrCharacter(_cur_t,_cur_t.content), 0 )
           r_repeat_count
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       _throw_syntax_error
       _cur_t = _previous_cur_t
-      return
+      return 0
       _cur_t = _previous_cur_t
+      return 0
 
-    method r_repeat_count
+    method r_repeat_count->Int
       local _previous_cur_t = _cur_t
       if (_next_t.type == TokenType.SYMBOL_STAR)
         temporarily _cur_t = _on_t
           if (not disable_output) _push( ZeroOrMore(_cur_t,_node_arg(-1)), 1 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       elseIf (_next_t.type == TokenType.SYMBOL_PLUS)
         temporarily _cur_t = _on_t
           if (not disable_output) _push( OneOrMore(_cur_t,_node_arg(-1)), 1 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       elseIf (_next_t.type == TokenType.SYMBOL_QUESTION)
         temporarily _cur_t = _on_t
           if (not disable_output) _push( OptionalPattern(_cur_t,_node_arg(-1)), 1 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       _cur_t = _previous_cur_t
+      return 0
 
-    method r_parser_routines
+    method r_parser_routines->Int
       local _previous_cur_t = _cur_t
       _begin_list
       r_consume_eols
@@ -1775,15 +1808,15 @@ class ParserCore [abstract]
       if (disable_output)     _discard_list
       else                    _push_list( CmdList(_list_t) )
       _cur_t = _previous_cur_t
-      return
+      return 0
 
-    method r_parser_multi_line_statements
+    method r_parser_multi_line_statements->Int
       local _previous_cur_t = _cur_t
       r_consume_eols_and_semicolons
       if ((not (_position < _limit)))
         _throw_syntax_error
         _cur_t = _previous_cur_t
-        return
+        return 0
       endIf
       _begin_list
       while (((_position < _limit) and (not ((_next_t.type == TokenType.SYMBOL_MINUS) or (_next_t.type.attributes & TokenType.ATTRIBUTE_STRUCTURAL)?))))
@@ -1793,16 +1826,16 @@ class ParserCore [abstract]
       if (disable_output)     _discard_list
       else                    _push_list( Statements(_list_t) )
       _cur_t = _previous_cur_t
-      return
+      return 0
 
-    method r_parser_single_line_statements
+    method r_parser_single_line_statements->Int
       local _previous_cur_t = _cur_t
       _begin_list
       if (_consume(TokenType.EOL))
         if (disable_output)     _discard_list
         else                    _push_list( Statements(_list_t) )
         _cur_t = _previous_cur_t
-        return
+        return 0
       endIf
       r_parser_statement
       while (_consume(TokenType.SYMBOL_SEMICOLON))
@@ -1812,9 +1845,9 @@ class ParserCore [abstract]
       if (disable_output)     _discard_list
       else                    _push_list( Statements(_list_t) )
       _cur_t = _previous_cur_t
-      return
+      return 0
 
-    method r_parser_control_structure
+    method r_parser_control_structure->Int
       local _previous_cur_t = _cur_t
       if (_next_t.type == TokenType.KEYWORD_IF)
         temporarily _cur_t = _on_t
@@ -1836,7 +1869,7 @@ class ParserCore [abstract]
           endIf
           if (not disable_output) _push( If(_cur_t,_node_arg(-4),_node_arg(-3)->(as Statements),_node_arg(-2),_node_arg(-1)->(as Statements)), 4 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.KEYWORD_ON)
@@ -1844,14 +1877,14 @@ class ParserCore [abstract]
           r_on_block
           if (not disable_output) _push( On(_cur_t,_node_arg(-5),_node_arg(-4)->(as Args),_node_arg(-3)->(as Statements),_node_arg(-2),_node_arg(-1)->(as Statements)), 5 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       elseIf (_next_t.type == TokenType.KEYWORD_ON_PEEK)
         temporarily _cur_t = _on_t
           r_on_block
           if (not disable_output) _push( On(_cur_t,_node_arg(-5),_node_arg(-4)->(as Args),_node_arg(-3)->(as Statements),_node_arg(-2),_node_arg(-1)->(as Statements),_string_to_Logical("true")), 5 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.KEYWORD_WHILE)
@@ -1870,13 +1903,14 @@ class ParserCore [abstract]
           endIf
           if (not disable_output) _push( While(_cur_t,_node_arg(-2),_node_arg(-1)->(as Statements)), 2 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       r_parser_statement
       _cur_t = _previous_cur_t
+      return 0
 
-    method r_on_block
+    method r_on_block->Int
       local _previous_cur_t = _cur_t
       r_ttype_or_literal
       r_collect_parse_list
@@ -1892,8 +1926,9 @@ class ParserCore [abstract]
         r_parser_single_line_else_on_others
       endIf
       _cur_t = _previous_cur_t
+      return 0
 
-    method r_parser_multi_line_else_ifs
+    method r_parser_multi_line_else_ifs->Int
       local _previous_cur_t = _cur_t
       _begin_list
       while ((_next_t.type == TokenType.KEYWORD_ELSE_IF))
@@ -1913,7 +1948,7 @@ class ParserCore [abstract]
               if (disable_output)     _discard_list
               else                    _push_list( CmdList(_list_t) )
               _cur_t = _previous_cur_t
-              return
+              return 0
             endIf
             r_parser_multi_line_statements
             if (not disable_output) _push( ElseIf(_cur_t,_node_arg(-2),_node_arg(-1)->(as Statements)), 2 )
@@ -1923,14 +1958,14 @@ class ParserCore [abstract]
       if (disable_output)     _discard_list
       else                    _push_list( CmdList(_list_t) )
       _cur_t = _previous_cur_t
-      return
+      return 0
 
-    method r_parser_multi_line_else
+    method r_parser_multi_line_else->Int
       local _previous_cur_t = _cur_t
       if ((not (_next_t.type == TokenType.KEYWORD_ELSE)))
         if (not disable_output) _push( null, 0 )
         _cur_t = _previous_cur_t
-        return
+        return 0
       endIf
       _save_position
       if (_next_t.type == TokenType.KEYWORD_ELSE)
@@ -1939,17 +1974,18 @@ class ParserCore [abstract]
             _restore_position
             if (not disable_output) _push( null, 0 )
             _cur_t = _previous_cur_t
-            return
+            return 0
           endIf
           r_parser_multi_line_statements
           _discard_position
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       _cur_t = _previous_cur_t
+      return 0
 
-    method r_parser_single_line_else_ifs
+    method r_parser_single_line_else_ifs->Int
       local _previous_cur_t = _cur_t
       _begin_list
       while ((_next_t.type == TokenType.KEYWORD_ELSE_IF))
@@ -1967,7 +2003,7 @@ class ParserCore [abstract]
               if (disable_output)     _discard_list
               else                    _push_list( CmdList(_list_t) )
               _cur_t = _previous_cur_t
-              return
+              return 0
             else
               _discard_position
             endIf
@@ -1979,14 +2015,14 @@ class ParserCore [abstract]
       if (disable_output)     _discard_list
       else                    _push_list( CmdList(_list_t) )
       _cur_t = _previous_cur_t
-      return
+      return 0
 
-    method r_parser_single_line_else
+    method r_parser_single_line_else->Int
       local _previous_cur_t = _cur_t
       if ((not (_next_t.type == TokenType.KEYWORD_ELSE)))
         if (not disable_output) _push( null, 0 )
         _cur_t = _previous_cur_t
-        return
+        return 0
       endIf
       _save_position
       if (_next_t.type == TokenType.KEYWORD_ELSE)
@@ -1995,17 +2031,18 @@ class ParserCore [abstract]
             _restore_position
             if (not disable_output) _push( null, 0 )
             _cur_t = _previous_cur_t
-            return
+            return 0
           endIf
           r_parser_single_line_statements
           _discard_position
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       _cur_t = _previous_cur_t
+      return 0
 
-    method r_parser_multi_line_else_ons
+    method r_parser_multi_line_else_ons->Int
       local _previous_cur_t = _cur_t
       _begin_list
       while (((_next_t.type == TokenType.KEYWORD_ELSE_ON) or (_next_t.type == TokenType.KEYWORD_ELSE_ON_PEEK)))
@@ -2021,7 +2058,7 @@ class ParserCore [abstract]
               if (disable_output)     _discard_list
               else                    _push_list( CmdList(_list_t) )
               _cur_t = _previous_cur_t
-              return
+              return 0
             endIf
             r_parser_multi_line_statements
             if (not disable_output) _push( ElseOn(_cur_t,_node_arg(-3),_node_arg(-2)->(as Args),_node_arg(-1)->(as Statements)), 3 )
@@ -2037,7 +2074,7 @@ class ParserCore [abstract]
               if (disable_output)     _discard_list
               else                    _push_list( CmdList(_list_t) )
               _cur_t = _previous_cur_t
-              return
+              return 0
             endIf
             r_parser_multi_line_statements
             if (not disable_output) _push( ElseOn(_cur_t,_node_arg(-3),_node_arg(-2)->(as Args),_node_arg(-1)->(as Statements),_string_to_Logical("true")), 3 )
@@ -2047,14 +2084,14 @@ class ParserCore [abstract]
       if (disable_output)     _discard_list
       else                    _push_list( CmdList(_list_t) )
       _cur_t = _previous_cur_t
-      return
+      return 0
 
-    method r_parser_multi_line_else_on_others
+    method r_parser_multi_line_else_on_others->Int
       local _previous_cur_t = _cur_t
       if ((not (_next_t.type == TokenType.KEYWORD_ELSE_OTHERS)))
         if (not disable_output) _push( null, 0 )
         _cur_t = _previous_cur_t
-        return
+        return 0
       endIf
       _save_position
       if (_next_t.type == TokenType.KEYWORD_ELSE_OTHERS)
@@ -2063,17 +2100,18 @@ class ParserCore [abstract]
             _restore_position
             if (not disable_output) _push( null, 0 )
             _cur_t = _previous_cur_t
-            return
+            return 0
           endIf
           r_parser_multi_line_statements
           _discard_position
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       _cur_t = _previous_cur_t
+      return 0
 
-    method r_parser_single_line_else_ons
+    method r_parser_single_line_else_ons->Int
       local _previous_cur_t = _cur_t
       _begin_list
       while ((_next_t.type == TokenType.KEYWORD_ELSE_ON))
@@ -2087,7 +2125,7 @@ class ParserCore [abstract]
               if (disable_output)     _discard_list
               else                    _push_list( CmdList(_list_t) )
               _cur_t = _previous_cur_t
-              return
+              return 0
             else
               _discard_position
             endIf
@@ -2100,14 +2138,14 @@ class ParserCore [abstract]
       if (disable_output)     _discard_list
       else                    _push_list( CmdList(_list_t) )
       _cur_t = _previous_cur_t
-      return
+      return 0
 
-    method r_parser_single_line_else_on_others
+    method r_parser_single_line_else_on_others->Int
       local _previous_cur_t = _cur_t
       if ((not (_next_t.type == TokenType.KEYWORD_ELSE_OTHERS)))
         if (not disable_output) _push( null, 0 )
         _cur_t = _previous_cur_t
-        return
+        return 0
       endIf
       _save_position
       if (_next_t.type == TokenType.KEYWORD_ELSE_OTHERS)
@@ -2116,32 +2154,25 @@ class ParserCore [abstract]
             _restore_position
             if (not disable_output) _push( null, 0 )
             _cur_t = _previous_cur_t
-            return
+            return 0
           endIf
           _consume(TokenType.SYMBOL_COLON)
           r_parser_single_line_statements
           _discard_position
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       _cur_t = _previous_cur_t
+      return 0
 
-    method r_parser_statement
+    method r_parser_statement->Int
       local _previous_cur_t = _cur_t
       if (_next_t.type == TokenType.KEYWORD_BEGIN_LIST)
         temporarily _cur_t = _on_t
           if (not disable_output) _push( BeginList(_cur_t), 0 )
           _cur_t = _previous_cur_t
-          return
-        endTemporarily
-      endIf
-      if (_next_t.type == TokenType.KEYWORD_CALL)
-        temporarily _cur_t = _on_t
-          r_identifier
-          if (not disable_output) _push( ParserCallUserMethod(_cur_t,_string_arg(-1)), 1 )
-          _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.KEYWORD_CREATE)
@@ -2149,7 +2180,7 @@ class ParserCore [abstract]
           r_parser_product
           if (not disable_output) _push( ParserCreate(_cur_t,_node_arg(-1)->(as CreateCmd)), 1 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.KEYWORD_CREATE_LIST)
@@ -2157,42 +2188,42 @@ class ParserCore [abstract]
           r_list_type
           if (not disable_output) _push( CreateList(_cur_t,_string_arg(-1)), 1 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.KEYWORD_CREATE_NULL)
         temporarily _cur_t = _on_t
           if (not disable_output) _push( CreateNull(_cur_t), 0 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.KEYWORD_CREATE_TOKEN_LIST)
         temporarily _cur_t = _on_t
           if (not disable_output) _push( CreateTokenList(_cur_t), 0 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.KEYWORD_CREATE_TOKEN_LIST_PRESERVING_STACK)
         temporarily _cur_t = _on_t
           if (not disable_output) _push( CreateTokenListPreservingStack(_cur_t), 0 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.KEYWORD_DISCARD_LIST)
         temporarily _cur_t = _on_t
           if (not disable_output) _push( DiscardList(_cur_t), 0 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.KEYWORD_DISCARD_POSITION)
         temporarily _cur_t = _on_t
           if (not disable_output) _push( DiscardPosition(_cur_t), 0 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.KEYWORD_MUST_CONSUME)
@@ -2200,13 +2231,13 @@ class ParserCore [abstract]
           r_ttype_or_literal
           if (not disable_output) _push( ParserMustConsume(_cur_t,_node_arg(-1)), 1 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.KEYWORD_NO_ACTION)
         temporarily _cur_t = _on_t
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.KEYWORD_PRINT)
@@ -2214,7 +2245,7 @@ class ParserCore [abstract]
           r_parser_args
           if (not disable_output) _push( Print(_cur_t,_node_arg(-1)->(as Args)), 1 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.KEYWORD_PRINTLN)
@@ -2228,7 +2259,7 @@ class ParserCore [abstract]
           endIf
           if (not disable_output) _push( Println(_cur_t,_node_arg(-1)->(as Args)), 1 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.KEYWORD_POP)
@@ -2236,7 +2267,7 @@ class ParserCore [abstract]
           r_access
           if (not disable_output) _push( ParserPop(_cur_t,_node_arg(-1)->(as Access)), 1 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.KEYWORD_PRODUCE)
@@ -2244,7 +2275,7 @@ class ParserCore [abstract]
           r_parser_product
           if (not disable_output) _push( ParserProduce(_cur_t,_node_arg(-1)->(as CreateCmd)), 1 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.SYMBOL_ARROW)
@@ -2252,7 +2283,7 @@ class ParserCore [abstract]
           r_parser_product
           if (not disable_output) _push( ParserProduce(_cur_t,_node_arg(-1)->(as CreateCmd)), 1 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.KEYWORD_PRODUCE_NULL)
@@ -2261,7 +2292,7 @@ class ParserCore [abstract]
           if (not disable_output) _push( null, 0 )
           if (not disable_output) _push( Return(_cur_t,_node_arg(-1)), 1 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.KEYWORD_PRODUCE_LIST)
@@ -2269,21 +2300,21 @@ class ParserCore [abstract]
           r_list_type
           if (not disable_output) _push( ProduceList(_cur_t,_string_arg(-1)), 1 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.KEYWORD_PRODUCE_TOKEN_LIST)
         temporarily _cur_t = _on_t
           if (not disable_output) _push( ProduceTokenList(_cur_t), 0 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.KEYWORD_PRODUCE_TOKEN_LIST_PRESERVING_STACK)
         temporarily _cur_t = _on_t
           if (not disable_output) _push( ProduceTokenListPreservingStack(_cur_t), 0 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.KEYWORD_PUSH)
@@ -2291,14 +2322,14 @@ class ParserCore [abstract]
           r_access
           if (not disable_output) _push( ParserPush(_cur_t,_node_arg(-1)->(as Access)), 1 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.KEYWORD_RESTORE_POSITION)
         temporarily _cur_t = _on_t
           if (not disable_output) _push( RestorePosition(_cur_t), 0 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.KEYWORD_RETURN)
@@ -2306,20 +2337,18 @@ class ParserCore [abstract]
           if ((_next_t.type == TokenType.EOL))
             if (not disable_output) _push( null, 0 )
           else
-            _throw_syntax_error
-            _cur_t = _previous_cur_t
-            return
+            r_parser_expression
           endIf
           if (not disable_output) _push( Return(_cur_t,_node_arg(-1)), 1 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.KEYWORD_SAVE_POSITION)
         temporarily _cur_t = _on_t
           if (not disable_output) _push( SavePosition(_cur_t), 0 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.KEYWORD_SYNTAX_ERROR)
@@ -2331,7 +2360,7 @@ class ParserCore [abstract]
           endIf
           if (not disable_output) _push( ThrowSyntaxError(_cur_t,_node_arg(-1)->(as Args)), 1 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.SYMBOL_PLUS_PLUS)
@@ -2339,7 +2368,7 @@ class ParserCore [abstract]
           r_parser_expression
           if (not disable_output) _push( Increment(_cur_t,_node_arg(-1)), 1 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.SYMBOL_MINUS_MINUS)
@@ -2347,7 +2376,7 @@ class ParserCore [abstract]
           r_parser_expression
           if (not disable_output) _push( Decrement(_cur_t,_node_arg(-1)), 1 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       r_parser_expression
@@ -2356,37 +2385,39 @@ class ParserCore [abstract]
           r_parser_expression
           if (not disable_output) _push( Assign(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.SYMBOL_PLUS_PLUS)
         temporarily _cur_t = _on_t
           if (not disable_output) _push( Increment(_cur_t,_node_arg(-1)), 1 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.SYMBOL_MINUS_MINUS)
         temporarily _cur_t = _on_t
           if (not disable_output) _push( Decrement(_cur_t,_node_arg(-1)), 1 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       _cur_t = _previous_cur_t
+      return 0
 
-    method r_list_type
+    method r_list_type->Int
       local _previous_cur_t = _cur_t
       if ((_next_t.type == TokenType.IDENTIFIER))
         r_identifier
       else
         if (not disable_output) _push( null, 0 )
         _cur_t = _previous_cur_t
-        return
+        return 0
       endIf
       _cur_t = _previous_cur_t
+      return 0
 
-    method r_parser_args
+    method r_parser_args->Int
       local _previous_cur_t = _cur_t
       if (_consume(TokenType.SYMBOL_OPEN_PAREN))
         r_consume_eols
@@ -2397,15 +2428,16 @@ class ParserCore [abstract]
         r_parser_arg_list
       endIf
       _cur_t = _previous_cur_t
+      return 0
 
-    method r_parser_arg_list
+    method r_parser_arg_list->Int
       local _previous_cur_t = _cur_t
       _begin_list
       if ((_next_t.type.attributes & TokenType.ATTRIBUTE_STRUCTURAL)?)
         if (disable_output)     _discard_list
         else                    _push_list( Args(_list_t) )
         _cur_t = _previous_cur_t
-        return
+        return 0
       endIf
       r_parser_expression
       while ((_position < _limit))
@@ -2416,7 +2448,7 @@ class ParserCore [abstract]
           if (disable_output)     _discard_list
           else                    _push_list( Args(_list_t) )
           _cur_t = _previous_cur_t
-          return
+          return 0
         else
           r_parser_expression
         endIf
@@ -2424,9 +2456,9 @@ class ParserCore [abstract]
       if (disable_output)     _discard_list
       else                    _push_list( Args(_list_t) )
       _cur_t = _previous_cur_t
-      return
+      return 0
 
-    method r_ttype_or_literal
+    method r_ttype_or_literal->Int
       local _previous_cur_t = _cur_t
       if (_consume(TokenType.SYMBOL_OPEN_PAREN))
         r_ttype_or_literal_inner
@@ -2435,8 +2467,9 @@ class ParserCore [abstract]
         r_ttype_or_literal_inner
       endIf
       _cur_t = _previous_cur_t
+      return 0
 
-    method r_ttype_or_literal_inner
+    method r_ttype_or_literal_inner->Int
       local _previous_cur_t = _cur_t
       if (_consume(TokenType.SYMBOL_AT))
         r_token_id
@@ -2445,8 +2478,9 @@ class ParserCore [abstract]
         r_token_id
       endIf
       _cur_t = _previous_cur_t
+      return 0
 
-    method r_attr_name_arg
+    method r_attr_name_arg->Int
       local _previous_cur_t = _cur_t
       if (_consume(TokenType.SYMBOL_OPEN_PAREN))
         r_attribute_name
@@ -2455,64 +2489,67 @@ class ParserCore [abstract]
         r_attribute_name
       endIf
       _cur_t = _previous_cur_t
+      return 0
 
-    method r_attribute_name
+    method r_attribute_name->Int
       local _previous_cur_t = _cur_t
       if (_next_t.type == TokenType.IDENTIFIER)
         temporarily _cur_t = _on_t
           if (not disable_output) _push( Identifier(_cur_t,_cur_t.content), 0 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.STRING)
         temporarily _cur_t = _on_t
           if (not disable_output) _push( LiteralString(_cur_t,_cur_t.content), 0 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.STRING_OR_CHARACTER)
         temporarily _cur_t = _on_t
           if (not disable_output) _push( LiteralString(_cur_t,_cur_t.content), 0 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       _throw_syntax_error("Attribute name expected.")
       _cur_t = _previous_cur_t
-      return
+      return 0
       _cur_t = _previous_cur_t
+      return 0
 
-    method r_token_id
+    method r_token_id->Int
       local _previous_cur_t = _cur_t
       if (_next_t.type == TokenType.IDENTIFIER)
         temporarily _cur_t = _on_t
           if (not disable_output) _push( Identifier(_cur_t,_cur_t.content), 0 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.STRING)
         temporarily _cur_t = _on_t
           if (not disable_output) _push( LiteralString(_cur_t,_cur_t.content), 0 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.STRING_OR_CHARACTER)
         temporarily _cur_t = _on_t
           if (not disable_output) _push( LiteralString(_cur_t,_cur_t.content), 0 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       _throw_syntax_error("TOKEN_ID or \"token_name\" expected.")
       _cur_t = _previous_cur_t
-      return
+      return 0
       _cur_t = _previous_cur_t
+      return 0
 
-    method r_collect_parse_list
+    method r_collect_parse_list->Int
       local _previous_cur_t = _cur_t
       _begin_list
       while ((((_position < _limit) and (not (_next_t.type == TokenType.EOL))) and (not (_next_t.type.attributes & TokenType.ATTRIBUTE_STRUCTURAL)?)))
@@ -2522,37 +2559,38 @@ class ParserCore [abstract]
       if (disable_output)     _discard_list
       else                    _push_list( Args(_list_t) )
       _cur_t = _previous_cur_t
-      return
+      return 0
 
-    method r_string_id_or_routine
+    method r_string_id_or_routine->Int
       local _previous_cur_t = _cur_t
       if (_next_t.type == TokenType.IDENTIFIER)
         temporarily _cur_t = _on_t
           if (not disable_output) _push( Identifier(_cur_t,_cur_t.content), 0 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.STRING)
         temporarily _cur_t = _on_t
           if (not disable_output) _push( LiteralString(_cur_t,_cur_t.content), 0 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.STRING_OR_CHARACTER)
         temporarily _cur_t = _on_t
           if (not disable_output) _push( LiteralString(_cur_t,_cur_t.content), 0 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       _throw_syntax_error("TOKEN_ID, \"token_name\", or routine_name expected.")
       _cur_t = _previous_cur_t
-      return
+      return 0
       _cur_t = _previous_cur_t
+      return 0
 
-    method r_parser_product
+    method r_parser_product->Int
       local _previous_cur_t = _cur_t
       r_consume_eols
       r_identifier
@@ -2571,20 +2609,22 @@ class ParserCore [abstract]
       endIf
       if (not disable_output) _push( CreateCmd(_cur_t,_string_arg(-3),_node_arg(-2)->(as Args),_string_arg(-1)), 3 )
       _cur_t = _previous_cur_t
-      return
+      return 0
 
-    method r_parser_expression
+    method r_parser_expression->Int
       local _previous_cur_t = _cur_t
       r_parser_logical_or
       _cur_t = _previous_cur_t
+      return 0
 
-    method r_parser_logical_or
+    method r_parser_logical_or->Int
       local _previous_cur_t = _cur_t
       r_parser_logical_and
       r_parser_logical_or__inner
       _cur_t = _previous_cur_t
+      return 0
 
-    method r_parser_logical_or__inner
+    method r_parser_logical_or__inner->Int
       local _previous_cur_t = _cur_t
       if (_next_t.type == TokenType.KEYWORD_OR)
         temporarily _cur_t = _on_t
@@ -2593,18 +2633,20 @@ class ParserCore [abstract]
           if (not disable_output) _push( LogicalOr(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
           r_parser_logical_or__inner
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       _cur_t = _previous_cur_t
+      return 0
 
-    method r_parser_logical_and
+    method r_parser_logical_and->Int
       local _previous_cur_t = _cur_t
       r_parser_comparison
       r_parser_logical_and__inner
       _cur_t = _previous_cur_t
+      return 0
 
-    method r_parser_logical_and__inner
+    method r_parser_logical_and__inner->Int
       local _previous_cur_t = _cur_t
       if (_next_t.type == TokenType.KEYWORD_AND)
         temporarily _cur_t = _on_t
@@ -2613,18 +2655,20 @@ class ParserCore [abstract]
           if (not disable_output) _push( LogicalAnd(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
           r_parser_logical_and__inner
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       _cur_t = _previous_cur_t
+      return 0
 
-    method r_parser_comparison
+    method r_parser_comparison->Int
       local _previous_cur_t = _cur_t
       r_parser_add_subtract
       r_parser_comparison__inner
       _cur_t = _previous_cur_t
+      return 0
 
-    method r_parser_comparison__inner
+    method r_parser_comparison__inner->Int
       local _previous_cur_t = _cur_t
       if (_next_t.type == TokenType.SYMBOL_EQ)
         temporarily _cur_t = _on_t
@@ -2633,7 +2677,7 @@ class ParserCore [abstract]
           if (not disable_output) _push( CompareEQ(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
           r_parser_comparison__inner
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.SYMBOL_NE)
@@ -2643,7 +2687,7 @@ class ParserCore [abstract]
           if (not disable_output) _push( CompareNE(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
           r_parser_comparison__inner
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.SYMBOL_LT)
@@ -2653,7 +2697,7 @@ class ParserCore [abstract]
           if (not disable_output) _push( CompareLT(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
           r_parser_comparison__inner
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.SYMBOL_GT)
@@ -2663,7 +2707,7 @@ class ParserCore [abstract]
           if (not disable_output) _push( CompareGT(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
           r_parser_comparison__inner
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.SYMBOL_LE)
@@ -2673,7 +2717,7 @@ class ParserCore [abstract]
           if (not disable_output) _push( CompareLE(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
           r_parser_comparison__inner
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.SYMBOL_GE)
@@ -2683,18 +2727,20 @@ class ParserCore [abstract]
           if (not disable_output) _push( CompareGE(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
           r_parser_comparison__inner
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       _cur_t = _previous_cur_t
+      return 0
 
-    method r_parser_add_subtract
+    method r_parser_add_subtract->Int
       local _previous_cur_t = _cur_t
       r_parser_multiply_divide
       r_parser_add_subtract__inner
       _cur_t = _previous_cur_t
+      return 0
 
-    method r_parser_add_subtract__inner
+    method r_parser_add_subtract__inner->Int
       local _previous_cur_t = _cur_t
       if (_next_t.type == TokenType.SYMBOL_PLUS)
         temporarily _cur_t = _on_t
@@ -2703,7 +2749,7 @@ class ParserCore [abstract]
           if (not disable_output) _push( Add(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
           r_parser_add_subtract__inner
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.SYMBOL_MINUS)
@@ -2713,18 +2759,20 @@ class ParserCore [abstract]
           if (not disable_output) _push( Subtract(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
           r_parser_add_subtract__inner
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       _cur_t = _previous_cur_t
+      return 0
 
-    method r_parser_multiply_divide
+    method r_parser_multiply_divide->Int
       local _previous_cur_t = _cur_t
       r_parser_power
       r_parser_multiply_divide__inner
       _cur_t = _previous_cur_t
+      return 0
 
-    method r_parser_multiply_divide__inner
+    method r_parser_multiply_divide__inner->Int
       local _previous_cur_t = _cur_t
       if (_next_t.type == TokenType.SYMBOL_STAR)
         temporarily _cur_t = _on_t
@@ -2733,7 +2781,7 @@ class ParserCore [abstract]
           if (not disable_output) _push( Multiply(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
           r_parser_multiply_divide__inner
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.SYMBOL_SLASH)
@@ -2743,18 +2791,20 @@ class ParserCore [abstract]
           if (not disable_output) _push( Divide(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
           r_parser_multiply_divide__inner
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       _cur_t = _previous_cur_t
+      return 0
 
-    method r_parser_power
+    method r_parser_power->Int
       local _previous_cur_t = _cur_t
       r_parser_pre_unary
       r_parser_power__inner
       _cur_t = _previous_cur_t
+      return 0
 
-    method r_parser_power__inner
+    method r_parser_power__inner->Int
       local _previous_cur_t = _cur_t
       if (_next_t.type == TokenType.SYMBOL_CARET)
         temporarily _cur_t = _on_t
@@ -2763,12 +2813,13 @@ class ParserCore [abstract]
           if (not disable_output) _push( Power(_cur_t,_node_arg(-2),_node_arg(-1)), 2 )
           r_parser_power__inner
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       _cur_t = _previous_cur_t
+      return 0
 
-    method r_parser_pre_unary
+    method r_parser_pre_unary->Int
       local _previous_cur_t = _cur_t
       if (_next_t.type == TokenType.SYMBOL_MINUS)
         temporarily _cur_t = _on_t
@@ -2776,7 +2827,7 @@ class ParserCore [abstract]
           r_parser_pre_unary
           if (not disable_output) _push( Negate(_cur_t,_node_arg(-1)), 1 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.KEYWORD_NOT)
@@ -2785,27 +2836,36 @@ class ParserCore [abstract]
           r_parser_pre_unary
           if (not disable_output) _push( LogicalNot(_cur_t,_node_arg(-1)), 1 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       r_parser_term
       _cur_t = _previous_cur_t
+      return 0
 
-    method r_parser_term
+    method r_parser_term->Int
       local _previous_cur_t = _cur_t
       if (_next_t.type == TokenType.SYMBOL_OPEN_PAREN)
         temporarily _cur_t = _on_t
           r_parser_expression
           if (not _consume(TokenType.SYMBOL_CLOSE_PAREN)) _throw_syntax_error( &expected=TokenType.SYMBOL_CLOSE_PAREN )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.KEYWORD_BUFFER)
         temporarily _cur_t = _on_t
           if (not disable_output) _push( ReadBuffer(_cur_t), 0 )
           _cur_t = _previous_cur_t
-          return
+          return 0
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.KEYWORD_CALL)
+        temporarily _cur_t = _on_t
+          r_identifier
+          if (not disable_output) _push( ParserCallUserMethod(_cur_t,_string_arg(-1)), 1 )
+          _cur_t = _previous_cur_t
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.KEYWORD_CONSUME)
@@ -2813,21 +2873,21 @@ class ParserCore [abstract]
           r_ttype_or_literal
           if (not disable_output) _push( ParserConsume(_cur_t,_node_arg(-1)), 1 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.KEYWORD_FALSE)
         temporarily _cur_t = _on_t
           if (not disable_output) _push( LiteralLogical(_cur_t,_string_to_Logical("false")), 0 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.KEYWORD_HAS_NEXT)
         temporarily _cur_t = _on_t
           if (not disable_output) _push( ParserHasAnother(_cur_t), 0 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.KEYWORD_NEXT_HAS_ATTRIBUTE)
@@ -2835,7 +2895,7 @@ class ParserCore [abstract]
           r_attr_name_arg
           if (not disable_output) _push( NextHasAttribute(_cur_t,_string_arg(-1)), 1 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.KEYWORD_NEXT_IS)
@@ -2843,82 +2903,85 @@ class ParserCore [abstract]
           r_ttype_or_literal
           if (not disable_output) _push( ParserNextIs(_cur_t,_node_arg(-1)), 1 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.KEYWORD_OUTPUT)
         temporarily _cur_t = _on_t
           if (not disable_output) _push( ReadOutput(_cur_t), 0 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.KEYWORD_READ)
         temporarily _cur_t = _on_t
           if (not disable_output) _push( ParserRead(_cur_t), 0 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.KEYWORD_TRUE)
         temporarily _cur_t = _on_t
           if (not disable_output) _push( LiteralLogical(_cur_t,_string_to_Logical("true")), 0 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.IDENTIFIER)
         temporarily _cur_t = _on_t
           if (not disable_output) _push( Access(_cur_t,_cur_t.content), 0 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.INTEGER)
         temporarily _cur_t = _on_t
           if (not disable_output) _push( LiteralInteger(_cur_t,_string_to_Int(_cur_t.content)), 0 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.STRING)
         temporarily _cur_t = _on_t
           if (not disable_output) _push( LiteralString(_cur_t,_cur_t.content), 0 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.STRING_OR_CHARACTER)
         temporarily _cur_t = _on_t
           if (not disable_output) _push( LiteralStringOrCharacter(_cur_t,_cur_t.content), 0 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       _throw_syntax_error
       _cur_t = _previous_cur_t
-      return
+      return 0
       _cur_t = _previous_cur_t
+      return 0
 
-    method r_access
+    method r_access->Int
       local _previous_cur_t = _cur_t
       if (_next_t.type == TokenType.IDENTIFIER)
         temporarily _cur_t = _on_t
           if (not disable_output) _push( Access(_cur_t,_cur_t.content), 0 )
           _cur_t = _previous_cur_t
-          return
+          return 0
         endTemporarily
       endIf
       _throw_syntax_error("Variable name expected.")
       _cur_t = _previous_cur_t
-      return
+      return 0
       _cur_t = _previous_cur_t
+      return 0
 
-    method r_additional_node_types
+    method r_additional_node_types->Int
       local _previous_cur_t = _cur_t
       if (not disable_output) _push( WriteBuffer(_cur_t,_node_arg(-1)), 1 )
       if (not disable_output) _push( WriteOutput(_cur_t,_node_arg(-1)), 1 )
       _cur_t = _previous_cur_t
+      return 0
 
 endClass
 

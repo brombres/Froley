@@ -4,7 +4,7 @@
 
 About          | Current Release
 ---------------|-----------------------
-Version        | 5.1
+Version        | 5.1.1
 Date           | April 11, 2024
 Platforms      | macOS, Linux, Windows
 Output Targets | Rogue

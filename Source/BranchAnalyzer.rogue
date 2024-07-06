@@ -70,4 +70,7 @@ class BranchAnalyzer : InspectionVisitor<<Logical>> [singleton]
       endForEach
       return false
 
+    method on_visit( cmd:ThrowSyntaxError )->Logical
+      return true
+
 endClass

@@ -491,8 +491,6 @@ class ParserCore [abstract]
       _throw_syntax_error
       _cur_t = _previous_cur_t
       return 0
-      _cur_t = _previous_cur_t
-      return 0
 
     method r_type_name->Int
       local _previous_cur_t = _cur_t
@@ -531,8 +529,6 @@ class ParserCore [abstract]
         endTemporarily
       endIf
       _throw_syntax_error("Identifier expected.")
-      _cur_t = _previous_cur_t
-      return 0
       _cur_t = _previous_cur_t
       return 0
 
@@ -627,8 +623,6 @@ class ParserCore [abstract]
         endTemporarily
       endIf
       _throw_syntax_error("Symbol expected.")
-      _cur_t = _previous_cur_t
-      return 0
       _cur_t = _previous_cur_t
       return 0
 
@@ -1339,8 +1333,6 @@ class ParserCore [abstract]
       _throw_syntax_error
       _cur_t = _previous_cur_t
       return 0
-      _cur_t = _previous_cur_t
-      return 0
 
     method r_empty_statements->Int
       local _previous_cur_t = _cur_t
@@ -1762,8 +1754,6 @@ class ParserCore [abstract]
         endTemporarily
       endIf
       _throw_syntax_error
-      _cur_t = _previous_cur_t
-      return 0
       _cur_t = _previous_cur_t
       return 0
 
@@ -2226,6 +2216,13 @@ class ParserCore [abstract]
           return 0
         endTemporarily
       endIf
+      if (_next_t.type == TokenType.KEYWORD_DUPLICATE)
+        temporarily _cur_t = _on_t
+          if (not disable_output) _push( ParserDuplicate(_cur_t), 0 )
+          _cur_t = _previous_cur_t
+          return 0
+        endTemporarily
+      endIf
       if (_next_t.type == TokenType.KEYWORD_MUST_CONSUME)
         temporarily _cur_t = _on_t
           r_ttype_or_literal
@@ -2517,8 +2514,6 @@ class ParserCore [abstract]
       _throw_syntax_error("Attribute name expected.")
       _cur_t = _previous_cur_t
       return 0
-      _cur_t = _previous_cur_t
-      return 0
 
     method r_token_id->Int
       local _previous_cur_t = _cur_t
@@ -2544,8 +2539,6 @@ class ParserCore [abstract]
         endTemporarily
       endIf
       _throw_syntax_error("TOKEN_ID or \"token_name\" expected.")
-      _cur_t = _previous_cur_t
-      return 0
       _cur_t = _previous_cur_t
       return 0
 
@@ -2585,8 +2578,6 @@ class ParserCore [abstract]
         endTemporarily
       endIf
       _throw_syntax_error("TOKEN_ID, \"token_name\", or routine_name expected.")
-      _cur_t = _previous_cur_t
-      return 0
       _cur_t = _previous_cur_t
       return 0
 
@@ -2958,8 +2949,6 @@ class ParserCore [abstract]
       _throw_syntax_error
       _cur_t = _previous_cur_t
       return 0
-      _cur_t = _previous_cur_t
-      return 0
 
     method r_access->Int
       local _previous_cur_t = _cur_t
@@ -2971,8 +2960,6 @@ class ParserCore [abstract]
         endTemporarily
       endIf
       _throw_syntax_error("Variable name expected.")
-      _cur_t = _previous_cur_t
-      return 0
       _cur_t = _previous_cur_t
       return 0
 

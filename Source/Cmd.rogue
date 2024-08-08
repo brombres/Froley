@@ -1997,3 +1997,9 @@ class ProduceTokenListPreservingStack : Cmd
     method description->String
       return "ProduceTokenListPreservingStack"
 endClass
+
+class ParserDuplicate : Cmd
+  METHODS
+    method description->String
+      return "ParserDuplicate"
+endClass

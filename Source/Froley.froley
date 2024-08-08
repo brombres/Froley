@@ -46,6 +46,7 @@ KEYWORD_CREATE_NULL         createNull
 KEYWORD_CREATE_TOKEN_LIST   createTokenList
 KEYWORD_CREATE_TOKEN_LIST_PRESERVING_STACK createTokenListPreservingStack
 KEYWORD_DISCARD_LIST        discardList
+KEYWORD_DUPLICATE           duplicate
 KEYWORD_ELSE_ON             elseOn       [structural]
 KEYWORD_ELSE_ON_PEEK        elseOnPeek   [structural]
 KEYWORD_ELSE_OTHERS         elseOthers   [structural]
@@ -1216,6 +1217,7 @@ parser
   on "createTokenListPreservingStack" -> CreateTokenListPreservingStack
   on "discardList"                    -> DiscardList
   on "discardPosition"                -> DiscardPosition
+  on "duplicate"                      -> ParserDuplicate
   on "mustConsume"  ttype_or_literal  -> ParserMustConsume(token_type)
   on "noAction": return
 

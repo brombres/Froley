@@ -163,6 +163,15 @@ class RParserCore( generator, parser_def:ParserDef ) : RogueSourceWriter
          |      endIf
          |      _saved_positions.remove_last
          |
+         |    method _duplicate
+         |      if (disable_output)
+         |        return
+         |      elseIf (_cmd_stack.count)
+         |        _cmd_stack.add( _cmd_stack.last )
+         |      else
+         |        throw _peek.error( "[INTERNAL] Attempt to duplicate command on empty command stack." )
+         |      endIf
+         |
          |    method _list_t->Token
          |      if (_list_tokens.is_empty)
          |        throw _peek.error( "[INTERNAL] createList/produceList without corresponding beginList." )

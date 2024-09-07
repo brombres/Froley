@@ -354,14 +354,7 @@ class BuildfileGenerator [singleton]
         |  if (System.is_macos) targets += ",ObjC"
         |  local cmd = "roguec $ $ --main --output=$ $"...
         |              (File(src_filepath).esc,flags,File(c_filepath).esc,targets)
-        |  println "> " + cmd
-        |  local status = Process.run( cmd, &env )
-        |  local result = status->String
-        |  println result
-        |  if (not status.success) throw Error( "Build failed." )
-        |  if (result.contains("ROGO:"))
-        |    System.exit( execute("rogo".appending(System.command_line_arguments.join(' '))) )
-        |  endIf
+        |  execute cmd
         |endRoutine
         |
         |routine compile_c

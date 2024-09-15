@@ -25,14 +25,14 @@ class RScannerCore( generator, scanner_def:ScannerDef ) : RogueSourceWriter
          |  PROPERTIES
          |    _filepath     : String
          |    _scanner      : Rogue::Scanner
-         |    line          = 1L
-         |    column        = 1L
+         |    line          = 1
+         |    column        = 1
          |
-         |    tokens        = Token[]
+         |    tokens        : Token[]
          |    buffer        = String()
          |    output        = String()
          |
-         |    start_ip      = 0L
+         |    start_ip      = 0
          |    halt          = false
          |
          |    _position_stack  = Int[]
@@ -74,16 +74,28 @@ class RScannerCore( generator, scanner_def:ScannerDef ) : RogueSourceWriter
       writeln ...
         @|
          |  METHODS
-         |    method init( file:File )
+         |    method init( file:File, line=1, column=1 )
          |      init( file.filepath, Rogue::Scanner(file) )
-         |      line   = 1
-         |      column = 1
          |
          |    method init( filepath:String, content:String, line=1, column=1 )
          |      init( filepath, Rogue::Scanner(content).[line=line, column=column] )
          |
-         |    method init( _filepath, _scanner )
+         |    method init( _filepath, _scanner, line=1, column=1 )
          |      noAction
+         |
+         |    method reset
+         |      if (_scanner) _scanner.reset
+         |      line   = 1
+         |      column = 1
+         |      tokens = null
+         |      buffer.clear
+         |      output.clear
+         |      start_ip = 0
+         |      halt = false
+         |      _position_stack.clear
+         |      _line_stack.clear
+         |      _column_stack.clear
+         |      _token_pos_stack.clear
          |
 
       forEach (fn_name in Program.scanner_user_calls)
@@ -97,6 +109,7 @@ class RScannerCore( generator, scanner_def:ScannerDef ) : RogueSourceWriter
          |      _execute( ip )
          |
          |    method tokenize( ip=null:Int? )->Token[]
+         |      tokens = Token[]
          |      if (ip) start_ip = ip.value
          |      _clear_state
          |      while (_execute(start_ip) or not halt)

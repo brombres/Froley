@@ -33,8 +33,8 @@ class RParserCore( generator, parser_def:ParserDef ) : RogueSourceWriter
          |    _next_t          : Token
          |    _cur_t           : Token
          |    _saved_positions = ParserPosition[]
-         |    start_ip         = 0L
-         |    ip               = 0L
+         |    start_ip         = 0
+         |    ip               = 0
          |    buffer           = String()
          |    output           = String()
          |
@@ -86,6 +86,19 @@ class RParserCore( generator, parser_def:ParserDef ) : RogueSourceWriter
          |      _position = 0
          |      _limit = _tokens.count
          |      _cmd_stack.clear
+         |      output.clear
+         |
+         |    method reset
+         |      _position = 0
+         |      _cmd_stack.clear
+         |      _list_starts.clear
+         |      _list_tokens.clear
+         |      _next_t = null
+         |      _cur_t = null
+         |      _saved_positions.clear
+         |      start_ip = 0
+         |      ip = 0
+         |      buffer.clear
          |      output.clear
 
       forEach (fn_name in Program.parser_user_calls)

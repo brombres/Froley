@@ -24,6 +24,7 @@ class RParserCore( generator, parser_def:ParserDef ) : RogueSourceWriter
       writeln ...
         @|
          |  PROPERTIES
+         |    _scanner         : Scanner
          |    _tokens          : Token[]
          |    _position        : Int
          |    _limit           : Int
@@ -71,15 +72,22 @@ class RParserCore( generator, parser_def:ParserDef ) : RogueSourceWriter
       writeln ...
         @|
          |  METHODS
+         |    method init
+         |      noAction
+         |
          |    method init( file:File )
-         |      init( Scanner(file) )
+         |      ensure<<_scanner>>()
+         |      _scanner.reset( file )
+         |      init( _scanner )
          |
          |    method init( filepath:String, content:String )
-         |      init( Scanner(filepath,content) )
+         |      ensure<<_scanner>>()
+         |      _scanner.reset( filepath, content )
+         |      init( _scanner )
          |
-         |    method init( scanner:Scanner )
-         |      local tokens = scanner.tokenize
-         |      if (scanner.output.count) print scanner.output; flush
+         |    method init( _scanner )
+         |      local tokens = _scanner.tokenize
+         |      if (_scanner.output.count) print _scanner.output; flush
          |      init( tokens )
          |
          |    method init( _tokens )
@@ -93,13 +101,25 @@ class RParserCore( generator, parser_def:ParserDef ) : RogueSourceWriter
          |      _cmd_stack.clear
          |      _list_starts.clear
          |      _list_tokens.clear
-         |      _next_t = null
-         |      _cur_t = null
          |      _saved_positions.clear
          |      start_ip = 0
          |      ip = 0
          |      buffer.clear
          |      output.clear
+         |
+         |    method reset( file:File )
+         |      ensure<<_scanner>>()
+         |      _scanner.reset( file )
+         |      reset
+         |
+         |    method reset( filepath:String, content:String )
+         |      ensure<<_scanner>>()
+         |      _scanner.reset( filepath, content )
+         |      reset( _scanner )
+         |
+         |    method reset( _scanner )
+         |      reset
+         |      init( _scanner )
 
       forEach (fn_name in Program.parser_user_calls)
         writeln

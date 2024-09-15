@@ -74,8 +74,11 @@ class RScannerCore( generator, scanner_def:ScannerDef ) : RogueSourceWriter
       writeln ...
         @|
          |  METHODS
+         |    method init
+         |      noAction
+         |
          |    method init( file:File, line=1, column=1 )
-         |      init( file.filepath, Rogue::Scanner(file) )
+         |      init( file.filepath, Rogue::Scanner(file).[line=line, column=column] )
          |
          |    method init( filepath:String, content:String, line=1, column=1 )
          |      init( filepath, Rogue::Scanner(content).[line=line, column=column] )
@@ -97,6 +100,14 @@ class RScannerCore( generator, scanner_def:ScannerDef ) : RogueSourceWriter
          |      _column_stack.clear
          |      _token_pos_stack.clear
          |
+         |    method reset( file:File, line=1:Int, column=1:Int )
+         |      reset
+         |      init( file, line, column )
+         |
+         |    method reset( filepath:String, content:String, line=1:Int, column=1:Int )
+         |      reset
+         |      init( filepath, content, line, column )
+         |
 
       forEach (fn_name in Program.scanner_user_calls)
         writeln  "    method $->Int [abstract]" (fn_name)
@@ -107,6 +118,16 @@ class RScannerCore( generator, scanner_def:ScannerDef ) : RogueSourceWriter
         @|    method execute( ip:Int )
          |      _clear_state
          |      _execute( ip )
+         |
+         |    method tokenize( file:File, line=1, column=1, &ip=null:Int? )->Token[]
+         |      return tokenize( file.filepath, Rogue::Scanner(file) )
+         |
+         |    method tokenize( filepath:String, content:String, line=1, column=1, &ip=null:Int? )->Token[]
+         |      return tokenize( filepath, Rogue::Scanner(content).[line=line, column=column] )
+         |
+         |    method tokenize( _filepath, _scanner, line=1, column=1, &ip=null:Int? )->Token[]
+         |      reset
+         |      return tokenize( ip )
          |
          |    method tokenize( ip=null:Int? )->Token[]
          |      tokens = Token[]

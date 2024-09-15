@@ -101,6 +101,7 @@ class ParserCore [abstract]
     ip_additional_node_types = 89
 
   PROPERTIES
+    _scanner         : Scanner
     _tokens          : Token[]
     _position        : Int
     _limit           : Int
@@ -110,23 +111,30 @@ class ParserCore [abstract]
     _next_t          : Token
     _cur_t           : Token
     _saved_positions = ParserPosition[]
-    start_ip         = 0L
-    ip               = 0L
+    start_ip         = 0
+    ip               = 0
     buffer           = String()
     output           = String()
 
     disable_output : Int
 
   METHODS
+    method init
+      noAction
+
     method init( file:File )
-      init( Scanner(file) )
+      ensure<<_scanner>>()
+      _scanner.reset( file )
+      init( _scanner )
 
     method init( filepath:String, content:String )
-      init( Scanner(filepath,content) )
+      ensure<<_scanner>>()
+      _scanner.reset( filepath, content )
+      init( _scanner )
 
-    method init( scanner:Scanner )
-      local tokens = scanner.tokenize
-      if (scanner.output.count) print scanner.output; flush
+    method init( _scanner )
+      local tokens = _scanner.tokenize
+      if (_scanner.output.count) print _scanner.output; flush
       init( tokens )
 
     method init( _tokens )
@@ -134,6 +142,31 @@ class ParserCore [abstract]
       _limit = _tokens.count
       _cmd_stack.clear
       output.clear
+
+    method reset
+      _position = 0
+      _cmd_stack.clear
+      _list_starts.clear
+      _list_tokens.clear
+      _saved_positions.clear
+      start_ip = 0
+      ip = 0
+      buffer.clear
+      output.clear
+
+    method reset( file:File )
+      ensure<<_scanner>>()
+      _scanner.reset( file )
+      reset
+
+    method reset( filepath:String, content:String )
+      ensure<<_scanner>>()
+      _scanner.reset( filepath, content )
+      reset( _scanner )
+
+    method reset( _scanner )
+      reset
+      init( _scanner )
 
     method has_another->Logical
       return _position < _limit
@@ -202,6 +235,15 @@ class ParserCore [abstract]
         throw _peek.error( "[INTERNAL] No savePosition to discard." )
       endIf
       _saved_positions.remove_last
+
+    method _duplicate
+      if (disable_output)
+        return
+      elseIf (_cmd_stack.count)
+        _cmd_stack.add( _cmd_stack.last )
+      else
+        throw _peek.error( "[INTERNAL] Attempt to duplicate command on empty command stack." )
+      endIf
 
     method _list_t->Token
       if (_list_tokens.is_empty)

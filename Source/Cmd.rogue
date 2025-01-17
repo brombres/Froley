@@ -2003,3 +2003,26 @@ class ParserDuplicate : Cmd
     method description->String
       return "ParserDuplicate"
 endClass
+
+class CreateAny : Cmd
+  PROPERTIES
+    token_group_name : String
+
+  METHODS
+    method init( t, token_group_name )
+
+    method init( existing:CreateAny )
+      prior.init( existing )
+      token_group_name = existing.token_group_name
+
+    method description->String
+      return "CreateAny($)" (%token_group_name)
+
+    method to->Character
+      return Cmd.to_character(token_group_name)
+
+    method to->Int:     return token_group_name
+    method to->Logical: return token_group_name?
+    method to->String: return token_group_name
+
+endClass

@@ -827,6 +827,11 @@ class ParserCore [abstract]
             r_identifier
             if (not disable_output) _push( ProduceAny(_cur_t,_string_arg(-1)), 1 )
           endTemporarily
+        elseIf (_next_t.type == TokenType.KEYWORD_CREATE_ANY)
+          temporarily _cur_t = _on_t
+            r_identifier
+            if (not disable_output) _push( CreateAny(_cur_t,_string_arg(-1)), 1 )
+          endTemporarily
         else
           if (disable_output)     _discard_list
           else                    _push_list( CmdList(_list_t) )

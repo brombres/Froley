@@ -5,6 +5,24 @@ class Organizer : Visitor
     this_match      : Match
 
   METHODS
+    method on_visit( cmd:CreateAny )->Cmd
+      # Add a scan case for each token in the named group
+      local t = cmd.t
+      local group = Program.token_groups[ cmd.token_group_name ]
+      if (not group)
+        throw t.error( ''No such token group "$".''(cmd.token_group_name) )
+      endIf
+      forEach (item in group.definitions)
+        local def = item->(as TokenDef)
+        local expr = LiteralString( t, def.symbol )
+        local cmd_create = ScannerCreate( t, Access(t,def.name) )
+        local cmd_return = Return( t, null )
+        local _case = MatchCase( t, expr, Statements(t,cmd_create,cmd_return) )
+        this_match.cases.add( _case )
+        visit( _case )
+      endForEach
+      return null
+
     method on_visit_node( cmd:CreateCmd )
       local node_type = Program.type( cmd.t, cmd.name )
       if (cmd.base_type_name)

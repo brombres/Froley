@@ -27,6 +27,7 @@ KEYWORD_BUFFER           buffer
 KEYWORD_CASE             case        [structural]
 KEYWORD_CHARACTER        Character
 KEYWORD_COLLECT          collect
+KEYWORD_CREATE_ANY       createAny  [structural]
 KEYWORD_END_MATCH        endMatch    [structural]
 KEYWORD_INPUT            input
 KEYWORD_INT              Int
@@ -630,6 +631,9 @@ parser
       elseOn "produceAny"
         identifier
         create ProduceAny(token_group_name:String)
+      elseOn "createAny"
+        identifier
+        create CreateAny(token_group_name:String)
       elseOthers
         produceList
       endOn

@@ -32,7 +32,7 @@ class BranchAnalyzer : InspectionVisitor<<Logical>> [singleton]
       forEach (cmd_case in cmd.cases)
         if (not visit(cmd_case)) return false
       endForEach
-      return true
+      return visit( cmd._others )
 
     method on_visit( cmd:On )->Logical
       if (not cmd._else_on_others) return false

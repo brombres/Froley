@@ -177,6 +177,7 @@ scanner
       if (ch == 'n')     ch = '\n'
       elseIf (ch == 'r') ch = '\r'
       elseIf (ch == 't') ch = '\t'
+      elseIf (ch == ']') ch = ']'
       else               collect '\\'  # leave the slash
     endIf
     collect ch

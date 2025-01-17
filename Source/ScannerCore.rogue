@@ -405,6 +405,8 @@ class ScannerCore [abstract]
             ch = '\r'
           elseIf ((ch=='t'))
             ch = '\t'
+          elseIf ((ch==']'))
+            ch = ']'
           else
             buffer.print('\\')
           endIf

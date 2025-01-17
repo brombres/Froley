@@ -1,4 +1,4 @@
-module Froley
+library Froley
 
 class RInspectionVisitor : RogueSourceWriter
   PROPERTIES
@@ -20,7 +20,7 @@ class RInspectionVisitor : RogueSourceWriter
       if (not String.exists(content) or not content.contains("class InspectionVisitor<<"))
         if (content is null) content = ""
         content +=  "# Generated and updated by Froley. Custom changes will not be overwritten; customize as desired.\n"
-        content += "module $\n\n"(Program.project_name)
+        content += "library $\n\n"(Program.project_name)
         content += @|class InspectionVisitor : InspectionVisitor<<Logical>>
                     |endClass
                     |

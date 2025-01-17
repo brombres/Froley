@@ -1,4 +1,4 @@
-module Simple
+library Simple
 
 class Runtime [singleton]
   PROPERTIES

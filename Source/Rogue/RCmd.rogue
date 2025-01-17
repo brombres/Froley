@@ -1,4 +1,4 @@
-module Froley
+library Froley
 
 class RCmd : RogueSourceWriter
   PROPERTIES
@@ -25,7 +25,7 @@ class RCmd : RogueSourceWriter
     method update_content( content:String )->String
       if (not String.exists(content))
         content =  "# Generated and updated by Froley. Custom changes will not be overwritten; customize as desired.\n"
-        content += "module $\n"(Program.project_name)
+        content += "library $\n"(Program.project_name)
       endIf
 
       scan_node_types( content )

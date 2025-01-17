@@ -1,4 +1,4 @@
-module Froley
+library Froley
 
 uses IO/DataIO
 uses Codec/Base64

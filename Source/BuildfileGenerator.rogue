@@ -1,4 +1,4 @@
-module Froley
+library Froley
 
 class BuildfileGenerator [singleton]
   METHODS

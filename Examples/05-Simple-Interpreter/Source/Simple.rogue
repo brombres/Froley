@@ -1,4 +1,4 @@
-module Simple
+library Simple
 
 $include "CmdExecute.rogue"
 $include "Scanner.rogue"

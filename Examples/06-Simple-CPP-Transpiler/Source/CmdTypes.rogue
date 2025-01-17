@@ -1,4 +1,4 @@
-module Simple
+library Simple
 
 augment Cmd
   METHODS

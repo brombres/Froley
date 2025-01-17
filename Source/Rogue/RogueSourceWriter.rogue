@@ -1,4 +1,4 @@
-module Froley
+library Froley
 
 class RogueSourceWriter
   PROPERTIES
@@ -46,7 +46,7 @@ class RogueSourceWriter
     method overwrite( class_name )
       generator.writer = String(2048)
 
-      writeln "module $\n"(Program.project_name)
+      writeln "library $\n"(Program.project_name)
       write_content
       close
 

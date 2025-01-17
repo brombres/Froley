@@ -1,4 +1,4 @@
-module Froley
+library Froley
 
 $include "Rogue/RCmd.rogue"
 $include "Rogue/RMain.rogue"
@@ -742,7 +742,7 @@ class RogueGenerator : Visitor
       endIf
 
       if (content.contains('$'))
-        content .= replacing( "$module", "module $\n" (Program.project_name) )
+        content .= replacing( "$library", "library $\n" (Program.project_name) )
         forEach (entry in write_replacements.entries)
           content .= replacing( entry.key, entry.value )
         endForEach

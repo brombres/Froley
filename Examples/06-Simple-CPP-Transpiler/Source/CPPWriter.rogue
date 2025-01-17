@@ -1,4 +1,4 @@
-module Simple
+library Simple
 
 class CPPWriter( filepath:String ) : Visitor
   PROPERTIES

@@ -1,4 +1,4 @@
-module Simple
+library Simple
 
 $include "CPPWriter.rogue"
 $include "CmdTypes.rogue"

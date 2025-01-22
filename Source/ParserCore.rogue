@@ -143,30 +143,34 @@ class ParserCore [abstract]
       _cmd_stack.clear
       output.clear
 
-    method reset
+    method reset( start_ip=0 )
       _position = 0
       _cmd_stack.clear
       _list_starts.clear
       _list_tokens.clear
       _saved_positions.clear
-      start_ip = 0
       ip = 0
       buffer.clear
       output.clear
 
-    method reset( file:File )
+    method reset( file:File, scanner_ip=0:Int, parser_ip=0:Int )
       ensure<<_scanner>>()
-      _scanner.reset( file )
-      reset
+      _scanner.reset( file, scanner_ip )
+      reset( parser_ip )
 
-    method reset( filepath:String, content:String )
+    method reset( filepath:String, content:String, scanner_ip=0:Int, parser_ip=0:Int )
       ensure<<_scanner>>()
-      _scanner.reset( filepath, content )
-      reset( _scanner )
+      _scanner.reset( filepath, content, scanner_ip )
+      reset( _scanner, parser_ip )
 
-    method reset( _scanner )
-      reset
+    method reset( _scanner, parser_ip=0:Int )
+      reset( parser_ip )
       init( _scanner )
+
+    method reset( t:Token, scanner_ip=0:Int, parser_ip=0:Int, scan_limit=null:Int )
+      ensure<<_scanner>>()
+      _scanner.reset( t, scanner_ip, scan_limit )
+      reset( _scanner, parser_ip )
 
     method has_another->Logical
       return _position < _limit
@@ -277,7 +281,7 @@ class ParserCore [abstract]
     method _peek->Token
       if (_position < _limit) return _tokens[ _position ]
       if (_tokens.count) return _tokens.last.cloned( TokenType.EOI )
-      return Token( TokenType.EOI, null, null, 0, 0 )
+      return Token( TokenType.EOI, null, null, 0, 0, 0 )
 
     method _pop->Cmd
       if (disable_output)       return null

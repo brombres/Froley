@@ -352,8 +352,9 @@ class RogueGenerator : Visitor
       return cmd
 
     method on_visit_node( cmd:MarkPosition )
-      writeln "line   = _scanner.line"
-      write   "column = _scanner.column"
+      writeln "line     = _scanner.line"
+      writeln "column   = _scanner.column"
+      writeln "position = _scanner.position"
       visit_children( cmd )
 
     method on_visit_node( cmd:Mode )

@@ -27,6 +27,7 @@ class RScannerCore( generator, scanner_def:ScannerDef ) : RogueSourceWriter
          |    _scanner      : Rogue::Scanner
          |    line          = 1
          |    column        = 1
+         |    position      = 0
          |
          |    tokens        : Token[]
          |    buffer        = String()
@@ -77,36 +78,44 @@ class RScannerCore( generator, scanner_def:ScannerDef ) : RogueSourceWriter
          |    method init
          |      noAction
          |
-         |    method init( file:File, line=1, column=1 )
-         |      init( file.filepath, Rogue::Scanner(file).[line=line, column=column] )
+         |    method init( file:File )
+         |      init( file.filepath, Rogue::Scanner(file) )
          |
-         |    method init( filepath:String, content:String, line=1, column=1 )
-         |      init( filepath, Rogue::Scanner(content).[line=line, column=column] )
+         |    method init( filepath:String, content:String )
+         |      init( filepath, Rogue::Scanner(content) )
          |
-         |    method init( _filepath, _scanner, line=1, column=1 )
+         |    method init( _filepath, _scanner )
          |      noAction
          |
-         |    method reset
+         |    method reset( start_ip=0 )
          |      if (_scanner) _scanner.reset
          |      line   = 1
          |      column = 1
          |      tokens = null
          |      buffer.clear
          |      output.clear
-         |      start_ip = 0
          |      halt = false
          |      _position_stack.clear
          |      _line_stack.clear
          |      _column_stack.clear
          |      _token_pos_stack.clear
          |
-         |    method reset( file:File, line=1:Int, column=1:Int )
-         |      reset
-         |      init( file, line, column )
+         |    method reset( file:File, start_ip=0:Int )
+         |      reset( start_ip )
+         |      init( file )
          |
-         |    method reset( filepath:String, content:String, line=1:Int, column=1:Int )
-         |      reset
-         |      init( filepath, content, line, column )
+         |    method reset( filepath:String, content:String, start_ip=0:Int )
+         |      reset( start_ip )
+         |      init( filepath, content )
+         |
+         |    method reset( t:Token, start_ip=0:Int, scan_limit=null:Int? )
+         |      reset( start_ip )
+         |      init( t.filepath, t.source )
+         |      if (scan_limit) _scanner.count = t.position + scan_limit.value
+         |      _scanner.seek( t.position )
+         |      line = t.line
+         |      column = t.column
+         |      position = t.position
          |
 
       forEach (fn_name in Program.scanner_user_calls)
@@ -228,7 +237,7 @@ class RScannerCore( generator, scanner_def:ScannerDef ) : RogueSourceWriter
          |      return true
          |
          |    method _t( type:TokenType, content=null:String )->Token
-         |      return Token( type, _filepath, _scanner.source, line, column, content )
+         |      return Token( type, _filepath, _scanner.source, line, column, position, content )
          |
          |    method _throw_expected_string_error( st:String )
          |      local message = "Syntax error - expected $, found " (st)

@@ -140,6 +140,8 @@ class RScannerCore( generator, scanner_def:ScannerDef ) : RogueSourceWriter
          |
          |    method tokenize( ip=null:Int? )->Token[]
          |      tokens = Token[]
+         |      tokens.reserve( _scanner.count / 3 )
+         |
          |      if (ip) start_ip = ip.value
          |      _clear_state
          |      while (_execute(start_ip) or not halt)

@@ -743,7 +743,7 @@ class RogueGenerator : Visitor
       endIf
 
       if (content.contains('$'))
-        content .= replacing( "$library", "library $\n" (Program.project_name) )
+        content .= replacing( "$LIBRARY", "library $\n" (Program.project_name) )
         forEach (entry in write_replacements.entries)
           content .= replacing( entry.key, entry.value )
         endForEach

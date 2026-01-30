@@ -1,5 +1,5 @@
-$define VERSION "5.2"
-$define DATE    "March 19, 2025"
+$define VERSION "5.2.1"
+$define DATE    "January 30, 2026"
 
 library Froley
 

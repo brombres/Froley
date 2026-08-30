@@ -213,7 +213,7 @@ class ParserCore [abstract]
 
     method _create_token_list( &preserve_stack )
       if (_saved_positions.is_empty)
-        throw _peek.error( "[INTERNAL] createTokenList/produceTokenlist without prior savePosition." )
+        throw _peek.error( "[INTERNAL] createTokenListDiscardingCommands/produceTokenlist without prior savePosition." )
       endIf
       local pos = _saved_positions.remove_last
       if (not preserve_stack) _cmd_stack.discard_from( pos.cmd_stack_count )
@@ -978,6 +978,14 @@ class ParserCore [abstract]
 
     method r_scanner_statement->Int
       local _previous_cur_t = _cur_t
+      if (_next_t.type == TokenType.KEYWORD_CALL)
+        temporarily _cur_t = _on_t
+          r_identifier
+          if (not disable_output) _push( ScannerCallUserMethod(_cur_t,_string_arg(-1)), 1 )
+          _cur_t = _previous_cur_t
+          return 0
+        endTemporarily
+      endIf
       if (_next_t.type == TokenType.KEYWORD_COLLECT)
         temporarily _cur_t = _on_t
           r_scanner_args
@@ -1650,10 +1658,10 @@ class ParserCore [abstract]
           return 0
         endTemporarily
       endIf
-      if (_next_t.type == TokenType.KEYWORD_CALL)
+      if (_next_t.type == TokenType.KEYWORD_QUERY)
         temporarily _cur_t = _on_t
           r_identifier
-          if (not disable_output) _push( ScannerCallUserMethod(_cur_t,_string_arg(-1)), 1 )
+          if (not disable_output) _push( ScannerQueryUserMethod(_cur_t,_string_arg(-1)), 1 )
           _cur_t = _previous_cur_t
           return 0
         endTemporarily
@@ -2216,6 +2224,14 @@ class ParserCore [abstract]
           return 0
         endTemporarily
       endIf
+      if (_next_t.type == TokenType.KEYWORD_CALL)
+        temporarily _cur_t = _on_t
+          r_identifier
+          if (not disable_output) _push( ParserCallUserMethod(_cur_t,_string_arg(-1)), 1 )
+          _cur_t = _previous_cur_t
+          return 0
+        endTemporarily
+      endIf
       if (_next_t.type == TokenType.KEYWORD_CREATE)
         temporarily _cur_t = _on_t
           r_parser_product
@@ -2241,14 +2257,28 @@ class ParserCore [abstract]
       endIf
       if (_next_t.type == TokenType.KEYWORD_CREATE_TOKEN_LIST)
         temporarily _cur_t = _on_t
-          if (not disable_output) _push( CreateTokenList(_cur_t), 0 )
+          if (not disable_output) _push( CreateTokenListDiscardingCommands(_cur_t), 0 )
+          _cur_t = _previous_cur_t
+          return 0
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.KEYWORD_CREATE_TOKEN_LIST_DISCARDING_COMMANDS)
+        temporarily _cur_t = _on_t
+          if (not disable_output) _push( CreateTokenListDiscardingCommands(_cur_t), 0 )
+          _cur_t = _previous_cur_t
+          return 0
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.KEYWORD_CREATE_TOKEN_LIST_PRESERVING_COMMANDS)
+        temporarily _cur_t = _on_t
+          if (not disable_output) _push( CreateTokenListPreservingCommands(_cur_t), 0 )
           _cur_t = _previous_cur_t
           return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.KEYWORD_CREATE_TOKEN_LIST_PRESERVING_STACK)
         temporarily _cur_t = _on_t
-          if (not disable_output) _push( CreateTokenListPreservingStack(_cur_t), 0 )
+          if (not disable_output) _push( CreateTokenListPreservingCommands(_cur_t), 0 )
           _cur_t = _previous_cur_t
           return 0
         endTemporarily
@@ -2353,14 +2383,28 @@ class ParserCore [abstract]
       endIf
       if (_next_t.type == TokenType.KEYWORD_PRODUCE_TOKEN_LIST)
         temporarily _cur_t = _on_t
-          if (not disable_output) _push( ProduceTokenList(_cur_t), 0 )
+          if (not disable_output) _push( ProduceTokenListDiscardingCommands(_cur_t), 0 )
+          _cur_t = _previous_cur_t
+          return 0
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.KEYWORD_PRODUCE_TOKEN_LIST_DISCARDING_COMMANDS)
+        temporarily _cur_t = _on_t
+          if (not disable_output) _push( ProduceTokenListDiscardingCommands(_cur_t), 0 )
           _cur_t = _previous_cur_t
           return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.KEYWORD_PRODUCE_TOKEN_LIST_PRESERVING_STACK)
         temporarily _cur_t = _on_t
-          if (not disable_output) _push( ProduceTokenListPreservingStack(_cur_t), 0 )
+          if (not disable_output) _push( ProduceTokenListPreservingCommands(_cur_t), 0 )
+          _cur_t = _previous_cur_t
+          return 0
+        endTemporarily
+      endIf
+      if (_next_t.type == TokenType.KEYWORD_PRODUCE_TOKEN_LIST_PRESERVING_COMMANDS)
+        temporarily _cur_t = _on_t
+          if (not disable_output) _push( ProduceTokenListPreservingCommands(_cur_t), 0 )
           _cur_t = _previous_cur_t
           return 0
         endTemporarily
@@ -2902,10 +2946,10 @@ class ParserCore [abstract]
           return 0
         endTemporarily
       endIf
-      if (_next_t.type == TokenType.KEYWORD_CALL)
+      if (_next_t.type == TokenType.KEYWORD_QUERY)
         temporarily _cur_t = _on_t
           r_identifier
-          if (not disable_output) _push( ParserCallUserMethod(_cur_t,_string_arg(-1)), 1 )
+          if (not disable_output) _push( ParserQueryUserMethod(_cur_t,_string_arg(-1)), 1 )
           _cur_t = _previous_cur_t
           return 0
         endTemporarily

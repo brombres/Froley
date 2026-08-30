@@ -183,6 +183,10 @@ class Organizer : Visitor
       Program.parser_user_calls.add( cmd.fn_name )
       visit_children( cmd )
 
+    method on_visit_node( cmd:ParserQueryUserMethod )
+      Program.parser_user_queries.add( cmd.fn_name )
+      visit_children( cmd )
+
     method on_visit_node( cmd:ParserDef )
       if (not cmd.name) cmd.name = "Parser"
       if (Program.parser and Program.parser is not cmd)
@@ -297,6 +301,10 @@ class Organizer : Visitor
 
     method on_visit_node( cmd:ScannerCallUserMethod )
       Program.scanner_user_calls.add( cmd.fn_name )
+      visit_children( cmd )
+
+    method on_visit_node( cmd:ScannerQueryUserMethod )
+      Program.scanner_user_queries.add( cmd.fn_name )
       visit_children( cmd )
 
     method on_visit_node( cmd:ScannerDef )

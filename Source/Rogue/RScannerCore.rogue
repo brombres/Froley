@@ -118,8 +118,14 @@ class RScannerCore( generator, scanner_def:ScannerDef ) : RogueSourceWriter
          |      position = t.position
          |
 
-      forEach (fn_name in Program.scanner_user_calls)
+      forEach (fn_name in Program.scanner_user_queries)
         writeln  "    method $->Int [abstract]" (fn_name)
+        writeln
+      endForEach
+
+      forEach (fn_name in Program.scanner_user_calls)
+        if (Program.scanner_user_queries.contains(fn_name)) nextIteration
+        writeln  "    method $ [abstract]" (fn_name)
         writeln
       endForEach
 

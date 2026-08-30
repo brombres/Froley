@@ -200,11 +200,11 @@ class RogueGenerator : Visitor
       write "if (not disable_output) _push( null, 0 )"
       visit_children( cmd )
 
-    method on_visit_node( cmd:CreateTokenList )
+    method on_visit_node( cmd:CreateTokenListDiscardingCommands )
       writeln "if (disable_output) _discard_position"
       write   "else                _create_token_list"
 
-    method on_visit_node( cmd:CreateTokenListPreservingStack )
+    method on_visit_node( cmd:CreateTokenListPreservingCommands )
       writeln "if (disable_output) _discard_position"
       write   "else                _create_token_list( &preserve_stack )"
 
@@ -416,6 +416,10 @@ class RogueGenerator : Visitor
       writeln cmd.fn_name
       visit_children( cmd )
 
+    method on_visit_node( cmd:ScannerQueryUserMethod )
+      write cmd.fn_name
+      visit_children( cmd )
+
     method on_visit_node( cmd:MustConsumeContent )
       write "_must_consume_content("
       write ''"$"'' (to_escaped_ascii(cmd.content, "\""))
@@ -450,6 +454,10 @@ class RogueGenerator : Visitor
 
     method on_visit_node( cmd:ParserCallUserMethod )
       writeln cmd.fn_name
+      visit_children( cmd )
+
+    method on_visit_node( cmd:ParserQueryUserMethod )
+      write cmd.fn_name
       visit_children( cmd )
 
     method on_visit( cmd:NextIsTokenType )->Cmd
@@ -489,13 +497,13 @@ class RogueGenerator : Visitor
       write   "return 0"
       visit_children( cmd )
 
-    method on_visit_node( cmd:ProduceTokenList )
+    method on_visit_node( cmd:ProduceTokenListDiscardingCommands )
       writeln "if (disable_output) _discard_position"
       writeln "else                _create_token_list"
       writeln "_cur_t = _previous_cur_t"
       write   "return 0"
 
-    method on_visit_node( cmd:ProduceTokenListPreservingStack )
+    method on_visit_node( cmd:ProduceTokenListPreservingCommands )
       writeln "if (disable_output) _discard_position"
       writeln "else                _create_token_list( &preserve_stack )"
       writeln "_cur_t = _previous_cur_t"

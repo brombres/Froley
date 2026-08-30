@@ -14,10 +14,19 @@ class RParser : RogueSourceWriter
          |  METHODS
 
       # User methods
-      forEach (fn_name at i in Program.parser_user_calls)
+      local i = 0
+      forEach (fn_name in Program.parser_user_queries)
+        if (i > 0) writeln
+        writeln "    method $->Int" (fn_name)
+        writeln "      return 0"
+        ++i
+      endForEach
+      forEach (fn_name in Program.parser_user_calls)
+        if (Program.parser_user_queries.contains(fn_name)) nextIteration
         if (i > 0) writeln
         writeln "    method $" (fn_name)
         writeln "      noAction"
+        ++i
       endForEach
 
       writeln ...

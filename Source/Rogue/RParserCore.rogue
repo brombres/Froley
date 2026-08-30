@@ -125,9 +125,15 @@ class RParserCore( generator, parser_def:ParserDef ) : RogueSourceWriter
          |      _scanner.reset( t, scanner_ip, scan_limit )
          |      reset( _scanner, parser_ip )
 
-      forEach (fn_name in Program.parser_user_calls)
+      forEach (fn_name in Program.parser_user_queries)
         writeln
         writeln  "    method $->Int [abstract]" (fn_name)
+      endForEach
+
+      forEach (fn_name in Program.parser_user_calls)
+        if (Program.parser_user_queries.contains(fn_name)) nextIteration
+        writeln
+        writeln  "    method $ [abstract]" (fn_name)
       endForEach
 
       writeln ...
@@ -173,7 +179,7 @@ class RParserCore( generator, parser_def:ParserDef ) : RogueSourceWriter
          |
          |    method _create_token_list( &preserve_stack )
          |      if (_saved_positions.is_empty)
-         |        throw _peek.error( "[INTERNAL] createTokenList/produceTokenlist without prior savePosition." )
+         |        throw _peek.error( "[INTERNAL] createTokenListDiscardingCommands/produceTokenlist without prior savePosition." )
          |      endIf
          |      local pos = _saved_positions.remove_last
          |      if (not preserve_stack) _cmd_stack.discard_from( pos.cmd_stack_count )

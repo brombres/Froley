@@ -44,8 +44,10 @@ tokens ParserKeywords
 KEYWORD_BEGIN_LIST          beginList
 KEYWORD_CREATE_LIST         createList
 KEYWORD_CREATE_NULL         createNull
-KEYWORD_CREATE_TOKEN_LIST   createTokenList
-KEYWORD_CREATE_TOKEN_LIST_PRESERVING_STACK createTokenListPreservingStack
+KEYWORD_CREATE_TOKEN_LIST                     createTokenList
+KEYWORD_CREATE_TOKEN_LIST_DISCARDING_COMMANDS createTokenListDiscardingCommands
+KEYWORD_CREATE_TOKEN_LIST_PRESERVING_COMMANDS createTokenListPreservingCommands
+KEYWORD_CREATE_TOKEN_LIST_PRESERVING_STACK    createTokenListPreservingStack
 KEYWORD_DISCARD_LIST        discardList
 KEYWORD_DUPLICATE           duplicate
 KEYWORD_ELSE_ON             elseOn       [structural]
@@ -58,8 +60,10 @@ KEYWORD_ON_PEEK             onPeek
 KEYWORD_POP                 pop
 KEYWORD_PRODUCE_LIST        produceList
 KEYWORD_PRODUCE_NULL        produceNull
-KEYWORD_PRODUCE_TOKEN_LIST  produceTokenList
-KEYWORD_PRODUCE_TOKEN_LIST_PRESERVING_STACK produceTokenListPreservingStack
+KEYWORD_PRODUCE_TOKEN_LIST                     produceTokenList
+KEYWORD_PRODUCE_TOKEN_LIST_DISCARDING_COMMANDS produceTokenListDiscardingCommands
+KEYWORD_PRODUCE_TOKEN_LIST_PRESERVING_COMMANDS produceTokenListPreservingCommands
+KEYWORD_PRODUCE_TOKEN_LIST_PRESERVING_STACK    produceTokenListPreservingStack
 KEYWORD_PUSH                push
 
 --------------------------------------------------------------------------------
@@ -90,6 +94,7 @@ KEYWORD_OTHERS           others      [structural]
 KEYWORD_PRINT            print
 KEYWORD_PRINTLN          println
 KEYWORD_PRODUCE          produce
+KEYWORD_QUERY            query
 KEYWORD_READ             read
 KEYWORD_RESTORE_POSITION restorePosition
 KEYWORD_RETURN           return
@@ -412,6 +417,7 @@ scanner
 parser
 --------------------------------------------------------------------------------
 - program
+
   beginList
     consume_eols
     while (hasAnother)
@@ -713,6 +719,7 @@ parser
   endOn
 
 - scanner_statement
+  on "call"    identifier         -> ScannerCallUserMethod(fn_name:String)
   on "collect" scanner_args       -> Collect(args:Args)
   on "create"  scanner_product    -> ScannerCreate(arg)
   on "discardPosition"            -> DiscardPosition
@@ -938,7 +945,7 @@ parser
   on '(' scanner_expression ')': return
   on '{' pattern_sequence '}':   return
   on "buffer"                       -> ReadBuffer
-  on "call"    identifier           -> ScannerCallUserMethod(fn_name:String)
+  on "query"   identifier           -> ScannerQueryUserMethod(fn_name:String)
   on "Character" '(' scanner_expression ')' -> CastToCharacter(operand):Unary
   on "Int"       '(' scanner_expression ')' -> CastToInt(operand):Unary
   on "Integer"   '(' scanner_expression ')' -> CastToInt(operand):Unary
@@ -1215,11 +1222,14 @@ parser
 
 - parser_statement
   on "beginList"                      -> BeginList
+  on "call"       identifier          -> ParserCallUserMethod(fn_name:String)
   on "create"     parser_product      -> ParserCreate(arg:CreateCmd)
   on "createList" list_type           -> CreateList(list_type:String)
   on "createNull"                     -> CreateNull
-  on "createTokenList"                -> CreateTokenList
-  on "createTokenListPreservingStack" -> CreateTokenListPreservingStack
+  on "createTokenList"                   -> CreateTokenListDiscardingCommands
+  on "createTokenListDiscardingCommands" -> CreateTokenListDiscardingCommands
+  on "createTokenListPreservingCommands" -> CreateTokenListPreservingCommands
+  on "createTokenListPreservingStack"    -> CreateTokenListPreservingCommands
   on "discardList"                    -> DiscardList
   on "discardPosition"                -> DiscardPosition
   on "duplicate"                      -> ParserDuplicate
@@ -1246,8 +1256,10 @@ parser
     produce Return(value)
   endOn
   on "produceList" list_type -> ProduceList(list_type:String)
-  on "produceTokenList"      -> ProduceTokenList
-  on "produceTokenListPreservingStack" -> ProduceTokenListPreservingStack
+  on "produceTokenList"                   -> ProduceTokenListDiscardingCommands
+  on "produceTokenListDiscardingCommands" -> ProduceTokenListDiscardingCommands
+  on "produceTokenListPreservingStack"    -> ProduceTokenListPreservingCommands
+  on "produceTokenListPreservingCommands" -> ProduceTokenListPreservingCommands
   on "push"    access        -> ParserPush(var:Access)
   on "restorePosition"       -> RestorePosition
   on "return"
@@ -1408,7 +1420,7 @@ parser
 - parser_term
   on '(' parser_expression ')':           return
   on "buffer"                           -> ReadBuffer
-  on "call"       identifier            -> ParserCallUserMethod(fn_name:String)
+  on "query"      identifier            -> ParserQueryUserMethod(fn_name:String)
   on "consume", ttype_or_literal        -> ParserConsume(token_type)
   on "false"                            -> LiteralLogical(value="false":Logical)
   on "hasAnother"                       -> ParserHasAnother

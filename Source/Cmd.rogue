@@ -1919,16 +1919,16 @@ class TokenList : Cmd
 endClass
 
 
-class CreateTokenList : Cmd
+class CreateTokenListDiscardingCommands : Cmd
   METHODS
     method description->String
-      return "CreateTokenList"
+      return "CreateTokenListDiscardingCommands"
 endClass
 
-class ProduceTokenList : Cmd
+class ProduceTokenListDiscardingCommands : Cmd
   METHODS
     method description->String
-      return "ProduceTokenList"
+      return "ProduceTokenListDiscardingCommands"
 endClass
 
 class NativeLiteral : Cmd
@@ -1986,16 +1986,16 @@ class ParserPush : Cmd
 
 endClass
 
-class CreateTokenListPreservingStack : Cmd
+class CreateTokenListPreservingCommands : Cmd
   METHODS
     method description->String
-      return "CreateTokenListPreservingStack"
+      return "CreateTokenListPreservingCommands"
 endClass
 
-class ProduceTokenListPreservingStack : Cmd
+class ProduceTokenListPreservingCommands : Cmd
   METHODS
     method description->String
-      return "ProduceTokenListPreservingStack"
+      return "ProduceTokenListPreservingCommands"
 endClass
 
 class ParserDuplicate : Cmd
@@ -2024,5 +2024,57 @@ class CreateAny : Cmd
     method to->Int:     return token_group_name
     method to->Logical: return token_group_name?
     method to->String: return token_group_name
+
+endClass
+
+class ParserQueryUserMethod : Cmd
+  PROPERTIES
+    fn_name : String
+
+  METHODS
+    method init( t, fn_name )
+
+    method init( existing:ParserQueryUserMethod )
+      prior.init( existing )
+      fn_name = existing.fn_name
+
+    method description->String
+      return "ParserQueryUserMethod($)" (%fn_name)
+
+    method to->Character
+      return Cmd.to_character(fn_name)
+
+    method to->Int:     return fn_name
+    method to->Logical: return fn_name?
+    method to->String: return fn_name
+
+    method type->FType
+      return FType.INT
+
+endClass
+
+class ScannerQueryUserMethod : Cmd
+  PROPERTIES
+    fn_name : String
+
+  METHODS
+    method init( t, fn_name )
+
+    method init( existing:ScannerQueryUserMethod )
+      prior.init( existing )
+      fn_name = existing.fn_name
+
+    method description->String
+      return "ScannerQueryUserMethod($)" (%fn_name)
+
+    method to->Character
+      return Cmd.to_character(fn_name)
+
+    method to->Int:     return fn_name
+    method to->Logical: return fn_name?
+    method to->String: return fn_name
+
+    method type->FType
+      return FType.INT
 
 endClass

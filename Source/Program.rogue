@@ -23,8 +23,10 @@ class Program [singleton]
     parser             : ParserDef
 
     scan_patterns      = [String:String]
-    scanner_user_calls = Set<<String>>()
-    parser_user_calls  = Set<<String>>()
+    scanner_user_calls   = Set<<String>>()  # 'call name'  - no return value
+    scanner_user_queries = Set<<String>>()  # 'query name' - returns Int
+    parser_user_calls    = Set<<String>>()
+    parser_user_queries  = Set<<String>>()
 
   METHODS
     method compile( command, nodes )

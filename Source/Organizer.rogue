@@ -309,10 +309,10 @@ class Organizer : Visitor
 
     method on_visit_node( cmd:TokenizerDef )
       if (not cmd.name) cmd.name = "Tokenizer"
-      if (Program.scanner and Program.scanner is not cmd)
-        throw cmd.t.error( "Multiple scanners defined - only one scanner can be defined." )
+      if (Program.tokenizer and Program.tokenizer is not cmd)
+        throw cmd.t.error( "Multiple scanners defined - only one tokenizer can be defined." )
       endIf
-      Program.scanner = cmd
+      Program.tokenizer = cmd
       visit_children( cmd )
 
 endClass

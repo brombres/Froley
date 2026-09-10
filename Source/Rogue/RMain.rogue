@@ -44,8 +44,8 @@ class RMain : RogueSourceWriter
          |    method scan_files
          |      forEach (arg in command//args)
          |        local filepath = arg->String
-         |        local scanner = Tokenizer( File(filepath) )
-         |        local tokens = scanner.tokenize
+         |        local tokenizer = Tokenizer( File(filepath) )
+         |        local tokens = tokenizer.tokenize
          |        println (forEach in tokens)
          |      endForEach
          |

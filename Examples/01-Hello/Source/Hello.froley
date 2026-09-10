@@ -1,7 +1,7 @@
-scanner
+tokenizer
 
 - main
-  # This scanner just echoes the content of Test.helloworld without creating any tokens.
+  # This tokenizer just echoes the content of Test.helloworld without creating any tokens.
   while (hasAnother)
     ch = read  # These two lines could be condensed into 'print read'
     print ch

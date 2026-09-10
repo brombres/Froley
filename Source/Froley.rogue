@@ -124,7 +124,7 @@ class Froley
                |    Show this help text.
                |
                |  --main, -m
-               |    Creates a main application file that demonstrates how to use the scanner and parser.
+               |    Creates a main application file that demonstrates how to use the tokenizer and parser.
                |    Does not create or modify a main file if it already exists.
                |
                |  --project=ProjectName, -p ProjectName

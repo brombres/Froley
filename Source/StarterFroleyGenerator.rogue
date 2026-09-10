@@ -61,7 +61,7 @@ class StarterFroleyGenerator [singleton]
          |KEYWORD_PRINTLN println
          |
          |--------------------------------------------------------------------------------
-         |scanner
+         |tokenizer
          |--------------------------------------------------------------------------------
          |- main
          |  consume [ \r\t]*               # whitespace

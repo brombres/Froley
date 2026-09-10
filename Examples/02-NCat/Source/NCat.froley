@@ -1,7 +1,7 @@
 --------------------------------------------------------------------------------
-scanner
+tokenizer
 --------------------------------------------------------------------------------
-# Begins the definition of the scanner.
+# Begins the definition of the tokenizer.
 
 - main
   # Begins a routine with the arbitrary name "main".

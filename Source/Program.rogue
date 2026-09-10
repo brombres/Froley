@@ -19,7 +19,7 @@ class Program [singleton]
     tokens_by_symbol   = [String:TokenDef]
     token_attributes   = [String:Int]{ "content":1 }
 
-    scanner            : TokenizerDef
+    tokenizer            : TokenizerDef
     parser             : ParserDef
 
     scan_patterns      = [String:String]

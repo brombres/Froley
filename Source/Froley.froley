@@ -18,10 +18,11 @@ tokens SectionKeywords
 KEYWORD_NATIVE_TYPES    nativeTypes [structural]
 KEYWORD_PARSER          parser      [structural]
 KEYWORD_SCANNER         scanner     [structural]
+KEYWORD_TOKENIZER       tokenizer   [structural]
 KEYWORD_TOKENS          tokens      [structural]
 
 --------------------------------------------------------------------------------
-tokens ScannerKeywords
+tokens TokenizerKeywords
 --------------------------------------------------------------------------------
 KEYWORD_BUFFER           buffer
 KEYWORD_CASE             case        [structural]
@@ -139,7 +140,7 @@ SYMBOL_SLASH          /
 SYMBOL_STAR           *
 
 --------------------------------------------------------------------------------
-scanner
+tokenizer
 --------------------------------------------------------------------------------
 - scan_standard_token
   if (not hasAnother) halt
@@ -270,9 +271,12 @@ scanner
       case "parser"
         mode scan_standard_token
         produce KEYWORD_PARSER
+      case "tokenizer"
+        mode scan_standard_token
+        produce KEYWORD_TOKENIZER
       case "scanner"
         mode scan_standard_token
-        produce KEYWORD_SCANNER
+        produce KEYWORD_TOKENIZER
       case "tokens"
         mode scan_tokens_id
         produce KEYWORD_TOKENS
@@ -334,9 +338,12 @@ scanner
       case "parser"
         mode scan_standard_token
         produce KEYWORD_PARSER
+      case "tokenizer"
+        mode scan_standard_token
+        produce KEYWORD_TOKENIZER
       case "scanner"
         mode scan_standard_token
-        produce KEYWORD_SCANNER
+        produce KEYWORD_TOKENIZER
       case "tokens"
         mode scan_tokens_id
         produce KEYWORD_TOKENS
@@ -344,7 +351,7 @@ scanner
         produce KEYWORD_ELSE_OTHERS
       produceAny CommonKeywords
       produceAny ParserKeywords
-      produceAny ScannerKeywords
+      produceAny TokenizerKeywords
       others
         produce IDENTIFIER
     endMatch
@@ -428,7 +435,7 @@ parser
   produce ProgramDef(sections)
 
 - section
-  on "scanner"
+  on "tokenizer"
     createNull
     must_consume_eols
     scanner_routines

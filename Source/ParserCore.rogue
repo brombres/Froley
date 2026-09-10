@@ -489,7 +489,7 @@ class ParserCore [abstract]
 
     method r_section->Int
       local _previous_cur_t = _cur_t
-      if (_next_t.type == TokenType.KEYWORD_SCANNER)
+      if (_next_t.type == TokenType.KEYWORD_TOKENIZER)
         temporarily _cur_t = _on_t
           if (not disable_output) _push( null, 0 )
           r_must_consume_eols

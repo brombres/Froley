@@ -11,8 +11,8 @@ class Cmd( t:Token )
     method init( existing:Cmd )
       t = existing.t
 
-    method cloned->ThisType [propagated]
-      return ThisType(this)
+    method cloned->$thisType [propagated]
+      return $thisType(this)
 
     method add( cmd:Cmd )
       throw UnsupportedOperationError()

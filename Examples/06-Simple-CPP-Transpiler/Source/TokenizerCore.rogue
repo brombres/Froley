@@ -17,15 +17,16 @@ class TokenizerCore [abstract]
 
   PROPERTIES
     _filepath     : String
-    _scanner      : Rogue::Scanner
-    line          = 1L
-    column        = 1L
+    _scanner      : Scanner
+    line          = 1
+    column        = 1
+    position      = 0
 
-    tokens        = Token[]
+    tokens        : Token[]
     buffer        = String()
     output        = String()
 
-    start_ip      = 0L
+    start_ip      = 0
     halt          = false
 
     _position_stack  = Int[]
@@ -44,22 +45,66 @@ class TokenizerCore [abstract]
     _scan_table_1 = ScanTable("IgABcAT/AmkKcgwBAP8BaRD/AW4U/wF0GAIBbBz/AW4gAwA=")
 
   METHODS
-    method init( file:File )
-      init( file.filepath, Rogue::Scanner(file) )
-      line   = 1
-      column = 1
+    method init
+      noAction
 
-    method init( filepath:String, content:String, line=1, column=1 )
-      init( filepath, Rogue::Scanner(content).[line=line, column=column] )
+    method init( file:File )
+      init( file.filepath, Scanner(file) )
+
+    method init( filepath:String, content:String )
+      init( filepath, Scanner(content) )
 
     method init( _filepath, _scanner )
       noAction
+
+    method reset( start_ip=0 )
+      if (_scanner) _scanner.reset
+      line   = 1
+      column = 1
+      tokens = null
+      buffer.clear
+      output.clear
+      halt = false
+      _position_stack.clear
+      _line_stack.clear
+      _column_stack.clear
+      _token_pos_stack.clear
+
+    method reset( file:File, start_ip=0:Int )
+      reset( start_ip )
+      init( file )
+
+    method reset( filepath:String, content:String, start_ip=0:Int )
+      reset( start_ip )
+      init( filepath, content )
+
+    method reset( t:Token, start_ip=0:Int, scan_limit=null:Int? )
+      reset( start_ip )
+      init( t.filepath, t.source )
+      if (scan_limit) _scanner.count = t.position + scan_limit.value
+      _scanner.seek( t.position )
+      line = t.line
+      column = t.column
+      position = t.position
 
     method execute( ip:Int )
       _clear_state
       _execute( ip )
 
+    method tokenize( file:File, line=1, column=1, &ip=null:Int? )->Token[]
+      return tokenize( file.filepath, Scanner(file) )
+
+    method tokenize( filepath:String, content:String, line=1, column=1, &ip=null:Int? )->Token[]
+      return tokenize( filepath, Scanner(content).[line=line, column=column] )
+
+    method tokenize( _filepath, _scanner, line=1, column=1, &ip=null:Int? )->Token[]
+      reset
+      return tokenize( ip )
+
     method tokenize( ip=null:Int? )->Token[]
+      tokens = Token[]
+      tokens.reserve( _scanner.count / 3 )
+
       if (ip) start_ip = ip.value
       _clear_state
       while (_execute(start_ip) or not halt)
@@ -157,7 +202,7 @@ class TokenizerCore [abstract]
       return true
 
     method _t( type:TokenType, content=null:String )->Token
-      return Token( type, _filepath, _scanner.source, line, column, content )
+      return Token( type, _filepath, _scanner.source, line, column, position, content )
 
     method _throw_expected_string_error( st:String )
       local message = "Syntax error - expected $, found " (st)
@@ -199,8 +244,10 @@ class TokenizerCore [abstract]
         halt = true
         return false
       endIf
-      line   = _scanner.line
-      column = _scanner.column
+      line     = _scanner.line
+      column   = _scanner.column
+      position = _scanner.position
+
       if (_scanner.consume('\n'))
         _add( TokenType.EOL )
         return false
@@ -248,7 +295,6 @@ class TokenizerCore [abstract]
       if (not r_scan_string) return false
       _throw_syntax_error
       return false
-      return true
 
     method r_scan_id_or_keyword->Logical
       if ((not _scan_pattern_2.scan(_scanner,buffer)))
@@ -314,6 +360,5 @@ class TokenizerCore [abstract]
       endWhile
       _throw_syntax_error("Unterminated string.")
       return false
-      return true
 
 endClass

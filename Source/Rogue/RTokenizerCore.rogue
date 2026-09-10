@@ -24,7 +24,7 @@ class RTokenizerCore( generator, scanner_def:TokenizerDef ) : RogueSourceWriter
         @|
          |  PROPERTIES
          |    _filepath     : String
-         |    _scanner      : Rogue::Scanner
+         |    _scanner      : Scanner
          |    line          = 1
          |    column        = 1
          |    position      = 0
@@ -79,10 +79,10 @@ class RTokenizerCore( generator, scanner_def:TokenizerDef ) : RogueSourceWriter
          |      noAction
          |
          |    method init( file:File )
-         |      init( file.filepath, Rogue::Scanner(file) )
+         |      init( file.filepath, Scanner(file) )
          |
          |    method init( filepath:String, content:String )
-         |      init( filepath, Rogue::Scanner(content) )
+         |      init( filepath, Scanner(content) )
          |
          |    method init( _filepath, _scanner )
          |      noAction
@@ -135,10 +135,10 @@ class RTokenizerCore( generator, scanner_def:TokenizerDef ) : RogueSourceWriter
          |      _execute( ip )
          |
          |    method tokenize( file:File, line=1, column=1, &ip=null:Int? )->Token[]
-         |      return tokenize( file.filepath, Rogue::Scanner(file) )
+         |      return tokenize( file.filepath, Scanner(file) )
          |
          |    method tokenize( filepath:String, content:String, line=1, column=1, &ip=null:Int? )->Token[]
-         |      return tokenize( filepath, Rogue::Scanner(content).[line=line, column=column] )
+         |      return tokenize( filepath, Scanner(content).[line=line, column=column] )
          |
          |    method tokenize( _filepath, _scanner, line=1, column=1, &ip=null:Int? )->Token[]
          |      reset

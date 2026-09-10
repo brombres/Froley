@@ -1,9 +1,9 @@
 library Froley
 
-class RScannerCore( generator, scanner_def:ScannerDef ) : RogueSourceWriter
+class RTokenizerCore( generator, scanner_def:TokenizerDef ) : RogueSourceWriter
   METHODS
     method init_object
-      class_name = "ScannerCore"
+      class_name = "TokenizerCore"
 
     method write_content
       writeln ...
@@ -14,7 +14,7 @@ class RScannerCore( generator, scanner_def:ScannerDef ) : RogueSourceWriter
          |$include "Token.rogue"
          |$include "TokenType.rogue"
          |
-         |class ScannerCore [abstract]
+         |class TokenizerCore [abstract]
          |  DEFINITIONS
       forEach (r in scanner_def.routines)
         writeln "    ip_$ = $" (r.name,r.ip)

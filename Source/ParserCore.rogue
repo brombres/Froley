@@ -4,7 +4,7 @@ library Froley
 $define PARSER_EXISTS true
 
 $include "Cmd.rogue"
-$include "Scanner.rogue"
+$include "Tokenizer.rogue"
 $include "Visitor.rogue"
 
 class ParserCore [abstract]
@@ -101,7 +101,7 @@ class ParserCore [abstract]
     ip_additional_node_types = 89
 
   PROPERTIES
-    _scanner         : Scanner
+    _scanner         : Tokenizer
     _tokens          : Token[]
     _position        : Int
     _limit           : Int
@@ -494,7 +494,7 @@ class ParserCore [abstract]
           if (not disable_output) _push( null, 0 )
           r_must_consume_eols
           r_scanner_routines
-          if (not disable_output) _push( ScannerDef(_cur_t,_string_arg(-2),_node_arg(-1)), 2 )
+          if (not disable_output) _push( TokenizerDef(_cur_t,_string_arg(-2),_node_arg(-1)), 2 )
           _cur_t = _previous_cur_t
           return 0
         endTemporarily
@@ -814,7 +814,7 @@ class ParserCore [abstract]
               r_consume_eols
               _begin_list
               r_scanner_product
-              if (not disable_output) _push( ScannerCreate(_cur_t,_node_arg(-1)), 1 )
+              if (not disable_output) _push( TokenizerCreate(_cur_t,_node_arg(-1)), 1 )
               if (not disable_output) _push( null, 0 )
               if (not disable_output) _push( Restart(_cur_t,_string_arg(-1)), 1 )
               if (disable_output)     _discard_list
@@ -981,7 +981,7 @@ class ParserCore [abstract]
       if (_next_t.type == TokenType.KEYWORD_CALL)
         temporarily _cur_t = _on_t
           r_identifier
-          if (not disable_output) _push( ScannerCallUserMethod(_cur_t,_string_arg(-1)), 1 )
+          if (not disable_output) _push( TokenizerCallUserMethod(_cur_t,_string_arg(-1)), 1 )
           _cur_t = _previous_cur_t
           return 0
         endTemporarily
@@ -997,7 +997,7 @@ class ParserCore [abstract]
       if (_next_t.type == TokenType.KEYWORD_CREATE)
         temporarily _cur_t = _on_t
           r_scanner_product
-          if (not disable_output) _push( ScannerCreate(_cur_t,_node_arg(-1)), 1 )
+          if (not disable_output) _push( TokenizerCreate(_cur_t,_node_arg(-1)), 1 )
           _cur_t = _previous_cur_t
           return 0
         endTemporarily
@@ -1034,7 +1034,7 @@ class ParserCore [abstract]
       if (_next_t.type == TokenType.KEYWORD_MUST_CONSUME)
         temporarily _cur_t = _on_t
           r_sequence_args
-          if (not disable_output) _push( ScannerMustConsume(_cur_t,_node_arg(-1)->(as SequenceArgs)), 1 )
+          if (not disable_output) _push( TokenizerMustConsume(_cur_t,_node_arg(-1)->(as SequenceArgs)), 1 )
           _cur_t = _previous_cur_t
           return 0
         endTemporarily
@@ -1070,7 +1070,7 @@ class ParserCore [abstract]
       if (_next_t.type == TokenType.KEYWORD_PRODUCE)
         temporarily _cur_t = _on_t
           r_scanner_product
-          if (not disable_output) _push( ScannerCreate(_cur_t,_node_arg(-1)), 1 )
+          if (not disable_output) _push( TokenizerCreate(_cur_t,_node_arg(-1)), 1 )
           if (not disable_output) _push( null, 0 )
           if (not disable_output) _push( Restart(_cur_t,_string_arg(-1)), 1 )
           _cur_t = _previous_cur_t
@@ -1079,7 +1079,7 @@ class ParserCore [abstract]
       elseIf (_next_t.type == TokenType.SYMBOL_ARROW)
         temporarily _cur_t = _on_t
           r_consume_eols
-          if (not disable_output) _push( ScannerCreate(_cur_t,_node_arg(-1)), 1 )
+          if (not disable_output) _push( TokenizerCreate(_cur_t,_node_arg(-1)), 1 )
           if (not disable_output) _push( null, 0 )
           if (not disable_output) _push( Restart(_cur_t,_string_arg(-1)), 1 )
           _cur_t = _previous_cur_t
@@ -1661,7 +1661,7 @@ class ParserCore [abstract]
       if (_next_t.type == TokenType.KEYWORD_QUERY)
         temporarily _cur_t = _on_t
           r_identifier
-          if (not disable_output) _push( ScannerQueryUserMethod(_cur_t,_string_arg(-1)), 1 )
+          if (not disable_output) _push( TokenizerQueryUserMethod(_cur_t,_string_arg(-1)), 1 )
           _cur_t = _previous_cur_t
           return 0
         endTemporarily
@@ -1699,7 +1699,7 @@ class ParserCore [abstract]
       if (_next_t.type == TokenType.KEYWORD_CONSUME)
         temporarily _cur_t = _on_t
           r_sequence_args
-          if (not disable_output) _push( ScannerConsume(_cur_t,_node_arg(-1)->(as SequenceArgs)), 1 )
+          if (not disable_output) _push( TokenizerConsume(_cur_t,_node_arg(-1)->(as SequenceArgs)), 1 )
           _cur_t = _previous_cur_t
           return 0
         endTemporarily
@@ -1713,7 +1713,7 @@ class ParserCore [abstract]
       endIf
       if (_next_t.type == TokenType.KEYWORD_HAS_NEXT)
         temporarily _cur_t = _on_t
-          if (not disable_output) _push( ScannerHasAnother(_cur_t), 0 )
+          if (not disable_output) _push( TokenizerHasAnother(_cur_t), 0 )
           _cur_t = _previous_cur_t
           return 0
         endTemporarily
@@ -1721,7 +1721,7 @@ class ParserCore [abstract]
       if (_next_t.type == TokenType.KEYWORD_NEXT_IS)
         temporarily _cur_t = _on_t
           r_sequence_args
-          if (not disable_output) _push( ScannerNextIs(_cur_t,_node_arg(-1)->(as SequenceArgs)), 1 )
+          if (not disable_output) _push( TokenizerNextIs(_cur_t,_node_arg(-1)->(as SequenceArgs)), 1 )
           _cur_t = _previous_cur_t
           return 0
         endTemporarily
@@ -1741,14 +1741,14 @@ class ParserCore [abstract]
           else
             if (not disable_output) _push( null, 0 )
           endIf
-          if (not disable_output) _push( ScannerPeek(_cur_t,_node_arg(-1)), 1 )
+          if (not disable_output) _push( TokenizerPeek(_cur_t,_node_arg(-1)), 1 )
           _cur_t = _previous_cur_t
           return 0
         endTemporarily
       endIf
       if (_next_t.type == TokenType.KEYWORD_READ)
         temporarily _cur_t = _on_t
-          if (not disable_output) _push( ScannerRead(_cur_t), 0 )
+          if (not disable_output) _push( TokenizerRead(_cur_t), 0 )
           _cur_t = _previous_cur_t
           return 0
         endTemporarily

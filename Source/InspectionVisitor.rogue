@@ -207,32 +207,32 @@ class InspectionVisitor<<$ReturnType>>
       result = visit(cmd.args)
       return result
 
-    method on_visit_children( cmd:ScannerConsume )->$ReturnType
+    method on_visit_children( cmd:TokenizerConsume )->$ReturnType
       local result : $ReturnType
       result = visit(cmd.args)
       return result
 
-    method on_visit_children( cmd:ScannerCreate )->$ReturnType
+    method on_visit_children( cmd:TokenizerCreate )->$ReturnType
       local result : $ReturnType
       result = visit(cmd.arg)
       return result
 
-    method on_visit_children( cmd:ScannerDef )->$ReturnType
+    method on_visit_children( cmd:TokenizerDef )->$ReturnType
       local result : $ReturnType
       result = visit(cmd.routine_defs)
       return result
 
-    method on_visit_children( cmd:ScannerMustConsume )->$ReturnType
+    method on_visit_children( cmd:TokenizerMustConsume )->$ReturnType
       local result : $ReturnType
       result = visit(cmd.args)
       return result
 
-    method on_visit_children( cmd:ScannerNextIs )->$ReturnType
+    method on_visit_children( cmd:TokenizerNextIs )->$ReturnType
       local result : $ReturnType
       result = visit(cmd.args)
       return result
 
-    method on_visit_children( cmd:ScannerPeek )->$ReturnType
+    method on_visit_children( cmd:TokenizerPeek )->$ReturnType
       local result : $ReturnType
       result = visit(cmd.lookahead)
       return result

@@ -6,8 +6,8 @@ $include "Rogue/RInspectionVisitor.rogue"
 $include "Rogue/RParser.rogue"
 $include "Rogue/RParserCore.rogue"
 $include "Rogue/RScanTable.rogue"
-$include "Rogue/RScanner.rogue"
-$include "Rogue/RScannerCore.rogue"
+$include "Rogue/RTokenizer.rogue"
+$include "Rogue/RTokenizerCore.rogue"
 $include "Rogue/RCompileError.rogue"
 $include "Rogue/RToken.rogue"
 $include "Rogue/RTokenType.rogue"
@@ -293,7 +293,7 @@ class RogueGenerator : Visitor
       write "++"
       visit_children( cmd )
 
-    method on_visit_node( cmd:ScannerHasAnother )
+    method on_visit_node( cmd:TokenizerHasAnother )
       write "_scanner.has_another"
       visit_children( cmd )
 
@@ -412,11 +412,11 @@ class RogueGenerator : Visitor
       indent -= 2
       return cmd
 
-    method on_visit_node( cmd:ScannerCallUserMethod )
+    method on_visit_node( cmd:TokenizerCallUserMethod )
       writeln cmd.fn_name
       visit_children( cmd )
 
-    method on_visit_node( cmd:ScannerQueryUserMethod )
+    method on_visit_node( cmd:TokenizerQueryUserMethod )
       write cmd.fn_name
       visit_children( cmd )
 
@@ -528,12 +528,12 @@ class RogueGenerator : Visitor
       write "_read"
       visit_children( cmd )
 
-    method on_visit_node( cmd:ScannerCreate )
+    method on_visit_node( cmd:TokenizerCreate )
       write   "_add( "
       visit_children( cmd )
       write " )"
 
-    method on_visit( cmd:ScannerPeek )->Cmd
+    method on_visit( cmd:TokenizerPeek )->Cmd
       write   "_scanner.peek"
       if (cmd.lookahead)
         write " ("
@@ -542,7 +542,7 @@ class RogueGenerator : Visitor
       endIf
       return cmd
 
-    method on_visit_node( cmd:ScannerRead )
+    method on_visit_node( cmd:TokenizerRead )
       write "_scanner.read"
       visit_children( cmd )
 
@@ -615,10 +615,10 @@ class RogueGenerator : Visitor
       write "_save_position"
       visit_children( cmd )
 
-    method on_visit( cmd:ScannerDef )->Cmd
+    method on_visit( cmd:TokenizerDef )->Cmd
       temporarily this_element = cmd
-        RScanner(this).create_missing
-        RScannerCore(this,cmd).overwrite
+        RTokenizer(this).create_missing
+        RTokenizerCore(this,cmd).overwrite
       endTemporarily
       return cmd
 
@@ -637,13 +637,13 @@ class RogueGenerator : Visitor
       writeln @|$scan_table.reset
                |contingent
       if (cmd.expression)
-        # ScannerRead from string; must accept all characters.
+        # TokenizerRead from string; must accept all characters.
         write @|  necessary ($scan_table.accept(forEach in
         write " "
         visit( cmd.expression )
         writeln @|))
       else
-        # ScannerRead longest match from input
+        # TokenizerRead longest match from input
         indent += 2
         writeln @|block n=1
                  |  while (_scanner.has_another(n))

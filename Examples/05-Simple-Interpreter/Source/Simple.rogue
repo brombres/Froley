@@ -1,7 +1,7 @@
 library Simple
 
 $include "CmdExecute.rogue"
-$include "Scanner.rogue"
+$include "Tokenizer.rogue"
 $include "Parser.rogue"
 $include "Resolver.rogue"
 

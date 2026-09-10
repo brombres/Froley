@@ -7,7 +7,7 @@ $include "ScanTable.rogue"
 $include "Token.rogue"
 $include "TokenType.rogue"
 
-class ScannerCore [abstract]
+class TokenizerCore [abstract]
   DEFINITIONS
     ip_scan_standard_token = 0
     ip_scan_charset = 1

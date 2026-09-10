@@ -236,10 +236,10 @@ class Element : Cmd
       return entry.value.type
 endClass
 
-class ScannerDef : Element
+class TokenizerDef : Element
   METHODS
     method description->String
-      return "ScannerDef($,$)" (%name,%routine_defs)
+      return "TokenizerDef($,$)" (%name,%routine_defs)
 
 endClass
 
@@ -584,7 +584,7 @@ class While : Cmd
 
 endClass
 
-class ScannerCreate : Cmd
+class TokenizerCreate : Cmd
   PROPERTIES
     arg : Cmd
 
@@ -592,7 +592,7 @@ class ScannerCreate : Cmd
     method init( t, arg )
 
     method description->String
-      return "ScannerCreate($)" (%arg)
+      return "TokenizerCreate($)" (%arg)
 
 endClass
 
@@ -713,7 +713,7 @@ class Mode : Cmd
 
 endClass
 
-class ScannerMustConsume : Cmd
+class TokenizerMustConsume : Cmd
   PROPERTIES
     args : SequenceArgs
 
@@ -721,7 +721,7 @@ class ScannerMustConsume : Cmd
     method init( t, args )
 
     method description->String
-      return "ScannerMustConsume($)" (%args)
+      return "TokenizerMustConsume($)" (%args)
 
 endClass
 
@@ -1115,7 +1115,7 @@ class ReadBuffer : Cmd
       return FType.STRING
 endClass
 
-class ScannerCallUserMethod : Cmd
+class TokenizerCallUserMethod : Cmd
   PROPERTIES
     fn_name : String
 
@@ -1123,7 +1123,7 @@ class ScannerCallUserMethod : Cmd
     method init( t, fn_name )
 
     method description->String
-      return "ScannerCallUserMethod($)" (%fn_name)
+      return "TokenizerCallUserMethod($)" (%fn_name)
 
     method to->Character
       if (fn_name is null or fn_name.count == 0) return Character(0)
@@ -1138,7 +1138,7 @@ class ScannerCallUserMethod : Cmd
 
 endClass
 
-class ScannerConsume : Cmd
+class TokenizerConsume : Cmd
   PROPERTIES
     args : SequenceArgs
 
@@ -1146,22 +1146,22 @@ class ScannerConsume : Cmd
     method init( t, args )
 
     method description->String
-      return "ScannerConsume($)" (%args)
+      return "TokenizerConsume($)" (%args)
 
     method type->FType
       return FType.LOGICAL
 endClass
 
-class ScannerHasAnother : Cmd
+class TokenizerHasAnother : Cmd
   METHODS
     method description->String
-      return "ScannerHasAnother"
+      return "TokenizerHasAnother"
 
     method type->FType
       return FType.LOGICAL
 endClass
 
-class ScannerNextIs : Cmd
+class TokenizerNextIs : Cmd
   PROPERTIES
     args : SequenceArgs
 
@@ -1169,13 +1169,13 @@ class ScannerNextIs : Cmd
     method init( t, args )
 
     method description->String
-      return "ScannerNextIs($)" (%args)
+      return "TokenizerNextIs($)" (%args)
 
     method type->FType
       return FType.LOGICAL
 endClass
 
-class ScannerPeek : Cmd
+class TokenizerPeek : Cmd
   PROPERTIES
     lookahead : Cmd
 
@@ -1183,16 +1183,16 @@ class ScannerPeek : Cmd
     method init( t, lookahead )
 
     method description->String
-      return "ScannerPeek($)" (%lookahead)
+      return "TokenizerPeek($)" (%lookahead)
 
     method type->FType
       return FType.CHARACTER
 endClass
 
-class ScannerRead : Cmd
+class TokenizerRead : Cmd
   METHODS
     method description->String
-      return "ScannerRead"
+      return "TokenizerRead"
 
     method type->FType
       return FType.CHARACTER
@@ -2053,19 +2053,19 @@ class ParserQueryUserMethod : Cmd
 
 endClass
 
-class ScannerQueryUserMethod : Cmd
+class TokenizerQueryUserMethod : Cmd
   PROPERTIES
     fn_name : String
 
   METHODS
     method init( t, fn_name )
 
-    method init( existing:ScannerQueryUserMethod )
+    method init( existing:TokenizerQueryUserMethod )
       prior.init( existing )
       fn_name = existing.fn_name
 
     method description->String
-      return "ScannerQueryUserMethod($)" (%fn_name)
+      return "TokenizerQueryUserMethod($)" (%fn_name)
 
     method to->Character
       return Cmd.to_character(fn_name)

@@ -4,7 +4,7 @@ library Simple
 $define PARSER_EXISTS true
 
 $include "Cmd.rogue"
-$include "Scanner.rogue"
+$include "Tokenizer.rogue"
 $include "Visitor.rogue"
 
 class ParserCore [abstract]
@@ -43,12 +43,12 @@ class ParserCore [abstract]
 
   METHODS
     method init( file:File )
-      init( Scanner(file) )
+      init( Tokenizer(file) )
 
     method init( filepath:String, content:String )
-      init( Scanner(filepath,content) )
+      init( Tokenizer(filepath,content) )
 
-    method init( scanner:Scanner )
+    method init( scanner:Tokenizer )
       local tokens = scanner.tokenize
       if (scanner.output.count) print scanner.output; flush
       init( tokens )

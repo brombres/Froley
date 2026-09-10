@@ -439,7 +439,7 @@ parser
     createNull
     must_consume_eols
     scanner_routines
-    produce ScannerDef(name:String,routine_defs)
+    produce TokenizerDef(name:String,routine_defs)
 
   elseOn "nativeTypes"
     beginList
@@ -632,7 +632,7 @@ parser
           consume_eols
           beginList
             scanner_product
-            create ScannerCreate(arg)
+            create TokenizerCreate(arg)
             createNull
             create Restart(start_ip:String)
           createList Statements
@@ -726,14 +726,14 @@ parser
   endOn
 
 - scanner_statement
-  on "call"    identifier         -> ScannerCallUserMethod(fn_name:String)
+  on "call"    identifier         -> TokenizerCallUserMethod(fn_name:String)
   on "collect" scanner_args       -> Collect(args:Args)
-  on "create"  scanner_product    -> ScannerCreate(arg)
+  on "create"  scanner_product    -> TokenizerCreate(arg)
   on "discardPosition"            -> DiscardPosition
   on "halt"                       -> Halt
   on "markPosition"               -> MarkPosition
   on "mode"  identifier           -> Mode(routine_name:String)
-  on "mustConsume"  sequence_args -> ScannerMustConsume(args:SequenceArgs)
+  on "mustConsume"  sequence_args -> TokenizerMustConsume(args:SequenceArgs)
   on "noAction": return
   on "print"    scanner_args      -> Print(args:Args)
   on "println"
@@ -746,12 +746,12 @@ parser
     produce Println(args:Args)
   endOn
   on "produce"  scanner_product
-    create ScannerCreate(arg)
+    create TokenizerCreate(arg)
     createNull
     produce Restart(start_ip:String)
   elseOn "->"
     consume_eols
-    create ScannerCreate(arg)
+    create TokenizerCreate(arg)
     createNull
     produce Restart(start_ip:String)
   endOn
@@ -952,21 +952,21 @@ parser
   on '(' scanner_expression ')': return
   on '{' pattern_sequence '}':   return
   on "buffer"                       -> ReadBuffer
-  on "query"   identifier           -> ScannerQueryUserMethod(fn_name:String)
+  on "query"   identifier           -> TokenizerQueryUserMethod(fn_name:String)
   on "Character" '(' scanner_expression ')' -> CastToCharacter(operand):Unary
   on "Int"       '(' scanner_expression ')' -> CastToInt(operand):Unary
   on "Integer"   '(' scanner_expression ')' -> CastToInt(operand):Unary
-  on "consume", sequence_args       -> ScannerConsume(args:SequenceArgs)
+  on "consume", sequence_args       -> TokenizerConsume(args:SequenceArgs)
   on "false"                        -> LiteralLogical(value="false":Logical)
-  on "hasAnother"                   -> ScannerHasAnother
-  on "nextIs", sequence_args        -> ScannerNextIs(args:SequenceArgs)
+  on "hasAnother"                   -> TokenizerHasAnother
+  on "nextIs", sequence_args        -> TokenizerNextIs(args:SequenceArgs)
   on "output"                       -> ReadOutput
   on "peek"
     if (consume('(')) scanner_expression; mustConsume(')')
     else              createNull
-    produce ScannerPeek(lookahead)
+    produce TokenizerPeek(lookahead)
   endOn
-  on "read"                      -> ScannerRead
+  on "read"                      -> TokenizerRead
   on "scan", sequence_args       -> Scan(args:SequenceArgs)
   on "true"                      -> LiteralLogical(value="true":Logical)
   on CHARSET

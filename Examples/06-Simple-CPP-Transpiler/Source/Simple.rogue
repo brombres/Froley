@@ -5,7 +5,7 @@ $include "CmdTypes.rogue"
 $include "Parser.rogue" [optional]
 $include "Program.rogue"
 $include "Resolver.rogue"
-$include "Scanner.rogue"
+$include "Tokenizer.rogue"
 
 uses Simple
 uses Console/CommandLineParser
@@ -43,7 +43,7 @@ class Simple
     method scan_files
       forEach (arg in command//args)
         local filepath = arg->String
-        local scanner = Scanner( File(filepath) )
+        local scanner = Tokenizer( File(filepath) )
         local tokens = scanner.tokenize
         println (forEach in tokens)
       endForEach

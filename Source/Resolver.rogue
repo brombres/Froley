@@ -134,7 +134,7 @@ class Resolver : Visitor
     method on_visit( cmd:CastToPattern )->Cmd
       return visit( Pattern( cmd.t, cmd.operand->ScanPattern ) )
 
-    method on_visit( cmd:ScannerConsume )->Cmd
+    method on_visit( cmd:TokenizerConsume )->Cmd
       local seq = resolve_sequence( cmd.args )
       which (seq.require_type)
         case FType.CHARACTER, FType.STRING
@@ -145,7 +145,7 @@ class Resolver : Visitor
           throw cmd.t.error( "Expected character, string, or pattern; found type $."(seq.type.display_name) )
       endWhich
 
-    method on_visit( cmd:ScannerMustConsume )->Cmd
+    method on_visit( cmd:TokenizerMustConsume )->Cmd
       local seq = resolve_sequence( cmd.args )
       which (seq.require_type)
         case FType.CHARACTER, FType.STRING
@@ -174,7 +174,7 @@ class Resolver : Visitor
       endIf
       return cmd
 
-    method on_visit( cmd:ScannerCreate )->Cmd
+    method on_visit( cmd:TokenizerCreate )->Cmd
       cmd.arg = cast_to( cmd.arg, FType.TOKEN_TYPE )
       return cmd
 
@@ -286,7 +286,7 @@ class Resolver : Visitor
       if (literal_content) return visit( NextIsContent( t, literal_content.value ) )
       return visit( NextIsTokenType( t, resolve_token_type(cmd.token_type) ) )
 
-    method on_visit( cmd:ScannerNextIs )->Cmd
+    method on_visit( cmd:TokenizerNextIs )->Cmd
       local seq = resolve_sequence( cmd.args )
       which (seq.require_type)
         case FType.CHARACTER, FType.STRING

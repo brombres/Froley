@@ -6,7 +6,7 @@ class RMain : RogueSourceWriter
 
     method write_content
       local content =
-        @|$include "Scanner.rogue"
+        @|$include "Tokenizer.rogue"
          |$include "Parser.rogue" [optional]
          |uses $ProjectName
          |uses Console/CommandLineParser
@@ -44,7 +44,7 @@ class RMain : RogueSourceWriter
          |    method scan_files
          |      forEach (arg in command//args)
          |        local filepath = arg->String
-         |        local scanner = Scanner( File(filepath) )
+         |        local scanner = Tokenizer( File(filepath) )
          |        local tokens = scanner.tokenize
          |        println (forEach in tokens)
          |      endForEach

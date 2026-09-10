@@ -12,7 +12,7 @@ class RParserCore( generator, parser_def:ParserDef ) : RogueSourceWriter
          |$define PARSER_EXISTS true
          |
          |$include "Cmd.rogue"
-         |$include "Scanner.rogue"
+         |$include "Tokenizer.rogue"
          |$include "Visitor.rogue"
          |
          |class ParserCore [abstract]
@@ -24,7 +24,7 @@ class RParserCore( generator, parser_def:ParserDef ) : RogueSourceWriter
       writeln ...
         @|
          |  PROPERTIES
-         |    _scanner         : Scanner
+         |    _scanner         : Tokenizer
          |    _tokens          : Token[]
          |    _position        : Int
          |    _limit           : Int

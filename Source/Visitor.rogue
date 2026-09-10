@@ -12,7 +12,7 @@ class Visitor<<$ReturnType>>
       return this_element instanceOf ParserDef
 
     method is_scanner->Logical
-      return this_element instanceOf ScannerDef
+      return this_element instanceOf TokenizerDef
 
     method on_visit_node( cmd:Cmd )
       visit_children( cmd )
@@ -275,42 +275,42 @@ class Visitor<<$ReturnType>>
         visit( cmd.args )
       endIf
 
-    method on_visit_children( cmd:ScannerConsume )
+    method on_visit_children( cmd:TokenizerConsume )
       if ($ReturnType instanceOf Cmd)
         cmd.args = visit(cmd.args)->(as SequenceArgs)
       else
         visit( cmd.args )
       endIf
 
-    method on_visit_children( cmd:ScannerCreate )
+    method on_visit_children( cmd:TokenizerCreate )
       if ($ReturnType instanceOf Cmd)
         cmd.arg = visit(cmd.arg)
       else
         visit( cmd.arg )
       endIf
 
-    method on_visit( cmd:ScannerDef )->$ReturnType
+    method on_visit( cmd:TokenizerDef )->$ReturnType
       temporarily this_element = cmd
         handle_visit( cmd )
       endTemporarily
       if ($ReturnType instanceOf Cmd) return cmd
       else                            return $ReturnType.meta.default_value
 
-    method on_visit_children( cmd:ScannerMustConsume )
+    method on_visit_children( cmd:TokenizerMustConsume )
       if ($ReturnType instanceOf Cmd)
         cmd.args = visit(cmd.args)->(as SequenceArgs)
       else
         visit( cmd.args )
       endIf
 
-    method on_visit_children( cmd:ScannerNextIs )
+    method on_visit_children( cmd:TokenizerNextIs )
       if ($ReturnType instanceOf Cmd)
         cmd.args = visit(cmd.args)->(as SequenceArgs)
       else
         visit( cmd.args )
       endIf
 
-    method on_visit_children( cmd:ScannerPeek )
+    method on_visit_children( cmd:TokenizerPeek )
       if ($ReturnType instanceOf Cmd)
         cmd.lookahead = visit(cmd.lookahead)
       else
@@ -473,7 +473,7 @@ class Visitor<<$ReturnType>>
         visit( cmd.routine_defs )
       endIf
 
-    method on_visit_children( cmd:ScannerDef )
+    method on_visit_children( cmd:TokenizerDef )
       if ($ReturnType instanceOf Cmd)
         cmd.routine_defs = visit(cmd.routine_defs)
       else

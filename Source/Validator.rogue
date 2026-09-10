@@ -31,7 +31,7 @@ class Validator : Visitor
       endIf
       visit_children( cmd )
 
-    method on_visit_node( cmd:ScannerDef )
+    method on_visit_node( cmd:TokenizerDef )
       if (cmd.vars.count)
         forEach (v in cmd.vars)
           if (v.type == FType.NONE)

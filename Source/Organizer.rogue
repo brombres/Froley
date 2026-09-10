@@ -15,7 +15,7 @@ class Organizer : Visitor
       forEach (item in group.definitions)
         local def = item->(as TokenDef)
         local expr = LiteralString( t, def.symbol )
-        local cmd_create = ScannerCreate( t, Access(t,def.name) )
+        local cmd_create = TokenizerCreate( t, Access(t,def.name) )
         local cmd_return = Return( t, null )
         local _case = MatchCase( t, expr, Statements(t,cmd_create,cmd_return) )
         this_match.cases.add( _case )
@@ -215,7 +215,7 @@ class Organizer : Visitor
       forEach (item in group.definitions)
         local def = item->(as TokenDef)
         local expr = LiteralString( t, def.symbol )
-        local cmd_create = ScannerCreate( t, Access(t,def.name) )
+        local cmd_create = TokenizerCreate( t, Access(t,def.name) )
         local cmd_restart = Restart( t, null )
         local _case = MatchCase( t, expr, Statements(t,cmd_create,cmd_restart) )
         this_match.cases.add( _case )
@@ -299,16 +299,16 @@ class Organizer : Visitor
       endIf
       visit_children( cmd )
 
-    method on_visit_node( cmd:ScannerCallUserMethod )
+    method on_visit_node( cmd:TokenizerCallUserMethod )
       Program.scanner_user_calls.add( cmd.fn_name )
       visit_children( cmd )
 
-    method on_visit_node( cmd:ScannerQueryUserMethod )
+    method on_visit_node( cmd:TokenizerQueryUserMethod )
       Program.scanner_user_queries.add( cmd.fn_name )
       visit_children( cmd )
 
-    method on_visit_node( cmd:ScannerDef )
-      if (not cmd.name) cmd.name = "Scanner"
+    method on_visit_node( cmd:TokenizerDef )
+      if (not cmd.name) cmd.name = "Tokenizer"
       if (Program.scanner and Program.scanner is not cmd)
         throw cmd.t.error( "Multiple scanners defined - only one scanner can be defined." )
       endIf
